@@ -48,7 +48,6 @@
      <addaction name="separator"/>
     </widget>
     <addaction name="actionOpenFile"/>
-    <addaction name="actionOpenRDMPDir"/>
     <addaction name="menuRecentFiles"/>
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
@@ -93,11 +92,6 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+O</string>
-   </property>
-  </action>
-  <action name="actionOpenRDMPDir">
-   <property name="text">
-    <string>Open RDMP Directory...</string>
    </property>
   </action>
   <action name="actionQuit">

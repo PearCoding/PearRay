@@ -103,7 +103,7 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 	mScene->beforeRender(this);
 
 	mTileMap = std::make_unique<RenderTileMap>();
-	mTileMap->init(*this, rtx, rty, mRenderSettings.tileMode);
+	mTileMap->init(this, rtx, rty, mRenderSettings.tileMode);
 
 	// Init modules
 	mIntegrator->onInit(this);
@@ -125,8 +125,8 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 
 	// Start
 	mIntegrator->onStart();
-	if (mIterationCallback)
-		mIterationCallback(mIncrementalCurrentIteration);
+	for (const auto& clb : mIterationCallbacks)
+		clb(mIncrementalCurrentIteration);
 	PR_LOG(L_INFO) << "Starting threads." << std::endl;
 	for (RenderThread* thread : mThreads)
 		thread->start();
@@ -235,9 +235,10 @@ RenderTile* RenderContext::getNextTile()
 			if (mThreadsWaitingForIteration == threadCount) { // The last thread arriving here has the honor to call optional callbacks and initiate the next iteration
 				if (mRenderSettings.useAdaptiveTiling)
 					optimizeTileMap();
+
 				++mIncrementalCurrentIteration;
-				if (mIterationCallback)
-					mIterationCallback(mIncrementalCurrentIteration - 1);
+				for (const auto& clb : mIterationCallbacks)
+					clb(mIncrementalCurrentIteration - 1);
 				mThreadsWaitingForIteration = 0;
 				lk.unlock();
 

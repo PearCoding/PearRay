@@ -106,6 +106,7 @@ void StreamPipeline::fillWithCameraRays()
 			uint32 grp_id;
 			{
 				RayGroup grp;
+				grp.BlendWeight	  = camera_ray.value().BlendWeight;
 				grp.Importance	  = camera_ray.value().Importance;
 				grp.WavelengthNM  = camera_ray.value().WavelengthNM;
 				grp.WavelengthPDF = camera_ray.value().WavelengthPDF;

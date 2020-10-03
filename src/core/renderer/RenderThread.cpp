@@ -42,8 +42,16 @@ void RenderThread::main()
 	setupFloatingPointEnvironment();
 
 	auto integrator					   = mRenderer->integrator()->createThreadInstance(mRenderer, mThreadIndex);
-	std::shared_ptr<OutputQueue> queue = std::make_shared<OutputQueue>(QUEUE_SIZE, QUEUE_THRESHOLD);
+	std::shared_ptr<OutputQueue> queue = std::make_shared<OutputQueue>(mPipeline.get(), QUEUE_SIZE, QUEUE_THRESHOLD);
 	auto bucket						   = mRenderer->output()->createBucket(mRenderer->maxTileSize());
+
+	for (const auto& clb : mRenderer->outputSpectralSplatCallbacks()) {
+		OutputQueueSpectralCallback spectralCallback = [this, clb](const OutputSpectralEntry* entries, size_t entry_count) {
+			if (this->mTile)
+				clb(this, entries, entry_count);
+		};
+		queue->registerSpectralCallback(spectralCallback);
+	}
 
 	integrator->onStart();
 	for (mTile = mRenderer->getNextTile();

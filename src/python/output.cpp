@@ -53,11 +53,14 @@ void setup_output(py::module& m)
 
 	// Hiding FrameBufferContainer
 	// TODO: Add whole interface
-	auto scope = py::class_<FrameBufferSystem, std::shared_ptr<FrameBufferSystem>>(m, "FrameBufferSystem");
-	scope.def("clear", &FrameBufferSystem::clear)
-		.def_property_readonly("spectral", [](const FrameBufferSystem& buffer) { return buffer.data().getInternalChannel_Spectral(); });
+	py::class_<FrameBufferSystem, std::shared_ptr<FrameBufferSystem>>(m, "FrameBufferSystem")
+		.def("clear", &FrameBufferSystem::clear)
+		.def_property_readonly("spectral", [](const FrameBufferSystem& buffer) { return buffer.data().getInternalChannel_Spectral(); })
+		.def("aov_1d", [](const FrameBufferSystem& buffer, AOV1D var) { return buffer.data().getInternalChannel_1D(var); })
+		.def("aov_3d", [](const FrameBufferSystem& buffer, AOV3D var) { return buffer.data().getInternalChannel_3D(var); })
+		.def("aov_counter", [](const FrameBufferSystem& buffer, AOVCounter var) { return buffer.data().getInternalChannel_Counter(var); });
 
-	py::enum_<AOV3D>(scope, "AOV3D")
+	py::enum_<AOV3D>(m, "AOV3D")
 		.value("POSITION", AOV_Position)
 		.value("NORMAL", AOV_Normal)
 		.value("NORMALG", AOV_NormalG)
@@ -66,15 +69,15 @@ void setup_output(py::module& m)
 		.value("VIEW", AOV_View)
 		.value("UVW", AOV_UVW);
 
-	py::enum_<AOV1D>(scope, "AOV1D")
+	py::enum_<AOV1D>(m, "AOV1D")
 		.value("DEPTH", AOV_Depth)
-		.value("TIME", AOV_Time)
+		.value("PIXELWEIGHT", AOV_PixelWeight)
 		.value("ENTITY_ID", AOV_EntityID)
 		.value("MATERIAL_ID", AOV_MaterialID)
 		.value("EMISSION_ID", AOV_EmissionID)
 		.value("DISPLACE_ID", AOV_DisplaceID);
 
-	py::enum_<AOVCounter>(scope, "AOVCounter")
+	py::enum_<AOVCounter>(m, "AOVCounter")
 		.value("FEEDBACK", AOV_Feedback)
 		.value("SAMPLES", AOV_SampleCount);
 }

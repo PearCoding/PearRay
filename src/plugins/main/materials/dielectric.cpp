@@ -66,7 +66,7 @@ public:
 		if constexpr (IsThin) {
 			// Account for scattering between interfaces
 			if (F < 1.0f)
-				F += (1 - F) * F / (F + 1); // Not really the factor when roughness is applied
+				F += (1 - F) * F / (F + 1); 
 		}
 
 		if (in.RND[0] <= F) {

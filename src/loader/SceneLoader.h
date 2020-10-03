@@ -37,22 +37,23 @@ private:
 	static void setupEnvironment(const std::vector<DL::DataGroup>& groups, SceneLoadContext& ctx);
 	static void setupTransformable(const DL::DataGroup& group,
 								   const std::shared_ptr<PR::ITransformable>& entity, SceneLoadContext& ctx);
+	static void addCamera(const DL::DataGroup& group, SceneLoadContext& ctx);
+	static void addEmission(const DL::DataGroup& group, SceneLoadContext& ctx);
 	static void addEntity(const DL::DataGroup& group,
 						  const std::shared_ptr<ITransformable>& parent, SceneLoadContext& ctx);
-	static void addSampler(const DL::DataGroup& group, SceneLoadContext& ctx);
 	static void addFilter(const DL::DataGroup& group, SceneLoadContext& ctx);
-	static void addIntegrator(const DL::DataGroup& group, SceneLoadContext& ctx);
-	static void addCamera(const DL::DataGroup& group, SceneLoadContext& ctx);
-	static void addLight(const DL::DataGroup& group, SceneLoadContext& ctx);
-	static void addEmission(const DL::DataGroup& group, SceneLoadContext& ctx);
-	static void addMaterial(const DL::DataGroup& group, SceneLoadContext& ctx);
-	static void addTexture(const DL::DataGroup& group, SceneLoadContext& ctx);
-	static void addSpectrum(const DL::DataGroup& group, SceneLoadContext& ctx);
-	static void addSubGraph(const DL::DataGroup& group, SceneLoadContext& ctx);
 	static void addInclude(const DL::DataGroup& group, SceneLoadContext& ctx);
+	static void addIntegrator(const DL::DataGroup& group, SceneLoadContext& ctx);
+	static void addLight(const DL::DataGroup& group, SceneLoadContext& ctx);
+	static void addMaterial(const DL::DataGroup& group, SceneLoadContext& ctx);
 	static void addMesh(const DL::DataGroup& group, SceneLoadContext& ctx);
 	static void addNode(const DL::DataGroup& group, SceneLoadContext& ctx);
 	static uint32 addNodeInline(const DL::DataGroup& group, SceneLoadContext& ctx);
+	static void addSampler(const DL::DataGroup& group, SceneLoadContext& ctx);
+	static void addSpectralMapper(const DL::DataGroup& group, SceneLoadContext& ctx);
+	static void addSpectrum(const DL::DataGroup& group, SceneLoadContext& ctx);
+	static void addSubGraph(const DL::DataGroup& group, SceneLoadContext& ctx);
+	static void addTexture(const DL::DataGroup& group, SceneLoadContext& ctx);
 
 	static ParameterGroup populateObjectParameters(const DL::DataGroup& group, SceneLoadContext& ctx);
 	static Parameter unpackShadingNetwork(const DL::DataGroup& group, SceneLoadContext& ctx);

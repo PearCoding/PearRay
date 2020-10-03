@@ -74,6 +74,9 @@ set(PR_Src
   shader/INodePlugin.h
   shader/NodeManager.cpp
   shader/NodeManager.h
+  spectral/ISpectralMapperPlugin.h
+  spectral/SpectralMapperManager.cpp
+  spectral/SpectralMapperManager.h
   )
 
 if(NOT WIN32)

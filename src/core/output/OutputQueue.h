@@ -7,10 +7,12 @@
 namespace PR {
 class OutputDevice;
 class FrameBufferBucket;
+class StreamPipeline;
 
+using OutputQueueSpectralCallback = std::function<void(const OutputSpectralEntry*, size_t)>;
 class PR_LIB_CORE OutputQueue {
 public:
-	OutputQueue(size_t max_entries, size_t trigger_threshold);
+	OutputQueue(StreamPipeline* pipeline, size_t max_entries, size_t trigger_threshold);
 	~OutputQueue();
 
 	inline void pushSpectralFragment(const Point2i& p, const SpectralBlob& mis, const SpectralBlob& importance, const SpectralBlob& radiance,
@@ -29,11 +31,22 @@ public:
 		flush();
 	}
 
+	inline void registerSpectralCallback(const OutputQueueSpectralCallback& callback)
+	{
+		mSpectralCallbacks.push_back(callback);
+	}
+
+	/*inline void unregisterSpectralCallback(const OutputQueueSpectralCallback& callback)
+	{
+		mSpectralCallbacks.erase(std::remove(mSpectralCallbacks.begin(), mSpectralCallbacks.end(), callback));
+	}*/
+
 private:
 	inline const uint32* pushPath(const LightPath& path);
 
 	std::vector<OutputSpectralEntry> mSpectralEntries;
 	size_t mSpectralIt;
+	std::vector<OutputQueueSpectralCallback> mSpectralCallbacks;
 
 	std::vector<OutputShadingPointEntry> mSPEntries;
 	size_t mSPIt;
@@ -42,6 +55,8 @@ private:
 	size_t mFeedbackIt;
 
 	MemoryStack mLightPathData;
+
+	StreamPipeline* mPipeline;
 
 	const size_t mTriggerThreshold;
 	const size_t mMemTriggerThreshold;

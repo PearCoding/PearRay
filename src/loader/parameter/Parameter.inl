@@ -11,11 +11,11 @@ inline Parameter::Parameter(ParameterType t, const std::vector<ParameterData>& d
 {
 }
 
-inline bool Parameter::isValid() const { return arraySize() != 0; }
-inline bool Parameter::isReference() const { return arraySize() == 1 && mType == PT_Reference; }
-inline bool Parameter::isArray() const { return arraySize() > 1 && mType != PT_Invalid; }
+inline bool Parameter::isValid() const { return !mData.empty(); }
+inline bool Parameter::isReference() const { return mData.size() == 1 && mType == PT_Reference; }
+inline bool Parameter::isArray() const { return mData.size() > 1 && mType != PT_Invalid; }
 
-inline size_t Parameter::arraySize() const { return mType == PT_String ? mDataString.size() : mData.size(); }
+inline size_t Parameter::arraySize() const { return mData.size(); }
 
 inline ParameterType Parameter::type() const { return mType; }
 inline bool Parameter::canBeNumber() const { return mType == PT_Int || mType == PT_UInt || mType == PT_Number; }
@@ -126,10 +126,10 @@ inline float Parameter::getExactNumber(size_t ind, float def) const
 
 inline std::string Parameter::getString(size_t ind, const std::string& def) const
 {
-	if (mType != PT_String || ind >= mDataString.size())
+	if (mType != PT_String || ind >= mData.size())
 		return def;
 	else
-		return mDataString[ind];
+		return mData[ind].String;
 }
 
 inline std::vector<bool> Parameter::getBoolArray() const
@@ -211,9 +211,12 @@ inline std::vector<float> Parameter::getExactNumberArray() const
 
 inline std::vector<std::string> Parameter::getStringArray() const
 {
-	if (mType != PT_String || mDataString.empty())
+	if (mType != PT_String || mData.empty())
 		return {};
 
-	return mDataString;
+	std::vector<std::string> arr(arraySize());
+	for (size_t i = 0; i < arraySize(); ++i)
+		arr[i] = mData[i].String;
+	return arr;
 }
 } // namespace PR

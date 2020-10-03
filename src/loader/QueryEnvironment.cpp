@@ -17,8 +17,6 @@
 #include "material/IMaterial.h"
 #include "material/MaterialManager.h"
 #include "parameter/Parameter.h"
-#include "shader/NodeManager.h"
-
 #include "plugin/PluginManager.h"
 #include "renderer/RenderFactory.h"
 #include "renderer/RenderSettings.h"
@@ -26,6 +24,9 @@
 #include "sampler/SamplerManager.h"
 #include "scene/Scene.h"
 #include "shader/ConstNode.h"
+#include "shader/NodeManager.h"
+#include "spectral/ISpectralMapperPlugin.h"
+#include "spectral/SpectralMapperManager.h"
 
 #include "DefaultSRGB.h"
 
@@ -39,15 +40,16 @@
 namespace PR {
 QueryEnvironment::QueryEnvironment(const std::filesystem::path& plugdir)
 	: mPluginManager(std::make_shared<PluginManager>(plugdir))
-	, mMaterialManager(std::make_shared<MaterialManager>())
-	, mEntityManager(std::make_shared<EntityManager>())
 	, mCameraManager(std::make_shared<CameraManager>())
 	, mEmissionManager(std::make_shared<EmissionManager>())
+	, mEntityManager(std::make_shared<EntityManager>())
+	, mFilterManager(std::make_shared<FilterManager>())
 	, mInfiniteLightManager(std::make_shared<InfiniteLightManager>())
 	, mIntegratorManager(std::make_shared<IntegratorManager>())
-	, mFilterManager(std::make_shared<FilterManager>())
-	, mSamplerManager(std::make_shared<SamplerManager>())
+	, mMaterialManager(std::make_shared<MaterialManager>())
 	, mNodeManager(std::make_shared<NodeManager>())
+	, mSamplerManager(std::make_shared<SamplerManager>())
+	, mSpectralMapperManager(std::make_shared<SpectralMapperManager>())
 {
 	mDefaultSpectralUpsampler = DefaultSRGB::loadSpectralUpsampler();
 
@@ -129,6 +131,9 @@ void QueryEnvironment::loadPlugins(const std::filesystem::path& basedir)
 			break;
 		case PT_NODE:
 			mNodeManager->addFactory(std::dynamic_pointer_cast<INodePlugin>(plugin));
+			break;
+		case PT_SPECTRALMAPPER:
+			mSpectralMapperManager->addFactory(std::dynamic_pointer_cast<ISpectralMapperPlugin>(plugin));
 			break;
 		default:
 			break;

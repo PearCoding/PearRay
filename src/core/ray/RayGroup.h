@@ -6,6 +6,7 @@ namespace PR {
 
 class PR_LIB_CORE RayGroup {
 public:
+	SpectralBlob BlendWeight   = SpectralBlob::Zero(); // Blending weight to framebuffer
 	SpectralBlob Importance	   = SpectralBlob::Zero(); // Initial importance (camera importanceu)
 	SpectralBlob WavelengthNM  = SpectralBlob::Zero(); // Initial wavelength (which is the same in our case all the time)
 	SpectralBlob WavelengthPDF = SpectralBlob::Ones();

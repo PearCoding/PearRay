@@ -23,14 +23,15 @@
 #include "material/IMaterialPlugin.h"
 #include "material/MaterialManager.h"
 #include "mesh/MeshBase.h"
+#include "sampler/SamplerManager.h"
 #include "shader/NodeManager.h"
+#include "spectral/SpectralMapperManager.h"
 
 #include "parser/CurveParser.h"
 #include "parser/MathParser.h"
 #include "parser/MeshParser.h"
 #include "parser/SpectralParser.h"
 #include "parser/TextureParser.h"
-#include "sampler/SamplerManager.h"
 
 #include "DataLisp.h"
 
@@ -89,6 +90,7 @@ std::shared_ptr<Environment> SceneLoader::createEnvironment(const std::vector<DL
 			DL::Data renderHeightD	 = top.getFromKey("render_height");
 			DL::Data cropD			 = top.getFromKey("crop");
 			DL::Data spectralDomainD = top.getFromKey("spectral_domain");
+			DL::Data spectralHeroD	 = top.getFromKey("spectral_hero");
 
 			std::shared_ptr<Environment> env;
 			try {
@@ -129,6 +131,9 @@ std::shared_ptr<Environment> SceneLoader::createEnvironment(const std::vector<DL
 					env->renderSettings().spectralMono = env->renderSettings().spectralStart == env->renderSettings().spectralEnd;
 				}
 			}
+
+			if (spectralHeroD.type() == DL::DT_Bool)
+				env->renderSettings().spectralHero = spectralHeroD.getBool();
 
 			env->cache()->setMode(static_cast<CacheMode>(opts.CacheMode));
 
@@ -179,6 +184,8 @@ void SceneLoader::setupEnvironment(const std::vector<DL::DataGroup>& groups, Sce
 			addLight(entry, ctx);
 		else if (entry.id() == "camera")
 			addCamera(entry, ctx);
+		else if (entry.id() == "spectral_mapper")
+			addSpectralMapper(entry, ctx);
 		else if (entry.id() == "output")
 			ctx.environment()->outputSpecification().parse(ctx.environment(), entry);
 	}
@@ -302,6 +309,43 @@ void SceneLoader::addFilter(const DL::DataGroup& group, SceneLoadContext& ctx)
 	} else {
 		PR_LOG(L_ERROR) << "[Loader] Unknown filter slot " << slot << std::endl;
 	}
+}
+
+void SceneLoader::addSpectralMapper(const DL::DataGroup& group, SceneLoadContext& ctx)
+{
+	auto manag		= ctx.environment()->spectralMapperManager();
+	const uint32 id = manag->nextID();
+
+	DL::Data typeD = group.getFromKey("type");
+
+	std::string type;
+
+	if (typeD.type() == DL::DT_String) {
+		type = typeD.getString();
+		std::transform(type.begin(), type.end(), type.begin(), ::tolower);
+	} else {
+		PR_LOG(L_ERROR) << "[Loader] No spectral mapper type set" << std::endl;
+		return;
+	}
+
+	auto fac = manag->getFactory(type);
+	if (!fac) {
+		PR_LOG(L_ERROR) << "[Loader] Unknown spectral mapper type " << type << std::endl;
+		return;
+	}
+
+	ctx.parameters() = populateObjectParameters(group, ctx);
+	auto mapper		 = fac->create(id, type, ctx);
+	if (!mapper) {
+		PR_LOG(L_ERROR) << "[Loader] Could not create spectral mapper of type " << type << std::endl;
+		return;
+	}
+
+	ctx.environment()->spectralMapperManager()->addObject(mapper);
+	if (ctx.environment()->renderSettings().spectralMapperFactory)
+		PR_LOG(L_WARNING) << "[Loader] Spectral mapper already selected. Replacing it " << std::endl;
+
+	ctx.environment()->renderSettings().spectralMapperFactory = mapper;
 }
 
 void SceneLoader::addIntegrator(const DL::DataGroup& group, SceneLoadContext& ctx)

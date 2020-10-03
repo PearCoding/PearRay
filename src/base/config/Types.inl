@@ -160,4 +160,55 @@ inline float nextFloatDown(float v)
 		++ui;
 	return bitsToFloat(ui);
 }
+
+// Power utils
+template <typename T>
+typename std::enable_if<std::is_integral<T>::value, bool>::type
+isPowerOf2(const T& v)
+{
+	return v && (!(v & (v - 1)));
+}
+
+inline uint8 nextPowerOf2(uint8 v)
+{
+	v--;
+	v |= v >> 1;
+	v |= v >> 2;
+	v |= v >> 4;
+	v++;
+	return v;
+}
+inline uint16 nextPowerOf2(uint16 v)
+{
+	v--;
+	v |= v >> 1;
+	v |= v >> 2;
+	v |= v >> 4;
+	v |= v >> 8;
+	v++;
+	return v;
+}
+inline uint32 nextPowerOf2(uint32 v)
+{
+	v--;
+	v |= v >> 1;
+	v |= v >> 2;
+	v |= v >> 4;
+	v |= v >> 8;
+	v |= v >> 16;
+	v++;
+	return v;
+}
+inline uint64 nextPowerOf2(uint64 v)
+{
+	v--;
+	v |= v >> 1;
+	v |= v >> 2;
+	v |= v >> 4;
+	v |= v >> 8;
+	v |= v >> 16;
+	v |= v >> 32;
+	v++;
+	return v;
+}
 } // namespace PR

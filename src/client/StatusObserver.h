@@ -23,5 +23,6 @@ private:
 	time_point_t mLastUpdate;
 
 	bool mBeautify;
+	bool mFirstTime;
 };
 } // namespace PR

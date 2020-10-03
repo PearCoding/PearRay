@@ -16,12 +16,12 @@ public:
 
 private:
 	void createImageProtocol();
-	void updateImageProtocol(float scale);
+	void closeImageProtocol();
+	void updateImageProtocol();
 
 	std::unique_ptr<class TevConnection> mConnection;
 	RenderContext* mRenderContext;
 	uint64 mUpdateCycleSeconds;
-	uint32 mMaxIterationCount;
 
 	time_point_t mLastUpdate;
 };

@@ -11,6 +11,7 @@ struct OutputSpectralEntry;
 struct OutputShadingPointEntry;
 struct OutputFeedbackEntry;
 
+class StreamPipeline;
 class IFilter;
 class PR_LIB_CORE FrameBufferBucket {
 	friend class FrameBufferSystem;
@@ -24,7 +25,7 @@ public:
 
 	inline void clear(bool force = false) { mData.clear(force); }
 
-	void commitSpectrals(const OutputSpectralEntry* entries, size_t entrycount);
+	void commitSpectrals(StreamPipeline* pipeline, const OutputSpectralEntry* entries, size_t entrycount);
 	void commitShadingPoints(const OutputShadingPointEntry* entries, size_t entrycount);
 	void commitFeedbacks(const OutputFeedbackEntry* entries, size_t entrycount);
 
@@ -40,10 +41,9 @@ protected:
 	inline FrameBufferContainer& data() { return mData; }
 
 private:
-	void commitSpectralsXYZ(const OutputSpectralEntry* entries, size_t entrycount);
-	void commitSpectralsMono(const OutputSpectralEntry* entries, size_t entrycount);
-	void commitSpectralsXYZNoFilter(const OutputSpectralEntry* entries, size_t entrycount);
-	void commitSpectralsMonoNoFilter(const OutputSpectralEntry* entries, size_t entrycount);
+	// Using the following function outside the corresponding .cpp will result in a compiler error
+	template<bool IsMono, bool HasFilter>
+	void commitSpectrals2(StreamPipeline* pipeline, const OutputSpectralEntry* entries, size_t entrycount);
 
 	const FilterCache mFilter;
 	const Size2i mOriginalSize;

@@ -9,10 +9,11 @@
 namespace PR {
 class PR_LIB_BASE StratifiedSampler : public ISampler {
 public:
-	StratifiedSampler(Random& random, uint32 samples)
+	StratifiedSampler(Random& random, uint32 samples, uint32 groups)
 		: ISampler(samples)
 		, mRandom(random)
-		, m2D_X(static_cast<uint32>(std::sqrt(samples)))
+		, m2D_X(static_cast<uint32>(std::sqrt(groups)))
+		, mGroups(groups)
 	{
 	}
 
@@ -20,15 +21,15 @@ public:
 
 	float generate1D(uint32 index) override
 	{
-		auto ret = Projection::stratified(mRandom.getFloat(), index, maxSamples());
+		auto ret = Projection::stratified(mRandom.getFloat(), index, mGroups);
 		return ret;
 	}
 
 	// Need better strategy for 2D and 3D
 	Vector2f generate2D(uint32 index) override
 	{
-		auto x = Projection::stratified(mRandom.getFloat(), index % m2D_X, maxSamples());
-		auto y = Projection::stratified(mRandom.getFloat(), index / m2D_X, maxSamples());
+		auto x = Projection::stratified(mRandom.getFloat(), index % m2D_X, m2D_X);
+		auto y = Projection::stratified(mRandom.getFloat(), index / m2D_X, m2D_X);
 
 		return Vector2f(x, y);
 	}
@@ -36,7 +37,8 @@ public:
 private:
 	Random& mRandom;
 
-	uint32 m2D_X;
+	const uint32 m2D_X;
+	const uint32 mGroups;
 };
 
 class StratifiedSamplerFactory : public ISamplerFactory {
@@ -53,7 +55,7 @@ public:
 
 	std::shared_ptr<ISampler> createInstance(uint32 sample_count, Random& rnd) const override
 	{
-		return std::make_shared<StratifiedSampler>(rnd, sample_count);
+		return std::make_shared<StratifiedSampler>(rnd, sample_count, mParams.getUInt("bins", sample_count));
 	}
 
 private:

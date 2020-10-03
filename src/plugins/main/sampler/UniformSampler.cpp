@@ -29,8 +29,8 @@ public:
 	}
 
 private:
-	uint32 m2D_X;
-	uint32 m2D_Y;
+	const uint32 m2D_X;
+	const uint32 m2D_Y;
 };
 
 class UniformSamplerFactory : public ISamplerFactory {

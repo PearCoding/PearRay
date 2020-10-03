@@ -19,7 +19,6 @@ struct PR_LIB_CORE OutputSpectralEntry {
 	const uint32* Path;
 
 	inline SpectralBlob contribution() const { return MIS * Importance * Radiance; }
-	inline float contribution(size_t i) const { return MIS[i] * Importance[i] * Radiance[i]; }
 };
 
 struct PR_LIB_CORE OutputShadingPointEntry {

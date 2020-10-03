@@ -17,6 +17,7 @@ class IEntity;
 class IIntegrator;
 class IMaterial;
 class FrameBufferSystem;
+class OutputSpectralEntry;
 class RayStream;
 class RenderTileSession;
 class RenderThread;
@@ -24,7 +25,8 @@ class RenderTile;
 class RenderTileMap;
 class Scene;
 
-using RenderIterationCallback = std::function<void(uint32)>;
+using RenderIterationCallback			= std::function<void(uint32)>;
+using RenderOutputSpectralSplatCallback = std::function<void(const RenderThread*, const OutputSpectralEntry*, size_t)>;
 
 class PR_LIB_CORE RenderContext {
 	friend class RenderThread;
@@ -78,8 +80,10 @@ public:
 	inline std::shared_ptr<Scene> scene() const { return mScene; }
 
 	// Set a callback called each start of iteration. The internal state of the callee is undefined
-	inline void setIterationCallback(const RenderIterationCallback& clb) { mIterationCallback = clb; }
-	inline RenderIterationCallback iterationCallback() const { return mIterationCallback; }
+	inline void addIterationCallback(const RenderIterationCallback& clb) { mIterationCallbacks.push_back(clb); }
+
+	inline void addOutputSpectralSplatCallback(const RenderOutputSpectralSplatCallback& clb) { mOutputSpectralSplatCallbacks.push_back(clb); }
+	inline const std::vector<RenderOutputSpectralSplatCallback>& outputSpectralSplatCallbacks() const { return mOutputSpectralSplatCallbacks; }
 
 protected:
 	RenderTile* getNextTile();
@@ -114,6 +118,7 @@ private:
 	std::shared_ptr<IIntegrator> mIntegrator;
 	bool mShouldStop;
 
-	RenderIterationCallback mIterationCallback;
+	std::vector<RenderIterationCallback> mIterationCallbacks;
+	std::vector<RenderOutputSpectralSplatCallback> mOutputSpectralSplatCallbacks;
 };
 } // namespace PR

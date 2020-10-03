@@ -18,7 +18,7 @@ public:
 	inline size_t tileCount() const { return mTileMap.size(); }
 	inline Size2i maxTileSize() const { return mMaxTileSize; }
 
-	void init(const RenderContext& context, uint32 rtx, uint32 rty, TileMode mode);
+	void init(RenderContext* context, uint32 rtx, uint32 rty, TileMode mode);
 
 	// Split tiles to minimize workoverload on single tiles
 	void optimize();

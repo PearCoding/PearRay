@@ -167,7 +167,7 @@ int main(int argc, char** argv)
 			obs->begin(renderer.get(), options);
 
 		// Setup iteration callback
-		renderer->setIterationCallback([&](uint32) {
+		renderer->addIterationCallback([&](uint32) {
 			if (softStop.exchange(false))
 				renderer->requestStop();
 

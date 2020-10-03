@@ -118,14 +118,11 @@ set(PR_Src
   renderer/StreamPipeline.cpp
   renderer/StreamPipeline.h
   renderer/StreamPipeline.inl
-  sampler/Distribution1D.h
-  sampler/Distribution1D.inl
   sampler/Distribution2D.cpp
   sampler/Distribution2D.h
   sampler/ISampler.h
   sampler/ISamplerFactory.h
   sampler/SampleArray.h
-  sampler/SplitSample.h
   scene/Scene.cpp
   scene/Scene.h
   spectral/Blackbody.h
@@ -133,6 +130,8 @@ set(PR_Src
   spectral/CIE.h
   spectral/EquidistantSpectrum.h
   spectral/EquidistantSpectrum.inl
+  spectral/ISpectralMapper.h
+  spectral/ISpectralMapperFactory.h
   spectral/OrderedSpectrum.h
   spectral/OrderedSpectrum.inl
   spectral/ParametricBlob.h

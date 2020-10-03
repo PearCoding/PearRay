@@ -5,8 +5,8 @@
 #include "StreamPipeline.h"
 #include "buffer/FrameBufferBucket.h"
 #include "material/IMaterial.h"
+#include "math/SplitSample.h"
 #include "output/OutputQueue.h"
-#include "sampler/SplitSample.h"
 #include "scene/Scene.h"
 #include "trace/IntersectionPoint.h"
 

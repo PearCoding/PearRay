@@ -31,10 +31,12 @@ class ICamera;
 struct CameraRay;
 class RenderContext;
 class ISampler;
+class ISpectralMapper;
+
 class PR_LIB_CORE RenderTile {
 public:
 	RenderTile(const Point2i& start, const Point2i& end,
-			   const RenderContext& context, const RenderTileContext& tileContext = RenderTileContext());
+			   RenderContext* context, const RenderTileContext& tileContext = RenderTileContext());
 	~RenderTile();
 
 	inline void incIteration() { ++mContext.IterationCount; }
@@ -70,6 +72,8 @@ public:
 	inline ISampler* timeSampler() const { return mTimeSampler.get(); }
 	inline ISampler* spectralSampler() const { return mSpectralSampler.get(); }
 
+	inline ISpectralMapper* spectralMapper() const { return mSpectralMapper.get(); }
+
 	inline const RenderTileStatistics& statistics() const { return mContext.Statistics; }
 	inline RenderTileStatistics& statistics() { return mContext.Statistics; }
 
@@ -84,8 +88,8 @@ private:
 	const Point2i mEnd;
 	const Size2i mViewSize;
 	const Size2i mImageSize;
-	uint64 mMaxPixelSamples;
-	uint32 mMaxIterationCount;
+	const uint64 mMaxIterationCount;
+	const uint32 mMaxPixelSamples;
 
 	RenderTileContext mContext;
 	std::chrono::high_resolution_clock::time_point mWorkStart;
@@ -97,20 +101,13 @@ private:
 	std::shared_ptr<ISampler> mTimeSampler;
 	std::shared_ptr<ISampler> mSpectralSampler;
 
-	// Spectral cache
-	const float mSpectralStart;
-	const float mSpectralEnd;
-	const float mSpectralSpan;
-	const float mSpectralDelta;
-	const bool mSpectralMonotonic;
+	std::shared_ptr<ISpectralMapper> mSpectralMapper;
 
 	// t = t'*alpha + beta
 	float mTimeAlpha;
 	float mTimeBeta;
 
-	const RenderContext* const mRenderContext;
+	RenderContext* mRenderContext;
 	const ICamera* const mCamera;
-
-	float mWeight_Cache;
 };
 } // namespace PR

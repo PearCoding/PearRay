@@ -4,35 +4,24 @@
 #include "camera/ICamera.h"
 #include "sampler/ISampler.h"
 #include "scene/Scene.h"
-#include "spectral/CIE.h"
-
-//#define PR_SAMPLE_BY_CIE_Y
-#define PR_SAMPLE_BY_CIE_XYZ
-
-#if defined(PR_SAMPLE_BY_CIE_Y) || defined(PR_SAMPLE_BY_CIE_XYZ)
-#define PR_SAMPLE_BY_CIE
-#endif
+#include "spectral/ISpectralMapper.h"
 
 namespace PR {
 RenderTile::RenderTile(const Point2i& start, const Point2i& end,
-					   const RenderContext& context, const RenderTileContext& tileContext)
+					   RenderContext* context, const RenderTileContext& tileContext)
 	: mWorking(false)
 	, mStart(start)
 	, mEnd(end)
 	, mViewSize(Size2i::fromPoints(start, end))
-	, mImageSize(context.settings().filmWidth, context.settings().filmHeight)
-	, mMaxPixelSamples(mViewSize.area())
+	, mImageSize(context->settings().filmWidth, context->settings().filmHeight)
+	, mMaxIterationCount(context->settings().maxSampleCount())
+	, mMaxPixelSamples(mViewSize.area() * mMaxIterationCount)
 	, mContext(tileContext)
 	, mWorkStart()
 	, mLastWorkTime()
-	, mRandom(context.settings().seed + (start(0) ^ start(1)))
-	, mSpectralStart(context.settings().spectralStart)
-	, mSpectralEnd(context.settings().spectralEnd)
-	, mSpectralSpan(mSpectralEnd - mSpectralStart)
-	, mSpectralDelta(mSpectralSpan / PR_SPECTRAL_BLOB_SIZE)
-	, mSpectralMonotonic(context.settings().spectralMono)
-	, mRenderContext(&context)
-	, mCamera(context.scene()->activeCamera().get())
+	, mRandom(context->settings().seed + start(0) + start(1))
+	, mRenderContext(context)
+	, mCamera(context->scene()->activeCamera().get())
 {
 	PR_ASSERT(mViewSize.isValid(), "Invalid tile size");
 
@@ -43,8 +32,7 @@ RenderTile::RenderTile(const Point2i& start, const Point2i& end,
 	mTimeSampler	 = mRenderContext->settings().createTimeSampler(mRandom);
 	mSpectralSampler = mRenderContext->settings().createSpectralSampler(mRandom);
 
-	mMaxIterationCount = mRenderContext->settings().maxSampleCount();
-	mMaxPixelSamples *= mMaxIterationCount;
+	mSpectralMapper = mRenderContext->settings().createSpectralMapper(mRenderContext);
 
 	switch (mRenderContext->settings().timeMappingMode) {
 	default:
@@ -65,10 +53,6 @@ RenderTile::RenderTile(const Point2i& start, const Point2i& end,
 	const float f = mRenderContext->settings().timeScale;
 	mTimeAlpha *= f;
 	mTimeBeta *= f;
-
-	mWeight_Cache = 1.0f / mMaxIterationCount;
-	if (!mRenderContext->settings().spectralMono) // TODO: Really???
-		mWeight_Cache *= PR_SPECTRAL_BLOB_SIZE;
 }
 
 RenderTile::~RenderTile()
@@ -85,59 +69,31 @@ std::optional<CameraRay> RenderTile::constructCameraRay(const Point2i& p, uint32
 	statistics().addPixelSampleCount();
 	++mContext.PixelSamplesRendered;
 
+	// Sample most information accesable by a camera
 	CameraSample cameraSample;
-	cameraSample.SensorSize	   = mImageSize;
-	cameraSample.Pixel		   = (p + mRenderContext->viewOffset()).cast<float>() + mAASampler->generate2D(sample).array() - Point2f(0.5f, 0.5f);
-	cameraSample.Lens		   = mLensSampler->generate2D(sample);
-	cameraSample.Time		   = mTimeAlpha * mTimeSampler->generate1D(sample) + mTimeBeta;
-	cameraSample.Importance	   = mWeight_Cache;
-	cameraSample.WavelengthPDF = 1;
+	cameraSample.SensorSize	 = mImageSize;
+	cameraSample.Pixel		 = (p + mRenderContext->viewOffset()).cast<float>() + mAASampler->generate2D(sample).array() - Point2f(0.5f, 0.5f);
+	cameraSample.Lens		 = mLensSampler->generate2D(sample);
+	cameraSample.Time		 = mTimeAlpha * mTimeSampler->generate1D(sample) + mTimeBeta;
+	cameraSample.BlendWeight = 1.0f;
+	cameraSample.Importance	 = 1.0f;
 
 	// Sample wavelength
-	if (mSpectralMonotonic) {
-		cameraSample.WavelengthNM = SpectralBlob(mSpectralStart);
+	if (mRenderContext->settings().spectralMono) {
+		cameraSample.WavelengthNM  = SpectralBlob(mRenderContext->settings().spectralStart);
+		cameraSample.WavelengthPDF = 1.0f;
 	} else {
-#if defined(PR_SAMPLE_BY_CIE)
-		if (mSpectralStart == PR_CIE_WAVELENGTH_START && mSpectralEnd == PR_CIE_WAVELENGTH_END) {
-			float u = mSpectralSampler->generate1D(sample);
-			PR_OPT_LOOP
-			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
-				const float k = std::fmod(u + i / (float)PR_SPECTRAL_BLOB_SIZE, 1.0f);
-				float pdf;
-#ifdef PR_SAMPLE_BY_CIE_Y
-				cameraSample.WavelengthNM(i) = CIE::sample_y(k, pdf);
-#else
-				cameraSample.WavelengthNM(i) = CIE::sample_xyz(k, pdf);
-#endif
-				cameraSample.WavelengthPDF(i) = pdf;
-			}
-		} else if (mSpectralStart == PR_VISIBLE_WAVELENGTH_START && mSpectralEnd == PR_VISIBLE_WAVELENGTH_END) {
-			float u = mSpectralSampler->generate1D(sample);
-			PR_OPT_LOOP
-			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
-				const float k = std::fmod(u + i / (float)PR_SPECTRAL_BLOB_SIZE, 1.0f);
-				float pdf;
-#ifdef PR_SAMPLE_BY_CIE_Y
-				cameraSample.WavelengthNM(i) = CIE::sample_vis_y(k, pdf);
-#else
-				cameraSample.WavelengthNM(i) = CIE::sample_vis_xyz(k, pdf);
-#endif
-				cameraSample.WavelengthPDF(i) = pdf;
-			}
-		} else {
-#endif
-			float start					 = mSpectralSampler->generate1D(sample) * mSpectralSpan; // Wavelength inside the span
-			cameraSample.WavelengthNM(0) = start + mSpectralStart;								 // Hero wavelength
-			PR_OPT_LOOP
-			for (size_t i = 1; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-				cameraSample.WavelengthNM(i) = mSpectralStart + std::fmod(start + i * mSpectralDelta, mSpectralSpan);
-#if defined(PR_SAMPLE_BY_CIE)
-		}
-#endif
+		const auto specSample	   = mSpectralMapper->sample(p + mRenderContext->viewOffset(), mSpectralSampler->generate1D(sample));
+		cameraSample.WavelengthNM  = specSample.WavelengthNM;
+		cameraSample.WavelengthPDF = specSample.PDF;
+		cameraSample.BlendWeight *= specSample.BlendWeight;
 	}
 
+	// Construct actual ray
 	std::optional<CameraRay> ray = mCamera->constructRay(cameraSample);
 	if (PR_LIKELY(ray.has_value())) {
+		if (PR_LIKELY(ray.value().BlendWeight.isZero()))
+			ray.value().BlendWeight = cameraSample.BlendWeight;
 		if (PR_LIKELY(ray.value().Importance.isZero()))
 			ray.value().Importance = cameraSample.Importance;
 		if (PR_LIKELY(ray.value().WavelengthNM.isZero()))
@@ -148,7 +104,7 @@ std::optional<CameraRay> RenderTile::constructCameraRay(const Point2i& p, uint32
 			ray.value().Time = cameraSample.Time;
 
 		// Set monochrome by force if necessary
-		if (mSpectralMonotonic)
+		if (mRenderContext->settings().spectralMono || !mRenderContext->settings().spectralHero)
 			ray.value().IsMonochrome = true;
 
 		if (ray.value().IsMonochrome)
@@ -200,8 +156,8 @@ std::pair<RenderTile*, RenderTile*> RenderTile::split(int dim) const
 	right.Statistics = left.Statistics;
 
 	// Create tiles
-	auto leftTile  = new RenderTile(startLeft, endLeft, *mRenderContext, left);
-	auto rightTile = new RenderTile(startRight, endRight, *mRenderContext, right);
+	auto leftTile  = new RenderTile(startLeft, endLeft, mRenderContext, left);
+	auto rightTile = new RenderTile(startRight, endRight, mRenderContext, right);
 	return std::make_pair(leftTile, rightTile);
 }
 } // namespace PR

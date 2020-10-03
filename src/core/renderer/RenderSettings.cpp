@@ -4,6 +4,8 @@
 #include "sampler/ISampler.h"
 #include "sampler/ISamplerFactory.h"
 #include "spectral/CIE.h"
+#include "spectral/ISpectralMapper.h"
+#include "spectral/ISpectralMapperFactory.h"
 
 namespace PR {
 RenderSettings::RenderSettings()
@@ -17,6 +19,7 @@ RenderSettings::RenderSettings()
 	, spectralStart(PR_VISIBLE_WAVELENGTH_START)
 	, spectralEnd(PR_VISIBLE_WAVELENGTH_END)
 	, spectralMono(false)
+	, spectralHero(true)
 	, filmWidth(1920)
 	, filmHeight(1080)
 	, cropMinX(0)
@@ -58,6 +61,11 @@ std::shared_ptr<IFilter> RenderSettings::createPixelFilter() const
 std::shared_ptr<IIntegrator> RenderSettings::createIntegrator() const
 {
 	return integratorFactory ? integratorFactory->createInstance() : nullptr;
+}
+
+std::shared_ptr<ISpectralMapper> RenderSettings::createSpectralMapper(RenderContext* ctx) const
+{
+	return spectralMapperFactory ? spectralMapperFactory->createInstance(spectralStart, spectralEnd, ctx) : nullptr;
 }
 
 uint32 RenderSettings::maxSampleCount() const

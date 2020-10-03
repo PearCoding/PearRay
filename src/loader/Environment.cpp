@@ -17,8 +17,6 @@
 #include "material/IMaterial.h"
 #include "material/MaterialManager.h"
 #include "parameter/Parameter.h"
-#include "shader/NodeManager.h"
-
 #include "plugin/PluginManager.h"
 #include "renderer/RenderFactory.h"
 #include "renderer/RenderSettings.h"
@@ -26,6 +24,9 @@
 #include "sampler/SamplerManager.h"
 #include "scene/Scene.h"
 #include "shader/ConstNode.h"
+#include "shader/NodeManager.h"
+#include "spectral/ISpectralMapperPlugin.h"
+#include "spectral/SpectralMapperManager.h"
 
 #include "DefaultSRGB.h"
 
@@ -161,6 +162,9 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory()
 		return nullptr;
 
 	if (!mFilterManager->createDefaultsIfNecessary(this))
+		return nullptr;
+
+	if (!mSpectralMapperManager->createDefaultsIfNecessary(this))
 		return nullptr;
 
 	fct->settings() = mRenderSettings;

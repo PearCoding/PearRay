@@ -135,6 +135,9 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 			size_t id		= x * channelCount;
 			const Point2i p = Point2i(x, y);
 
+			const float blendWeight = data.getInternalChannel_1D(AOV_PixelWeight)->getFragment(p, 0);
+			const float blendFactor = blendWeight <= PR_EPSILON ? 1.0f : 1.0f / blendWeight;
+
 			// Spectral
 			for (const IM_ChannelSettingSpec& sett : chSpec) {
 				std::shared_ptr<FrameBufferFloat> channel;
@@ -143,14 +146,20 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 				else
 					channel = data.getLPEChannel_Spectral(sett.LPE);
 
-				const float* ptr = channel->ptr();
-				toneMapper.setColorMode(sett.TCM);
-				toneMapper.map(&ptr[y * channel->heightPitch() + x * channel->widthPitch()],
-							   &line[id], 3, 1); // RGB
+				if (mRenderer->settings().spectralMono) {
+					line[id]	 = channel->getFragment(p, 0);
+					line[id + 1] = channel->getFragment(p, 1);
+					line[id + 2] = channel->getFragment(p, 2);
+				} else {
+					const float* ptr = channel->ptr();
+					toneMapper.setColorMode(sett.TCM);
+					toneMapper.map(&ptr[y * channel->heightPitch() + x * channel->widthPitch()],
+								   &line[id], 3, 1); // RGB
+				}
 
-				line[id] *= options.SpectralFactor;
-				line[id + 1] *= options.SpectralFactor;
-				line[id + 2] *= options.SpectralFactor;
+				line[id] *= blendFactor * options.SpectralFactor;
+				line[id + 1] *= blendFactor * options.SpectralFactor;
+				line[id + 2] *= blendFactor * options.SpectralFactor;
 
 				id += 3;
 			}
@@ -163,9 +172,9 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 					channel = data.getLPEChannel_3D(sett.Variable, sett.LPE);
 
 				if (channel) {
-					line[id]	 = channel->getFragment(p, 0);
-					line[id + 1] = channel->getFragment(p, 1);
-					line[id + 2] = channel->getFragment(p, 2);
+					line[id]	 = blendFactor * channel->getFragment(p, 0);
+					line[id + 1] = blendFactor * channel->getFragment(p, 1);
+					line[id + 2] = blendFactor * channel->getFragment(p, 2);
 				}
 
 				id += 3;
@@ -179,10 +188,12 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 					channel = data.getLPEChannel_1D(sett.Variable, sett.LPE);
 
 				if (channel)
-					line[id] = channel->getFragment(p, 0);
+					line[id] = (sett.Variable != AOV_PixelWeight ? blendFactor : 1.0f) * channel->getFragment(p, 0);
 
 				id += 1;
 			}
+
+			// TODO: Maybe apply blend weight also on auxillary aov data?
 
 			for (const IM_ChannelSettingCounter& sett : chcounter) {
 				std::shared_ptr<FrameBufferUInt32> channel;

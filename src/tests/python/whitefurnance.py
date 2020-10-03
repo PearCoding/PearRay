@@ -20,7 +20,7 @@ SPECSCENESTR = """
         :type 'DIRECT'
         :max_ray_depth 4
         :light_sampe_count 1
-        :msi {msi}
+        :mis {mis}
     )
     (sampler
         :slot 'aa'
@@ -54,19 +54,18 @@ SPECSCENESTR = """
         :type 'env'
         :radiance 1
     )
-    ; Lights
+    ; Materials
+    (material
+        :name 'Diffuse'
+        :type 'diffuse'
+        :albedo 1
+    )
     ; Primitives
     (entity
         :type "sphere"
         :name "Unit Sphere"
         :radius 1
         :material "Diffuse"
-    )
-    ; Materials
-    (material
-        :name 'Diffuse'
-        :type 'diffuse'
-        :albedo 1
     )
 )
 """
@@ -82,7 +81,7 @@ FULLSCENESTR = """
         :type 'DIRECT'
         :max_ray_depth 4
         :light_sampe_count 1
-        :msi {msi}
+        :mis {mis}
     )
     (sampler
         :slot 'aa'
@@ -121,19 +120,18 @@ FULLSCENESTR = """
         :type 'env'
         :radiance (illuminant "D65")
     )
-    ; Lights
+    ; Materials
+    (material
+        :name 'Diffuse'
+        :type 'diffuse'
+        :albedo "white"
+    )
     ; Primitives
     (entity
         :type "sphere"
         :name "Unit Sphere"
         :radius 1
         :material "Diffuse"
-    )
-    ; Materials
-    (material
-        :name 'Diffuse'
-        :type 'diffuse'
-        :albedo "white"
     )
 )
 """
@@ -175,22 +173,22 @@ class TestWhitefurnance(unittest.TestCase):
             self.checkAt(img, POINTS[i][0], POINTS[i][1])
 
     def test_spec_nonmsi(self):
-        img = self.render(SPECSCENESTR.format(msi="false", size=IMGSIZE))
+        img = self.render(SPECSCENESTR.format(mis="false", size=IMGSIZE))
         self.checkStandardPos(img)
         self.assertAlmostEqual(self.mean(img), 1, places=4)
 
     def test_spec_msi(self):
-        img = self.render(SPECSCENESTR.format(msi="true", size=IMGSIZE))
+        img = self.render(SPECSCENESTR.format(mis="true", size=IMGSIZE))
         self.checkStandardPos(img)
         self.assertAlmostEqual(self.mean(img), 1, places=4)
 
     def test_full_nonmsi(self):
-        img = self.render(FULLSCENESTR.format(msi="false", size=IMGSIZE))
+        img = self.render(FULLSCENESTR.format(mis="false", size=IMGSIZE))
         self.checkStandardPos(img)
         self.assertAlmostEqual(self.mean(img), 1, places=4)
 
     def test_full_msi(self):
-        img = self.render(FULLSCENESTR.format(msi="true", size=IMGSIZE))
+        img = self.render(FULLSCENESTR.format(mis="true", size=IMGSIZE))
         self.checkStandardPos(img)
         self.assertAlmostEqual(self.mean(img), 1, places=4)
 

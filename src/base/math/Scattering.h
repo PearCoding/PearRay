@@ -24,6 +24,22 @@ inline Vector3f faceforward_global(float gNdotV, const Vector3f& N)
 	return is_inside_global(gNdotV) ? -N : N;
 }
 
+/////////////////////////////////////////////
+/**
+* @brief Returns simple correction factor between shading and geometry normal
+*
+* @todo Make use of this!
+* @param Ng Surface geometry normal
+* @param Ns Surface shading normal
+* @param V Unit vector pointing FROM or TO the surface point in shading space.
+* @return Factor between [0, 1] correcting the loss of energy by changing from geometry to shading
+*/
+inline float normal_correction_factor_global(const Vector3f& Ng, const Vector3f& Ns, const Vector3f& V)
+{
+	const float denominator = std::abs(Ng.dot(V));
+	return denominator <= PR_EPSILON ? 1 : std::abs(Ns.dot(V) / denominator);
+}
+
 ////////////////////////////////////////////////
 /**
 * @param V Outgoing vector

@@ -43,11 +43,14 @@ set(PR_Src
   math/Bits.h
   math/Compression.h
   math/Concentric.h
+  math/Distribution1D.h
+  math/Distribution1D.inl
   math/Fresnel.h
   math/Generator.h
   math/Hash.h
   math/ImportanceSampling.h
   math/Microfacet.h
+  math/Normal.h
   math/Projection.h
   math/ProjectionMap.h
   math/Sampling.h
@@ -59,6 +62,7 @@ set(PR_Src
   math/SIMathUtils.h
   math/SphereMap.h
   math/Spherical.h
+  math/SplitSample.h
   math/Tangent.h
   math/Triangulation.h
   math/Triangulation2D.cpp

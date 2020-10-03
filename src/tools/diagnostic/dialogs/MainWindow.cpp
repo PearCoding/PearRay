@@ -13,7 +13,6 @@
 #include <QMessageBox>
 #include <QSettings>
 
-// We do not link to the library, only include the configuration file!
 #include "config/Version.h"
 
 constexpr int MAX_LAST_FILES = 10;
@@ -24,7 +23,6 @@ MainWindow::MainWindow(QWidget* parent)
 	ui.setupUi(this);
 
 	connect(ui.actionOpenFile, SIGNAL(triggered()), this, SLOT(openFile()));
-	connect(ui.actionOpenRDMPDir, SIGNAL(triggered()), this, SLOT(openRDMPDir()));
 	connect(ui.actionAbout, SIGNAL(triggered()), this, SLOT(about()));
 	connect(ui.actionAboutQt, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
 	connect(ui.actionWebsite, SIGNAL(triggered()), this, SLOT(openWebsite()));
@@ -105,12 +103,16 @@ void MainWindow::openFile(const QString& file)
 		w->show();
 		w->openFile(file);
 	} else if (info.suffix() == "prof") {
-		ProfWindow* w	  = new ProfWindow(ui.mdiArea);
+		ProfWindow* w	   = new ProfWindow(ui.mdiArea);
 		QMdiSubWindow* win = ui.mdiArea->addSubWindow(w);
 
 		win->setWindowIcon(QIcon(":/timeline_icon"));
 		w->show();
 		w->openFile(file);
+	} else {
+		QApplication::restoreOverrideCursor();
+		QMessageBox::critical(this, tr("Unknown file type"), tr("File type of %1 is not supported").arg(file));
+		return;
 	}
 
 	addToRecentFiles(file);

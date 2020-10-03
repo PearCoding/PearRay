@@ -15,16 +15,6 @@
 #endif
 
 namespace PR {
-// Ensure that fstreams are opened with this! fstream(encodePath(path))!
-// Use filesystem::path directly
-/*#ifdef PR_OS_WINDOWS
-PR_LIB_BASE std::wstring encodePath(const std::wstring& path);
-PR_LIB_BASE std::wstring encodePath(const std::string& path);
-#else
-PR_LIB_BASE std::string encodePath(const std::wstring& path);
-PR_LIB_BASE std::string encodePath(const std::string& path);
-#endif*/
-
 // Force flush to zero for denormal/subnormal values
 // And enable floating point exceptions if in debug
 inline void setupFloatingPointEnvironment()

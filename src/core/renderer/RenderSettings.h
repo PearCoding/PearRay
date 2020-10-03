@@ -4,14 +4,17 @@
 
 namespace PR {
 class IFilterFactory;
-class ISamplerFactory;
 class IIntegratorFactory;
+class ISamplerFactory;
+class ISpectralMapperFactory;
 
 class IFilter;
-class ISampler;
 class IIntegrator;
+class ISampler;
+class ISpectralMapper;
 
 class Random;
+class RenderContext;
 
 /** @brief Bridge class to combine common render settings*/
 class PR_LIB_CORE RenderSettings final {
@@ -32,6 +35,7 @@ public:
 	float spectralStart;
 	float spectralEnd;
 	bool spectralMono;
+	bool spectralHero; // Use spectral wavesampling
 
 	// Film entries
 	uint32 filmWidth;
@@ -71,6 +75,8 @@ public:
 	std::shared_ptr<IFilterFactory> pixelFilterFactory;
 	std::shared_ptr<IIntegratorFactory> integratorFactory;
 
+	std::shared_ptr<ISpectralMapperFactory> spectralMapperFactory;
+
 	// Easy access
 	std::shared_ptr<ISampler> createAASampler(Random& random) const;
 	std::shared_ptr<ISampler> createLensSampler(Random& random) const;
@@ -78,6 +84,7 @@ public:
 	std::shared_ptr<ISampler> createSpectralSampler(Random& random) const;
 	std::shared_ptr<IFilter> createPixelFilter() const;
 	std::shared_ptr<IIntegrator> createIntegrator() const;
+	std::shared_ptr<ISpectralMapper> createSpectralMapper(RenderContext* ctx) const;
 	
 	uint32 maxSampleCount() const;
 };

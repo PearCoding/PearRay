@@ -3,6 +3,7 @@
 #include "filter/IFilter.h"
 #include "output/OutputData.h"
 #include "path/LightPathView.h"
+#include "renderer/StreamPipeline.h"
 #include "spectral/CIE.h"
 
 namespace PR {
@@ -62,34 +63,39 @@ void FrameBufferBucket::cache()
 	}
 }
 
-void FrameBufferBucket::commitSpectrals(const OutputSpectralEntry* entries, size_t entry_count)
+void FrameBufferBucket::commitSpectrals(StreamPipeline* pipeline, const OutputSpectralEntry* entries, size_t entry_count)
 {
 	if (mMonotonic) {
 		if (mHasFilter)
-			commitSpectralsMono(entries, entry_count);
+			commitSpectrals2<true, true>(pipeline, entries, entry_count);
 		else
-			commitSpectralsMonoNoFilter(entries, entry_count);
+			commitSpectrals2<true, false>(pipeline, entries, entry_count);
 	} else {
 		if (mHasFilter)
-			commitSpectralsXYZ(entries, entry_count);
+			commitSpectrals2<false, true>(pipeline, entries, entry_count);
 		else
-			commitSpectralsXYZNoFilter(entries, entry_count);
+			commitSpectrals2<false, false>(pipeline, entries, entry_count);
 	}
 }
 
-void FrameBufferBucket::commitSpectralsXYZ(const OutputSpectralEntry* entries, size_t entry_count)
+template <bool IsMono, bool HasFilter>
+void FrameBufferBucket::commitSpectrals2(StreamPipeline* pipeline, const OutputSpectralEntry* entries, size_t entry_count)
 {
 	const int32 filterRadius = mFilter.radius();
 	const Size2i filterSize	 = Size2i(filterRadius, filterRadius);
+
+	PR_ASSERT(HasFilter || filterRadius == 0, "If no filter is choosen, radius must be zero");
 
 	PR_OPT_LOOP
 	for (size_t i = 0; i < entry_count; ++i) {
 		const auto& entry = entries[i];
 
 		const Point2i rp		   = entry.Position + filterSize;
-		const bool isMono		   = entry.Flags & OSEF_Mono;
-		const SpectralBlob factor  = isMono ? SpectralBlobUtils::HeroOnly() : SpectralBlob(1.0f / PR_SPECTRAL_BLOB_SIZE);
-		const SpectralBlob contrib = factor * entry.contribution();
+		const bool isMono		   = IsMono || (entry.Flags & OSEF_Mono);
+		const RayGroup& grp		   = pipeline->getRayGroup(entry.RayGroupID);
+		const SpectralBlob factor  = isMono ? SpectralBlobUtils::HeroOnly() : SpectralBlob::Ones();
+		const SpectralBlob contrib = factor * grp.BlendWeight * entry.contribution();
+		const float blendWeight	   = (factor * grp.BlendWeight * entry.MIS).sum();
 
 #ifndef PR_NO_SPECTRAL_CHECKS
 		// Check for valid samples
@@ -107,177 +113,56 @@ void FrameBufferBucket::commitSpectralsXYZ(const OutputSpectralEntry* entries, s
 		}
 #endif
 
-		// Map to CIE XYZ
-		const CIETriplet triplet = CIE::eval(contrib, entry.Wavelengths);
+		CIETriplet triplet;
+		if constexpr (IsMono) {
+			triplet = contrib[0] /* CIE::eval(entry.Wavelengths[0])*/;
+		} else {
+			// Map to CIE XYZ
+			triplet = CIE::eval(contrib, entry.Wavelengths);
+		}
 
 		const LightPathView path = LightPathView(entry.Path);
 
-		// Apply for each filter area
-		const Point2i start = Point2i::Zero().cwiseMax(rp - filterSize);
-		const Point2i end	= (extendedViewSize() - Point2i(1, 1)).cwiseMin(rp + filterSize);
-		for (Point1i py = start(1); py <= end(1); ++py) {
-			for (Point1i px = start(0); px <= end(0); ++px) {
-				const Point2i sp			 = Point2i(px, py);
-				const float filterWeight	 = mFilter.evalWeight(sp(0) - rp(0), sp(1) - rp(1));
-				const CIETriplet weightedRad = filterWeight * triplet;
+		if constexpr (HasFilter) {
+			// Apply for each filter area
+			const Point2i start = Point2i::Zero().cwiseMax(rp - filterSize);
+			const Point2i end	= (extendedViewSize() - Point2i(1, 1)).cwiseMin(rp + filterSize);
+			for (Point1i py = start(1); py <= end(1); ++py) {
+				for (Point1i px = start(0); px <= end(0); ++px) {
+					const Point2i sp			 = Point2i(px, py);
+					const float filterWeight	 = mFilter.evalWeight(sp(0) - rp(0), sp(1) - rp(1));
+					const CIETriplet weightedRad = filterWeight * triplet;
 
-				PR_UNROLL_LOOP(3)
-				for (Size1i k = 0; k < 3; ++k)
-					mData.getInternalChannel_Spectral()->getFragment(sp, k) += weightedRad[k];
+					mData.getInternalChannel_1D(AOV_PixelWeight)->getFragment(sp, 0) += filterWeight * blendWeight;
 
-				// LPE
-				for (auto pair : mData.mLPE_Spectral) {
-					if (pair.first.match(path)) {
-						PR_UNROLL_LOOP(3)
-						for (Size1i k = 0; k < 3; ++k)
-							pair.second->getFragment(sp, k) += weightedRad[k];
+					PR_UNROLL_LOOP(3)
+					for (Size1i k = 0; k < 3; ++k)
+						mData.getInternalChannel_Spectral()->getFragment(sp, k) += weightedRad[k];
+
+					// LPE
+					for (auto pair : mData.mLPE_Spectral) {
+						if (pair.first.match(path)) {
+							PR_UNROLL_LOOP(3)
+							for (Size1i k = 0; k < 3; ++k)
+								pair.second->getFragment(sp, k) += weightedRad[k];
+						}
 					}
 				}
 			}
-		}
-	}
-}
+		} else {
+			mData.getInternalChannel_1D(AOV_PixelWeight)->getFragment(entry.Position, 0) += blendWeight;
 
-void FrameBufferBucket::commitSpectralsXYZNoFilter(const OutputSpectralEntry* entries, size_t entry_count)
-{
-	PR_OPT_LOOP
-	for (size_t i = 0; i < entry_count; ++i) {
-		const auto& entry = entries[i];
+			PR_UNROLL_LOOP(3)
+			for (Size1i k = 0; k < 3; ++k)
+				mData.getInternalChannel_Spectral()->getFragment(entry.Position, k) += triplet[k];
 
-		const Point2i sp		   = entry.Position;
-		const bool isMono		   = entry.Flags & OSEF_Mono;
-		const SpectralBlob factor  = isMono ? SpectralBlobUtils::HeroOnly() : SpectralBlob(1.0f / PR_SPECTRAL_BLOB_SIZE);
-		const SpectralBlob contrib = factor * entry.contribution();
-
-#ifndef PR_NO_SPECTRAL_CHECKS
-		// Check for valid samples
-		const bool isInf	 = contrib.isInf().any();
-		const bool isNaN	 = contrib.isNaN().any();
-		const bool isNeg	 = (contrib < 0.0f).any();
-		const bool isInvalid = isInf | isNaN | isNeg;
-		if (PR_UNLIKELY(isInvalid)) {
-			const uint32 feedback = (isNaN ? OF_NaN : 0)
-									| (isInf ? OF_Infinite : 0)
-									| (isNeg ? OF_Negative : 0);
-
-			mData.getInternalChannel_Counter(AOV_Feedback)->getFragment(sp, 0) |= feedback;
-			continue;
-		}
-#endif
-
-		// Map to CIE XYZ
-		const CIETriplet triplet = CIE::eval(contrib, entry.Wavelengths);
-
-		const LightPathView path = LightPathView(entry.Path);
-
-		PR_UNROLL_LOOP(3)
-		for (Size1i k = 0; k < 3; ++k)
-			mData.getInternalChannel_Spectral()->getFragment(sp, k) += triplet[k];
-
-		// LPE
-		for (auto pair : mData.mLPE_Spectral) {
-			if (pair.first.match(path)) {
-				PR_UNROLL_LOOP(3)
-				for (Size1i k = 0; k < 3; ++k)
-					pair.second->getFragment(sp, k) += triplet[k];
-			}
-		}
-	}
-}
-
-void FrameBufferBucket::commitSpectralsMono(const OutputSpectralEntry* entries, size_t entry_count)
-{
-	const int32 filterRadius = mFilter.radius();
-	const Size2i filterSize	 = Size2i(filterRadius, filterRadius);
-
-	PR_OPT_LOOP
-	for (size_t i = 0; i < entry_count; ++i) {
-		const auto& entry = entries[i];
-
-		const Point2i rp	= entry.Position + filterSize;
-		const float contrib = entry.contribution(0);
-
-#ifndef PR_NO_SPECTRAL_CHECKS
-		// Check for valid samples
-		const bool isInf	 = std::isinf(contrib);
-		const bool isNaN	 = std::isnan(contrib);
-		const bool isNeg	 = contrib < 0.0f;
-		const bool isInvalid = isInf | isNaN | isNeg;
-		if (PR_UNLIKELY(isInvalid)) {
-			const uint32 feedback = (isNaN ? OF_NaN : 0)
-									| (isInf ? OF_Infinite : 0)
-									| (isNeg ? OF_Negative : 0);
-
-			mData.getInternalChannel_Counter(AOV_Feedback)->getFragment(rp, 0) |= feedback;
-			continue;
-		}
-#endif
-
-		const LightPathView path = LightPathView(entry.Path);
-
-		// Apply for each filter area
-		const Point2i start = Point2i::Zero().cwiseMax(rp - filterSize);
-		const Point2i end	= (extendedViewSize() - Point2i(1, 1)).cwiseMin(rp + filterSize);
-		for (Point1i py = start(1); py <= end(1); ++py) {
-			for (Point1i px = start(0); px <= end(0); ++px) {
-				const Point2i sp		 = Point2i(px, py);
-				const float filterWeight = mFilter.evalWeight(sp(0) - rp(0), sp(1) - rp(1));
-				const float weightedRad	 = filterWeight * contrib;
-
-				PR_UNROLL_LOOP(3)
-				for (Size1i k = 0; k < 3; ++k)
-					mData.getInternalChannel_Spectral()->getFragment(sp, k) += weightedRad;
-
-				// LPE
-				for (auto pair : mData.mLPE_Spectral) {
-					if (pair.first.match(path)) {
-						PR_UNROLL_LOOP(3)
-						for (Size1i k = 0; k < 3; ++k)
-							pair.second->getFragment(sp, k) += weightedRad;
-					}
+			// LPE
+			for (auto pair : mData.mLPE_Spectral) {
+				if (pair.first.match(path)) {
+					PR_UNROLL_LOOP(3)
+					for (Size1i k = 0; k < 3; ++k)
+						pair.second->getFragment(entry.Position, k) += triplet[k];
 				}
-			}
-		}
-	}
-}
-
-void FrameBufferBucket::commitSpectralsMonoNoFilter(const OutputSpectralEntry* entries, size_t entry_count)
-{
-	PR_OPT_LOOP
-	for (size_t i = 0; i < entry_count; ++i) {
-		const auto& entry = entries[i];
-
-		const Point2i sp	= entry.Position;
-		const float contrib = entry.contribution(0);
-
-#ifndef PR_NO_SPECTRAL_CHECKS
-		// Check for valid samples
-		const bool isInf	 = std::isinf(contrib);
-		const bool isNaN	 = std::isnan(contrib);
-		const bool isNeg	 = contrib < 0.0f;
-		const bool isInvalid = isInf | isNaN | isNeg;
-		if (PR_UNLIKELY(isInvalid)) {
-			const uint32 feedback = (isNaN ? OF_NaN : 0)
-									| (isInf ? OF_Infinite : 0)
-									| (isNeg ? OF_Negative : 0);
-
-			mData.getInternalChannel_Counter(AOV_Feedback)->getFragment(sp, 0) |= feedback;
-			continue;
-		}
-#endif
-
-		const LightPathView path = LightPathView(entry.Path);
-
-		PR_UNROLL_LOOP(3)
-		for (Size1i k = 0; k < 3; ++k)
-			mData.getInternalChannel_Spectral()->getFragment(sp, k) += contrib;
-
-		// LPE
-		for (auto pair : mData.mLPE_Spectral) {
-			if (pair.first.match(path)) {
-				PR_UNROLL_LOOP(3)
-				for (Size1i k = 0; k < 3; ++k)
-					pair.second->getFragment(sp, k) += contrib;
 			}
 		}
 	}

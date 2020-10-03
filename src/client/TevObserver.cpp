@@ -16,6 +16,7 @@ constexpr uint32 CHANNEL_COUNT					= 3; // Only triplets supported yet
 static const char* CHANNEL_NAMES[CHANNEL_COUNT] = { "R", "G", "B" };
 constexpr uint32 CHANNEL_NAME_SIZE				= 2;
 constexpr uint32 CREATE_MESSAGE_SIZE			= 4 + 1 + IMAGE_NAME_SIZE + 1 + 4 + 4 + 4 + 3 * CHANNEL_NAME_SIZE;
+constexpr uint32 CLOSE_MESSAGE_SIZE				= 4 + 1 + IMAGE_NAME_SIZE;
 constexpr uint32 UPDATE_MESSAGE_HEADER_SIZE		= 4 + 1 + IMAGE_NAME_SIZE + 1 + 4 + 4 + 4 + 4 + CHANNEL_NAME_SIZE;
 constexpr uint32 UPDATE_TILE_SIZE				= 64;
 
@@ -50,22 +51,25 @@ void TevObserver::begin(RenderContext* renderContext, const ProgramSettings& set
 	mConnection			= std::make_unique<TevConnection>(settings.TevIp, settings.TevPort);
 	mUpdateCycleSeconds = settings.TevUpdate;
 	mLastUpdate			= std::chrono::high_resolution_clock::now();
-	mMaxIterationCount	= mRenderContext->maxIterationCount();
 
-	if (mConnection->Con.isOpen())
+	if (mConnection->Con.isOpen()) {
+		closeImageProtocol(); // Make sure a open file is closed
 		createImageProtocol();
+	}
 }
 
 void TevObserver::end()
 {
 	if (mConnection->Con.isOpen())
-		updateImageProtocol(1);
+		updateImageProtocol();
 
 	mConnection.reset();
 }
 
 void TevObserver::update(const UpdateInfo& info)
 {
+	PR_UNUSED(info);
+
 	if (!mConnection->Con.isOpen())
 		return;
 
@@ -75,7 +79,7 @@ void TevObserver::update(const UpdateInfo& info)
 	if ((uint64)duration.count() < mUpdateCycleSeconds)
 		return;
 
-	updateImageProtocol(mMaxIterationCount / ((float)info.CurrentIteration));
+	updateImageProtocol();
 
 	mLastUpdate = now;
 }
@@ -117,6 +121,21 @@ void TevObserver::createImageProtocol()
 }
 
 // uint32 		MessageSize
+// uint8 		Type = 2
+// String 		Name
+void TevObserver::closeImageProtocol()
+{
+	mConnection->Out.resize(CLOSE_MESSAGE_SIZE);
+
+	mConnection->Out.write((uint32)CLOSE_MESSAGE_SIZE);
+	mConnection->Out.write((uint8)2);
+	mConnection->Out.write(IMAGE_NAME);
+
+	//PR_ASSERT(mConnection->Out.currentUsed() == CLOSE_MESSAGE_SIZE, "Invalid package size");
+	mConnection->Out.flush();
+}
+
+// uint32 		MessageSize
 // uint8 		Type = 3
 // bool/uint8 	GrabFocus
 // String 		Name
@@ -126,9 +145,10 @@ void TevObserver::createImageProtocol()
 // int32 		Width
 // int32 		Height
 // float*W*H	Data
-void TevObserver::updateImageProtocol(float scale)
+void TevObserver::updateImageProtocol()
 {
-	auto channel = mRenderContext->output()->data().getInternalChannel_Spectral();
+	const auto channel		 = mRenderContext->output()->data().getInternalChannel_Spectral();
+	const auto blend_channel = mRenderContext->output()->data().getInternalChannel_1D(AOV_PixelWeight);
 	PR_ASSERT(channel->channels() == CHANNEL_COUNT,
 			  "Expect spectral channel to have 3 channels");
 
@@ -159,24 +179,31 @@ void TevObserver::updateImageProtocol(float scale)
 				PR_OPT_LOOP
 				for (size_t iy = 0; iy < h; ++iy) {
 					for (size_t ix = 0; ix < w; ++ix) {
-						const auto p  = Point2i(sx + ix, sy + iy);
-						const float x = scale * channel->getFragment(p, 0);
-						const float y = scale * channel->getFragment(p, 1);
-						const float z = scale * channel->getFragment(p, 2);
+						const auto p = Point2i(sx + ix, sy + iy);
+
+						const float blendWeight = blend_channel->getFragment(p, 0);
+						const float blendFactor = blendWeight <= PR_EPSILON ? 1.0f : 1.0f / blendWeight;
+
+						const float x = channel->getFragment(p, 0);
+						const float y = channel->getFragment(p, 1);
+						const float z = channel->getFragment(p, 2);
+
 						float r, g, b;
 						RGBConverter::fromXYZ(x, y, z, r, g, b);
-						mConnection->Data[UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * 0 + iy * w + ix] = r;
-						mConnection->Data[UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * 1 + iy * w + ix] = g;
-						mConnection->Data[UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * 2 + iy * w + ix] = b;
+						mConnection->Data[UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * 0 + iy * w + ix] = r * blendFactor;
+						mConnection->Data[UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * 1 + iy * w + ix] = g * blendFactor;
+						mConnection->Data[UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * 2 + iy * w + ix] = b * blendFactor;
 					}
 				}
 			} else {
 				PR_OPT_LOOP
 				for (size_t iy = 0; iy < h; ++iy) {
 					for (size_t ix = 0; ix < w; ++ix) {
-						const auto p = Point2i(sx + ix, sy + iy);
+						const auto p			= Point2i(sx + ix, sy + iy);
+						const float blendWeight = blend_channel->getFragment(p, 0);
+						const float blendFactor = blendWeight <= PR_EPSILON ? 1.0f : 1.0f / blendWeight;
 						for (size_t k = 0; k < CHANNEL_COUNT; ++k)
-							mConnection->Data[UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * k + iy * w + ix] = scale * channel->getFragment(p, k);
+							mConnection->Data[UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * k + iy * w + ix] = blendFactor * channel->getFragment(p, k);
 					}
 				}
 			}

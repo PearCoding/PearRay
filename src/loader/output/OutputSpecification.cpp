@@ -129,8 +129,8 @@ static struct {
 	{ "displace", AOV_DisplaceID },
 	{ "depth", AOV_Depth },
 	{ "d", AOV_Depth },
-	{ "time", AOV_Time },
-	{ "t", AOV_Time },
+	{ "pixel", AOV_PixelWeight },
+	{ "blend", AOV_PixelWeight },
 	{ nullptr, AOV_1D_COUNT },
 };
 

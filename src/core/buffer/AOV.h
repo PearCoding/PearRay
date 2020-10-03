@@ -19,7 +19,7 @@ enum AOV1D {
 	AOV_EmissionID,
 	AOV_DisplaceID,
 	AOV_Depth,
-	AOV_Time,
+	AOV_PixelWeight,
 
 	AOV_1D_COUNT
 };

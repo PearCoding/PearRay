@@ -5,11 +5,11 @@
 #include "container/Interval.h"
 #include "material/IMaterial.h"
 #include "material/IMaterialPlugin.h"
+#include "math/Distribution1D.h"
 #include "math/Sampling.h"
 #include "math/Spherical.h"
+#include "math/SplitSample.h"
 #include "renderer/RenderContext.h"
-#include "sampler/Distribution1D.h"
-#include "sampler/SplitSample.h"
 
 #include <sstream>
 #include <tbb/blocked_range.h>
@@ -204,7 +204,7 @@ public:
 		const Vector2f out = Spherical::from_direction_hemi(oV);
 		const int row	   = mRowBasis->indexOf(out(0), out(1));
 		const int col	   = mColumnBasis->indexOf(in(0), in(1));
-		return mColumnCDF[row].discretePdfForBin(col) * mColumnBasis->pdf(mColumnBasis->multiIndexFromLinear(col));
+		return mColumnCDF[row].discretePdf(col) * mColumnBasis->pdf(mColumnBasis->multiIndexFromLinear(col));
 	}
 
 	inline Vector3f sample(const Vector2f& uv, const Vector3f& oV, float& pdf, float& weight) const
@@ -277,7 +277,7 @@ public:
 	{
 		PR_ASSERT(mTransmission && mReflection, "No reflectivity calculated");
 		const Vector2f inA = Spherical::from_direction_hemi(in);
-		const size_t row	= mReflection->row()->indexOf(inA(0), inA(1));
+		const size_t row   = mReflection->row()->indexOf(inA(0), inA(1));
 		PR_ASSERT(row < mReflectivity.size(), "Invalid row index");
 		return mReflectivity[row];
 	}

@@ -10,6 +10,7 @@ struct PR_LIB_CORE CameraSample {
 	Point2f Lens;
 	uint32 PixelIndex;
 	float Time;
+	SpectralBlob BlendWeight;
 	SpectralBlob Importance;
 	SpectralBlob WavelengthNM;
 	SpectralBlob WavelengthPDF;
@@ -23,6 +24,7 @@ struct PR_LIB_CORE CameraRay {
 	bool IsMonochrome  = false;
 
 	// Optional camera ray adaptations, if zero or negative, previous camera sample will be used
+	SpectralBlob BlendWeight   = SpectralBlob::Zero();
 	SpectralBlob Importance	   = SpectralBlob::Zero();
 	SpectralBlob WavelengthNM  = SpectralBlob::Zero();
 	SpectralBlob WavelengthPDF = SpectralBlob::Zero();

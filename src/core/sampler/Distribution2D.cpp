@@ -4,6 +4,7 @@ namespace PR {
 
 Distribution2D::Distribution2D(size_t width, size_t height)
 	: mConditional()
+	, mConditionalIntegrals(height, 0.0f)
 	, mMarginal(height)
 {
 	for (size_t i = 0; i < height; ++i)

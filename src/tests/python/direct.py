@@ -51,7 +51,7 @@ SCENESTR = """
       :type 'direct'
       :max_ray_depth 1
       :light_sample_count 1
-      :msi {msi}
+      :mis {mis}
     )
     (sampler
       :slot 'aa'
@@ -137,11 +137,11 @@ class TestDirect(unittest.TestCase):
             self.assertAlmostEqual(res, expected, places=3)
 
     def test_nonmsi(self):
-        img = self.render(SCENESTR.format(msi="false", size=IMGSIZE))
+        img = self.render(SCENESTR.format(mis="false", size=IMGSIZE))
         self.checkAt(img, POINTS)
 
     def test_msi(self):
-        img = self.render(SCENESTR.format(msi="true", size=IMGSIZE))
+        img = self.render(SCENESTR.format(mis="true", size=IMGSIZE))
         self.checkAt(img, POINTS)
 
 

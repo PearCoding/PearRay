@@ -26,16 +26,16 @@ void RenderTileMap::clearMap()
 	mTileMap.clear();
 }
 
-void RenderTileMap::init(const RenderContext& context, uint32 rtx, uint32 rty, TileMode mode)
+void RenderTileMap::init(RenderContext* context, uint32 rtx, uint32 rty, TileMode mode)
 {
 	PR_PROFILE_THIS;
 
-	mMaxTileSize		= context.viewSize();
+	mMaxTileSize		= context->viewSize();
 	mMaxTileSize.Width	= std::max<int32>(2, std::floor(mMaxTileSize.Width / (float)rtx));
 	mMaxTileSize.Height = std::max<int32>(2, std::floor(mMaxTileSize.Height / (float)rty));
 
-	const Size1i tx = std::ceil(context.viewSize().Width / (float)mMaxTileSize.Width);
-	const Size1i ty = std::ceil(context.viewSize().Height / (float)mMaxTileSize.Height);
+	const Size1i tx = std::ceil(context->viewSize().Width / (float)mMaxTileSize.Width);
+	const Size1i ty = std::ceil(context->viewSize().Height / (float)mMaxTileSize.Height);
 
 	// Clear previous data
 	clearMap();
@@ -45,7 +45,7 @@ void RenderTileMap::init(const RenderContext& context, uint32 rtx, uint32 rty, T
 	mTileMap.reserve(static_cast<size_t>(tx * ty));
 	auto addTile = [&](Point1i sx, Point1i sy) {
 		Point2i start = Point2i(sx, sy);
-		Point2i end	  = (start + mMaxTileSize).cwiseMin(Point2i(context.viewSize().Width, context.viewSize().Height));
+		Point2i end	  = (start + mMaxTileSize).cwiseMin(Point2i(context->viewSize().Width, context->viewSize().Height));
 		auto tile	  = new RenderTile(start, end, context);
 		mTileMap.emplace_back(tile);
 	};
@@ -58,8 +58,8 @@ void RenderTileMap::init(const RenderContext& context, uint32 rtx, uint32 rty, T
 				Point1i sx = j * mMaxTileSize.Width;
 				Point1i sy = i * mMaxTileSize.Height;
 
-				if (sx < context.viewSize().Width - 1
-					&& sy < context.viewSize().Height - 1)
+				if (sx < context->viewSize().Width - 1
+					&& sy < context->viewSize().Height - 1)
 					addTile(sx, sy);
 			}
 		}
@@ -71,8 +71,8 @@ void RenderTileMap::init(const RenderContext& context, uint32 rtx, uint32 rty, T
 				Point1i sx = j * mMaxTileSize.Width;
 				Point1i sy = i * mMaxTileSize.Height;
 
-				if (sx < context.viewSize().Width - 1
-					&& sy < context.viewSize().Height - 1)
+				if (sx < context->viewSize().Width - 1
+					&& sy < context->viewSize().Height - 1)
 					addTile(sx, sy);
 			}
 			// Odd
@@ -81,8 +81,8 @@ void RenderTileMap::init(const RenderContext& context, uint32 rtx, uint32 rty, T
 					Point1i sx = j * mMaxTileSize.Width;
 					Point1i sy = i * mMaxTileSize.Height;
 
-					if (sx < context.viewSize().Width - 1
-						&& sy < context.viewSize().Height - 1)
+					if (sx < context->viewSize().Width - 1
+						&& sy < context->viewSize().Height - 1)
 						addTile(sx, sy);
 				}
 			}
@@ -96,8 +96,8 @@ void RenderTileMap::init(const RenderContext& context, uint32 rtx, uint32 rty, T
 			const auto ity = ty / 2 + p[1];
 
 			if (itx < tx && ity < ty) {
-				if (itx * mMaxTileSize.Width < context.viewSize().Width - 1
-					&& ity * mMaxTileSize.Height < context.viewSize().Height - 1)
+				if (itx * mMaxTileSize.Width < context->viewSize().Width - 1
+					&& ity * mMaxTileSize.Height < context->viewSize().Height - 1)
 					addTile(itx * mMaxTileSize.Width,
 							ity * mMaxTileSize.Height);
 			}
@@ -117,8 +117,8 @@ void RenderTileMap::init(const RenderContext& context, uint32 rtx, uint32 rty, T
 			Point1i sx = x * mMaxTileSize.Width;
 			Point1i sy = y * mMaxTileSize.Height;
 
-			if (sx < context.viewSize().Width - 1
-				&& sy < context.viewSize().Height - 1)
+			if (sx < context->viewSize().Width - 1
+				&& sy < context->viewSize().Height - 1)
 				addTile(sx, sy);
 		}
 	}

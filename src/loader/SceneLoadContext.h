@@ -6,11 +6,16 @@
 #include <filesystem>
 
 namespace PR {
-class INode;
 class Environment;
-class ParameterGroup;
-class FloatSpectralNode;
 class FloatScalarNode;
+class FloatSpectralNode;
+class IFilterFactory;
+class IIntegratorFactory;
+class INode;
+class ISamplerFactory;
+class ISpectralMapperFactory;
+class ParameterGroup;
+
 class PR_LIB_LOADER SceneLoadContext {
 public:
 	SceneLoadContext() = default;
@@ -61,6 +66,11 @@ public:
 	inline void setEnvironment(Environment* env) { mEnvironment = env; }
 	inline Environment* environment() const { return mEnvironment; }
 	inline bool hasEnvironment() const { return mEnvironment != nullptr; }
+
+	std::shared_ptr<IIntegratorFactory> loadIntegratorFactory(const std::string& type, const ParameterGroup& params) const;
+	std::shared_ptr<ISamplerFactory> loadSamplerFactory(const std::string& type, const ParameterGroup& params) const;
+	std::shared_ptr<IFilterFactory> loadFilterFactory(const std::string& type, const ParameterGroup& params) const;
+	std::shared_ptr<ISpectralMapperFactory> loadSpectralMapperFactory(const std::string& type, const ParameterGroup& params) const;
 
 private:
 	ParameterGroup mParameters;

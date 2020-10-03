@@ -1,6 +1,10 @@
 #include "SceneLoadContext.h"
 #include "Environment.h"
+#include "filter/FilterManager.h"
+#include "integrator/IntegratorManager.h"
+#include "sampler/SamplerManager.h"
 #include "shader/ConstNode.h"
+#include "spectral/SpectralMapperManager.h"
 
 namespace PR {
 
@@ -167,4 +171,67 @@ std::shared_ptr<FloatScalarNode> SceneLoadContext::lookupScalarNode(const std::s
 	return lookupScalarNode(mParameters.getParameter(parameter), def);
 }
 
+std::shared_ptr<IIntegratorFactory> SceneLoadContext::loadIntegratorFactory(const std::string& type, const ParameterGroup& params) const
+{
+	auto manag		= mEnvironment->integratorManager();
+	const uint32 id = manag->nextID();
+
+	auto fac = manag->getFactory(type);
+	if (!fac) {
+		PR_LOG(L_ERROR) << "Unknown integrator type " << type << std::endl;
+		return nullptr;
+	}
+
+	SceneLoadContext copy = *this;
+	copy.mParameters	  = params;
+	return fac->create(id, type, copy);
+}
+
+std::shared_ptr<ISamplerFactory> SceneLoadContext::loadSamplerFactory(const std::string& type, const ParameterGroup& params) const
+{
+	auto manag		= mEnvironment->samplerManager();
+	const uint32 id = manag->nextID();
+
+	auto fac = manag->getFactory(type);
+	if (!fac) {
+		PR_LOG(L_ERROR) << "Unknown sampler type " << type << std::endl;
+		return nullptr;
+	}
+
+	SceneLoadContext copy = *this;
+	copy.mParameters	  = params;
+	return fac->create(id, type, copy);
+}
+
+std::shared_ptr<IFilterFactory> SceneLoadContext::loadFilterFactory(const std::string& type, const ParameterGroup& params) const
+{
+	auto manag		= mEnvironment->filterManager();
+	const uint32 id = manag->nextID();
+
+	auto fac = manag->getFactory(type);
+	if (!fac) {
+		PR_LOG(L_ERROR) << "Unknown filter type " << type << std::endl;
+		return nullptr;
+	}
+
+	SceneLoadContext copy = *this;
+	copy.mParameters	  = params;
+	return fac->create(id, type, copy);
+}
+
+std::shared_ptr<ISpectralMapperFactory> SceneLoadContext::loadSpectralMapperFactory(const std::string& type, const ParameterGroup& params) const
+{
+	auto manag		= mEnvironment->spectralMapperManager();
+	const uint32 id = manag->nextID();
+
+	auto fac = manag->getFactory(type);
+	if (!fac) {
+		PR_LOG(L_ERROR) << "Unknown spectral mapper type " << type << std::endl;
+		return nullptr;
+	}
+
+	SceneLoadContext copy = *this;
+	copy.mParameters	  = params;
+	return fac->create(id, type, copy);
+}
 } // namespace PR

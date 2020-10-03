@@ -4,8 +4,9 @@ namespace PR {
 FrameBufferContainer::FrameBufferContainer(const Size2i& size, Size1i specChannels)
 	: mSpectral(new FrameBufferFloat(std::max<Size1i>(3, specChannels), size, 0.0f))
 {
+	mInt1D[AOV_PixelWeight]		 = std::make_shared<FrameBufferFloat>(1, size, 0);
 	mIntCounter[AOV_SampleCount] = std::make_shared<FrameBufferUInt32>(1, size, 0);
-	mIntCounter[AOV_Feedback]	= std::make_shared<FrameBufferUInt32>(1, size, 0);
+	mIntCounter[AOV_Feedback]	 = std::make_shared<FrameBufferUInt32>(1, size, 0);
 }
 
 FrameBufferContainer::~FrameBufferContainer()

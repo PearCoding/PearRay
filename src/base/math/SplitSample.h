@@ -3,7 +3,7 @@
 #include "PR_Config.h"
 
 namespace PR {
-class PR_LIB_CORE SplitSample1D {
+class PR_LIB_BASE SplitSample1D {
 public:
 	inline SplitSample1D(float u,
 						 size_t start, size_t end)
@@ -26,7 +26,7 @@ private:
 	uint32 mI;
 };
 
-class PR_LIB_CORE SplitSample2D {
+class PR_LIB_BASE SplitSample2D {
 public:
 	inline SplitSample2D(const Vector2f& u,
 						 size_t start1, size_t end1,

@@ -89,10 +89,15 @@ public:
 			outL.PDF_S = 1;
 
 		// Trace shadow ray
-		const Ray shadow  = spt.Ray.next(spt.P, outL.Outgoing, spt.Surface.N, RF_Shadow, SHADOW_RAY_MIN, SHADOW_RAY_MAX);
-		bool hitSomething = session.traceOcclusionRay(shadow);
-		if (hitSomething) // If we hit something before the light/background, the light path is occluded
-			return ZERO_CONTRIB;
+		const Ray shadow		= spt.Ray.next(spt.P, outL.Outgoing, spt.Surface.N, RF_Shadow, SHADOW_RAY_MIN, SHADOW_RAY_MAX);
+		const bool hitSomething = session.traceOcclusionRay(shadow);
+
+		SpectralBlob evalW;
+		if (hitSomething) { // If we hit something before the light/background, the light path is occluded
+			evalW = SpectralBlob::Zero();
+		} else {
+			evalW = outL.Radiance;
+		}
 
 		// Evaluate surface
 		MaterialEvalInput in{ MaterialEvalContext::fromIP(spt, shadow.Direction), ShadingContext::fromIP(session.threadID(), spt) };
@@ -101,9 +106,9 @@ public:
 		token = LightPathToken(out.Type);
 
 		// Calculate hero mis pdf
-		const float matPDF = (spt.Ray.Flags & RF_Monochrome) ? out.PDF_S[0] : out.PDF_S.sum();
+		const float matPDF = (spt.Ray.Flags & RF_Monochrome) ? out.PDF_S[0] : (out.PDF_S.sum() / PR_SPECTRAL_BLOB_SIZE);
 		const float msiL   = allowMIS ? MIS(1, outL.PDF_S, 1, matPDF) : 1.0f;
-		return Contribution{ msiL, out.Weight / outL.PDF_S, outL.Radiance };
+		return Contribution{ msiL, out.Weight / outL.PDF_S, evalW };
 	}
 
 	// Estimate direct (finite) light
@@ -139,7 +144,7 @@ public:
 		if (entityPdf.IsArea)
 			pdfS = IS::toSolidAngle(pdfS, sqrD, cosO); // The whole integration is in solid angle domain -> Map into it
 
-		if (cosO <= PR_EPSILON || PR_UNLIKELY(pdfS <= PR_EPSILON))
+		if (PR_UNLIKELY(pdfS <= PR_EPSILON))
 			return ZERO_CONTRIB;
 
 		// Trace shadow ray
@@ -147,17 +152,20 @@ public:
 		const float distance = std::sqrt(sqrD);
 		const Vector3f oN	 = NdotL < 0 ? -spt.Surface.N : spt.Surface.N; // Offset normal used for safe positioning
 		const Ray shadow	 = spt.Ray.next(spt.P, L, oN, RF_Shadow, SHADOW_RAY_MIN, distance);
-		bool shadowHit		 = session.traceShadowRay(shadow, distance, light->id());
+		const bool shadowHit = cosO > PR_EPSILON && session.traceShadowRay(shadow, distance, light->id());
 
-		if (!shadowHit)
-			return ZERO_CONTRIB;
-
-		// Evaluate light
-		LightEvalInput inL;
-		inL.Entity		   = light;
-		inL.ShadingContext = ShadingContext::fromIP(session.threadID(), IntersectionPoint::forSurface(shadow, lightPos, lightPt));
-		LightEvalOutput outL;
-		ems->eval(inL, outL, session);
+		SpectralBlob lightW;
+		if (!shadowHit) {
+			lightW = SpectralBlob::Zero();
+		} else {
+			// Evaluate light
+			LightEvalInput inL;
+			inL.Entity		   = light;
+			inL.ShadingContext = ShadingContext::fromIP(session.threadID(), IntersectionPoint::forSurface(shadow, lightPos, lightPt));
+			LightEvalOutput outL;
+			ems->eval(inL, outL, session);
+			lightW = outL.Weight;
+		}
 
 		// Evaluate surface
 		MaterialEvalInput in{ MaterialEvalContext::fromIP(spt, L), ShadingContext::fromIP(session.threadID(), spt) };
@@ -167,16 +175,16 @@ public:
 
 		float mis = 1;
 		if (mMISEnabled && handleMSI) {
-			const float matPDF = (spt.Ray.Flags & RF_Monochrome) ? out.PDF_S[0] : out.PDF_S.sum();
+			const float matPDF = (spt.Ray.Flags & RF_Monochrome) ? out.PDF_S[0] : (out.PDF_S.sum() / PR_SPECTRAL_BLOB_SIZE);
 			mis				   = MIS(mLightSampleCount, pdfS, 1, matPDF);
 		}
 
-		return Contribution{ mis, out.Weight / pdfS, outL.Weight };
+		return Contribution{ mis, out.Weight / pdfS, lightW };
 	}
 
 	// Estimate indirect light
 	bool scatterLight(RenderTileSession& session, LightPath& path,
-					  const IntersectionPoint& spt, float msi, const SpectralBlob& importance,
+					  const IntersectionPoint& spt, float mis, const SpectralBlob& importance,
 					  IMaterial* material)
 	{
 		PR_PROFILE_THIS;
@@ -184,13 +192,15 @@ public:
 		const bool allowMIS = mMISEnabled && !material->hasDeltaDistribution();
 
 		constexpr float DEPTH_DROP_RATE = 0.90f;
+		constexpr float SCATTER_EPS		= 1e-4f;
 
 		// Russian Roulette
 		// TODO: Add adjoint russian roulette (and maybe splitting)
 		const float roussian_prob = mSampler.next1D();
 		const float scatProb	  = std::min<float>(1.0f, pow(DEPTH_DROP_RATE, (int)spt.Ray.IterationDepth - (int)mMaxRayDepthSoft));
 		if (spt.Ray.IterationDepth + 1 >= mMaxRayDepthHard
-			|| roussian_prob > scatProb)
+			|| roussian_prob > scatProb
+			|| scatProb <= SCATTER_EPS)
 			return false;
 
 		// Sample BxDF
@@ -212,9 +222,6 @@ public:
 
 		if (material->isSpectralVarying())
 			next.Flags |= RF_Monochrome;
-
-		if (PR_UNLIKELY(next_importance.isZero()))
-			return false;
 
 		path.addToken(LightPathToken(out.Type)); // (1)
 		bool hasScattered = false;
@@ -241,7 +248,7 @@ public:
 			float next_mis = 1;
 
 			// If we hit a light from the frontside, apply the lighting to current path (Emissive Term)
-			if (allowMIS
+			if ((mMISEnabled || material->hasDeltaDistribution())
 				&& nentity->isLight()
 				&& next.Direction.dot(spt2.Surface.Geometry.N) < -PR_EPSILON // Check if frontside
 				&& nentity->id() != spt.Surface.Geometry.EntityID			 // Check if not self
@@ -257,18 +264,19 @@ public:
 
 					const auto pdfL = session.sampleLightPDF(EntitySamplingInfo{ spt.Surface.P, spt.Surface.N },
 															 spt.Surface.Geometry.EntityID, nentity);
-					next_mis		= MIS(
-						   1, out.PDF_S[0],
-						   mLightSampleCount, pdfL.IsArea ? IS::toSolidAngle(pdfL.Value, spt2.Depth2, aNdotV) : pdfL.Value);
+					next_mis		= allowMIS ? MIS(
+									  1, out.PDF_S[0],
+									  mLightSampleCount, pdfL.IsArea ? IS::toSolidAngle(pdfL.Value, spt2.Depth2, aNdotV) : pdfL.Value)
+										: 1.0f;
 
 					path.addToken(LightPathToken(ST_EMISSIVE, SE_NONE));
-					session.pushSpectralFragment(SpectralBlob(next_mis * msi), weighted_importance, outL.Weight, next, path);
+					session.pushSpectralFragment(SpectralBlob(next_mis * mis), weighted_importance, outL.Weight, next, path);
 					path.popToken();
 				}
 			}
 
-			if (nmaterial)
-				evalN(session, path, spt2, msi * next_mis, weighted_importance, nentity, nmaterial);
+			if (PR_LIKELY(nmaterial))
+				evalN(session, path, spt2, mis * next_mis, weighted_importance, nentity, nmaterial);
 		} else {
 			session.tile()->statistics().addBackgroundHitCount();
 
@@ -289,10 +297,13 @@ public:
 				mInfLightHandled[spt.Ray.IterationDepth * mInfLightCount + light->id()] = !allowMIS;
 				hasScattered															= true;
 
-				const float matPDF = (spt.Ray.Flags & RF_Monochrome) ? out.PDF_S[0] : out.PDF_S.sum();
+				const float matPDF = (spt.Ray.Flags & RF_Monochrome) ? out.PDF_S[0] : (out.PDF_S.sum() / PR_SPECTRAL_BLOB_SIZE);
 				const float msiL   = allowMIS ? MIS(1, matPDF, 1, lout.PDF_S) : 1.0f;
-				session.pushSpectralFragment(SpectralBlob(msiL * msi), weighted_importance, lout.Radiance, next, path);
+				session.pushSpectralFragment(SpectralBlob(msiL * mis), weighted_importance, lout.Radiance, next, path);
 			}
+
+			if (!hasScattered) // Make sure atleast the weights are updated
+				session.pushSpectralFragment(SpectralBlob(mis), weighted_importance, SpectralBlob::Zero(), next, path);
 			path.popToken();
 		}
 
@@ -302,7 +313,7 @@ public:
 
 	// Every camera vertex
 	void evalN(RenderTileSession& session, LightPath& path,
-			   const IntersectionPoint& spt, float msi, const SpectralBlob& importance,
+			   const IntersectionPoint& spt, float mis, const SpectralBlob& importance,
 			   IEntity* entity, IMaterial* material)
 	{
 		PR_UNUSED(entity);
@@ -323,7 +334,7 @@ public:
 			mInfLightHandled[spt.Ray.IterationDepth * mInfLightCount + i] = false;
 
 		// Scatter Light
-		bool hasScatterContrib = scatterLight(session, path, spt, msi, importance, material);
+		bool hasScatterContrib = scatterLight(session, path, spt, mis, importance, material);
 
 		if (material->hasDeltaDistribution())
 			return;
@@ -339,7 +350,7 @@ public:
 
 			path.addToken(token);
 			path.addToken(LightPathToken(ST_EMISSIVE, SE_NONE));
-			session.pushSpectralFragment(SpectralBlob(contrib.MIS * msi), factor * importance * contrib.Importance, contrib.Radiance, spt.Ray, path);
+			session.pushSpectralFragment(SpectralBlob(contrib.MIS * mis), factor * importance * contrib.Importance, contrib.Radiance, spt.Ray, path);
 			path.popToken(2);
 		}
 
@@ -357,7 +368,7 @@ public:
 
 			path.addToken(token);
 			path.addToken(LightPathToken::Background());
-			session.pushSpectralFragment(SpectralBlob(contrib.MIS * msi), factor * importance * contrib.Importance, contrib.Radiance, spt.Ray, path);
+			session.pushSpectralFragment(SpectralBlob(contrib.MIS * mis), factor * importance * contrib.Importance, contrib.Radiance, spt.Ray, path);
 			path.popToken(2);
 		}
 	}
@@ -426,18 +437,27 @@ public:
 		LightPath cb = LightPath::createCB();
 		session.tile()->statistics().addDepthCount(sg.size());
 		session.tile()->statistics().addBackgroundHitCount(sg.size());
-		for (auto light : session.tile()->context()->scene()->nonDeltaInfiniteLights()) {
+
+		if (!session.tile()->context()->scene()->nonDeltaInfiniteLights().empty()) {
+			for (auto light : session.tile()->context()->scene()->nonDeltaInfiniteLights()) {
+				for (size_t i = 0; i < sg.size(); ++i) {
+					InfiniteLightEvalInput in;
+					sg.extractRay(i, in.Ray);
+					in.Point = nullptr;
+					InfiniteLightEvalOutput out;
+					light->eval(in, out, session);
+
+					if (out.PDF_S <= PR_EPSILON)
+						continue;
+
+					session.pushSpectralFragment(SpectralBlob::Ones(), SpectralBlob::Ones(), out.Radiance, in.Ray, cb);
+				}
+			}
+		} else { // If no inf. lights are available make sure at least zero is splatted
 			for (size_t i = 0; i < sg.size(); ++i) {
-				InfiniteLightEvalInput in;
-				sg.extractRay(i, in.Ray);
-				in.Point = nullptr;
-				InfiniteLightEvalOutput out;
-				light->eval(in, out, session);
-
-				if (out.PDF_S <= PR_EPSILON)
-					continue;
-
-				session.pushSpectralFragment(SpectralBlob::Ones(), SpectralBlob::Ones(), out.Radiance, in.Ray, cb);
+				Ray ray;
+				sg.extractRay(i, ray);
+				session.pushSpectralFragment(SpectralBlob::Ones(), SpectralBlob::Ones(), SpectralBlob::Zero(), ray, cb);
 			}
 		}
 	}

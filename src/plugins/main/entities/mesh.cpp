@@ -11,8 +11,8 @@
 #include "entity/IEntityPlugin.h"
 #include "material/IMaterial.h"
 #include "math/Projection.h"
+#include "math/SplitSample.h"
 #include "mesh/MeshBase.h"
-#include "sampler/SplitSample.h"
 
 #include <filesystem>
 
@@ -143,7 +143,7 @@ public:
 
 		Vector2f uv = Triangle::sample(Vector2f(split.uniform1(), split.uniform2()));
 
-		return EntitySamplePoint(transform() * face.interpolateVertices(uv), uv, faceID, EntitySamplePDF{pdf, true});
+		return EntitySamplePoint(transform() * face.interpolateVertices(uv), uv, faceID, EntitySamplePDF{ pdf, true });
 	}
 
 	// UV variant
