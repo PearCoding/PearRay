@@ -56,6 +56,7 @@ void setup_output(py::module& m)
 	py::class_<FrameBufferSystem, std::shared_ptr<FrameBufferSystem>>(m, "FrameBufferSystem")
 		.def("clear", &FrameBufferSystem::clear)
 		.def_property_readonly("spectral", [](const FrameBufferSystem& buffer) { return buffer.data().getInternalChannel_Spectral(); })
+		.def_property_readonly("pixelweight", [](const FrameBufferSystem& buffer) { return buffer.data().getInternalChannel_1D(AOV_PixelWeight); })
 		.def("aov_1d", [](const FrameBufferSystem& buffer, AOV1D var) { return buffer.data().getInternalChannel_1D(var); })
 		.def("aov_3d", [](const FrameBufferSystem& buffer, AOV3D var) { return buffer.data().getInternalChannel_3D(var); })
 		.def("aov_counter", [](const FrameBufferSystem& buffer, AOVCounter var) { return buffer.data().getInternalChannel_Counter(var); });

@@ -76,6 +76,8 @@ FULLSCENESTR = """
     :render_width {size}
     :render_height {size}
     :camera 'Camera'
+    :spectral_hero {hero}
+
     ; Settings
     (integrator
         :type 'DIRECT'
@@ -136,7 +138,11 @@ FULLSCENESTR = """
 )
 """
 
-POINTS = [[0.50, 0.50], [0.25, 0.25], [0.75, 0.25], [0.25, 0.75], [0.75, 0.75], [0.05, 0.05], [0.95, 0.05], [0.05, 0.95], [0.95, 0.95]]
+POINTS = [[0.50, 0.50], [0.25, 0.25], [0.75, 0.25], [0.25, 0.75], [
+    0.75, 0.75], [0.05, 0.05], [0.95, 0.05], [0.05, 0.95], [0.95, 0.95]]
+
+SPEC_RESULT = 1
+CIE_RESULT = 1  # TODO: Applying CIE XYZ makes it impossible to converge to 1 -> Extract real result
 
 
 class TestWhitefurnance(unittest.TestCase):
@@ -155,42 +161,56 @@ class TestWhitefurnance(unittest.TestCase):
         ctx.start(8, 8)
         ctx.waitForFinish()
 
-        return ctx.output.spectral
+        return np.divide(ctx.output.spectral, ctx.output.pixelweight)
 
     def mean(self, img):
         intr = 0
         for i in range(IMGSIZE):
             for j in range(IMGSIZE):
-                intr += img.getFragment([i, j], 0)
+                intr += img[i, j, 0]
         return intr/(IMGSIZE*IMGSIZE)
 
     def checkAt(self, img, fx, fy):
-        res = img.getFragment([int(IMGSIZE*fx), int(IMGSIZE*fy)], 0)
+        res = img[int(IMGSIZE*fx), int(IMGSIZE*fy), 0]
         self.assertAlmostEqual(res, 1, places=3)
 
     def checkStandardPos(self, img):
         for i in range(len(POINTS)):
             self.checkAt(img, POINTS[i][0], POINTS[i][1])
 
-    def test_spec_nonmsi(self):
+    def test_spec_nonmis(self):
         img = self.render(SPECSCENESTR.format(mis="false", size=IMGSIZE))
         self.checkStandardPos(img)
-        self.assertAlmostEqual(self.mean(img), 1, places=4)
+        self.assertAlmostEqual(self.mean(img), SPEC_RESULT, places=4)
 
-    def test_spec_msi(self):
+    def test_spec_mis(self):
         img = self.render(SPECSCENESTR.format(mis="true", size=IMGSIZE))
         self.checkStandardPos(img)
-        self.assertAlmostEqual(self.mean(img), 1, places=4)
+        self.assertAlmostEqual(self.mean(img), SPEC_RESULT, places=4)
 
-    def test_full_nonmsi(self):
-        img = self.render(FULLSCENESTR.format(mis="false", size=IMGSIZE))
+    def test_non_hero_nonmis(self):
+        img = self.render(FULLSCENESTR.format(
+            mis="false", hero="false", size=IMGSIZE))
         self.checkStandardPos(img)
-        self.assertAlmostEqual(self.mean(img), 1, places=4)
+        self.assertAlmostEqual(self.mean(img), CIE_RESULT, places=4)
 
-    def test_full_msi(self):
-        img = self.render(FULLSCENESTR.format(mis="true", size=IMGSIZE))
+    def test_non_hero_mis(self):
+        img = self.render(FULLSCENESTR.format(
+            mis="true", hero="false", size=IMGSIZE))
         self.checkStandardPos(img)
-        self.assertAlmostEqual(self.mean(img), 1, places=4)
+        self.assertAlmostEqual(self.mean(img), CIE_RESULT, places=4)
+
+    def test_full_nonmis(self):
+        img = self.render(FULLSCENESTR.format(
+            mis="false", hero="true", size=IMGSIZE))
+        self.checkStandardPos(img)
+        self.assertAlmostEqual(self.mean(img), CIE_RESULT, places=4)
+
+    def test_full_mis(self):
+        img = self.render(FULLSCENESTR.format(
+            mis="true", hero="true", size=IMGSIZE))
+        self.checkStandardPos(img)
+        self.assertAlmostEqual(self.mean(img), CIE_RESULT, places=4)
 
 
 def runTest(pr):

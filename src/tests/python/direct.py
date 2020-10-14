@@ -127,20 +127,19 @@ class TestDirect(unittest.TestCase):
         ctx.start(8, 8)
         ctx.waitForFinish()
 
-        return ctx.output.spectral
+        return np.divide(ctx.output.spectral, ctx.output.pixelweight)
 
     def checkAt(self, img, points):
         for i in range(len(points)):
-            res = img.getFragment(
-                [int(IMGSIZE*points[i][0]), int(IMGSIZE*points[i][1])], 0)
+            res = img[int(IMGSIZE*points[i][0]), int(IMGSIZE*points[i][1]), 0]
             expected = analytical(points[i])
             self.assertAlmostEqual(res, expected, places=3)
 
-    def test_nonmsi(self):
+    def test_nonmis(self):
         img = self.render(SCENESTR.format(mis="false", size=IMGSIZE))
         self.checkAt(img, POINTS)
 
-    def test_msi(self):
+    def test_mis(self):
         img = self.render(SCENESTR.format(mis="true", size=IMGSIZE))
         self.checkAt(img, POINTS)
 
