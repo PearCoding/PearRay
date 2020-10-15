@@ -59,14 +59,10 @@
 		0,0,0,1]
 	)
 	; Materials
-	(spectrum
-		:name 'Material_diffuse_color'
-		:data (refl 0 0.800000 0.800000)
-	)
 	(material
 		:name 'Material'
 		:type 'diffuse'
-		:albedo 'Material_diffuse_color'
+		:albedo (refl 0 0.800000 0.800000)
 	)
 	; Mesh
 	(mesh

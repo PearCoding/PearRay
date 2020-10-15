@@ -64,14 +64,10 @@
 	; Curves
 	; Particle Systems
 	; Materials
-	(spectrum
-		:name 'Material_diffuse_color'
-		:data (refl 0.98 0.525250 0.171813)
-	)
 	(material
 		:name 'Material'
 		:type 'diffuse'
-		:albedo 'Material_diffuse_color'
+		:albedo (refl 0.98 0.525250 0.171813)
 	)
 	(material
 		:name 'Material.001'
@@ -82,14 +78,10 @@
 		:name 'Material.002'
 		:type 'mirror'
 	)
-	(spectrum
-		:name 'Material.003_diffuse_color'
-		:data (refl 0.98 0.174027 0.035058)
-	)
 	(material
 		:name 'Material.003'
 		:type 'principled'
-		:base_color 'Material.003_diffuse_color'
+		:base_color (refl 0.98 0.174027 0.035058)
 		:roughness 0.4
 		:subsurface 0.0
 		:metallic 0.3
@@ -101,14 +93,10 @@
 		:clearcoat 0.0
 		:clearcoat_gloss 0.0
 	)
-	(spectrum
-		:name 'Material.004_diffuse_color'
-		:data (refl 0.8 0.8 0.8)
-	)
 	(material
 		:name 'Material.004'
 		:type 'principled'
-		:base_color 'Material.004_diffuse_color'
+		:base_color (refl 0.8 0.8 0.8)
 		:roughness 0.2
 		:subsurface 0.0
 		:metallic 0.6

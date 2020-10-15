@@ -63,51 +63,35 @@
 		:type 'diffuse'
 		:albedo 'blue'
 	)
-	(spectrum
-		:name 'Border_diffuse_color'
-		:data (refl 0.500000 0.500000 0.500000)
-	)
 	(material
 		:name 'Border'
 		:type 'diffuse'
-		:albedo 'Border_diffuse_color'
-	)
-	(spectrum
-		:name 'Brown_diffuse_color'
-		:data (refl 1.000000 0.500000 0.250000)
+		:albedo (refl 0.500000 0.500000 0.500000)
 	)
 	(material
 		:name 'Brown'
 		:type 'diffuse'
-		:albedo 'Brown_diffuse_color'
+		:albedo (refl 1.000000 0.500000 0.250000)
 	)
 	(material
 		:name 'Cyan'
 		:type 'diffuse'
 		:albedo 'cyan'
 	)
-	(spectrum
-		:name 'DarkMagenta_diffuse_color'
-		:data (refl 0.500000 0.250000 1.000000)
-	)
 	(material
 		:name 'DarkMagenta'
 		:type 'diffuse'
-		:albedo 'DarkMagenta_diffuse_color'
+		:albedo (refl 0.500000 0.250000 1.000000)
 	)
 	(material
 		:name 'Green'
 		:type 'diffuse'
 		:albedo 'green'
 	)
-	(spectrum
-		:name 'GreenCyan_diffuse_color'
-		:data (refl 0.250000 1.000000 0.500000)
-	)
 	(material
 		:name 'GreenCyan'
 		:type 'diffuse'
-		:albedo 'GreenCyan_diffuse_color'
+		:albedo (refl 0.250000 1.000000 0.500000)
 	)
 	(material
 		:name 'Magenta'

@@ -1,5 +1,6 @@
 PR_ADD_PLUGIN(nod_illuminant CPP IlluminantNode.cpp)
 PR_ADD_PLUGIN(nod_scalarmath CPP ScalarMathNode.cpp)
 PR_ADD_PLUGIN(nod_spectralmath CPP SpectralMathNode.cpp)
+PR_ADD_PLUGIN(nod_spectralvalue CPP SpectralValueNode.cpp)
 PR_ADD_PLUGIN(nod_reflective CPP ReflectiveNode.cpp)
 PR_ADD_PLUGIN(nod_trianglepeak CPP TrianglePeakNode.cpp)

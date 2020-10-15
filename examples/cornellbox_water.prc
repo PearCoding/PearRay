@@ -39,89 +39,57 @@
 		:transform [1.0,0.0,0.0,0.0,0.0,0.0,-1.0,-3.93462872505188,0.0,1.0,0.0,1.0,0.0,0.0,0.0,1.0]
 	)
 	; Lights
-	(spectrum
-		:name 'light_color'
-		:data (illum 17 12 4)
-	)
 	(emission
 		:name 'light_em'
 		:type 'standard'
-		:radiance (smul (illuminant "D65") 'light_color')
+		:radiance (smul (illuminant "D65") (illum 17 12 4))
 	)
 	; Curves
 	; Particle Systems
 	; Materials
-	(spectrum
-		:name 'backWall_diffuse_color'
-		:data (refl 0.725000 0.710000 0.680000)
-	)
 	(material
 		:name 'backWall'
 		:type 'diffuse'
-		:albedo 'backWall_diffuse_color'
+		:albedo (refl 0.725000 0.710000 0.680000)
 	)
 	(spectrum
 		:name 'ceiling_diffuse_color'
-		:data (refl 0.725000 0.710000 0.680000)
+		:data 
 	)
 	(material
 		:name 'ceiling'
 		:type 'diffuse'
-		:albedo 'ceiling_diffuse_color'
-	)
-	(spectrum
-		:name 'floor_diffuse_color'
-		:data (refl 0.725000 0.710000 0.680000)
+		:albedo (refl 0.725000 0.710000 0.680000)
 	)
 	(material
 		:name 'floor'
 		:type 'diffuse'
-		:albedo 'floor_diffuse_color'
-	)
-	(spectrum
-		:name 'leftWall_diffuse_color'
-		:data (refl 0.630000 0.065000 0.050000)
+		:albedo (refl 0.725000 0.710000 0.680000)
 	)
 	(material
 		:name 'leftWall'
 		:type 'diffuse'
-		:albedo 'leftWall_diffuse_color'
-	)
-	(spectrum
-		:name 'light_diffuse_color'
-		:data (refl 0.780000 0.780000 0.780000)
+		:albedo (refl 0.630000 0.065000 0.050000)
 	)
 	(material
 		:name 'light'
 		:type 'diffuse'
-		:albedo 'light_diffuse_color'
-	)
-	(spectrum
-		:name 'rightWall_diffuse_color'
-		:data (refl 0.140000 0.450000 0.091000)
+		:albedo (refl 0.780000 0.780000 0.780000)
 	)
 	(material
 		:name 'rightWall'
 		:type 'diffuse'
-		:albedo 'rightWall_diffuse_color'
-	)
-	(spectrum
-		:name 'shortBox_diffuse_color'
-		:data (refl 0.725000 0.710000 0.680000)
+		:albedo (refl 0.140000 0.450000 0.091000)
 	)
 	(material
 		:name 'shortBox'
 		:type 'diffuse'
-		:albedo 'shortBox_diffuse_color'
-	)
-	(spectrum
-		:name 'tallBox_diffuse_color'
-		:data (refl 0.725000 0.710000 0.680000)
+		:albedo (refl 0.725000 0.710000 0.680000)
 	)
 	(material
 		:name 'tallBox'
 		:type 'diffuse'
-		:albedo 'tallBox_diffuse_color'
+		:albedo (refl 0.725000 0.710000 0.680000)
 	)
 	(material
 		:name 'Water'

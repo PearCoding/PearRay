@@ -51,8 +51,6 @@ set(PR_Src
   parser/MathParser.h
   parser/MeshParser.cpp
   parser/MeshParser.h
-  parser/SpectralParser.cpp
-  parser/SpectralParser.h
   parser/TextureParser.cpp
   parser/TextureParser.h
   plugin/AbstractManager.h

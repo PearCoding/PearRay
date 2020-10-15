@@ -30,7 +30,6 @@
 #include "parser/CurveParser.h"
 #include "parser/MathParser.h"
 #include "parser/MeshParser.h"
-#include "parser/SpectralParser.h"
 #include "parser/TextureParser.h"
 
 #include "DataLisp.h"
@@ -164,8 +163,6 @@ void SceneLoader::setupEnvironment(const std::vector<DL::DataGroup>& groups, Sce
 			addFilter(entry, ctx);
 		else if (entry.id() == "integrator")
 			addIntegrator(entry, ctx);
-		else if (entry.id() == "spectrum") // Just a sophisticated node
-			addSpectrum(entry, ctx);
 		else if (entry.id() == "texture") // Just a sophisticated node
 			addTexture(entry, ctx);
 		else if (entry.id() == "node")
@@ -841,29 +838,6 @@ void SceneLoader::addMesh(const DL::DataGroup& group, SceneLoadContext& ctx)
 	}
 
 	ctx.environment()->addMesh(name, std::move(mesh));
-}
-
-void SceneLoader::addSpectrum(const DL::DataGroup& group, SceneLoadContext& ctx)
-{
-	DL::Data nameD = group.getFromKey("name");
-	DL::Data dataD = group.getFromKey("data");
-
-	std::string name;
-	if (nameD.type() == DL::DT_String) {
-		name = nameD.getString();
-	} else {
-		PR_LOG(L_ERROR) << "[Loader] Couldn't get name for spectral entry." << std::endl;
-		return;
-	}
-
-	if (ctx.environment()->hasNode(name)) {
-		PR_LOG(L_ERROR) << "[Loader] Spectrum name already set" << std::endl;
-		return;
-	}
-
-	// TODO
-	const auto spec = SpectralParser::getSpectrum(ctx.environment()->defaultSpectralUpsampler().get(), dataD);
-	ctx.environment()->addNode(name, spec);
 }
 
 void SceneLoader::addSubGraph(const DL::DataGroup& group, SceneLoadContext& ctx)

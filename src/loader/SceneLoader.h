@@ -51,7 +51,6 @@ private:
 	static uint32 addNodeInline(const DL::DataGroup& group, SceneLoadContext& ctx);
 	static void addSampler(const DL::DataGroup& group, SceneLoadContext& ctx);
 	static void addSpectralMapper(const DL::DataGroup& group, SceneLoadContext& ctx);
-	static void addSpectrum(const DL::DataGroup& group, SceneLoadContext& ctx);
 	static void addSubGraph(const DL::DataGroup& group, SceneLoadContext& ctx);
 	static void addTexture(const DL::DataGroup& group, SceneLoadContext& ctx);
 
