@@ -31,8 +31,8 @@ public:
 
 class PR_LIB_LOADER Environment : public QueryEnvironment {
 public:
-	Environment(const std::wstring& workdir,
-				const std::wstring& plugdir,
+	Environment(const std::filesystem::path& workdir,
+				const std::filesystem::path& plugdir,
 				bool useStandardLib = true);
 	virtual ~Environment();
 
@@ -64,8 +64,8 @@ public:
 
 	inline void* textureSystem();
 
-	inline void setWorkingDir(const std::wstring& dir);
-	inline std::wstring workingDir() const;
+	inline void setWorkingDir(const std::filesystem::path& dir);
+	inline std::filesystem::path workingDir() const;
 
 	inline OutputSpecification& outputSpecification();
 	inline const RenderSettings& renderSettings() const;
@@ -84,7 +84,7 @@ private:
 	inline void getNode(const std::string& name, std::shared_ptr<FloatSpectralNode>& node) const;
 	inline void getNode(const std::string& name, std::shared_ptr<FloatVectorNode>& node) const;
 
-	std::wstring mWorkingDir;
+	std::filesystem::path mWorkingDir;
 	RenderSettings mRenderSettings;
 
 	std::shared_ptr<ResourceManager> mResourceManager;

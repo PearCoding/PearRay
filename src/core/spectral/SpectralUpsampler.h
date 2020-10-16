@@ -18,6 +18,7 @@ public:
 
 	void prepare(const float* PR_RESTRICT r, const float* PR_RESTRICT g, const float* PR_RESTRICT b,
 				 float* PR_RESTRICT out_a, float* PR_RESTRICT out_b, float* PR_RESTRICT out_c, size_t elems);
+	void prepare(const float* PR_RESTRICT rgb, float* PR_RESTRICT out, size_t elems);
 
 	inline static void compute(const float* PR_RESTRICT a, const float* PR_RESTRICT b, const float* PR_RESTRICT c,
 							   const float* PR_RESTRICT wavelengths, float* PR_RESTRICT out_weights, size_t elems)

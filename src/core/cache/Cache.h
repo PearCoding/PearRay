@@ -2,6 +2,7 @@
 
 #include "ICachable.h"
 #include <atomic>
+#include <filesystem>
 #include <mutex>
 #include <tbb/concurrent_priority_queue.h>
 
@@ -15,7 +16,7 @@ enum CacheMode {
 class ICachable;
 class PR_LIB_CORE Cache {
 public:
-	Cache(const std::wstring& workDir);
+	Cache(const std::filesystem::path& workDir);
 	~Cache();
 
 	/**
@@ -32,7 +33,7 @@ public:
 	void load(ICachable* entity);
 	void unloadAll();
 
-	inline const std::wstring& cacheDir() const { return mCacheDir; }
+	inline const std::filesystem::path& cacheDir() const { return mCacheDir; }
 	inline void setMaxMemoryUsage(size_t mem) { mMaxMemoryUsage = mem; }
 	inline size_t maxMemoryUsage() const { return mMaxMemoryUsage; }
 	inline size_t currentMemoryUsage() const { return mMaxMemoryUsage; }
@@ -54,7 +55,7 @@ private:
 	tbb::concurrent_priority_queue<ICachable*, Comparator> mEntities;
 
 	// This two variable do not change while working -> No thread safety needed
-	const std::wstring mCacheDir;
+	const std::filesystem::path mCacheDir;
 	size_t mMaxMemoryUsage;
 	CacheMode mMode;
 

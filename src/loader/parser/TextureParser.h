@@ -2,7 +2,7 @@
 
 #include "PR_Config.h"
 
-#include <string>
+#include <filesystem>
 
 namespace DL {
 class DataGroup;
@@ -10,9 +10,9 @@ class DataGroup;
 
 namespace PR {
 class SceneLoadContext;
-class SceneLoader;
 class PR_LIB_LOADER TextureParser {
 public:
-	void parse(const SceneLoadContext& ctx, const std::string& name, const DL::DataGroup& group) const;
+	static void parse(SceneLoadContext& ctx, const std::string& name, const DL::DataGroup& group);
+	static void convertToParametric(const SceneLoadContext& ctx, const std::filesystem::path& input, const std::filesystem::path& output);
 };
 } // namespace PR

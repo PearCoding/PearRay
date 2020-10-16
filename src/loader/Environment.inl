@@ -126,8 +126,8 @@ inline bool Environment::isNode(const std::string& name) const
 
 inline void* Environment::textureSystem() { return mTextureSystem; }
 
-inline void Environment::setWorkingDir(const std::wstring& dir) { mWorkingDir = dir; }
-inline std::wstring Environment::workingDir() const { return mWorkingDir; }
+inline void Environment::setWorkingDir(const std::filesystem::path& dir) { mWorkingDir = dir; }
+inline std::filesystem::path Environment::workingDir() const { return mWorkingDir; }
 
 inline OutputSpecification& Environment::outputSpecification() { return mOutputSpecification; }
 inline const RenderSettings& Environment::renderSettings() const { return mRenderSettings; }

@@ -43,6 +43,8 @@ public:
 		return std::filesystem::absolute(currentFile().parent_path() / path);
 	}
 
+	std::filesystem::path setupParametricImage(const std::filesystem::path& path);
+
 	// Lookup functions for easier access
 	std::shared_ptr<INode> lookupRawNode(const Parameter& parameter) const;
 	std::shared_ptr<FloatSpectralNode> lookupSpectralNode(

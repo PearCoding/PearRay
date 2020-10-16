@@ -3,8 +3,8 @@
 #include <filesystem>
 
 namespace PR {
-Cache::Cache(const std::wstring& workDir)
-	: mCacheDir(workDir + L"/cache/")
+Cache::Cache(const std::filesystem::path& workDir)
+	: mCacheDir(workDir / "cache/")
 	, mMaxMemoryUsage(4ULL * 1024 * 1024 * 1024) // 4 GB
 	, mMode(CM_Auto)
 	, mCurrentMemoryUsage(0)

@@ -1,29 +1,31 @@
 #pragma once
 
 #include "PR_Config.h"
+
+#include <filesystem>
 #include <unordered_map>
 
 namespace PR {
 class PR_LIB_LOADER ResourceManager {
 public:
-	ResourceManager(const std::wstring& workingDir);
+	ResourceManager(const std::filesystem::path& workingDir);
 
-	std::wstring requestFile(const std::string& grp, const std::string& name, const std::string& ext, bool& updateNeeded);
-	inline std::wstring requestFile(const std::string& grp, const std::string& name, const std::string& ext)
+	std::filesystem::path requestFile(const std::string& grp, const std::string& name, const std::string& ext, bool& updateNeeded);
+	inline std::filesystem::path requestFile(const std::string& grp, const std::string& name, const std::string& ext)
 	{
 		bool _ignore;
 		return requestFile(grp, name, ext, _ignore);
 	}
 
-	void addDependency(const std::string& grp, const std::string& name, const std::wstring& path);
+	void addDependency(const std::string& grp, const std::string& name, const std::filesystem::path& path);
 
 private:
 	size_t generateID(const std::string& grp, const std::string& name) const;
-	bool checkDependencies(size_t id, const std::wstring& req_file) const;
+	bool checkDependencies(size_t id, const std::filesystem::path& req_file) const;
 
-	std::wstring mWorkingDir;
+	std::filesystem::path mWorkingDir;
 
-	std::unordered_multimap<size_t, std::wstring> mRequestedFiles;
-	std::unordered_multimap<size_t, std::wstring> mDependencies;
+	std::unordered_multimap<size_t, std::filesystem::path> mRequestedFiles;
+	std::unordered_multimap<size_t, std::filesystem::path> mDependencies;
 };
 } // namespace PR

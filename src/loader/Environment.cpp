@@ -38,8 +38,8 @@
 #include <regex>
 
 namespace PR {
-Environment::Environment(const std::wstring& workdir,
-						 const std::wstring& plugdir,
+Environment::Environment(const std::filesystem::path& workdir,
+						 const std::filesystem::path& plugdir,
 						 bool useStandardLib)
 	: QueryEnvironment(plugdir)
 	, mWorkingDir(workdir)

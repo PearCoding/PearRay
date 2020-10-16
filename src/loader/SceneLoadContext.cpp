@@ -1,7 +1,9 @@
 #include "SceneLoadContext.h"
 #include "Environment.h"
+#include "ResourceManager.h"
 #include "filter/FilterManager.h"
 #include "integrator/IntegratorManager.h"
+#include "parser/TextureParser.h"
 #include "sampler/SamplerManager.h"
 #include "shader/ConstNode.h"
 #include "spectral/SpectralMapperManager.h"
@@ -45,6 +47,19 @@ void SceneLoadContext::popFile()
 {
 	PR_ASSERT(mFileStack.size() >= 1, "Invalid push/pop count");
 	mFileStack.pop_back();
+}
+
+std::filesystem::path SceneLoadContext::setupParametricImage(const std::filesystem::path& path)
+{
+	bool updateNeeded	 = false;
+	const auto para_path = mEnvironment->resourceManager()->requestFile("image", path.stem(), ".exr", updateNeeded);
+
+	if (updateNeeded) {
+		PR_LOG(L_INFO) << "Converting " << path << " to parametric image " << para_path << std::endl;
+		TextureParser::convertToParametric(*this, path, para_path);
+	}
+
+	return para_path;
 }
 
 std::shared_ptr<INode> SceneLoadContext::lookupRawNode(const Parameter& parameter) const

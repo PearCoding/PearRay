@@ -1,41 +1,11 @@
 #include "DebugIO.h"
-#include "config/Build.h"
-
-#include <OpenImageIO/imageio.h>
+#include "ImageIO.h"
 
 namespace PR {
 namespace Debug {
 void saveImage(const std::string& path, const float* data, size_t width, size_t height, size_t channels)
 {
-	OIIO::ImageSpec spec(width, height, channels, OIIO::TypeDesc::FLOAT);
-
-	const std::string versionStr = Build::getVersionString();
-	spec.attribute("Software", "PearRay " + versionStr);
-	spec.attribute("IPTC:ProgramVersion", versionStr);
-
-	if (channels > 3) {
-		spec.channelnames.resize(channels);
-		for (size_t i = 0; i < channels; ++i)
-			spec.channelnames[i] = "Value_" + std::to_string(i + 1);
-	}
-
-	auto out = OIIO::ImageOutput::create(path);
-	if (!out)
-		return;
-
-	if (!out->open(path, spec)) {
-#if OIIO_PLUGIN_VERSION < 22
-		OIIO::ImageOutput::destroy(out);
-#endif
-		return;
-	}
-
-	out->write_image(OIIO::TypeDesc::FLOAT, data);
-	out->close();
-
-#if OIIO_PLUGIN_VERSION < 22
-	OIIO::ImageOutput::destroy(out);
-#endif
+	ImageIO::save(path, data, width, height, channels);
 }
 } // namespace Debug
 } // namespace PR

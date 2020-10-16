@@ -8,6 +8,8 @@ set(PR_Src
   Environment.cpp
   Environment.h
   Environment.inl
+  ImageIO.cpp
+  ImageIO.h
   QueryEnvironment.cpp
   QueryEnvironment.h
   QueryEnvironment.inl

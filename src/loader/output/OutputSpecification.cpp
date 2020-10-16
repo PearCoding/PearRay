@@ -13,7 +13,7 @@ namespace PR {
 constexpr static const wchar_t* LOCK_RUN_FILE_NAME = L".pearray_run.lock";
 constexpr static const wchar_t* LOCK_OUT_FILE_NAME = L".pearray_out.lock";
 
-OutputSpecification::OutputSpecification(const std::wstring& wrkDir)
+OutputSpecification::OutputSpecification(const std::filesystem::path& wrkDir)
 	: mInit(false)
 	, mWorkingDir(wrkDir)
 {

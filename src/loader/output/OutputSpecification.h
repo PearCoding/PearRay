@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ImageWriter.h"
-#include <vector>
 
 namespace DL {
 class DataGroup;
@@ -22,7 +21,7 @@ class PR_LIB_LOADER OutputSpecification {
 	PR_CLASS_NON_COPYABLE(OutputSpecification);
 
 public:
-	OutputSpecification(const std::wstring& wrkDir);
+	OutputSpecification(const std::filesystem::path& wrkDir);
 	virtual ~OutputSpecification();
 
 	void init(const std::shared_ptr<RenderContext>& context);
@@ -36,7 +35,7 @@ public:
 
 private:
 	bool mInit;
-	std::wstring mWorkingDir;
+	std::filesystem::path mWorkingDir;
 	std::unique_ptr<FileLock> mRunLock;
 	std::unique_ptr<FileLock> mOutputLock;
 

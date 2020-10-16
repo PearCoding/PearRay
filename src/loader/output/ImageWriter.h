@@ -3,8 +3,9 @@
 #include "buffer/AOV.h"
 #include "buffer/FrameBuffer.h"
 #include "spectral/ToneMapper.h"
-#include <string>
+
 #include <vector>
+#include <filesystem>
 
 namespace PR {
 struct IM_ChannelSetting1D {
@@ -53,7 +54,7 @@ public:
 	void init(const std::shared_ptr<RenderContext>& renderer);
 	void deinit();
 
-	bool save(ToneMapper& toneMapper, const std::wstring& file,
+	bool save(ToneMapper& toneMapper, const std::filesystem::path& file,
 			  const std::vector<IM_ChannelSettingSpec>& spec,
 			  const std::vector<IM_ChannelSetting1D>& ch1d,
 			  const std::vector<IM_ChannelSettingCounter>& chcounter,

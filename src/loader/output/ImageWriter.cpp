@@ -47,7 +47,7 @@ void ImageWriter::deinit()
 	mRenderer = nullptr;
 }
 
-bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
+bool ImageWriter::save(ToneMapper& toneMapper, const std::filesystem::path& file,
 					   const std::vector<IM_ChannelSettingSpec>& chSpec,
 					   const std::vector<IM_ChannelSetting1D>& ch1d,
 					   const std::vector<IM_ChannelSettingCounter>& chcounter,
