@@ -5,9 +5,9 @@
 #include "spectral/Blackbody.h"
 
 namespace PR {
-class BlackbodyNode : public FloatSpectralNode {
+class ConstBlackbodyNode : public FloatSpectralNode {
 public:
-	explicit BlackbodyNode(float temperature)
+	explicit ConstBlackbodyNode(float temperature)
 		: mTemperature(temperature)
 	{
 	}
@@ -33,12 +33,45 @@ private:
 	const float mTemperature;
 };
 
+class DynamicBlackbodyNode : public FloatSpectralNode {
+public:
+	explicit DynamicBlackbodyNode(const std::shared_ptr<FloatScalarNode>& temperature)
+		: mTemperature(temperature)
+	{
+	}
+
+	SpectralBlob eval(const ShadingContext& ctx) const override
+	{
+		const float temp = mTemperature->eval(ctx);
+
+		SpectralBlob res;
+		PR_UNROLL_LOOP(PR_SPECTRAL_BLOB_SIZE)
+		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
+			res[i] = blackbody(ctx.WavelengthNM[i], temp);
+		return res;
+	}
+
+	Vector2i queryRecommendedSize() const override { return Vector2i(1, 1); }
+	std::string dumpInformation() const override
+	{
+		std::stringstream sstream;
+		sstream << "Blackbody ( T:" << mTemperature->dumpInformation() << ")";
+		return sstream.str();
+	}
+
+private:
+	const std::shared_ptr<FloatScalarNode> mTemperature;
+};
+
 class BlackbodyPlugin : public INodePlugin {
 public:
 	std::shared_ptr<INode> create(uint32, const std::string&, const SceneLoadContext& ctx) override
 	{
-		float temperature = ctx.parameters().getParameter(0).getNumber(6500.0f);
-		return std::make_shared<BlackbodyNode>(temperature);
+		const auto prop = ctx.parameters().getParameter(0);
+		if (prop.isReference())
+			return std::make_shared<DynamicBlackbodyNode>(ctx.lookupScalarNode(prop));
+		else
+			return std::make_shared<ConstBlackbodyNode>(prop.getNumber(6500.0f));
 	}
 
 	const std::vector<std::string>& getNames() const override
