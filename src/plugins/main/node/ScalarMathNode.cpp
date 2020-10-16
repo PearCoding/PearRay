@@ -73,29 +73,29 @@ namespace PR {
 		const std::shared_ptr<FloatScalarNode> mOp2;                                                                   \
 	};
 
-#define _OPF2(Prefix, F)                                                                                          \
-	class Prefix##Math : public FloatScalarNode {                                                                 \
-	public:                                                                                                       \
-		explicit Prefix##Math(const std::shared_ptr<FloatScalarNode>& op1,                                        \
-							  const std::shared_ptr<FloatScalarNode>& op2)                                        \
-			: mOp1(op1)                                                                                           \
-			, mOp2(op2)                                                                                           \
-		{                                                                                                         \
-		}                                                                                                         \
-		float eval(const ShadingContext& ctx) const override                                                      \
-		{                                                                                                         \
-			return F(mOp1->eval(ctx), mOp2->eval(ctx));                                                           \
-		}                                                                                                         \
-		std::string dumpInformation() const override                                                              \
-		{                                                                                                         \
-			std::stringstream sstream;                                                                            \
+#define _OPF2(Prefix, F)                                                                                           \
+	class Prefix##Math : public FloatScalarNode {                                                                  \
+	public:                                                                                                        \
+		explicit Prefix##Math(const std::shared_ptr<FloatScalarNode>& op1,                                         \
+							  const std::shared_ptr<FloatScalarNode>& op2)                                         \
+			: mOp1(op1)                                                                                            \
+			, mOp2(op2)                                                                                            \
+		{                                                                                                          \
+		}                                                                                                          \
+		float eval(const ShadingContext& ctx) const override                                                       \
+		{                                                                                                          \
+			return F(mOp1->eval(ctx), mOp2->eval(ctx));                                                            \
+		}                                                                                                          \
+		std::string dumpInformation() const override                                                               \
+		{                                                                                                          \
+			std::stringstream sstream;                                                                             \
 			sstream << PR_STRINGIFY(F) " (" << mOp1->dumpInformation() << " , " << mOp2->dumpInformation() << ")"; \
-			return sstream.str();                                                                                 \
-		}                                                                                                         \
-                                                                                                                  \
-	private:                                                                                                      \
-		const std::shared_ptr<FloatScalarNode> mOp1;                                                              \
-		const std::shared_ptr<FloatScalarNode> mOp2;                                                              \
+			return sstream.str();                                                                                  \
+		}                                                                                                          \
+                                                                                                                   \
+	private:                                                                                                       \
+		const std::shared_ptr<FloatScalarNode> mOp1;                                                               \
+		const std::shared_ptr<FloatScalarNode> mOp2;                                                               \
 	};
 
 #define ADD_OP +
@@ -115,6 +115,12 @@ _OPF1(Tan, std::tan)
 _OPF1(ASin, std::asin)
 _OPF1(ACos, std::acos)
 _OPF1(ATan, std::atan)
+_OPF1(SinH, std::sinh)
+_OPF1(CosH, std::cosh)
+_OPF1(TanH, std::tanh)
+_OPF1(ASinH, std::asinh)
+_OPF1(ACosH, std::acosh)
+_OPF1(ATanH, std::atanh)
 _OPF1(Exp, std::exp)
 _OPF1(Log, std::log)
 _OPF1(Abs, std::abs)
@@ -159,6 +165,18 @@ public:
 			return std::make_shared<ACosMath>(ctx.lookupScalarNode(ctx.parameters().getParameter(0)));
 		} else if (type_name == "atan") {
 			return std::make_shared<ATanMath>(ctx.lookupScalarNode(ctx.parameters().getParameter(0)));
+		} else if (type_name == "sinh") {
+			return std::make_shared<SinHMath>(ctx.lookupScalarNode(ctx.parameters().getParameter(0)));
+		} else if (type_name == "cosh") {
+			return std::make_shared<CosHMath>(ctx.lookupScalarNode(ctx.parameters().getParameter(0)));
+		} else if (type_name == "tanh") {
+			return std::make_shared<TanHMath>(ctx.lookupScalarNode(ctx.parameters().getParameter(0)));
+		} else if (type_name == "asinh") {
+			return std::make_shared<ASinHMath>(ctx.lookupScalarNode(ctx.parameters().getParameter(0)));
+		} else if (type_name == "acosh") {
+			return std::make_shared<ACosHMath>(ctx.lookupScalarNode(ctx.parameters().getParameter(0)));
+		} else if (type_name == "atanh") {
+			return std::make_shared<ATanHMath>(ctx.lookupScalarNode(ctx.parameters().getParameter(0)));
 		} else if (type_name == "exp") {
 			return std::make_shared<ExpMath>(ctx.lookupScalarNode(ctx.parameters().getParameter(0)));
 		} else if (type_name == "log") {
@@ -194,7 +212,9 @@ public:
 	{
 		const static std::vector<std::string> names({ "add", "sub", "subtract", "mul", "multiply", "div", "divide",
 													  "neg", "negate",
-													  "sin", "cos", "tan", "asin", "acos", "atan", "exp", "log", "abs", "sqrt", "cbrt", "ceil", "floor", "round",
+													  "sin", "cos", "tan", "asin", "acos", "atan",
+													  "sinh", "cosh", "tanh", "asinh", "acosh", "atanh",
+													  "exp", "log", "abs", "sqrt", "cbrt", "ceil", "floor", "round",
 													  "atan2", "max", "min" });
 		return names;
 	}
