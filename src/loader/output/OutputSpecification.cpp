@@ -104,14 +104,31 @@ void OutputSpecification::setup(const std::shared_ptr<RenderContext>& renderer)
 		}
 
 		for (IM_ChannelSettingSpec& ss : file.SettingsSpectral) {
-			if (!ss.LPE_S.empty()) {
-				size_t id;
-				data.requestLPEChannel_Spectral(LightPathExpression(ss.LPE_S), id);
-				ss.LPE = (int)id;
+			if (!ss.LPE_S.empty() || !data.hasInternalChannel_Spectral(ss.Variable)) {
+				if (ss.LPE_S.empty())
+					data.requestInternalChannel_Spectral(ss.Variable);
+				else {
+					size_t id;
+					data.requestLPEChannel_Spectral(ss.Variable, LightPathExpression(ss.LPE_S), id);
+					ss.LPE = (int)id;
+				}
 			}
 		}
 	}
 }
+
+static struct {
+	const char* Str;
+	AOVSpectral Var;
+} _s_varSpectral[] = {
+	{ "color", AOV_Output },
+	{ "spectral", AOV_Output },
+	{ "output", AOV_Output },
+	{ "rgb", AOV_Output },
+	{ "online_m", AOV_OnlineM },
+	{ "online_s", AOV_OnlineS },
+	{ nullptr, AOV_SPECTRAL_COUNT },
+};
 
 static struct {
 	const char* Str;
@@ -174,6 +191,24 @@ static struct {
 	{ "tex", AOV_UVW },
 	{ nullptr, AOV_3D_COUNT },
 };
+
+AOVSpectral typeToVariableSpectral(const std::string& str)
+{
+	for (size_t i = 0; _s_varSpectral[i].Str; ++i) {
+		if (str == _s_varSpectral[i].Str)
+			return _s_varSpectral[i].Var;
+	}
+	return AOV_SPECTRAL_COUNT; // AS UNKNOWN
+}
+
+std::string variableToString(AOVSpectral var)
+{
+	for (size_t i = 0; _s_varSpectral[i].Str; ++i) {
+		if (var == _s_varSpectral[i].Var)
+			return _s_varSpectral[i].Str;
+	}
+	return ""; // AS UNKNOWN
+}
 
 AOV1D typeToVariable1D(const std::string& str)
 {
@@ -278,55 +313,55 @@ void OutputSpecification::parse(Environment*, const DL::DataGroup& entry)
 				}
 			}
 
-			if (type == "rgb" || type == "color") {
+			const AOVSpectral varSpectral = typeToVariableSpectral(type);
+			const AOV3D var3D			  = typeToVariable3D(type);
+			const AOV1D var1D			  = typeToVariable1D(type);
+			const AOVCounter varCounter	  = typeToVariableCounter(type);
+
+			if (varSpectral != AOV_SPECTRAL_COUNT) {
 				IM_ChannelSettingSpec spec;
-				spec.TCM   = tcm;
-				spec.LPE_S = lpe;
-				spec.LPE   = -1;
+				spec.Variable = varSpectral;
+				spec.TCM	  = tcm;
+				spec.LPE_S	  = lpe;
+				spec.LPE	  = -1;
 
 				if (!lpe.empty())
 					spec.Name = spec.Name + "[" + lpe + "]";
 				file.SettingsSpectral.push_back(spec);
+			} else if (var3D != AOV_3D_COUNT) {
+				IM_ChannelSetting3D spec;
+				spec.Variable = var3D;
+				spec.LPE_S	  = lpe;
+				spec.LPE	  = -1;
+
+				std::string name = variableToString(var3D);
+				if (!lpe.empty())
+					name = name + "[" + lpe + "]";
+				spec.Name[0] = name + ".x";
+				spec.Name[1] = name + ".y";
+				spec.Name[2] = name + ".z";
+
+				file.Settings3D.push_back(spec);
+			} else if (var1D != AOV_1D_COUNT) {
+				IM_ChannelSetting1D spec;
+				spec.Variable = var1D;
+				spec.LPE_S	  = lpe;
+				spec.LPE	  = -1;
+				spec.Name	  = variableToString(var1D);
+				if (!lpe.empty())
+					spec.Name = spec.Name + "[" + lpe + "]";
+				file.Settings1D.push_back(spec);
+			} else if (varCounter != AOV_COUNTER_COUNT) {
+				IM_ChannelSettingCounter spec;
+				spec.Variable = varCounter;
+				spec.LPE_S	  = lpe;
+				spec.LPE	  = -1;
+				spec.Name	  = variableToString(varCounter);
+				if (!lpe.empty())
+					spec.Name = spec.Name + "[" + lpe + "]";
+				file.SettingsCounter.push_back(spec);
 			} else {
-				AOV3D var3D			  = typeToVariable3D(type);
-				AOV1D var1D			  = typeToVariable1D(type);
-				AOVCounter varCounter = typeToVariableCounter(type);
-
-				if (var3D != AOV_3D_COUNT) {
-					IM_ChannelSetting3D spec;
-					spec.Variable = var3D;
-					spec.LPE_S	  = lpe;
-					spec.LPE	  = -1;
-
-					std::string name = variableToString(var3D);
-					if (!lpe.empty())
-						name = name + "[" + lpe + "]";
-					spec.Name[0] = name + ".x";
-					spec.Name[1] = name + ".y";
-					spec.Name[2] = name + ".z";
-
-					file.Settings3D.push_back(spec);
-				} else if (var1D != AOV_1D_COUNT) {
-					IM_ChannelSetting1D spec;
-					spec.Variable = var1D;
-					spec.LPE_S	  = lpe;
-					spec.LPE	  = -1;
-					spec.Name	  = variableToString(var1D);
-					if (!lpe.empty())
-						spec.Name = spec.Name + "[" + lpe + "]";
-					file.Settings1D.push_back(spec);
-				} else if (varCounter != AOV_COUNTER_COUNT) {
-					IM_ChannelSettingCounter spec;
-					spec.Variable = varCounter;
-					spec.LPE_S	  = lpe;
-					spec.LPE	  = -1;
-					spec.Name	  = variableToString(varCounter);
-					if (!lpe.empty())
-						spec.Name = spec.Name + "[" + lpe + "]";
-					file.SettingsCounter.push_back(spec);
-				} else {
-					PR_LOG(L_ERROR) << "Unknown channel type " << type;
-				}
+				PR_LOG(L_ERROR) << "Unknown channel type " << type;
 			}
 		}
 	}

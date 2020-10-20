@@ -5,12 +5,17 @@ namespace PR {
 inline bool FrameBufferContainer::hasInternalChannel_1D(AOV1D var) const { return getInternalChannel_1D(var) != nullptr; }
 inline bool FrameBufferContainer::hasInternalChannel_Counter(AOVCounter var) const { return getInternalChannel_Counter(var) != nullptr; }
 inline bool FrameBufferContainer::hasInternalChannel_3D(AOV3D var) const { return getInternalChannel_3D(var) != nullptr; }
-inline bool FrameBufferContainer::hasInternalChannel_Spectral() const { return getInternalChannel_Spectral() != nullptr; }
+inline bool FrameBufferContainer::hasInternalChannel_Spectral(AOVSpectral var) const { return getInternalChannel_Spectral(var) != nullptr; }
 
 inline std::shared_ptr<FrameBufferFloat> FrameBufferContainer::getInternalChannel_1D(AOV1D var) const { return mInt1D[var]; }
 inline std::shared_ptr<FrameBufferUInt32> FrameBufferContainer::getInternalChannel_Counter(AOVCounter var) const { return mIntCounter[var]; }
 inline std::shared_ptr<FrameBufferFloat> FrameBufferContainer::getInternalChannel_3D(AOV3D var) const { return mInt3D[var]; }
-inline std::shared_ptr<FrameBufferFloat> FrameBufferContainer::getInternalChannel_Spectral() const { return mSpectral; }
+inline std::shared_ptr<FrameBufferFloat> FrameBufferContainer::getInternalChannel_Spectral(AOVSpectral var) const { return mSpectral[var]; }
+
+inline VarianceEstimator FrameBufferContainer::varianceEstimator() const
+{
+	return VarianceEstimator(mSpectral[AOV_OnlineM], mSpectral[AOV_OnlineS], mInt1D[AOV_PixelWeight]);
+}
 
 inline std::shared_ptr<FrameBufferFloat> FrameBufferContainer::requestInternalChannel_1D(AOV1D var)
 {
@@ -39,10 +44,13 @@ inline std::shared_ptr<FrameBufferFloat> FrameBufferContainer::requestInternalCh
 	return output;
 }
 
-inline std::shared_ptr<FrameBufferFloat> FrameBufferContainer::requestInternalChannel_Spectral()
+inline std::shared_ptr<FrameBufferFloat> FrameBufferContainer::requestInternalChannel_Spectral(AOVSpectral var)
 {
-	PR_ASSERT(mSpectral, "Internal spectral channel has to be set all the time");
-	return mSpectral;
+	if (mSpectral[var])
+		return mSpectral[var];
+	auto output	   = createSpectralBuffer();
+	mSpectral[var] = output;
+	return output;
 }
 
 // Custom
@@ -73,7 +81,7 @@ inline std::shared_ptr<FrameBufferFloat> FrameBufferContainer::requestCustomChan
 	if (hasCustomChannel_1D(str))
 		return mCustom1D.at(str);
 
-	auto output	= create1DBuffer();
+	auto output	   = create1DBuffer();
 	mCustom1D[str] = output;
 	return output;
 }
@@ -91,7 +99,7 @@ inline std::shared_ptr<FrameBufferFloat> FrameBufferContainer::requestCustomChan
 	if (hasCustomChannel_3D(str))
 		return mCustom3D.at(str);
 
-	auto output	= create3DBuffer();
+	auto output	   = create3DBuffer();
 	mCustom3D[str] = output;
 	return output;
 }
@@ -109,7 +117,7 @@ inline std::shared_ptr<FrameBufferFloat> FrameBufferContainer::requestCustomChan
 inline size_t FrameBufferContainer::getLPEChannelCount_1D(AOV1D var) const { return mLPE_1D[var].size(); }
 inline size_t FrameBufferContainer::getLPEChannelCount_Counter(AOVCounter var) const { return mLPE_Counter[var].size(); }
 inline size_t FrameBufferContainer::getLPEChannelCount_3D(AOV3D var) const { return mLPE_3D[var].size(); }
-inline size_t FrameBufferContainer::getLPEChannelCount_Spectral() const { return mLPE_Spectral.size(); }
+inline size_t FrameBufferContainer::getLPEChannelCount_Spectral(AOVSpectral var) const { return mLPE_Spectral[var].size(); }
 
 inline std::shared_ptr<FrameBufferFloat> FrameBufferContainer::getLPEChannel_1D(AOV1D var, size_t i) const
 {
@@ -123,9 +131,9 @@ inline std::shared_ptr<FrameBufferFloat> FrameBufferContainer::getLPEChannel_3D(
 {
 	return i < getLPEChannelCount_3D(var) ? mLPE_3D[var].at(i).second : nullptr;
 }
-inline std::shared_ptr<FrameBufferFloat> FrameBufferContainer::getLPEChannel_Spectral(size_t i) const
+inline std::shared_ptr<FrameBufferFloat> FrameBufferContainer::getLPEChannel_Spectral(AOVSpectral var, size_t i) const
 {
-	return i < getLPEChannelCount_Spectral() ? mLPE_Spectral.at(i).second : nullptr;
+	return i < getLPEChannelCount_Spectral(var) ? mLPE_Spectral[var].at(i).second : nullptr;
 }
 
 inline std::shared_ptr<FrameBufferFloat> FrameBufferContainer::requestLPEChannel_1D(AOV1D var, const LightPathExpression& expr, size_t& id)
@@ -152,12 +160,12 @@ inline std::shared_ptr<FrameBufferFloat> FrameBufferContainer::requestLPEChannel
 	mLPE_3D[var].emplace_back(std::make_pair(expr, output));
 	return output;
 }
-inline std::shared_ptr<FrameBufferFloat> FrameBufferContainer::requestLPEChannel_Spectral(const LightPathExpression& expr, size_t& id)
+inline std::shared_ptr<FrameBufferFloat> FrameBufferContainer::requestLPEChannel_Spectral(AOVSpectral var, const LightPathExpression& expr, size_t& id)
 {
 	PR_ASSERT(expr.isValid(), "Given expression has to be valid");
 	auto output = createSpectralBuffer();
-	id			= mLPE_Spectral.size();
-	mLPE_Spectral.emplace_back(std::make_pair(expr, output));
+	id			= mLPE_Spectral[var].size();
+	mLPE_Spectral[var].emplace_back(std::make_pair(expr, output));
 	return output;
 }
 

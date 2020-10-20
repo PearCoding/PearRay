@@ -13,6 +13,8 @@ set(PR_Src
   buffer/FrameBufferContainer.cpp
   buffer/FrameBufferContainer.h
   buffer/FrameBufferContainer.inl
+  buffer/VarianceEstimator.h
+  buffer/VarianceEstimator.inl
   cache/ICachable.h
   cache/Cache.h
   cache/Cache.cpp

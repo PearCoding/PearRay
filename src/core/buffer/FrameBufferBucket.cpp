@@ -84,6 +84,9 @@ void FrameBufferBucket::commitSpectrals2(StreamPipeline* pipeline, const OutputS
 	const int32 filterRadius = mFilter.radius();
 	const Size2i filterSize	 = Size2i(filterRadius, filterRadius);
 
+	const auto spectralCh = mData.getInternalChannel_Spectral(AOV_Output);
+	const auto weightCh	  = mData.getInternalChannel_1D(AOV_PixelWeight);
+
 	PR_ASSERT(HasFilter || filterRadius == 0, "If no filter is choosen, radius must be zero");
 
 	PR_OPT_LOOP
@@ -133,14 +136,14 @@ void FrameBufferBucket::commitSpectrals2(StreamPipeline* pipeline, const OutputS
 					const float filterWeight	 = mFilter.evalWeight(sp(0) - rp(0), sp(1) - rp(1));
 					const CIETriplet weightedRad = filterWeight * triplet;
 
-					mData.getInternalChannel_1D(AOV_PixelWeight)->getFragment(sp, 0) += filterWeight * blendWeight;
+					weightCh->getFragment(sp, 0) += filterWeight * blendWeight;
 
 					PR_UNROLL_LOOP(3)
 					for (Size1i k = 0; k < 3; ++k)
-						mData.getInternalChannel_Spectral()->getFragment(sp, k) += weightedRad[k];
+						spectralCh->getFragment(sp, k) += weightedRad[k];
 
 					// LPE
-					for (auto pair : mData.mLPE_Spectral) {
+					for (auto pair : mData.mLPE_Spectral[AOV_Output]) {
 						if (pair.first.match(path)) {
 							PR_UNROLL_LOOP(3)
 							for (Size1i k = 0; k < 3; ++k)
@@ -150,14 +153,14 @@ void FrameBufferBucket::commitSpectrals2(StreamPipeline* pipeline, const OutputS
 				}
 			}
 		} else {
-			mData.getInternalChannel_1D(AOV_PixelWeight)->getFragment(entry.Position, 0) += blendWeight;
+			weightCh->getFragment(entry.Position, 0) += blendWeight;
 
 			PR_UNROLL_LOOP(3)
 			for (Size1i k = 0; k < 3; ++k)
-				mData.getInternalChannel_Spectral()->getFragment(entry.Position, k) += triplet[k];
+				spectralCh->getFragment(entry.Position, k) += triplet[k];
 
 			// LPE
-			for (auto pair : mData.mLPE_Spectral) {
+			for (auto pair : mData.mLPE_Spectral[AOV_Output]) {
 				if (pair.first.match(path)) {
 					PR_UNROLL_LOOP(3)
 					for (Size1i k = 0; k < 3; ++k)

@@ -4,8 +4,8 @@
 #include "buffer/FrameBuffer.h"
 #include "spectral/ToneMapper.h"
 
-#include <vector>
 #include <filesystem>
+#include <vector>
 
 namespace PR {
 struct IM_ChannelSetting1D {
@@ -31,6 +31,7 @@ struct IM_ChannelSetting3D {
 
 struct IM_ChannelSettingSpec {
 	std::string Name;
+	AOVSpectral Variable = AOV_Output;
 	ToneColorMode TCM;
 	int LPE = -1;
 	std::string LPE_S;

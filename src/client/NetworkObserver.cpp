@@ -69,7 +69,7 @@ bool handle_status(NetworkObserver* observer, Serializer& out)
 bool handle_image(NetworkObserver* observer, Serializer& out)
 {
 	auto context = observer->context();
-	auto channel = context->output()->data().getInternalChannel_Spectral();
+	auto channel = context->output()->data().getInternalChannel_Spectral(AOV_Output);
 
 	PR_ASSERT(channel->channels() == 3, "Expect spectral channel to have 3 channels"); // TODO: This may change in the future
 

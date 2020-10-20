@@ -142,9 +142,9 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::filesystem::path& file
 			for (const IM_ChannelSettingSpec& sett : chSpec) {
 				std::shared_ptr<FrameBufferFloat> channel;
 				if (sett.LPE < 0)
-					channel = data.getInternalChannel_Spectral();
+					channel = data.getInternalChannel_Spectral(sett.Variable);
 				else
-					channel = data.getLPEChannel_Spectral(sett.LPE);
+					channel = data.getLPEChannel_Spectral(sett.Variable, sett.LPE);
 
 				if (mRenderer->settings().spectralMono) {
 					line[id]	 = channel->getFragment(p, 0);

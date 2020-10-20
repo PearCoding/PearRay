@@ -99,7 +99,7 @@ void TevObserver::onIteration(const UpdateInfo&)
 // 3*String 	ChannelNames = R,G,B
 void TevObserver::createImageProtocol()
 {
-	auto channel = mRenderContext->output()->data().getInternalChannel_Spectral();
+	auto channel = mRenderContext->output()->data().getInternalChannel_Spectral(AOV_Output);
 	PR_ASSERT(channel->channels() == CHANNEL_COUNT,
 			  "Expect spectral channel to have 3 channels");
 
@@ -147,7 +147,7 @@ void TevObserver::closeImageProtocol()
 // float*W*H	Data
 void TevObserver::updateImageProtocol()
 {
-	const auto channel		 = mRenderContext->output()->data().getInternalChannel_Spectral();
+	const auto channel		 = mRenderContext->output()->data().getInternalChannel_Spectral(AOV_Output);
 	const auto blend_channel = mRenderContext->output()->data().getInternalChannel_1D(AOV_PixelWeight);
 	PR_ASSERT(channel->channels() == CHANNEL_COUNT,
 			  "Expect spectral channel to have 3 channels");

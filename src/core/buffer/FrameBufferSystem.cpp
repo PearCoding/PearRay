@@ -6,7 +6,7 @@
 
 namespace PR {
 FrameBufferSystem::FrameBufferSystem(const std::shared_ptr<IFilter>& filter,
-						   const Size2i& size, Size1i specChannels, bool monotonic)
+									 const Size2i& size, Size1i specChannels, bool monotonic)
 	: mFilter(filter)
 	, mMonotonic(monotonic)
 	, mData(size, specChannels)
@@ -21,9 +21,11 @@ std::shared_ptr<FrameBufferBucket> FrameBufferSystem::createBucket(const Size2i&
 {
 	std::shared_ptr<FrameBufferBucket> bucket = std::make_shared<FrameBufferBucket>(
 		mFilter, size,
-		mData.getInternalChannel_Spectral()->channels(), mMonotonic);
+		mData.getInternalChannel_Spectral(AOV_Output)->channels(), mMonotonic);
 
 	// Internals
+	for (int i = 0; i < AOV_SPECTRAL_COUNT; ++i)
+		bucket->data().requestInternalChannel_Spectral((AOVSpectral)i);
 	for (int i = 0; i < AOV_3D_COUNT; ++i)
 		bucket->data().requestInternalChannel_3D((AOV3D)i);
 	for (int i = 0; i < AOV_1D_COUNT; ++i)
@@ -52,8 +54,9 @@ std::shared_ptr<FrameBufferBucket> FrameBufferSystem::createBucket(const Size2i&
 	for (int i = 0; i < AOV_COUNTER_COUNT; ++i)
 		for (const auto& p : mData.mLPE_Counter[i])
 			bucket->data().requestLPEChannel_Counter((AOVCounter)i, p.first, tmp);
-	for (const auto& p : mData.mLPE_Spectral)
-		bucket->data().requestLPEChannel_Spectral(p.first, tmp);
+	for (int i = 0; i < AOV_SPECTRAL_COUNT; ++i)
+		for (const auto& p : mData.mLPE_Spectral[i])
+			bucket->data().requestLPEChannel_Spectral((AOVSpectral)i, p.first, tmp);
 
 	bucket->cache();
 
@@ -61,7 +64,7 @@ std::shared_ptr<FrameBufferBucket> FrameBufferSystem::createBucket(const Size2i&
 }
 
 void FrameBufferSystem::mergeBucket(const Point2i& p,
-							   const std::shared_ptr<FrameBufferBucket>& bucket)
+									const std::shared_ptr<FrameBufferBucket>& bucket)
 {
 	std::lock_guard<std::mutex> guard(mMergeMutex);
 
@@ -75,9 +78,12 @@ void FrameBufferSystem::mergeBucket(const Point2i& p,
 	const Size2i src_size = Size2i::fromArray(bucket->extendedViewSize() - src_off);
 	const Size2i dst_size = src_size;
 
-	mData.mSpectral->addBlock(dst_off, dst_size, src_off, src_size, *bucket->data().mSpectral);
-	for (size_t k = 0; k < mData.mLPE_Spectral.size(); ++k)
-		mData.mLPE_Spectral[k].second->addBlock(dst_off, dst_size, src_off, src_size, *bucket->data().mLPE_Spectral[k].second);
+	for (int i = 0; i < AOV_SPECTRAL_COUNT; ++i) {
+		if (mData.mSpectral[i])
+			mData.mSpectral[i]->addBlock(dst_off, dst_size, src_off, src_size, *bucket->data().mSpectral[i]);
+		for (size_t k = 0; k < mData.mLPE_Spectral[i].size(); ++k)
+			mData.mLPE_Spectral[i][k].second->addBlock(dst_off, dst_size, src_off, src_size, *bucket->data().mLPE_Spectral[i][k].second);
+	}
 
 	for (int i = 0; i < AOV_3D_COUNT; ++i) {
 		if (mData.mInt3D[i])
