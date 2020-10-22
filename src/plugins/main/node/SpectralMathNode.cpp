@@ -175,6 +175,81 @@ private:
 	const std::shared_ptr<FloatSpectralNode> mOp2;
 };
 
+inline static SpectralBlob brightness_contrast(const SpectralBlob& c, float brightness, float contrast)
+{
+	const float a = 1.0f + contrast;
+	const float b = brightness - contrast * 0.5f;
+
+	return (a * c + b).cwiseMax(0);
+}
+
+class ConstBCSpectralMath : public FloatSpectralNode {
+public:
+	explicit ConstBCSpectralMath(const std::shared_ptr<FloatSpectralNode>& color,
+								 float brightness, float contrast)
+		: mColor(color)
+		, mBrightness(brightness)
+		, mContrast(contrast)
+	{
+	}
+
+	SpectralBlob eval(const ShadingContext& ctx) const override
+	{
+		return brightness_contrast(mColor->eval(ctx), mBrightness, mContrast);
+	}
+
+	Vector2i queryRecommendedSize() const override
+	{
+		return mColor->queryRecommendedSize();
+	}
+
+	std::string dumpInformation() const override
+	{
+		std::stringstream sstream;
+		sstream << "BrightnessContrast (" << mColor->dumpInformation() << ", Brightness=" << mBrightness << ", Contrast=" << mContrast << ")";
+		return sstream.str();
+	}
+
+private:
+	const std::shared_ptr<FloatSpectralNode> mColor;
+	const float mBrightness;
+	const float mContrast;
+};
+
+class DynamicBCSpectralMath : public FloatSpectralNode {
+public:
+	explicit DynamicBCSpectralMath(const std::shared_ptr<FloatSpectralNode>& color,
+								   const std::shared_ptr<FloatScalarNode>& brightness,
+								   const std::shared_ptr<FloatScalarNode>& contrast)
+		: mColor(color)
+		, mBrightness(brightness)
+		, mContrast(contrast)
+	{
+	}
+
+	SpectralBlob eval(const ShadingContext& ctx) const override
+	{
+		return brightness_contrast(mColor->eval(ctx), mBrightness->eval(ctx), mContrast->eval(ctx));
+	}
+
+	Vector2i queryRecommendedSize() const override
+	{
+		return mColor->queryRecommendedSize();
+	}
+
+	std::string dumpInformation() const override
+	{
+		std::stringstream sstream;
+		sstream << "BrightnessContrast (" << mColor->dumpInformation() << ", Brightness=" << mBrightness->dumpInformation() << ", Contrast=" << mContrast->dumpInformation() << ")";
+		return sstream.str();
+	}
+
+private:
+	const std::shared_ptr<FloatSpectralNode> mColor;
+	const std::shared_ptr<FloatScalarNode> mBrightness;
+	const std::shared_ptr<FloatScalarNode> mContrast;
+};
+
 class SpectralMathPlugin : public INodePlugin {
 public:
 	std::shared_ptr<INode> create(uint32, const std::string& type_name, const SceneLoadContext& ctx) override
@@ -229,6 +304,14 @@ public:
 				return std::make_shared<ConstBlendSpectralMath>(fac.getNumber(0.5f),
 																ctx.lookupSpectralNode(ctx.parameters().getParameter(1)),
 																ctx.lookupSpectralNode(ctx.parameters().getParameter(2)));
+		} else if (type_name == "sbrightnesscontrast") {
+			const auto color	  = ctx.lookupSpectralNode(ctx.parameters().getParameter(0));
+			const auto brightness = ctx.parameters().getParameter(1);
+			const auto contrast	  = ctx.parameters().getParameter(2);
+			if (brightness.isReference() || contrast.isReference())
+				return std::make_shared<DynamicBCSpectralMath>(color, ctx.lookupScalarNode(brightness), ctx.lookupScalarNode(contrast));
+			else
+				return std::make_shared<ConstBCSpectralMath>(color, brightness.getNumber(0), contrast.getNumber(0));
 		} else {
 			PR_ASSERT(false, "SpectralMathNode plugin does not handle all offered types of operations!");
 			return nullptr;
