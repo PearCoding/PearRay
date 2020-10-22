@@ -324,7 +324,7 @@ public:
 													  "sneg", "sabs",
 													  "smax", "smin",
 													  "sburn", "sscreen", "sdodge", "soverlay", "ssoftlight", "shardlight",
-													  "sblend" });
+													  "sblend", "sbrightnesscontrast" });
 		return names;
 	}
 
