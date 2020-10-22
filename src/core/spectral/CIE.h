@@ -42,20 +42,29 @@ public:
 
 	static inline CIETriplet eval(float wavelength)
 	{
-		static const EquidistantSpectrumView CIE_X(NM_TO_X, PR_CIE_SAMPLE_COUNT, PR_CIE_WAVELENGTH_START, PR_CIE_WAVELENGTH_END);
-		static const EquidistantSpectrumView CIE_Y(NM_TO_Y, PR_CIE_SAMPLE_COUNT, PR_CIE_WAVELENGTH_START, PR_CIE_WAVELENGTH_END);
-		static const EquidistantSpectrumView CIE_Z(NM_TO_Z, PR_CIE_SAMPLE_COUNT, PR_CIE_WAVELENGTH_START, PR_CIE_WAVELENGTH_END);
-
-		return CIETriplet{ CIE_X.lookup(wavelength), CIE_Y.lookup(wavelength), CIE_Z.lookup(wavelength) };
+		return CIETriplet{ eval_x(wavelength), eval_y(wavelength), eval_z(wavelength) };
 	}
 
-	//////////////// CIE
-	////////////////
+	static inline float eval_x(float wavelength)
+	{
+		static const EquidistantSpectrumView CIE_X(NM_TO_X, PR_CIE_SAMPLE_COUNT, PR_CIE_WAVELENGTH_START, PR_CIE_WAVELENGTH_END);
+		return CIE_X.lookup(wavelength);
+	}
+
 	static inline float eval_y(float wavelength)
 	{
 		static const EquidistantSpectrumView CIE_Y(NM_TO_Y, PR_CIE_SAMPLE_COUNT, PR_CIE_WAVELENGTH_START, PR_CIE_WAVELENGTH_END);
 		return CIE_Y.lookup(wavelength);
 	}
+
+	static inline float eval_z(float wavelength)
+	{
+		static const EquidistantSpectrumView CIE_Z(NM_TO_Z, PR_CIE_SAMPLE_COUNT, PR_CIE_WAVELENGTH_START, PR_CIE_WAVELENGTH_END);
+		return CIE_Z.lookup(wavelength);
+	}
+
+	//////////////// CIE
+	////////////////
 
 	static inline float sample_y(float u, float& pdf)
 	{
