@@ -65,9 +65,7 @@ static inline void hsv(const SpectralBlob& w, const SpectralBlob& wvl, SpectralB
 	const SpectralBlob diffG = (((rgbMax - g) / 6) + (diff / 2)) / diff;
 	const SpectralBlob diffB = (((rgbMax - b) / 6) + (diff / 2)) / diff;
 
-	hue		   = (r == rgbMax).select(diffB - diffG, hue);
-	hue		   = (g == rgbMax).select((1.0f / 3) + diffR - diffB, hue);
-	hue		   = (b == rgbMax).select((2.0f / 3) + diffG - diffR, hue);
+	hue		   = (r == rgbMax).select(diffB - diffG, (g == rgbMax).select((1.0f / 3) + diffR - diffB, (2.0f / 3) + diffG - diffR));
 	hue		   = (hue < 0).select(hue + 1, hue);
 	hue		   = (hue > 1).select(hue - 1, hue);
 	hue		   = (diff == 0).select(SpectralBlob::Zero(), hue);
