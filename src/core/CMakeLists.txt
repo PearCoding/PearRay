@@ -90,6 +90,9 @@ set(PR_Src
   path/LPE_RegExpr.cpp
   path/LPE_RegExpr.h
   path/LPE_RegState.h
+  photon/Photon.h
+  photon/PhotonMap.h
+  photon/PhotonMap.inl
   ray/Ray.h
   ray/RayGroup.h
   ray/RayGroupContainer.h
