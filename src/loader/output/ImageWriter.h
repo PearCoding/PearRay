@@ -35,6 +35,7 @@ struct IM_ChannelSettingSpec {
 	ToneColorMode TCM;
 	int LPE = -1;
 	std::string LPE_S;
+	bool IsRaw = false;
 };
 
 struct IM_SaveOptions {

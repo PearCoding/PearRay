@@ -32,6 +32,7 @@ public:
 	uint32 TevUpdate; // In seconds
 	uint16 TevPort;
 	std::string TevIp;
+	bool TevVariance;
 
 	// Network
 	int16 ListenNetwork; // Port to listen, -1 no networking

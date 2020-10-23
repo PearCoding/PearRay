@@ -47,6 +47,7 @@ bool ProgramSettings::parse(int argc, char** argv)
 			("tev-update", "Update interval in seconds for tev", cxxopts::value<uint32>()->default_value("1"))
 			("tev-port", "Set port to connect to Tev", cxxopts::value<uint16>()->default_value("14158"))
 			("tev-ip", "Set ip to connect to Tev", cxxopts::value<std::string>()->default_value("localhost"))
+			("tev-var", "Enable tev connection and show variance aswell")
 
 			("t,threads", "Amount of threads used for processing. Set 0 for automatic detection.", cxxopts::value<uint32>())
 			("rtx", "Amount of horizontal tiles used in threading", cxxopts::value<uint32>())
@@ -145,10 +146,11 @@ bool ProgramSettings::parse(int argc, char** argv)
 		ImgUseTags		   = (vm.count("img-use-tags") != 0);
 
 		// Tev Image
-		if (vm.count("tev")) {
-			TevUpdate = vm["tev-update"].as<uint32>();
-			TevPort	  = vm["tev-port"].as<uint16>();
-			TevIp	  = vm["tev-ip"].as<std::string>();
+		if (vm.count("tev") || vm.count("tev-var")) {
+			TevUpdate	= vm["tev-update"].as<uint32>();
+			TevPort		= vm["tev-port"].as<uint16>();
+			TevIp		= vm["tev-ip"].as<std::string>();
+			TevVariance = vm.count("tev-var") != 0;
 		} else {
 			TevUpdate = 0;
 			TevPort	  = 0;

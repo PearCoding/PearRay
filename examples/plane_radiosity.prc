@@ -24,6 +24,7 @@
 	(output
 		:name 'image'
 		(channel :type 'color' :color 'xyz' )
+		(channel :type 'var' )
 	)
 	; Camera
 	(camera

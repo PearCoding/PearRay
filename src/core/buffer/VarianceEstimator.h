@@ -5,22 +5,19 @@
 namespace PR {
 class PR_LIB_CORE VarianceEstimator {
 public:
-	inline VarianceEstimator(const std::shared_ptr<FrameBufferFloat>& onlineM,
-							 const std::shared_ptr<FrameBufferFloat>& onlineS,
-							 const std::shared_ptr<FrameBufferFloat>& weights);
+	inline VarianceEstimator(const std::shared_ptr<FrameBufferFloat>& onlineMean,
+							 const std::shared_ptr<FrameBufferFloat>& onlineVariance);
 	inline ~VarianceEstimator();
 
 	inline Size1i channelCount() const;
 
-	inline void addValue(const Point2i& p, Size1i channel, float weight, float value);
-	inline void addWeight(const Point2i& p, float weight);
+	inline void addValue(const Point2i& p, Size1i channel, float prev_weight_sum, float weight, float value);
 
 	inline float populationVariance(const Point2i& p, Size1i channel) const;
 
 private:
-	const std::shared_ptr<FrameBufferFloat> mOnlineM; // Mean
-	const std::shared_ptr<FrameBufferFloat> mOnlineS; // Incremental update value S
-	const std::shared_ptr<FrameBufferFloat> mWeights;
+	const std::shared_ptr<FrameBufferFloat> mOnlineMean;
+	const std::shared_ptr<FrameBufferFloat> mOnlineVariance;
 };
 } // namespace PR
 

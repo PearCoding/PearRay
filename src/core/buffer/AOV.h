@@ -3,8 +3,8 @@
 namespace PR {
 enum AOVSpectral {
 	AOV_Output = 0,
-	AOV_OnlineM,
-	AOV_OnlineS,
+	AOV_OnlineMean,
+	AOV_OnlineVariance,
 
 	AOV_SPECTRAL_COUNT
 };

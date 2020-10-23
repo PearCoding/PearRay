@@ -146,7 +146,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::filesystem::path& file
 				else
 					channel = data.getLPEChannel_Spectral(sett.Variable, sett.LPE);
 
-				if (mRenderer->settings().spectralMono) {
+				if (mRenderer->settings().spectralMono || sett.IsRaw) {
 					line[id]	 = channel->getFragment(p, 0);
 					line[id + 1] = channel->getFragment(p, 1);
 					line[id + 2] = channel->getFragment(p, 2);

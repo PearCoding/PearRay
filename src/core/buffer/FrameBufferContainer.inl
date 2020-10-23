@@ -14,7 +14,7 @@ inline std::shared_ptr<FrameBufferFloat> FrameBufferContainer::getInternalChanne
 
 inline VarianceEstimator FrameBufferContainer::varianceEstimator() const
 {
-	return VarianceEstimator(mSpectral[AOV_OnlineM], mSpectral[AOV_OnlineS], mInt1D[AOV_PixelWeight]);
+	return VarianceEstimator(mSpectral[AOV_OnlineMean], mSpectral[AOV_OnlineVariance]);
 }
 
 inline std::shared_ptr<FrameBufferFloat> FrameBufferContainer::requestInternalChannel_1D(AOV1D var)

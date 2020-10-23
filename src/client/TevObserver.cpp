@@ -10,21 +10,23 @@
 #include <thread>
 
 namespace PR {
-static const char* IMAGE_NAME					= "PearRay";
-constexpr uint32 IMAGE_NAME_SIZE				= 8;
-constexpr uint32 CHANNEL_COUNT					= 3; // Only triplets supported yet
-static const char* CHANNEL_NAMES[CHANNEL_COUNT] = { "R", "G", "B" };
-constexpr uint32 CHANNEL_NAME_SIZE				= 2;
-constexpr uint32 CREATE_MESSAGE_SIZE			= 4 + 1 + IMAGE_NAME_SIZE + 1 + 4 + 4 + 4 + 3 * CHANNEL_NAME_SIZE;
-constexpr uint32 CLOSE_MESSAGE_SIZE				= 4 + 1 + IMAGE_NAME_SIZE;
-constexpr uint32 UPDATE_MESSAGE_HEADER_SIZE		= 4 + 1 + IMAGE_NAME_SIZE + 1 + 4 + 4 + 4 + 4 + CHANNEL_NAME_SIZE;
-constexpr uint32 UPDATE_TILE_SIZE				= 64;
+static const char* IMAGE_NAME						= "PearRay";
+static const uint32 IMAGE_NAME_SIZE					= strlen(IMAGE_NAME) + 1;
+constexpr uint32 MAX_CHANNEL_COUNT					= 6; // Only triplets supported yet
+static const char* CHANNEL_NAMES[MAX_CHANNEL_COUNT] = { "R", "G", "B", "Variance.R", "Variance.G", "Variance.B" };
+static const uint32 CREATE_MESSAGE_HEADER_SIZE		= 4 + 1 + IMAGE_NAME_SIZE + 1 + 4 + 4 + 4;
+static const uint32 CLOSE_MESSAGE_SIZE				= 4 + 1 + IMAGE_NAME_SIZE;
+static const uint32 UPDATE_MESSAGE_HEADER_SIZE		= 4 + 1 + IMAGE_NAME_SIZE + 1 + 4 + 4 + 4 + 4;
+constexpr uint32 UPDATE_TILE_SIZE					= 64;
 
 class TevConnection {
 public:
 	Socket Con;
 	BufferedNetworkSerializer Out;
 	std::vector<float> Data;
+
+	size_t CreateMessageSize;
+	std::array<size_t, MAX_CHANNEL_COUNT> UpdateMessageSize;
 
 	TevConnection(const std::string& ip, uint16 port)
 	{
@@ -36,6 +38,7 @@ public:
 TevObserver::TevObserver()
 	: mRenderContext(nullptr)
 	, mUpdateCycleSeconds(0)
+	, mDisplayVariance(false)
 {
 }
 
@@ -50,9 +53,11 @@ void TevObserver::begin(RenderContext* renderContext, const ProgramSettings& set
 	mRenderContext		= renderContext;
 	mConnection			= std::make_unique<TevConnection>(settings.TevIp, settings.TevPort);
 	mUpdateCycleSeconds = settings.TevUpdate;
+	mDisplayVariance	= settings.TevVariance;
 	mLastUpdate			= std::chrono::high_resolution_clock::now();
 
 	if (mConnection->Con.isOpen()) {
+		calculateProtocolCache();
 		closeImageProtocol(); // Make sure a open file is closed
 		createImageProtocol();
 	}
@@ -89,34 +94,49 @@ void TevObserver::onIteration(const UpdateInfo&)
 	// Nothing
 }
 
-// uint32 		MessageSize
-// uint8 		Type = 4
-// String 		Name
-// bool/uint8 	GrabFocus
-// int32 		Width
-// int32 		Height
-// int32 		Channels = 3
-// 3*String 	ChannelNames = R,G,B
+void TevObserver::calculateProtocolCache()
+{
+	const size_t full_channel_count = mDisplayVariance ? 6 : 3;
+
+	size_t channel_name_size = 0;
+	for (size_t i = 0; i < full_channel_count; i++)
+		channel_name_size += strlen(CHANNEL_NAMES[i]) + 1;
+
+	mConnection->CreateMessageSize = CREATE_MESSAGE_HEADER_SIZE + channel_name_size;
+
+	for (size_t i = 0; i < MAX_CHANNEL_COUNT; i++)
+		mConnection->UpdateMessageSize[i] = UPDATE_MESSAGE_HEADER_SIZE + strlen(CHANNEL_NAMES[i]) + 1;
+}
+
+// uint32 			MessageSize
+// uint8 			Type = 4
+// String 			Name
+// bool/uint8 		GrabFocus
+// int32 			Width
+// int32 			Height
+// int32 			Channels
+// Channels*String 	ChannelNames
 void TevObserver::createImageProtocol()
 {
 	auto channel = mRenderContext->output()->data().getInternalChannel_Spectral(AOV_Output);
-	PR_ASSERT(channel->channels() == CHANNEL_COUNT,
+	PR_ASSERT(channel->channels() == 3,
 			  "Expect spectral channel to have 3 channels");
 
-	mConnection->Data.resize(UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * CHANNEL_COUNT); // Make sure update calls have space
-	mConnection->Out.resize(UPDATE_MESSAGE_HEADER_SIZE + sizeof(float) * UPDATE_TILE_SIZE * UPDATE_TILE_SIZE);
+	const size_t full_channel_count = mDisplayVariance ? 6 : 3;
 
-	mConnection->Out.write((uint32)CREATE_MESSAGE_SIZE);
+	mConnection->Data.resize(UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * full_channel_count); // Make sure update calls have space
+	mConnection->Out.resize(mConnection->UpdateMessageSize[full_channel_count - 1] + sizeof(float) * UPDATE_TILE_SIZE * UPDATE_TILE_SIZE);
+
+	mConnection->Out.write((uint32)mConnection->CreateMessageSize);
 	mConnection->Out.write((uint8)4);
 	mConnection->Out.write((uint8)1);
 	mConnection->Out.write(IMAGE_NAME);
 	mConnection->Out.write((uint32)channel->width());
 	mConnection->Out.write((uint32)channel->height());
-	mConnection->Out.write((uint32)CHANNEL_COUNT);
-	for (uint32 i = 0; i < CHANNEL_COUNT; i++)
+	mConnection->Out.write((uint32)full_channel_count);
+	for (uint32 i = 0; i < full_channel_count; i++)
 		mConnection->Out.write(CHANNEL_NAMES[i]);
 
-	PR_ASSERT(mConnection->Out.currentUsed() == CREATE_MESSAGE_SIZE, "Invalid package size");
 	mConnection->Out.flush();
 }
 
@@ -149,8 +169,10 @@ void TevObserver::updateImageProtocol()
 {
 	const auto channel		 = mRenderContext->output()->data().getInternalChannel_Spectral(AOV_Output);
 	const auto blend_channel = mRenderContext->output()->data().getInternalChannel_1D(AOV_PixelWeight);
-	PR_ASSERT(channel->channels() == CHANNEL_COUNT,
-			  "Expect spectral channel to have 3 channels");
+	const auto var_channel	 = mRenderContext->output()->data().getInternalChannel_Spectral(AOV_OnlineVariance);
+	PR_ASSERT(channel->channels() == 3, "Expect spectral channel to have 3 channels");
+
+	const size_t full_channel_count = mDisplayVariance ? 6 : 3;
 
 	const size_t tx = channel->width() / UPDATE_TILE_SIZE + 1;
 	const size_t ty = channel->height() / UPDATE_TILE_SIZE + 1;
@@ -202,15 +224,28 @@ void TevObserver::updateImageProtocol()
 						const auto p			= Point2i(sx + ix, sy + iy);
 						const float blendWeight = blend_channel->getFragment(p, 0);
 						const float blendFactor = blendWeight <= PR_EPSILON ? 1.0f : 1.0f / blendWeight;
-						for (size_t k = 0; k < CHANNEL_COUNT; ++k)
+						for (size_t k = 0; k < 3; ++k)
 							mConnection->Data[UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * k + iy * w + ix] = blendFactor * channel->getFragment(p, k);
 					}
 				}
 			}
 
-			for (uint32 c = 0; c < CHANNEL_COUNT; ++c) {
+			if (mDisplayVariance) {
+				PR_OPT_LOOP
+				for (size_t iy = 0; iy < h; ++iy) {
+					for (size_t ix = 0; ix < w; ++ix) {
+						const auto p			= Point2i(sx + ix, sy + iy);
+						const float blendWeight = blend_channel->getFragment(p, 0);
+						const float blendFactor = blendWeight <= PR_EPSILON ? 1.0f : 1.0f / blendWeight;
+						for (size_t k = 0; k < 3; ++k)
+							mConnection->Data[UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * (k + 3) + iy * w + ix] = blendFactor * var_channel->getFragment(p, k);
+					}
+				}
+			}
+
+			for (uint32 c = 0; c < full_channel_count; ++c) {
 				const float* data		 = mConnection->Data.data() + UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * c;
-				const uint32 messageSize = UPDATE_MESSAGE_HEADER_SIZE + sizeof(float) * h * w;
+				const uint32 messageSize = mConnection->UpdateMessageSize[c] + sizeof(float) * h * w;
 
 				mConnection->Out.write((uint32)messageSize);
 				mConnection->Out.write((uint8)3);

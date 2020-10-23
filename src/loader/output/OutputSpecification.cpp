@@ -125,8 +125,10 @@ static struct {
 	{ "spectral", AOV_Output },
 	{ "output", AOV_Output },
 	{ "rgb", AOV_Output },
-	{ "online_m", AOV_OnlineM },
-	{ "online_s", AOV_OnlineS },
+	{ "online_mean", AOV_OnlineMean },
+	{ "variance", AOV_OnlineVariance },
+	{ "online_variance", AOV_OnlineVariance },
+	{ "var", AOV_OnlineVariance },
 	{ nullptr, AOV_SPECTRAL_COUNT },
 };
 
@@ -324,6 +326,12 @@ void OutputSpecification::parse(Environment*, const DL::DataGroup& entry)
 				spec.TCM	  = tcm;
 				spec.LPE_S	  = lpe;
 				spec.LPE	  = -1;
+
+				if (varSpectral != AOV_Output) {
+					spec.IsRaw = true;
+					spec.Name  = variableToString(varSpectral);
+				}
+				// else keep it empty
 
 				if (!lpe.empty())
 					spec.Name = spec.Name + "[" + lpe + "]";

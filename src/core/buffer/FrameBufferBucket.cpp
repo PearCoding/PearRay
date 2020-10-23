@@ -84,10 +84,37 @@ void FrameBufferBucket::commitSpectrals2(StreamPipeline* pipeline, const OutputS
 	const int32 filterRadius = mFilter.radius();
 	const Size2i filterSize	 = Size2i(filterRadius, filterRadius);
 
-	const auto spectralCh = mData.getInternalChannel_Spectral(AOV_Output);
-	const auto weightCh	  = mData.getInternalChannel_1D(AOV_PixelWeight);
+	const auto spectralCh  = mData.getInternalChannel_Spectral(AOV_Output);
+	const auto weightCh	   = mData.getInternalChannel_1D(AOV_PixelWeight);
+	auto varianceEstimator = mData.varianceEstimator();
 
 	PR_ASSERT(HasFilter || filterRadius == 0, "If no filter is choosen, radius must be zero");
+
+	const auto addContribution = [&](const Point2i& sp, float weight, const CIETriplet& triplet, const LightPathView& path) {
+		float& weights = weightCh->getFragment(sp, 0);
+
+		// Add contribution to main channel
+		PR_UNROLL_LOOP(3)
+		for (Size1i k = 0; k < 3; ++k)
+			spectralCh->getFragment(sp, k) += triplet[k];
+
+		// Add contribution to variance channel
+		PR_UNROLL_LOOP(3)
+		for (Size1i k = 0; k < 3; ++k)
+			varianceEstimator.addValue(sp, k, weights, weight, triplet[k]);
+
+		// Increment weights
+		weights += weight;
+
+		// LPE
+		for (auto pair : mData.mLPE_Spectral[AOV_Output]) {
+			if (pair.first.match(path)) {
+				PR_UNROLL_LOOP(3)
+				for (Size1i k = 0; k < 3; ++k)
+					pair.second->getFragment(sp, k) += triplet[k];
+			}
+		}
+	};
 
 	PR_OPT_LOOP
 	for (size_t i = 0; i < entry_count; ++i) {
@@ -132,41 +159,13 @@ void FrameBufferBucket::commitSpectrals2(StreamPipeline* pipeline, const OutputS
 			const Point2i end	= (extendedViewSize() - Point2i(1, 1)).cwiseMin(rp + filterSize);
 			for (Point1i py = start(1); py <= end(1); ++py) {
 				for (Point1i px = start(0); px <= end(0); ++px) {
-					const Point2i sp			 = Point2i(px, py);
-					const float filterWeight	 = mFilter.evalWeight(sp(0) - rp(0), sp(1) - rp(1));
-					const CIETriplet weightedRad = filterWeight * triplet;
-
-					weightCh->getFragment(sp, 0) += filterWeight * blendWeight;
-
-					PR_UNROLL_LOOP(3)
-					for (Size1i k = 0; k < 3; ++k)
-						spectralCh->getFragment(sp, k) += weightedRad[k];
-
-					// LPE
-					for (auto pair : mData.mLPE_Spectral[AOV_Output]) {
-						if (pair.first.match(path)) {
-							PR_UNROLL_LOOP(3)
-							for (Size1i k = 0; k < 3; ++k)
-								pair.second->getFragment(sp, k) += weightedRad[k];
-						}
-					}
+					const Point2i sp		 = Point2i(px, py);
+					const float filterWeight = mFilter.evalWeight(sp(0) - rp(0), sp(1) - rp(1));
+					addContribution(sp, filterWeight * blendWeight, filterWeight * triplet, path);
 				}
 			}
 		} else {
-			weightCh->getFragment(entry.Position, 0) += blendWeight;
-
-			PR_UNROLL_LOOP(3)
-			for (Size1i k = 0; k < 3; ++k)
-				spectralCh->getFragment(entry.Position, k) += triplet[k];
-
-			// LPE
-			for (auto pair : mData.mLPE_Spectral[AOV_Output]) {
-				if (pair.first.match(path)) {
-					PR_UNROLL_LOOP(3)
-					for (Size1i k = 0; k < 3; ++k)
-						pair.second->getFragment(entry.Position, k) += triplet[k];
-				}
-			}
+			addContribution(entry.Position, blendWeight, triplet, path);
 		}
 	}
 }

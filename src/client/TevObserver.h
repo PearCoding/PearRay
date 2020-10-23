@@ -15,6 +15,7 @@ public:
 	void onIteration(const UpdateInfo& info) override;
 
 private:
+	void calculateProtocolCache();
 	void createImageProtocol();
 	void closeImageProtocol();
 	void updateImageProtocol();
@@ -22,6 +23,7 @@ private:
 	std::unique_ptr<class TevConnection> mConnection;
 	RenderContext* mRenderContext;
 	uint64 mUpdateCycleSeconds;
+	bool mDisplayVariance;
 
 	time_point_t mLastUpdate;
 };
