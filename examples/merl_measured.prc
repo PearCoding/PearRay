@@ -21,7 +21,7 @@
 	  :radius 1
 	)
 	(integrator 
-	  :type 'direct'
+	  :type 'ppm'
 	)
 	; Outputs
 	(output
