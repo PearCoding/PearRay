@@ -30,10 +30,4 @@ inline void VarianceEstimator::addValue(const Point2i& p, Size1i channel, float 
 	mean += factor * (value - oldM);
 	var	 += weight * (value - oldM) * (value - mean);
 }
-
-inline float VarianceEstimator::populationVariance(const Point2i& p, Size1i channel) const
-{
-	return mOnlineVariance->getFragment(p, channel);
-}
-
 } // namespace PR

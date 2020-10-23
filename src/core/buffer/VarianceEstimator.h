@@ -13,8 +13,6 @@ public:
 
 	inline void addValue(const Point2i& p, Size1i channel, float prev_weight_sum, float weight, float value);
 
-	inline float populationVariance(const Point2i& p, Size1i channel) const;
-
 private:
 	const std::shared_ptr<FrameBufferFloat> mOnlineMean;
 	const std::shared_ptr<FrameBufferFloat> mOnlineVariance;
