@@ -31,7 +31,7 @@ struct PPMParameters {
 	size_t MaxPhotonsPerPass = 1000000;
 	size_t MaxGatherCount	 = 100;
 	float MaxGatherRadius	 = 10.0f;
-	float SqueezeWeight		 = 1.0f;
+	float SqueezeWeight2	 = 1.0f;
 	float ContractRatio		 = 0.25f;
 };
 
@@ -52,6 +52,7 @@ constexpr float SHADOW_RAY_MAX = PR_INF;
 constexpr float BOUNCE_RAY_MIN = SHADOW_RAY_MIN;
 constexpr float BOUNCE_RAY_MAX = PR_INF;
 
+template <GatherMode GM>
 class IntPPMInstance : public IIntegratorInstance {
 public:
 	explicit IntPPMInstance(const PPMParameters& parameters)
@@ -181,9 +182,7 @@ public:
 		if (!entity->isLight() && PR_UNLIKELY(!material))
 			return;
 
-#ifndef PR_ALL_RAYS_CONTRIBUTE_SP
 		session.pushSPFragment(spt, path);
-#endif
 
 		// Only consider camera rays, as everything else is handled eventually by MIS
 		if (entity->isLight()) {
@@ -212,9 +211,6 @@ public:
 		walkPath(session, path, actual_spt, importance, actual_entity, actual_material);
 		if (actual_material == nullptr) {
 			if (actual_entity == nullptr) { // Background was hit
-											// Theoretical question: If a non-delta light is hit, why try to sample them afterwards in evalN? -> Answer: You shall not!
-				// A solution to prevent double count is to use a list of lights hit in the following loop
-				// Afterwards in evalN only lights not on the list will be considered to be sampled from
 				path.addToken(LightPathToken::Background());
 				for (auto light : session.tile()->context()->scene()->nonDeltaInfiniteLights()) {
 					InfiniteLightEvalInput lin;
@@ -231,7 +227,7 @@ public:
 
 				path.popToken();
 			} else {
-				// Error or max path reached
+				// Error or max depth reached
 				session.pushSpectralFragment(SpectralBlob::Ones(), importance, SpectralBlob::Zero(), actual_spt.Ray, path);
 			}
 		} else {
@@ -252,6 +248,7 @@ public:
 				path.popToken(2);
 			}
 		}
+		path.popTokenUntil(1);
 	}
 
 	void handleShadingGroup(RenderTileSession& session, const ShadingGroup& sg)
@@ -326,6 +323,7 @@ private:
 	const PPMParameters mParameters;
 };
 
+template <GatherMode GM>
 class IntPPM : public IIntegrator {
 public:
 	explicit IntPPM(const PPMParameters& parameters)
@@ -337,7 +335,7 @@ public:
 
 	inline std::shared_ptr<IIntegratorInstance> createThreadInstance(RenderContext*, size_t) override
 	{
-		return std::make_shared<IntPPMInstance>(mParameters);
+		return std::make_shared<IntPPMInstance<GM>>(mParameters);
 	}
 
 private:
@@ -348,18 +346,38 @@ class IntPPMFactory : public IIntegratorFactory {
 public:
 	explicit IntPPMFactory(const ParameterGroup& params)
 	{
-		mParameters.MaxPhotonsPerPass = (size_t)params.getUInt("photons", mParameters.MaxPhotonsPerPass);
+		mParameters.MaxPhotonsPerPass = std::max<size_t>(100, params.getUInt("photons", mParameters.MaxPhotonsPerPass));
 		mParameters.MaxRayDepth		  = (size_t)params.getUInt("max_ray_depth", mParameters.MaxRayDepth);
-		// TODO
+		mParameters.MaxGatherCount	  = std::max<size_t>(100, params.getUInt("max_gather_count", mParameters.MaxGatherCount));
+		mParameters.MaxGatherRadius	  = std::max(0.00001f, params.getNumber("max_gather_radius", mParameters.MaxGatherRadius));
+
+		mParameters.SqueezeWeight2 = std::max(0.0f, std::min(1.0f, params.getNumber("squeeze_weight", mParameters.SqueezeWeight2)));
+		mParameters.SqueezeWeight2 *= mParameters.SqueezeWeight2;
+
+		mParameters.ContractRatio = std::max(0.0f, std::min(1.0f, params.getNumber("contract_ratio", mParameters.ContractRatio)));
+
+		std::string mode = params.getString("gather_mode", "sphere");
+		std::transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
+		if (mode == "dome")
+			mGatherMode = GM_Dome;
+		else
+			mGatherMode = GM_Sphere;
 	}
 
 	std::shared_ptr<IIntegrator> createInstance() const override
 	{
-		return std::make_shared<IntPPM>(mParameters);
+		switch (mGatherMode) {
+		case GM_Dome:
+			return std::make_shared<IntPPM<GM_Dome>>(mParameters);
+		case GM_Sphere:
+		default:
+			return std::make_shared<IntPPM<GM_Sphere>>(mParameters);
+		}
 	}
 
 private:
 	PPMParameters mParameters;
+	GatherMode mGatherMode;
 };
 
 class IntPPMPlugin : public IIntegratorPlugin {

@@ -34,6 +34,13 @@ inline void LightPath::popToken(int n)
 		popToken();
 }
 
+inline void LightPath::popTokenUntil(int i)
+{
+	const int diff = static_cast<int>(mCurrentPos) - i;
+	if (diff > 0)
+		popToken(diff);
+}
+
 inline void LightPath::reset()
 {
 	mCurrentPos = 0;
@@ -56,6 +63,7 @@ inline size_t LightPath::currentSize() const
 
 LightPathToken LightPath::token(int index) const
 {
+	PR_ASSERT(index < static_cast<int>(mCurrentPos), "Token index out of bounds");
 	return mTokens[index];
 }
 
@@ -66,7 +74,7 @@ inline size_t LightPath::packedSizeRequirement() const
 
 inline void LightPath::toPacked(uint8* buffer, size_t size) const
 {
-	PR_UNUSED(size);// Remove warning when asserts are not used
+	PR_UNUSED(size); // Remove warning when asserts are not used
 	PR_ASSERT(size >= packedSizeRequirement(), "Minimum buffer size not satisfied");
 
 	uint32* b = reinterpret_cast<uint32*>(buffer);
