@@ -20,21 +20,26 @@ public:
 	template <typename Func>
 	inline void generate(Func func)
 	{
-		tbb::parallel_for(tbb::blocked_range<size_t>(0, mMarginal.numberOfValues()),
+		std::vector<float> integrals;
+		integrals.resize(height(), 0.0f);
+
+		tbb::parallel_for(tbb::blocked_range<size_t>(0, height()),
 						  [&](const tbb::blocked_range<size_t>& r) {
 							  for (size_t y = r.begin(); y != r.end(); ++y)
-								  mConditional[y].generate([&](size_t x) { return func(x, y); }, &mConditionalIntegrals[y]);
+								  mConditional[y].generate([&](size_t x) { return func(x, y); }, &integrals[y]);
 						  });
 
-		mMarginal.generate([&](size_t y) { return mConditionalIntegrals[y]; });
+		mMarginal.generate([&](size_t y) { return integrals[y]; });
 	}
 
 	Vector2f sampleContinuous(const Vector2f& uv, float& pdf) const;
 	float continuousPdf(const Vector2f& uv) const;
 
+	/// Apply MIS Compensation
+	void applyCompensation();
+
 private:
 	std::vector<Distribution1D> mConditional;
-	std::vector<float> mConditionalIntegrals;
 	Distribution1D mMarginal;
 };
 } // namespace PR

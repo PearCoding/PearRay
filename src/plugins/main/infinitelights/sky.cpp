@@ -125,6 +125,8 @@ private:
 				return val;
 			}
 		});
+
+		mDistribution->applyCompensation();
 	}
 
 	inline SpectralBlob radiance(const SpectralBlob& wvls, const ElevationAzimuth& ea) const

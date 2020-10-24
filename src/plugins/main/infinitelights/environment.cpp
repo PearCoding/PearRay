@@ -120,9 +120,10 @@ public:
 
 		const std::string name = params.getString("name", "__unknown");
 
-		auto radP			 = params.getParameter("radiance");
-		auto backgroundP	 = params.getParameter("background");
-		const bool allowDist = params.getBool("distribution", true);
+		const auto radP				 = params.getParameter("radiance");
+		const auto backgroundP		 = params.getParameter("background");
+		const bool allowDistribution = params.getBool("distribution", true);
+		const bool allowCompensation = params.getBool("compensation", true);
 
 		std::shared_ptr<FloatSpectralNode> radiance;
 		std::shared_ptr<FloatSpectralNode> background;
@@ -141,7 +142,7 @@ public:
 
 		Vector2i recSize = radiance->queryRecommendedSize();
 		std::shared_ptr<Distribution2D> dist;
-		if (allowDist && recSize(0) > 1 && recSize(1) > 1) {
+		if (allowDistribution && recSize(0) > 1 && recSize(1) > 1) {
 			dist = std::make_shared<Distribution2D>(recSize(0), recSize(1));
 
 			const Vector2f filterSize(1.0f / recSize(0), 1.0f / recSize(1));
@@ -162,6 +163,9 @@ public:
 				const float val = sinTheta * radiance->eval(coord).maxCoeff();
 				return (val <= PR_EPSILON) ? 0.0f : val;
 			});
+
+			if (allowCompensation)
+				dist->applyCompensation();
 		}
 
 		if (dist) {

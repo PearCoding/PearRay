@@ -446,10 +446,6 @@ public:
 					in.Point = nullptr;
 					InfiniteLightEvalOutput out;
 					light->eval(in, out, session);
-
-					if (out.PDF_S <= PR_EPSILON)
-						continue;
-
 					session.pushSpectralFragment(SpectralBlob::Ones(), SpectralBlob::Ones(), out.Radiance, in.Ray, cb);
 				}
 			}

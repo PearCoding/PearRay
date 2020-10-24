@@ -65,6 +65,9 @@ public:
 	inline float discretePdf(size_t x) const;
 	inline float evalDiscrete(float u) const;
 
+	/// Reduce pdf by v. Negative values will be clamped to zero
+	inline void reducePDFBy(float v, float* integral = nullptr);
+
 	// The given CDF is assumed to be normalized such that its last entry is exactly 1
 	inline static float sampleContinuous(float u, float& pdf, const float* cdf, size_t size, size_t* offset = nullptr);
 	inline static float evalContinuous(float u, const float* cdf, size_t size);

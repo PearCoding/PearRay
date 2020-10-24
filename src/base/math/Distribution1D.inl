@@ -116,6 +116,22 @@ inline float Distribution1D::evalDiscrete(float x, const float* cdf, size_t size
 	return cdf[off];
 }
 
+inline void Distribution1D::reducePDFBy(float v, float* integral)
+{
+	// Extract
+	std::vector<float> pdfs;
+	pdfs.resize(mCDF.size() - 1, 0.0f);
+	for (size_t i = 0; i < mCDF.size() - 1; ++i)
+		pdfs[i] = discretePdf(i);
+
+	// Reduce
+	for (float& p : pdfs)
+		p = std::max(0.0f, p - v);
+
+	// Rebuild
+	generate([&](size_t i) { return pdfs[i]; }, integral);
+}
+
 ////////////////////////////// StaticCDF
 
 template <size_t N>
