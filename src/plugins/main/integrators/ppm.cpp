@@ -199,6 +199,54 @@ public:
 		}
 	}
 
+	inline static SpectralBlob wavelengthFilter(const SpectralBlob& a, const SpectralBlob& b)
+	{
+		return (1 - (a - b).cwiseAbs() / 8.0f).cwiseMax(0.0f);
+	}
+
+	Contribution gather(RenderTileSession& /*session*/, const IntersectionPoint& spt)
+	{
+		Photon::PhotonSphere query;
+
+		float& searchRadius = mContext->SearchRadius2->getFragment(spt.Ray.PixelIndex, 0);
+
+		query.MaxPhotons	= mParameters.MaxGatherCount;
+		query.SqueezeWeight = mParameters.SqueezeWeight2;
+		query.Center		= spt.P;
+		query.Normal		= spt.Surface.N;
+		query.Distance2		= searchRadius;
+
+		auto accumFunc = [&](SpectralBlob& accum, const Photon::Photon& photon, const Photon::PhotonSphere& sp, float d2) {
+			PR_UNUSED(sp);
+			PR_UNUSED(d2);
+			const Vector3f dir = Vector3f(photon.Direction[0], photon.Direction[1], photon.Direction[2]);
+			const float NdotL  = std::abs(spt.Surface.N.dot(dir));
+			accum += wavelengthFilter(spt.Ray.WavelengthNM, photon.Wavelengths) * photon.Power * NdotL; // TODO: Really?
+		};
+
+		size_t found = 0;
+		SpectralBlob accum;
+		if constexpr (GM == GM_Dome)
+			accum = mContext->Map.estimateDome(query, accumFunc, found);
+		else
+			accum = mContext->Map.estimateSphere(query, accumFunc, found);
+
+		if (found > 1) {
+			auto& currentPhotons = mContext->LocalPhotonCount->getFragment(spt.Ray.PixelIndex, 0);
+			// Change radius, photons etc.
+			const uint64 newN	 = currentPhotons + std::floor((1 - mParameters.ContractRatio) * found);
+			const float fraction = newN / static_cast<float>(currentPhotons + found);
+
+			searchRadius   = query.Distance2 * fraction;
+			currentPhotons = newN;
+		}
+
+		// TODO: Add PPM and other parts together!
+		const float inv = 1.0f / (PR_PI * searchRadius);
+
+		return Contribution{ 1.0f, SpectralBlob(inv), accum };
+	}
+
 	// First camera vertex
 	void handleCameraPath(RenderTileSession& session, LightPath& path,
 						  const IntersectionPoint& spt,
@@ -259,7 +307,14 @@ public:
 				session.pushSpectralFragment(SpectralBlob::Ones(), importance, SpectralBlob::Zero(), actual_spt.Ray, path);
 			}
 		} else {
-			// TODO: Gather
+			const auto gather_contrib = gather(session, spt);
+			if (gather_contrib.MIS <= PR_EPSILON) {
+				path.addToken(LightPathToken::Emissive());
+				session.pushSpectralFragment(SpectralBlob(gather_contrib.MIS),
+											 importance * gather_contrib.Importance, gather_contrib.Radiance,
+											 spt.Ray, path);
+				path.popToken(1);
+			}
 
 			// Infinite Lights
 			// 1 sample per inf-light
@@ -351,6 +406,7 @@ public:
 			return;
 		threadData.Handled = true;
 
+		// TODO: Use wavefront approach!
 		for (const auto& light : threadData.Lights) {
 			const float sampleInv = 1.0f / light.Photons;
 
