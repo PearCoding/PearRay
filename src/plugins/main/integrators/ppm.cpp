@@ -18,10 +18,9 @@
 #include "sampler/SampleArray.h"
 #include "trace/IntersectionPoint.h"
 
-#include "Logger.h"
+#include "photon/PhotonMap.h"
 
-// Define this to let all rays regardless of depth contribute to SP AOVs, else only camera rays are considered
-//#define PR_ALL_RAYS_CONTRIBUTE_SP
+#include "Logger.h"
 
 #define MIS(n1, p1, n2, p2) IS::balance_term((n1), (p1), (n2), (p2))
 
@@ -33,6 +32,22 @@ struct PPMParameters {
 	float MaxGatherRadius	 = 10.0f;
 	float SqueezeWeight2	 = 1.0f;
 	float ContractRatio		 = 0.25f;
+};
+
+struct PPMLightCache {
+	IEntity* Entity;
+	float SurfaceArea;
+	uint64 Photons;
+};
+
+struct PPMContext {
+	Photon::PhotonMap Map;
+	std::vector<std::vector<PPMLightCache>> Tiles;
+
+	inline PPMContext(float gridDelta)
+		: Map(gridDelta)
+	{
+	}
 };
 
 enum GatherMode {
@@ -55,8 +70,9 @@ constexpr float BOUNCE_RAY_MAX = PR_INF;
 template <GatherMode GM>
 class IntPPMInstance : public IIntegratorInstance {
 public:
-	explicit IntPPMInstance(const PPMParameters& parameters)
-		: mParameters(parameters)
+	explicit IntPPMInstance(PPMContext* context, const PPMParameters& parameters)
+		: mContext(context)
+		, mParameters(parameters)
 	{
 	}
 
@@ -262,8 +278,6 @@ public:
 		session.tile()->statistics().addDepthCount(sg.size());
 		session.tile()->statistics().addEntityHitCount(sg.size());
 
-		// TODO: Send out photons
-
 		for (size_t i = 0; i < sg.size(); ++i) {
 			IntersectionPoint spt;
 			sg.computeShadingPoint(i, spt);
@@ -304,19 +318,28 @@ public:
 	void onTile(RenderTileSession& session) override
 	{
 		PR_PROFILE_THIS;
-		while (!session.pipeline()->isFinished()) {
-			session.pipeline()->runPipeline();
-			while (session.pipeline()->hasShadingGroup()) {
-				auto sg = session.pipeline()->popShadingGroup(session);
-				if (sg.isBackground())
-					handleBackground(session, sg);
-				else
-					handleShadingGroup(session, sg);
+
+		const bool accumPass = session.tile()->iterationCount() % 2 != 0;
+
+		if (!accumPass) {
+			// Send out photons
+			//PR_LOG(L_INFO) << "Sending photons!!!! " << std::endl;
+		} else {
+			while (!session.pipeline()->isFinished()) {
+				session.pipeline()->runPipeline();
+				while (session.pipeline()->hasShadingGroup()) {
+					auto sg = session.pipeline()->popShadingGroup(session);
+					if (sg.isBackground())
+						handleBackground(session, sg);
+					else
+						handleShadingGroup(session, sg);
+				}
 			}
 		}
 	}
 
 private:
+	const PPMContext* mContext;
 	const PPMParameters mParameters;
 };
 
@@ -330,13 +353,108 @@ public:
 
 	virtual ~IntPPM() = default;
 
-	inline std::shared_ptr<IIntegratorInstance> createThreadInstance(RenderContext*, size_t) override
+	inline std::shared_ptr<IIntegratorInstance> createThreadInstance(RenderContext* renderer, size_t) override
 	{
-		return std::make_shared<IntPPMInstance<GM>>(mParameters);
+		mThreadMutex.lock();
+		if (!mContext) {
+			mContext = std::make_unique<PPMContext>(mParameters.MaxGatherRadius);
+			setupContext(renderer);
+		}
+		mThreadMutex.unlock();
+		return std::make_shared<IntPPMInstance<GM>>(mContext.get(), mParameters);
 	}
 
 private:
+	void setupContext(RenderContext* renderer)
+	{
+		std::unordered_map<IEntity*, PPMLightCache> lights;
+		assignLights(renderer, lights);
+		assignTiles(renderer, lights);
+
+		// Make sure the photon map is always cleared before photon pass
+		renderer->addIterationCallback([this](uint32 iter) {
+			if (iter % 2 == 0) // Photon pass
+				mContext->Map.reset();
+		});
+		// TODO: What if the integrator context gets destroyed?
+	}
+
+	void assignLights(RenderContext* renderer, std::unordered_map<IEntity*, PPMLightCache>& lights)
+	{
+		const uint64 Photons	= mParameters.MaxPhotonsPerPass;
+		const uint64 MinPhotons = Photons * 0.02f; // Should be a parameter
+		const auto& lightList	= renderer->lights();
+
+		const uint64 k = MinPhotons * lightList.size();
+		if (k >= Photons) { // Not enough photons given.
+			PR_LOG(L_WARNING) << "Not enough photons per pass given. At least " << k << " is needed." << std::endl;
+
+			for (const auto& light : lightList)
+				lights[light.get()] = PPMLightCache{ light.get(), light->worldSurfaceArea(), MinPhotons };
+		} else {
+			const uint64 d = Photons - k;
+
+			// Extract surface area information
+			float fullArea = 0;
+			for (const auto& light : lightList) {
+				PPMLightCache cache;
+				cache.Entity	  = light.get();
+				cache.SurfaceArea = light->worldSurfaceArea();
+				fullArea += cache.SurfaceArea;
+				lights[light.get()] = std::move(cache);
+			}
+
+			// Assign photons based on surface
+			PR_LOG(L_DEBUG) << "PPM Lights" << std::endl;
+			for (const auto& light : lightList) {
+				PPMLightCache& cache = lights[light.get()];
+				cache.Photons		 = MinPhotons + std::ceil(d * (cache.SurfaceArea / fullArea));
+
+				PR_LOG(L_DEBUG) << "  -> Light '" << light->name() << "' " << cache.Photons << " photons " << cache.SurfaceArea << "m2" << std::endl;
+			}
+		}
+	}
+
+	void assignTiles(RenderContext* renderer, const std::unordered_map<IEntity*, PPMLightCache>& lights)
+	{
+		const uint64 Photons		= mParameters.MaxPhotonsPerPass;
+		const uint64 PhotonsPerTile = std::ceil(Photons / static_cast<float>(renderer->tileCount()));
+		PR_LOG(L_DEBUG) << "Each tile shoots " << PhotonsPerTile << " photons" << std::endl;
+
+		// Spread light photon pair to tiles
+		std::vector<uint64> photonsPerTile(renderer->tileCount(), 0);
+		mContext->Tiles.resize(photonsPerTile.size());
+		for (const auto& light : lights) {
+			uint64 photonsSpread = 0;
+			for (uint32 t = 0; t < renderer->tileCount(); ++t) {
+				if (photonsSpread >= light.second.Photons)
+					break;
+
+				if (photonsPerTile[t] >= PhotonsPerTile)
+					continue;
+
+				const uint64 photons = std::min(PhotonsPerTile - photonsPerTile[t],
+												light.second.Photons - photonsSpread);
+
+				photonsSpread += photons;
+				photonsPerTile[t] += photons;
+
+				if (photons > 0)
+					mContext->Tiles[t].push_back(PPMLightCache{ light.second.Entity, light.second.SurfaceArea, photons });
+			}
+		}
+
+		// Debug output
+		for (uint32 t = 0; t < renderer->tileCount(); ++t) {
+			PR_LOG(L_DEBUG) << "PPM Tile has " << mContext->Tiles[t].size() << " lights" << std::endl;
+			for (const auto& ltd : mContext->Tiles[t])
+				PR_LOG(L_DEBUG) << "  -> Light '" << ltd.Entity->name() << "' with " << ltd.Photons << " photons" << std::endl;
+		}
+	}
+
 	const PPMParameters mParameters;
+	std::mutex mThreadMutex;
+	std::unique_ptr<PPMContext> mContext;
 };
 
 class IntPPMFactory : public IIntegratorFactory {

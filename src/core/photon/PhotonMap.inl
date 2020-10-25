@@ -79,13 +79,11 @@ SpectralBlob PhotonMap::estimate(const PhotonSphere& sphere,
 					centerCoord.Z + z
 				};
 
-				typename Map::const_accessor acc;
-				if (mPhotons.find(acc, key)) {
-					for (const Photon& pht : (*acc).second) {
-						if (checkFunc(pht, sphere, dist2)) { // Found a photon!
-							found++;
-							accumFunc(spec, pht, sphere, dist2);
-						}
+				const auto range = mPhotons.equal_range(key);
+				for (auto it = range.first; it != range.second; ++it) {
+					if (checkFunc(it->second, sphere, dist2)) { // Found a photon!
+						found++;
+						accumFunc(spec, it->second, sphere, dist2);
 					}
 				}
 			}
@@ -99,10 +97,7 @@ void PhotonMap::store(const Photon& pht)
 	mStoredPhotons++;
 	const auto key = toCoords(pht.Position[0], pht.Position[1], pht.Position[2]);
 
-	typename Map::accessor acc;
-	mPhotons.insert(acc, key);
-
-	(*acc).second.push_back(pht);
+	mPhotons.insert(std::make_pair(key, pht));
 
 	mBox.combine(Vector3f(pht.Position[0], pht.Position[1], pht.Position[2]));
 }

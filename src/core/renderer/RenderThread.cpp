@@ -60,9 +60,6 @@ void RenderThread::main()
 
 		RenderTileSession session(mThreadIndex, mTile, pipeline(), queue, bucket);
 
-		mTile->incIteration();
-		mStatistics.addTileCount();
-
 		bucket->clear(true);
 		mPipeline->reset(mTile);
 		integrator->onTile(session);
@@ -73,6 +70,8 @@ void RenderThread::main()
 		queue->commitAndFlush(bucket.get());
 		mRenderer->output()->mergeBucket(mTile->start(), bucket);
 
+		mTile->incIteration();
+		mStatistics.addTileCount();
 		mTile->release();
 	}
 	integrator->onEnd();

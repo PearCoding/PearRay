@@ -7,7 +7,7 @@
 #include "photon/Photon.h"
 
 #include <atomic>
-#include <tbb/concurrent_hash_map.h>
+#include <tbb/concurrent_unordered_map.h>
 #include <vector>
 
 namespace PR {
@@ -61,7 +61,11 @@ private:
 		inline static bool equal(const KeyCoord& k1, const KeyCoord& k2);
 	};
 
-	using Map = tbb::concurrent_hash_map<KeyCoord, std::vector<Photon>, hash_compare>;
+	struct hasher {
+		std::size_t operator()(const KeyCoord& k) const { return hash_compare::hash(k); }
+	};
+
+	using Map = tbb::concurrent_unordered_multimap<KeyCoord, Photon, hasher>;
 	Map mPhotons;
 
 	std::atomic<uint64> mStoredPhotons;
