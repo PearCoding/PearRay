@@ -58,7 +58,7 @@ public:
 	bool isFinished() const;
 	void waitForFinish();
 
-	size_t threads() const { return mThreads.size(); }
+	size_t threadCount() const { return mThreads.size(); }
 
 	// Slow and only copies!
 	std::vector<Rect2i> currentTiles() const;

@@ -220,7 +220,7 @@ RenderTile* RenderContext::getNextTile()
 {
 	PR_PROFILE_THIS;
 
-	const auto threadCount = threads();
+	const size_t threads = threadCount();
 
 	RenderTile* tile		  = nullptr;
 	bool breakBecauseFinished = false;
@@ -232,7 +232,7 @@ RenderTile* RenderContext::getNextTile()
 			std::unique_lock<std::mutex> lk(mIterationMutex);
 			++mThreadsWaitingForIteration;
 
-			if (mThreadsWaitingForIteration == threadCount) { // The last thread arriving here has the honor to call optional callbacks and initiate the next iteration
+			if (mThreadsWaitingForIteration == threads) { // The last thread arriving here has the honor to call optional callbacks and initiate the next iteration
 				if (mRenderSettings.useAdaptiveTiling)
 					optimizeTileMap();
 

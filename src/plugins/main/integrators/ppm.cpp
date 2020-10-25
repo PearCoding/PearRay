@@ -2,6 +2,7 @@
 #include "Profiler.h"
 #include "SceneLoadContext.h"
 #include "buffer/Feedback.h"
+#include "buffer/FrameBufferSystem.h"
 #include "emission/IEmission.h"
 #include "infinitelight/IInfiniteLight.h"
 #include "integrator/IIntegrator.h"
@@ -9,6 +10,7 @@
 #include "integrator/IIntegratorPlugin.h"
 #include "material/IMaterial.h"
 #include "math/ImportanceSampling.h"
+#include "math/Sampling.h"
 
 #include "path/LightPath.h"
 #include "renderer/RenderContext.h"
@@ -21,6 +23,8 @@
 #include "photon/PhotonMap.h"
 
 #include "Logger.h"
+
+/* Implementation of Stochastic Progressive Photon Mapping */
 
 #define MIS(n1, p1, n2, p2) IS::balance_term((n1), (p1), (n2), (p2))
 
@@ -40,9 +44,17 @@ struct PPMLightCache {
 	uint64 Photons;
 };
 
+struct PPMThreadData {
+	std::vector<PPMLightCache> Lights;
+	bool Handled = false; // Will make sure it will be handled once per iteration
+};
+
 struct PPMContext {
 	Photon::PhotonMap Map;
-	std::vector<std::vector<PPMLightCache>> Tiles;
+	std::vector<PPMThreadData> Threads;
+	std::shared_ptr<FrameBufferFloat> AccumulatedFlux;
+	std::shared_ptr<FrameBufferFloat> SearchRadius2;
+	std::shared_ptr<FrameBufferUInt32> LocalPhotonCount;
 
 	inline PPMContext(float gridDelta)
 		: Map(gridDelta)
@@ -315,31 +327,138 @@ public:
 		}
 	}
 
-	void onTile(RenderTileSession& session) override
+	void accumPass(RenderTileSession& session)
+	{
+		PR_PROFILE_THIS;
+		while (!session.pipeline()->isFinished()) {
+			session.pipeline()->runPipeline();
+			while (session.pipeline()->hasShadingGroup()) {
+				auto sg = session.pipeline()->popShadingGroup(session);
+				if (sg.isBackground())
+					handleBackground(session, sg);
+				else
+					handleShadingGroup(session, sg);
+			}
+		}
+	}
+
+	void photonPass(RenderTileSession& session)
 	{
 		PR_PROFILE_THIS;
 
-		const bool accumPass = session.tile()->iterationCount() % 2 != 0;
+		auto& threadData = mContext->Threads[session.threadID()];
+		if (threadData.Handled)
+			return;
+		threadData.Handled = true;
 
-		if (!accumPass) {
-			// Send out photons
-			//PR_LOG(L_INFO) << "Sending photons!!!! " << std::endl;
-		} else {
-			while (!session.pipeline()->isFinished()) {
-				session.pipeline()->runPipeline();
-				while (session.pipeline()->hasShadingGroup()) {
-					auto sg = session.pipeline()->popShadingGroup(session);
-					if (sg.isBackground())
-						handleBackground(session, sg);
-					else
-						handleShadingGroup(session, sg);
+		for (const auto& light : threadData.Lights) {
+			const float sampleInv = 1.0f / light.Photons;
+
+			// Cache
+			uint32 lastEmissionID = PR_INVALID_ID;
+			IEmission* emission	  = nullptr;
+
+			size_t photonsShoot	 = 0;
+			size_t photonsStored = 0;
+			for (; photonsShoot < light.Photons; ++photonsShoot) {
+				// Randomly select point on light surface
+				const auto pp = light.Entity->sampleParameterPoint(session.tile()->random().get2D());
+
+				EntityGeometryQueryPoint qp;
+				qp.Position	   = pp.Position;
+				qp.UV		   = pp.UV;
+				qp.PrimitiveID = pp.PrimitiveID;
+				qp.View		   = Vector3f::Zero();
+
+				GeometryPoint gp;
+				light.Entity->provideGeometryPoint(qp, gp);
+
+				// Randomly sample direction from emissive material (TODO: Should be abstracted)
+				const Vector2f drnd		 = session.tile()->random().get2D();
+				const Vector3f local_dir = Sampling::hemi(drnd[0], drnd[1]);
+				const Vector3f dir		 = Tangent::fromTangentSpace(gp.N, gp.Nx, gp.Ny, local_dir);
+
+				Ray ray = Ray(pp.Position, dir);
+				ray.Flags |= RF_Light;
+
+				if (PR_UNLIKELY(gp.EmissionID != lastEmissionID)) {
+					lastEmissionID = gp.EmissionID;
+					emission	   = session.getEmission(gp.EmissionID);
+				}
+
+				LightEvalInput in;
+				in.Entity					   = light.Entity;
+				in.ShadingContext.Face		   = gp.PrimitiveID;
+				in.ShadingContext.dUV		   = gp.dUV;
+				in.ShadingContext.UV		   = gp.UV;
+				in.ShadingContext.ThreadIndex  = session.threadID();
+				in.ShadingContext.WavelengthNM = SpectralBlob(550, 520, 460, 620); // TODO
+
+				LightEvalOutput out;
+				emission->eval(in, out, session);
+				out.Weight /= pp.PDF.Value * Sampling::hemi_pdf();
+
+				for (size_t j = 0; j < mParameters.MaxRayDepth; ++j) {
+					Vector3f pos;
+					GeometryPoint ngp;
+					IEntity* entity		= nullptr;
+					IMaterial* material = nullptr;
+					if (!session.traceBounceRay(ray, pos, ngp, entity, material))
+						break;
+
+					if (entity && material && material->canBeShaded()) {
+						IntersectionPoint ip;
+						ip.setForSurface(ray, pos, ngp);
+
+						MaterialSampleInput sin;
+						sin.Context		   = MaterialSampleContext::fromIP(ip);
+						sin.ShadingContext = ShadingContext::fromIP(session.threadID(), ip);
+
+						MaterialSampleOutput sout;
+						material->sample(sin, sout, session);
+
+						if (material->hasDeltaDistribution()) {
+							// Continue
+							out.Weight *= SpectralBlobUtils::HeroOnly() * sout.Weight / sout.PDF_S;
+							ray = ray.next(ip.P, sout.globalL(ip), ip.Surface.N,
+										   RF_Monochrome | RF_Light, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX);
+						} else {
+							// Always store when diffuse
+							Photon::Photon photon;
+							for (int k = 0; k < 3; ++k) {
+								photon.Position[k]	= ip.P(k);
+								photon.Direction[k] = -ray.Direction(k);
+							}
+
+							photon.Power	   = sout.Weight * sampleInv;
+							photon.Wavelengths = sin.ShadingContext.WavelengthNM;
+							mContext->Map.store(photon);
+
+							photonsStored++;
+						}
+
+					} else { // Nothing found, abort
+						break;
+					}
 				}
 			}
 		}
 	}
 
+	void onTile(RenderTileSession& session) override
+	{
+		PR_PROFILE_THIS;
+
+		const bool isAccumPass = session.tile()->iterationCount() % 2 != 0;
+
+		if (!isAccumPass)
+			photonPass(session);
+		else
+			accumPass(session);
+	}
+
 private:
-	const PPMContext* mContext;
+	PPMContext* mContext;
 	const PPMParameters mParameters;
 };
 
@@ -373,10 +492,24 @@ private:
 
 		// Make sure the photon map is always cleared before photon pass
 		renderer->addIterationCallback([this](uint32 iter) {
-			if (iter % 2 == 0) // Photon pass
+			if (iter % 2 == 0) { // Photon pass
 				mContext->Map.reset();
+				for (auto& td : mContext->Threads)
+					td.Handled = false;
+			}
 		});
 		// TODO: What if the integrator context gets destroyed?
+
+		// Create framebuffers
+		// Notice: There is no need for tile local framebuffers as no filters are used and random pixel access is prohibited
+		const auto output		   = renderer->output()->data().getInternalChannel_Spectral(AOV_Output);
+		mContext->AccumulatedFlux  = std::make_shared<FrameBufferFloat>(output->channels(), output->size());
+		mContext->SearchRadius2	   = std::make_shared<FrameBufferFloat>(1, output->size());
+		mContext->LocalPhotonCount = std::make_shared<FrameBufferUInt32>(1, output->size());
+
+		mContext->AccumulatedFlux->fill(0);
+		mContext->SearchRadius2->fill(mParameters.MaxGatherRadius * mParameters.MaxGatherRadius);
+		mContext->LocalPhotonCount->fill(0);
 	}
 
 	void assignLights(RenderContext* renderer, std::unordered_map<IEntity*, PPMLightCache>& lights)
@@ -417,37 +550,37 @@ private:
 
 	void assignTiles(RenderContext* renderer, const std::unordered_map<IEntity*, PPMLightCache>& lights)
 	{
-		const uint64 Photons		= mParameters.MaxPhotonsPerPass;
-		const uint64 PhotonsPerTile = std::ceil(Photons / static_cast<float>(renderer->tileCount()));
-		PR_LOG(L_DEBUG) << "Each tile shoots " << PhotonsPerTile << " photons" << std::endl;
+		const uint64 Photons		  = mParameters.MaxPhotonsPerPass;
+		const uint64 PhotonsPerThread = std::ceil(Photons / static_cast<float>(renderer->threadCount()));
+		PR_LOG(L_DEBUG) << "Each thread will shoot " << PhotonsPerThread << " photons" << std::endl;
 
 		// Spread light photon pair to tiles
-		std::vector<uint64> photonsPerTile(renderer->tileCount(), 0);
-		mContext->Tiles.resize(photonsPerTile.size());
+		std::vector<uint64> photonsPerThread(renderer->threadCount(), 0);
+		mContext->Threads.resize(photonsPerThread.size());
 		for (const auto& light : lights) {
 			uint64 photonsSpread = 0;
-			for (uint32 t = 0; t < renderer->tileCount(); ++t) {
+			for (size_t t = 0; t < renderer->threadCount(); ++t) {
 				if (photonsSpread >= light.second.Photons)
 					break;
 
-				if (photonsPerTile[t] >= PhotonsPerTile)
+				if (photonsPerThread[t] >= PhotonsPerThread)
 					continue;
 
-				const uint64 photons = std::min(PhotonsPerTile - photonsPerTile[t],
+				const uint64 photons = std::min(PhotonsPerThread - photonsPerThread[t],
 												light.second.Photons - photonsSpread);
 
 				photonsSpread += photons;
-				photonsPerTile[t] += photons;
+				photonsPerThread[t] += photons;
 
 				if (photons > 0)
-					mContext->Tiles[t].push_back(PPMLightCache{ light.second.Entity, light.second.SurfaceArea, photons });
+					mContext->Threads[t].Lights.push_back(PPMLightCache{ light.second.Entity, light.second.SurfaceArea, photons });
 			}
 		}
 
 		// Debug output
-		for (uint32 t = 0; t < renderer->tileCount(); ++t) {
-			PR_LOG(L_DEBUG) << "PPM Tile has " << mContext->Tiles[t].size() << " lights" << std::endl;
-			for (const auto& ltd : mContext->Tiles[t])
+		for (size_t t = 0; t < renderer->threadCount(); ++t) {
+			PR_LOG(L_DEBUG) << "PPM Thread has " << mContext->Threads[t].Lights.size() << " lights" << std::endl;
+			for (const auto& ltd : mContext->Threads[t].Lights)
 				PR_LOG(L_DEBUG) << "  -> Light '" << ltd.Entity->name() << "' with " << ltd.Photons << " photons" << std::endl;
 		}
 	}
@@ -504,7 +637,7 @@ public:
 
 	const std::vector<std::string>& getNames() const override
 	{
-		const static std::vector<std::string> names({ "ppm", "photon" });
+		const static std::vector<std::string> names({ "ppm", "sppm", "photon" });
 		return names;
 	}
 
