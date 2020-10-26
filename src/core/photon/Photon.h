@@ -8,8 +8,8 @@ namespace Photon {
 struct alignas(16) Photon {
 	Vector3f Position;
 	Vector3f Direction;
-	SpectralBlob Power;
-	SpectralBlob Wavelengths;
+	SpectralBlobStorage Power;
+	SpectralBlobStorage WavelengthNM;
 };
 } // namespace Photon
 } // namespace PR

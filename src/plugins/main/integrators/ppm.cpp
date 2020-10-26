@@ -65,16 +65,21 @@ enum GatherMode {
 	GM_Dome
 };
 
+// TODO
+constexpr float WAVELENGTH_START = 400;
+constexpr float WAVELENGTH_END	 = 760;
+constexpr float WAVEBAND		 = 60;
+inline static SpectralBlob sampleWavelength(Random& rnd)
+{
+	return SpectralBlob(rnd.getFloat(), rnd.getFloat(), rnd.getFloat(), rnd.getFloat()) * (WAVELENGTH_END - WAVELENGTH_START) + WAVELENGTH_START;
+}
 inline static SpectralBlob wavelengthFilter(const SpectralBlob& a, const SpectralBlob& b)
 {
-	//return (1 - (a - b).cwiseAbs() / 8.0f).cwiseMax(0.0f);
-	PR_UNUSED(a);
-	PR_UNUSED(b);
-	return SpectralBlob::Ones();
+	return ((a - b).cwiseAbs() <= WAVEBAND).select(SpectralBlob::Ones(), SpectralBlob::Zero());
 }
 
 inline static float kernel(float nr2) { return 1 - std::sqrt(nr2); }
-inline static float kernelnorm(float R2) { return 4 * PR_PI * R2; }
+inline static float kernelnorm(float R2) { return PR_PI * R2; }
 
 struct Contribution {
 	float MIS;
@@ -219,19 +224,19 @@ public:
 		query.Normal		= spt.Surface.N;
 		query.Distance2		= mContext->CurrentSearchRadius2;
 
-		/*MaterialEvalInput min;
+		MaterialEvalInput min;
 		min.Context		   = MaterialEvalContext::fromIP(spt, Vector3f(0, 0, 0));
-		min.ShadingContext = ShadingContext::fromIP(session.threadID(), spt);*/
+		min.ShadingContext = ShadingContext::fromIP(session.threadID(), spt);
 
 		auto accumFunc = [&](SpectralBlob& accum, const Photon::Photon& photon, const Photon::PhotonSphere& sp, float d2) {
 			PR_UNUSED(sp);
 
-			/*min.Context.computeL(spt, (photon.Position - sp.Center).normalized());
+			min.Context.computeL(spt, photon.Direction);
 			MaterialEvalOutput mout;
-			material->eval(min, mout, session);*/
+			material->eval(min, mout, session);
 			const float f = kernel(d2 / query.Distance2);
 
-			accum += /*wavelengthFilter(spt.Ray.WavelengthNM, photon.Wavelengths) */ photon.Power /* mout.Weight*/ * f;
+			accum += wavelengthFilter(spt.Ray.WavelengthNM, photon.WavelengthNM) / photon.Power * mout.Weight * f;
 			//accum += photon.Power;
 		};
 
@@ -243,7 +248,7 @@ public:
 			accum = mContext->Map.estimateSphere(query, accumFunc, found);
 
 		if (found >= 1) {
-			accum *= mContext->CurrentKernelInvNorm / found;
+			accum *= mContext->CurrentKernelInvNorm / mParameters.MaxPhotonsPerPass /* found*/;
 			// TODO: Add PPM and other parts together!
 			return Contribution{ 1.0f, SpectralBlob::Ones(), accum };
 		} else {
@@ -382,11 +387,6 @@ public:
 			return;
 		threadData.Handled = true;
 
-		const auto sampleWavelength = [&]() {
-			// TODO
-			return session.tile()->random().getFloat() * (760 - 360) + 360;
-		};
-
 		// TODO: Use wavefront approach!
 		for (const auto& light : threadData.Lights) {
 			const float sampleInv = 1.0f / light.Photons;
@@ -429,7 +429,7 @@ public:
 				in.ShadingContext.dUV		   = gp.dUV;
 				in.ShadingContext.UV		   = gp.UV;
 				in.ShadingContext.ThreadIndex  = session.threadID();
-				in.ShadingContext.WavelengthNM = SpectralBlob(sampleWavelength(), sampleWavelength(), sampleWavelength(), sampleWavelength());
+				in.ShadingContext.WavelengthNM = sampleWavelength(session.tile()->random());
 
 				LightEvalOutput out;
 				emission->eval(in, out, session);
@@ -462,10 +462,16 @@ public:
 						} else {
 							// Always store when diffuse
 							Photon::Photon photon;
-							photon.Position	   = ip.P;
-							photon.Direction   = -ray.Direction;
-							photon.Power	   = sout.Weight * sampleInv;
-							photon.Wavelengths = sin.ShadingContext.WavelengthNM;
+							photon.Position		= ip.P;
+							photon.Direction	= -ray.Direction;
+							photon.Power		= sout.Weight * sampleInv;
+							photon.WavelengthNM = sin.ShadingContext.WavelengthNM;
+
+							if (ray.Flags & RF_Monochrome) { // If monochrome, spread hero to each channel
+								photon.Power		= photon.Power[0] / PR_SPECTRAL_BLOB_SIZE;
+								photon.WavelengthNM = photon.WavelengthNM[0];
+							}
+
 							mContext->Map.store(photon);
 
 							photonsStored++;
@@ -525,13 +531,13 @@ private:
 		for (auto& td : mContext->Threads)
 			td.Handled = false;
 
-		float prod = 1.0f;
-		for (uint32 k = 1; k < photonPass; ++k)
-			prod *= (k + 1 - mParameters.ContractRatio) / k;
+		if (photonPass == 0)
+			mContext->CurrentSearchRadius2 = mParameters.MaxGatherRadius * mParameters.MaxGatherRadius;
+		else
+			mContext->CurrentSearchRadius2 *= (photonPass + 1 + mParameters.ContractRatio) / (photonPass + 2);
 
-		mContext->CurrentSearchRadius2 = mParameters.MaxGatherRadius * mParameters.MaxGatherRadius * prod / (photonPass + 1.0f);
 		mContext->CurrentSearchRadius2 = std::max(mContext->CurrentSearchRadius2, 0.00001f);
-		PR_LOG(L_INFO) << "PPM Radius2=" << mContext->CurrentSearchRadius2 << std::endl;
+		PR_LOG(L_DEBUG) << "PPM Radius2=" << mContext->CurrentSearchRadius2 << std::endl;
 
 		mContext->CurrentKernelInvNorm = 1.0f / kernelnorm(mContext->CurrentSearchRadius2);
 	}
