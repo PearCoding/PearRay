@@ -53,6 +53,7 @@ public:
 	inline float edge(int dim) const { return mUpperBound(dim) - mLowerBound(dim); }
 
 	inline float longestEdge() const { return std::max(width(), std::max(height(), depth())); }
+	inline float shortestEdge() const { return std::min(width(), std::min(height(), depth())); }
 
 	inline float diameter() const { return (mUpperBound - mLowerBound).norm(); }
 
@@ -107,7 +108,7 @@ public:
 
 	inline bool contains(const Vector3f& point) const
 	{
-		return (mUpperBound.array() <= point.array()).all() && (mLowerBound.array() >= point.array()).all();
+		return (mUpperBound.array() >= point.array()).all() && (mLowerBound.array() <= point.array()).all();
 	}
 
 	void intersects(const Ray& in, HitPoint& out) const;

@@ -7,7 +7,7 @@ using namespace PR;
 PR_BEGIN_TESTCASE(Photon)
 PR_TEST("Initialization")
 {
-	Photon::PhotonMap map(1.0f);
+	Photon::PhotonMap map(BoundingBox(1, 1, 1), 1.0f);
 
 	PR_CHECK_TRUE(map.isEmpty());
 	PR_CHECK_EQ(map.storedPhotons(), 0ULL);
@@ -16,15 +16,12 @@ PR_TEST("Store")
 {
 	constexpr uint64 PHOTONS = 100;
 
-	Photon::PhotonMap map(1.0f);
+	Photon::PhotonMap map(BoundingBox(5, 5, 5), 1.0f);
 	Photon::Photon pht;
-	pht.Position[0] = 0;
-	pht.Position[1] = 1;
-	pht.Position[2] = 2;
+	pht.Position = Vector3f(0, 1, 2);
 
-	for (uint64 k = 0; k < PHOTONS; ++k) {
+	for (uint64 k = 0; k < PHOTONS; ++k)
 		map.store(pht);
-	}
 
 	PR_CHECK_FALSE(map.isEmpty());
 	PR_CHECK_EQ(map.storedPhotons(), PHOTONS);
@@ -37,7 +34,7 @@ PR_TEST("Search")
 {
 	constexpr uint64 PHOTONS = 100;
 
-	Photon::PhotonMap map(0.1f);
+	Photon::PhotonMap map(BoundingBox(2, 2, 2), 0.1f);
 
 	Photon::Photon pht;
 	Random random(42);
@@ -50,15 +47,14 @@ PR_TEST("Search")
 	}
 
 	Photon::PhotonSphere sphere;
-	sphere.MaxPhotons = PHOTONS;
-	sphere.Center	  = Vector3f(0, 0, 0);
-	sphere.Distance2  = 4;
+	sphere.Center	 = Vector3f(0, 0, 0);
+	sphere.Distance2 = 4;
 
 	auto emptyAccum = [&](SpectralBlob&, const Photon::Photon&, const Photon::PhotonSphere&, float) {};
 	size_t found;
 
 	map.estimateSphere(sphere, emptyAccum, found);
-	PR_CHECK_EQ(found, sphere.MaxPhotons);
+	PR_CHECK_EQ(found, PHOTONS);
 
 	sphere.Center = Vector3f(5, 0, 0);
 	map.estimateSphere(sphere, emptyAccum, found);

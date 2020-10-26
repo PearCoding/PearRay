@@ -56,8 +56,7 @@
                 "-i",
                 "${workspaceFolder}/examples/area_lit_spheres.prc",
                 "-v",
-                "-p",
-                "--no-adaptive-tiling"
+                "-p"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build",
@@ -83,8 +82,7 @@
                 "${workspaceFolder}/examples/color_test.prc",
                 "-v",
                 "-p",
-                "-I",
-                "--no-adaptive-tiling"
+                "-I"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build",
@@ -159,8 +157,7 @@
                 "-i",
                 "${workspaceFolder}/examples/cornellbox_water.prc",
                 "-v",
-                "-p",
-                "--no-adaptive-tiling"
+                "-p"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build",
@@ -258,7 +255,6 @@
                 "${workspaceFolder}/examples/cornellbox.prc",
                 "-v",
                 "-p",
-                "--no-adaptive-tiling",
                 "-I"
             ],
             "stopAtEntry": false,
@@ -311,8 +307,7 @@
                 "-i",
                 "${workspaceFolder}/examples/box_tri.prc",
                 "-v",
-                "-p",
-                "--no-adaptive-tiling"
+                "-p"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build",
@@ -337,8 +332,7 @@
                 "-i",
                 "${workspaceFolder}/examples/complex.prc",
                 "-v",
-                "-p",
-                "--no-adaptive-tiling"
+                "-p"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build",
@@ -363,8 +357,7 @@
                 "-i",
                 "${workspaceFolder}/examples/mesh.prc",
                 "-v",
-                "-p",
-                "--no-adaptive-tiling"
+                "-p"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build",
@@ -439,8 +432,7 @@
                 "-i",
                 "${workspaceFolder}/examples/sphere.prc",
                 "-v",
-                "-p",
-                "--no-adaptive-tiling"
+                "-p"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build",
@@ -465,8 +457,7 @@
                 "-i",
                 "${workspaceFolder}/examples/shaded_sphere.prc",
                 "-v",
-                "-p",
-                "--no-adaptive-tiling"
+                "-p"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build",
@@ -627,6 +618,26 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${command:cmake.buildDirectory}/bin/pr_test_memory",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "targetArchitecture": "x64",
+            "setupCommands": [
+                {
+                    "description": "Automatische Strukturierung und Einrückung für \"gdb\" aktivieren",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "pr_test_photon",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${command:cmake.buildDirectory}/bin/pr_test_photon",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build",

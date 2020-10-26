@@ -118,7 +118,7 @@ PR_TEST("[C(DS+)+.*L]")
 	path2.addToken(LightPathToken(ST_REFLECTION, SE_DIFFUSE));
 	path2.addToken(LightPathToken(ST_REFLECTION, SE_DIFFUSE));
 	path2.addToken(LightPathToken::Background());
-	PR_CHECK_TRUE(expr.match(path2));//f
+	PR_CHECK_TRUE(expr.match(path2)); //f
 
 	LightPath path3; // CDSSDSDDB
 	path3.addToken(LightPathToken::Camera());
@@ -173,6 +173,30 @@ PR_TEST("Add/Pop")
 	PR_CHECK_EQ(path.containerSize(), 4);
 	PR_CHECK_TRUE(path.isEmpty());
 }
+PR_TEST("Pop Until")
+{
+	LightPath path; // CDSB
+	PR_CHECK_TRUE(path.isEmpty());
+
+	path.addToken(LightPathToken::Camera());
+	path.addToken(LightPathToken(ST_REFLECTION, SE_DIFFUSE));
+	path.addToken(LightPathToken(ST_REFRACTION, SE_SPECULAR));
+	path.addToken(LightPathToken::Background());
+
+	PR_CHECK_EQ(path.currentSize(), 4);
+	PR_CHECK_EQ(path.containerSize(), 4);
+	PR_CHECK_FALSE(path.isEmpty());
+
+	path.popTokenUntil(1);
+	PR_CHECK_EQ(path.currentSize(), 1);
+	PR_CHECK_EQ(path.containerSize(), 4);
+	PR_CHECK_FALSE(path.isEmpty());
+
+	path.reset();
+	PR_CHECK_EQ(path.currentSize(), 0);
+	PR_CHECK_EQ(path.containerSize(), 4);
+	PR_CHECK_TRUE(path.isEmpty());
+}
 /*PR_TEST("[C[^S]+S?B]")
 {
 	LightPathExpression expr("C[^S]+S?B");
@@ -197,7 +221,7 @@ PR_TEST("Packed")
 	path.toPacked((uint8*)buffer, (size + 1) * sizeof(uint32));
 
 	PR_CHECK_EQ(path.packedSizeRequirement(), (size + 1) * sizeof(uint32));
-	
+
 	LightPathView view = LightPathView(buffer);
 	PR_CHECK_EQ(view.currentSize(), size);
 	for (size_t i = 0; i < size; ++i) {

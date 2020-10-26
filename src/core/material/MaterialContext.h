@@ -59,9 +59,14 @@ public:
 		ctx.PrimitiveID	 = sp.Surface.Geometry.PrimitiveID;
 		ctx.WavelengthNM = sp.Ray.WavelengthNM;
 		ctx.V			 = Tangent::toTangentSpace(sp.Surface.N, sp.Surface.Nx, sp.Surface.Ny, -sp.Ray.Direction);
-		ctx.L			 = Tangent::toTangentSpace(sp.Surface.N, sp.Surface.Nx, sp.Surface.Ny, gL);
+		ctx.computeL(sp, gL);
 
 		return ctx;
+	}
+
+	inline void computeL(const IntersectionPoint& sp, const Vector3f& gL)
+	{
+		L = Tangent::toTangentSpace(sp.Surface.N, sp.Surface.Nx, sp.Surface.Ny, gL);
 	}
 };
 

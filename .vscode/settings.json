@@ -2,6 +2,7 @@
     "files.associations": {
       "*.impala": "rust",
       "*.prc": "lisp",
+      "*.art": "rust",
       "array": "cpp",
       "bitset": "cpp",
       "string_view": "cpp",
@@ -80,7 +81,10 @@
       "regex": "cpp",
       "geometry": "cpp",
       "core": "cpp",
-      "openglsupport": "cpp"
+      "openglsupport": "cpp",
+      "boundingbox": "cpp",
+      "boundingsphere": "cpp",
+      "polytope": "cpp"
     },
     "files.exclude": {
         "**/.git": true,

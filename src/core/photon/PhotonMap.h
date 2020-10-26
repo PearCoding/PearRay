@@ -7,18 +7,17 @@
 #include "photon/Photon.h"
 
 #include <atomic>
-#include <tbb/concurrent_unordered_map.h>
+#include <tbb/concurrent_vector.h>
 #include <vector>
 
 namespace PR {
 namespace Photon {
 struct PhotonSphere // Setup for the estimation query
 {
-	uint64 MaxPhotons;
-	Vector3f Normal;
-	float SqueezeWeight;
-	Vector3f Center;
-	float Distance2;
+	Vector3f Normal		= Vector3f::UnitZ();
+	float SqueezeWeight = 0.0f;
+	Vector3f Center		= Vector3f::Zero();
+	float Distance2		= 0.0f;
 };
 
 // Spatial Hashmap
@@ -28,7 +27,7 @@ class PhotonMap {
 public:
 	using CheckFunction = bool (*)(const Photon&, const PhotonSphere&, float&);
 
-	inline explicit PhotonMap(float gridDelta);
+	inline explicit PhotonMap(const BoundingBox& bbox, float gridDelta);
 	inline ~PhotonMap();
 
 	inline void reset();
@@ -49,30 +48,24 @@ public:
 
 private:
 	struct KeyCoord {
-		int32 X, Y, Z;
+		uint32 X, Y, Z;
 
 		inline bool operator==(const KeyCoord& other) const;
 	};
 
 	inline KeyCoord toCoords(float x, float y, float z) const;
+	inline size_t toIndex(const KeyCoord& coords) const;
 
-	struct hash_compare {
-		inline static size_t hash(const KeyCoord&);
-		inline static bool equal(const KeyCoord& k1, const KeyCoord& k2);
-	};
-
-	struct hasher {
-		std::size_t operator()(const KeyCoord& k) const { return hash_compare::hash(k); }
-	};
-
-	using Map = tbb::concurrent_unordered_multimap<KeyCoord, Photon, hasher>;
+	using Map = std::vector<tbb::concurrent_vector<Photon>>;
 	Map mPhotons;
 
 	std::atomic<uint64> mStoredPhotons;
 	const float mGridDelta;
 	const float mInvGridDelta;
-
-	BoundingBox mBox;
+	const BoundingBox mBoundingBox;
+	const uint32 mGridX;
+	const uint32 mGridY;
+	const uint32 mGridZ;
 };
 } // namespace Photon
 } // namespace PR

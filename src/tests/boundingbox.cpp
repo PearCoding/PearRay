@@ -36,6 +36,14 @@ PR_TEST("Bounds")
 	PR_CHECK_EQ(box.center(), Vector3f(0, 0, 0));
 }
 
+PR_TEST("Contains")
+{
+	BoundingBox box(2, 2, 2);
+	PR_CHECK_TRUE(box.contains(Vector3f(0, 0, 0)));
+	PR_CHECK_FALSE(box.contains(Vector3f(2, 2, 2)));
+	PR_CHECK_FALSE(box.contains(Vector3f(-2, 0, 3)));
+}
+
 PR_TEST("Clip Inside")
 {
 	BoundingBox box(2, 2, 2);

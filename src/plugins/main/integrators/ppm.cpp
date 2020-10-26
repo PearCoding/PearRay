@@ -11,8 +11,8 @@
 #include "material/IMaterial.h"
 #include "math/ImportanceSampling.h"
 #include "math/Sampling.h"
-
 #include "path/LightPath.h"
+#include "photon/PhotonMap.h"
 #include "renderer/RenderContext.h"
 #include "renderer/RenderTile.h"
 #include "renderer/RenderTileSession.h"
@@ -20,11 +20,11 @@
 #include "sampler/SampleArray.h"
 #include "trace/IntersectionPoint.h"
 
-#include "photon/PhotonMap.h"
+#include "IntegratorUtils.h"
 
 #include "Logger.h"
 
-/* Implementation of Stochastic Progressive Photon Mapping */
+/* Implementation of Propabilistic Progressive Photon Mapping */
 
 #define MIS(n1, p1, n2, p2) IS::balance_term((n1), (p1), (n2), (p2))
 
@@ -32,9 +32,8 @@ namespace PR {
 struct PPMParameters {
 	size_t MaxRayDepth		 = 64;
 	size_t MaxPhotonsPerPass = 1000000;
-	size_t MaxGatherCount	 = 100;
-	float MaxGatherRadius	 = 10.0f;
-	float SqueezeWeight2	 = 1.0f;
+	float MaxGatherRadius	 = 0.1f;
+	float SqueezeWeight2	 = 0.0f;
 	float ContractRatio		 = 0.25f;
 };
 
@@ -52,12 +51,11 @@ struct PPMThreadData {
 struct PPMContext {
 	Photon::PhotonMap Map;
 	std::vector<PPMThreadData> Threads;
-	std::shared_ptr<FrameBufferFloat> AccumulatedFlux;
-	std::shared_ptr<FrameBufferFloat> SearchRadius2;
-	std::shared_ptr<FrameBufferUInt32> LocalPhotonCount;
+	float CurrentSearchRadius2 = 0.0f;
+	float CurrentKernelInvNorm = 0.0f;
 
-	inline PPMContext(float gridDelta)
-		: Map(gridDelta)
+	inline PPMContext(const BoundingBox& bbox, float gridDelta)
+		: Map(bbox, gridDelta)
 	{
 	}
 };
@@ -66,6 +64,17 @@ enum GatherMode {
 	GM_Sphere,
 	GM_Dome
 };
+
+inline static SpectralBlob wavelengthFilter(const SpectralBlob& a, const SpectralBlob& b)
+{
+	//return (1 - (a - b).cwiseAbs() / 8.0f).cwiseMax(0.0f);
+	PR_UNUSED(a);
+	PR_UNUSED(b);
+	return SpectralBlob::Ones();
+}
+
+inline static float kernel(float nr2) { return 1 - std::sqrt(nr2); }
+inline static float kernelnorm(float R2) { return 4 * PR_PI * R2; }
 
 struct Contribution {
 	float MIS;
@@ -199,29 +208,31 @@ public:
 		}
 	}
 
-	inline static SpectralBlob wavelengthFilter(const SpectralBlob& a, const SpectralBlob& b)
+	Contribution gather(const RenderTileSession& session, const IntersectionPoint& spt, IMaterial* material)
 	{
-		return (1 - (a - b).cwiseAbs() / 8.0f).cwiseMax(0.0f);
-	}
-
-	Contribution gather(RenderTileSession& /*session*/, const IntersectionPoint& spt)
-	{
+		PR_UNUSED(material);
+		PR_UNUSED(session);
 		Photon::PhotonSphere query;
 
-		float& searchRadius = mContext->SearchRadius2->getFragment(spt.Ray.PixelIndex, 0);
-
-		query.MaxPhotons	= mParameters.MaxGatherCount;
 		query.SqueezeWeight = mParameters.SqueezeWeight2;
 		query.Center		= spt.P;
 		query.Normal		= spt.Surface.N;
-		query.Distance2		= searchRadius;
+		query.Distance2		= mContext->CurrentSearchRadius2;
+
+		/*MaterialEvalInput min;
+		min.Context		   = MaterialEvalContext::fromIP(spt, Vector3f(0, 0, 0));
+		min.ShadingContext = ShadingContext::fromIP(session.threadID(), spt);*/
 
 		auto accumFunc = [&](SpectralBlob& accum, const Photon::Photon& photon, const Photon::PhotonSphere& sp, float d2) {
 			PR_UNUSED(sp);
-			PR_UNUSED(d2);
-			const Vector3f dir = Vector3f(photon.Direction[0], photon.Direction[1], photon.Direction[2]);
-			const float NdotL  = std::abs(spt.Surface.N.dot(dir));
-			accum += wavelengthFilter(spt.Ray.WavelengthNM, photon.Wavelengths) * photon.Power * NdotL; // TODO: Really?
+
+			/*min.Context.computeL(spt, (photon.Position - sp.Center).normalized());
+			MaterialEvalOutput mout;
+			material->eval(min, mout, session);*/
+			const float f = kernel(d2 / query.Distance2);
+
+			accum += /*wavelengthFilter(spt.Ray.WavelengthNM, photon.Wavelengths) */ photon.Power /* mout.Weight*/ * f;
+			//accum += photon.Power;
 		};
 
 		size_t found = 0;
@@ -231,20 +242,13 @@ public:
 		else
 			accum = mContext->Map.estimateSphere(query, accumFunc, found);
 
-		if (found > 1) {
-			auto& currentPhotons = mContext->LocalPhotonCount->getFragment(spt.Ray.PixelIndex, 0);
-			// Change radius, photons etc.
-			const uint64 newN	 = currentPhotons + std::floor((1 - mParameters.ContractRatio) * found);
-			const float fraction = newN / static_cast<float>(currentPhotons + found);
-
-			searchRadius   = query.Distance2 * fraction;
-			currentPhotons = newN;
+		if (found >= 1) {
+			accum *= mContext->CurrentKernelInvNorm / found;
+			// TODO: Add PPM and other parts together!
+			return Contribution{ 1.0f, SpectralBlob::Ones(), accum };
+		} else {
+			return ZERO_CONTRIB;
 		}
-
-		// TODO: Add PPM and other parts together!
-		const float inv = 1.0f / (PR_PI * searchRadius);
-
-		return Contribution{ 1.0f, SpectralBlob(inv), accum };
 	}
 
 	// First camera vertex
@@ -307,12 +311,12 @@ public:
 				session.pushSpectralFragment(SpectralBlob::Ones(), importance, SpectralBlob::Zero(), actual_spt.Ray, path);
 			}
 		} else {
-			const auto gather_contrib = gather(session, spt);
-			if (gather_contrib.MIS <= PR_EPSILON) {
+			const auto gather_contrib = gather(session, actual_spt, actual_material);
+			if (gather_contrib.MIS > PR_EPSILON) {
 				path.addToken(LightPathToken::Emissive());
 				session.pushSpectralFragment(SpectralBlob(gather_contrib.MIS),
 											 importance * gather_contrib.Importance, gather_contrib.Radiance,
-											 spt.Ray, path);
+											 actual_spt.Ray, path);
 				path.popToken(1);
 			}
 
@@ -354,34 +358,6 @@ public:
 		}
 	}
 
-	void handleBackground(RenderTileSession& session, const ShadingGroup& sg)
-	{ // Same as direct integrator
-		PR_PROFILE_THIS;
-		LightPath cb = LightPath::createCB();
-		session.tile()->statistics().addDepthCount(sg.size());
-		session.tile()->statistics().addBackgroundHitCount(sg.size());
-
-		if (!session.tile()->context()->scene()->nonDeltaInfiniteLights().empty()) {
-			for (auto light : session.tile()->context()->scene()->nonDeltaInfiniteLights()) {
-				for (size_t i = 0; i < sg.size(); ++i) {
-					InfiniteLightEvalInput in;
-					sg.extractRay(i, in.Ray);
-					in.Point = nullptr;
-					InfiniteLightEvalOutput out;
-					light->eval(in, out, session);
-
-					session.pushSpectralFragment(SpectralBlob::Ones(), SpectralBlob::Ones(), out.Radiance, in.Ray, cb);
-				}
-			}
-		} else { // If no inf. lights are available make sure at least zero is splatted
-			for (size_t i = 0; i < sg.size(); ++i) {
-				Ray ray;
-				sg.extractRay(i, ray);
-				session.pushSpectralFragment(SpectralBlob::Ones(), SpectralBlob::Ones(), SpectralBlob::Zero(), ray, cb);
-			}
-		}
-	}
-
 	void accumPass(RenderTileSession& session)
 	{
 		PR_PROFILE_THIS;
@@ -390,7 +366,7 @@ public:
 			while (session.pipeline()->hasShadingGroup()) {
 				auto sg = session.pipeline()->popShadingGroup(session);
 				if (sg.isBackground())
-					handleBackground(session, sg);
+					IntegratorUtils::handleBackground(session, sg);
 				else
 					handleShadingGroup(session, sg);
 			}
@@ -405,6 +381,11 @@ public:
 		if (threadData.Handled)
 			return;
 		threadData.Handled = true;
+
+		const auto sampleWavelength = [&]() {
+			// TODO
+			return session.tile()->random().getFloat() * (760 - 360) + 360;
+		};
 
 		// TODO: Use wavefront approach!
 		for (const auto& light : threadData.Lights) {
@@ -448,7 +429,7 @@ public:
 				in.ShadingContext.dUV		   = gp.dUV;
 				in.ShadingContext.UV		   = gp.UV;
 				in.ShadingContext.ThreadIndex  = session.threadID();
-				in.ShadingContext.WavelengthNM = SpectralBlob(550, 520, 460, 620); // TODO
+				in.ShadingContext.WavelengthNM = SpectralBlob(sampleWavelength(), sampleWavelength(), sampleWavelength(), sampleWavelength());
 
 				LightEvalOutput out;
 				emission->eval(in, out, session);
@@ -481,18 +462,15 @@ public:
 						} else {
 							// Always store when diffuse
 							Photon::Photon photon;
-							for (int k = 0; k < 3; ++k) {
-								photon.Position[k]	= ip.P(k);
-								photon.Direction[k] = -ray.Direction(k);
-							}
-
+							photon.Position	   = ip.P;
+							photon.Direction   = -ray.Direction;
 							photon.Power	   = sout.Weight * sampleInv;
 							photon.Wavelengths = sin.ShadingContext.WavelengthNM;
 							mContext->Map.store(photon);
 
 							photonsStored++;
+							break;
 						}
-
 					} else { // Nothing found, abort
 						break;
 					}
@@ -532,7 +510,8 @@ public:
 	{
 		mThreadMutex.lock();
 		if (!mContext) {
-			mContext = std::make_unique<PPMContext>(mParameters.MaxGatherRadius);
+			const float edge = std::max(0.1f, renderer->scene()->boundingBox().shortestEdge());
+			mContext		 = std::make_unique<PPMContext>(renderer->scene()->boundingBox(), edge / 100);
 			setupContext(renderer);
 		}
 		mThreadMutex.unlock();
@@ -540,6 +519,23 @@ public:
 	}
 
 private:
+	void beforePhotonPass(uint32 photonPass)
+	{
+		mContext->Map.reset();
+		for (auto& td : mContext->Threads)
+			td.Handled = false;
+
+		float prod = 1.0f;
+		for (uint32 k = 1; k < photonPass; ++k)
+			prod *= (k + 1 - mParameters.ContractRatio) / k;
+
+		mContext->CurrentSearchRadius2 = mParameters.MaxGatherRadius * mParameters.MaxGatherRadius * prod / (photonPass + 1.0f);
+		mContext->CurrentSearchRadius2 = std::max(mContext->CurrentSearchRadius2, 0.00001f);
+		PR_LOG(L_INFO) << "PPM Radius2=" << mContext->CurrentSearchRadius2 << std::endl;
+
+		mContext->CurrentKernelInvNorm = 1.0f / kernelnorm(mContext->CurrentSearchRadius2);
+	}
+
 	void setupContext(RenderContext* renderer)
 	{
 		std::unordered_map<IEntity*, PPMLightCache> lights;
@@ -548,24 +544,10 @@ private:
 
 		// Make sure the photon map is always cleared before photon pass
 		renderer->addIterationCallback([this](uint32 iter) {
-			if (iter % 2 == 0) { // Photon pass
-				mContext->Map.reset();
-				for (auto& td : mContext->Threads)
-					td.Handled = false;
-			}
+			if (iter % 2 == 0)
+				beforePhotonPass(iter / 2);
 		});
 		// TODO: What if the integrator context gets destroyed?
-
-		// Create framebuffers
-		// Notice: There is no need for tile local framebuffers as no filters are used and random pixel access is prohibited
-		const auto output		   = renderer->output()->data().getInternalChannel_Spectral(AOV_Output);
-		mContext->AccumulatedFlux  = std::make_shared<FrameBufferFloat>(output->channels(), output->size());
-		mContext->SearchRadius2	   = std::make_shared<FrameBufferFloat>(1, output->size());
-		mContext->LocalPhotonCount = std::make_shared<FrameBufferUInt32>(1, output->size());
-
-		mContext->AccumulatedFlux->fill(0);
-		mContext->SearchRadius2->fill(mParameters.MaxGatherRadius * mParameters.MaxGatherRadius);
-		mContext->LocalPhotonCount->fill(0);
 	}
 
 	void assignLights(RenderContext* renderer, std::unordered_map<IEntity*, PPMLightCache>& lights)
@@ -652,7 +634,6 @@ public:
 	{
 		mParameters.MaxPhotonsPerPass = std::max<size_t>(100, params.getUInt("photons", mParameters.MaxPhotonsPerPass));
 		mParameters.MaxRayDepth		  = (size_t)params.getUInt("max_ray_depth", mParameters.MaxRayDepth);
-		mParameters.MaxGatherCount	  = std::max<size_t>(100, params.getUInt("max_gather_count", mParameters.MaxGatherCount));
 		mParameters.MaxGatherRadius	  = std::max(0.00001f, params.getNumber("max_gather_radius", mParameters.MaxGatherRadius));
 
 		mParameters.SqueezeWeight2 = std::max(0.0f, std::min(1.0f, params.getNumber("squeeze_weight", mParameters.SqueezeWeight2)));

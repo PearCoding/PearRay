@@ -6,8 +6,8 @@ namespace PR {
 namespace Photon {
 // 14 Floats :O
 struct alignas(16) Photon {
-	float Position[3];
-	float Direction[3];
+	Vector3f Position;
+	Vector3f Direction;
 	SpectralBlob Power;
 	SpectralBlob Wavelengths;
 };
