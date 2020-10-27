@@ -30,7 +30,8 @@
 
 namespace PR {
 struct PPMParameters {
-	size_t MaxRayDepth		 = 64;
+	size_t MaxRayDepthHard	 = 16;
+	size_t MaxRayDepthSoft	 = 4;
 	size_t MaxPhotonsPerPass = 1000000;
 	float MaxGatherRadius	 = 0.1f;
 	float SqueezeWeight2	 = 0.0f;
@@ -162,7 +163,7 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		if (spt.Ray.IterationDepth + 1 >= mParameters.MaxRayDepth) {
+		if (spt.Ray.IterationDepth + 1 >= mParameters.MaxRayDepthHard) {
 			material = nullptr;
 			return;
 		}
@@ -254,9 +255,9 @@ public:
 			accum = mContext->Map.estimateSphere(query, accumFunc, found);
 
 		//if (found >= 1) {
-			accum *= mContext->CurrentKernelInvNorm;
-			// TODO: Add PPM and other parts together!
-			return Contribution{ 1.0f, SpectralBlob::Ones(), accum };
+		accum *= mContext->CurrentKernelInvNorm;
+		// TODO: Add PPM and other parts together!
+		return Contribution{ 1.0f, SpectralBlob::Ones(), accum };
 		/*} else {
 			return ZERO_CONTRIB;
 		}*/
@@ -352,7 +353,7 @@ public:
 	void handleShadingGroup(RenderTileSession& session, const ShadingGroup& sg)
 	{
 		PR_PROFILE_THIS;
-		const size_t maxPathSize = mParameters.MaxRayDepth + 2;
+		const size_t maxPathSize = mParameters.MaxRayDepthHard + 2;
 
 		LightPath path(maxPathSize);
 		path.addToken(LightPathToken::Camera());
@@ -441,7 +442,7 @@ public:
 				emission->eval(in, out, session);
 				out.Weight *= sampleInv / (pp.PDF.Value * Sampling::cos_hemi_pdf(local_dir(2)));
 
-				for (size_t j = 0; j < mParameters.MaxRayDepth; ++j) {
+				for (size_t j = 0; j < mParameters.MaxRayDepthHard; ++j) {
 					Vector3f pos;
 					GeometryPoint ngp;
 					IEntity* entity		= nullptr;
@@ -453,20 +454,7 @@ public:
 						IntersectionPoint ip;
 						ip.setForSurface(ray, pos, ngp);
 
-						if (material->hasDeltaDistribution()) {
-							// Continue
-							MaterialSampleInput sin;
-							sin.Context		   = MaterialSampleContext::fromIP(ip);
-							sin.ShadingContext = ShadingContext::fromIP(session.threadID(), ip);
-
-							MaterialSampleOutput sout;
-							material->sample(sin, sout, session);
-
-							out.Weight *= sout.Weight / sout.PDF_S;
-							ray = ray.next(ip.P, sout.globalL(ip), ip.Surface.N,
-										   RF_Monochrome | RF_Light, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX);
-						} else {
-							// Always store when diffuse
+						if (!material->hasDeltaDistribution()) { // Always store when diffuse
 							Photon::Photon photon;
 							photon.Position		= ip.P;
 							photon.Direction	= -ray.Direction;
@@ -481,8 +469,42 @@ public:
 							mContext->Map.storeUnsafe(photon);
 
 							photonsStored++;
-							break;
 						}
+
+						// Russian roulette
+						if (j >= mParameters.MaxRayDepthSoft) {
+							constexpr float DEPTH_DROP_RATE = 0.80f;
+							constexpr float SCATTER_EPS		= 1e-4f;
+
+							const float roussian_prob = session.tile()->random().getFloat();
+							const float weight_f	  = out.Weight.maxCoeff();
+							const float scatProb	  = std::min<float>(1.0f, weight_f * pow(DEPTH_DROP_RATE, (int)j - (int)mParameters.MaxRayDepthSoft));
+							if (roussian_prob > scatProb || scatProb <= SCATTER_EPS)
+								break;
+
+							out.Weight /= scatProb;
+						}
+
+						// Continue
+						MaterialSampleInput sin;
+						sin.Context		   = MaterialSampleContext::fromIP(ip);
+						sin.ShadingContext = ShadingContext::fromIP(session.threadID(), ip);
+
+						MaterialSampleOutput sout;
+						material->sample(sin, sout, session);
+						out.Weight *= sout.Weight;
+
+						if (out.Weight.isZero(PR_EPSILON) || sout.PDF_S[0] <= PR_EPSILON)
+							break;
+
+						int rflags = RF_Light;
+						if (material->hasDeltaDistribution())
+							rflags |= RF_Monochrome;
+						else
+							out.Weight /= sout.PDF_S[0];
+
+						ray = ray.next(ip.P, sout.globalL(ip), ip.Surface.N,
+									   rflags, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX);
 					} else { // Nothing found, abort
 						break;
 					}
@@ -645,7 +667,8 @@ public:
 	explicit IntPPMFactory(const ParameterGroup& params)
 	{
 		mParameters.MaxPhotonsPerPass = std::max<size_t>(100, params.getUInt("photons", mParameters.MaxPhotonsPerPass));
-		mParameters.MaxRayDepth		  = (size_t)params.getUInt("max_ray_depth", mParameters.MaxRayDepth);
+		mParameters.MaxRayDepthHard	  = (size_t)params.getUInt("max_ray_depth", mParameters.MaxRayDepthHard);
+		mParameters.MaxRayDepthSoft	  = std::min(mParameters.MaxRayDepthHard, (size_t)params.getUInt("soft_max_ray_depth", mParameters.MaxRayDepthSoft));
 		mParameters.MaxGatherRadius	  = std::max(0.00001f, params.getNumber("max_gather_radius", mParameters.MaxGatherRadius));
 
 		mParameters.SqueezeWeight2 = std::max(0.0f, std::min(1.0f, params.getNumber("squeeze_weight", mParameters.SqueezeWeight2)));
