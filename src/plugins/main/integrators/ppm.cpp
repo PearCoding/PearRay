@@ -68,18 +68,25 @@ enum GatherMode {
 // TODO
 constexpr float WAVELENGTH_START = 400;
 constexpr float WAVELENGTH_END	 = 760;
-constexpr float WAVEBAND		 = 60;
+constexpr float WAVEBAND		 = WAVELENGTH_END - WAVELENGTH_START;
 inline static SpectralBlob sampleWavelength(Random& rnd)
 {
 	return SpectralBlob(rnd.getFloat(), rnd.getFloat(), rnd.getFloat(), rnd.getFloat()) * (WAVELENGTH_END - WAVELENGTH_START) + WAVELENGTH_START;
 }
+
 inline static SpectralBlob wavelengthFilter(const SpectralBlob& a, const SpectralBlob& b)
 {
-	return ((a - b).cwiseAbs() <= WAVEBAND).select(SpectralBlob::Ones(), SpectralBlob::Zero());
+	return ((a - b).cwiseAbs() <= (WAVEBAND / 2))
+		.select(SpectralBlob((WAVELENGTH_END - WAVELENGTH_START) / WAVEBAND),
+				SpectralBlob::Zero());
 }
 
-inline static float kernel(float nr2) { return 1 - std::sqrt(nr2); }
-inline static float kernelnorm(float R2) { return PR_PI * R2; }
+// Integral over area of circle with radius r
+/*inline static float kernel(float nr2) { return 1 - std::sqrt(nr2); }
+inline static float kernelarea(float R2) { return PR_PI * R2 / 3.0f; }*/
+
+inline static float kernel(float nr2) { return 1 - nr2; }
+inline static float kernelarea(float R2) { return PR_PI * R2 / 2.0f; }
 
 struct Contribution {
 	float MIS;
@@ -197,9 +204,9 @@ public:
 	}
 
 	// Every camera vertex
-	void walkPath(RenderTileSession& session, LightPath& path,
-				  IntersectionPoint& spt, SpectralBlob& importance,
-				  IEntity*& entity, IMaterial*& material)
+	inline void walkPath(RenderTileSession& session, LightPath& path,
+						 IntersectionPoint& spt, SpectralBlob& importance,
+						 IEntity*& entity, IMaterial*& material)
 	{
 		// Early drop out for invalid splashes
 		if (PR_UNLIKELY(!material))
@@ -228,16 +235,15 @@ public:
 		min.Context		   = MaterialEvalContext::fromIP(spt, Vector3f(0, 0, 0));
 		min.ShadingContext = ShadingContext::fromIP(session.threadID(), spt);
 
-		auto accumFunc = [&](SpectralBlob& accum, const Photon::Photon& photon, const Photon::PhotonSphere& sp, float d2) {
+		const auto accumFunc = [&](SpectralBlob& accum, const Photon::Photon& photon, const Photon::PhotonSphere& sp, float d2) {
 			PR_UNUSED(sp);
 
-			min.Context.computeL(spt, photon.Direction);
+			min.Context.setLFromGlobal(spt, photon.Direction);
 			MaterialEvalOutput mout;
 			material->eval(min, mout, session);
 			const float f = kernel(d2 / query.Distance2);
 
-			accum += wavelengthFilter(spt.Ray.WavelengthNM, photon.WavelengthNM) / photon.Power * mout.Weight * f;
-			//accum += photon.Power;
+			accum += /*wavelengthFilter(spt.Ray.WavelengthNM, photon.WavelengthNM) */ photon.Power * mout.Weight * f;
 		};
 
 		size_t found = 0;
@@ -247,13 +253,13 @@ public:
 		else
 			accum = mContext->Map.estimateSphere(query, accumFunc, found);
 
-		if (found >= 1) {
-			accum *= mContext->CurrentKernelInvNorm / mParameters.MaxPhotonsPerPass /* found*/;
+		//if (found >= 1) {
+			accum *= mContext->CurrentKernelInvNorm;
 			// TODO: Add PPM and other parts together!
 			return Contribution{ 1.0f, SpectralBlob::Ones(), accum };
-		} else {
+		/*} else {
 			return ZERO_CONTRIB;
-		}
+		}*/
 	}
 
 	// First camera vertex
@@ -412,7 +418,7 @@ public:
 
 				// Randomly sample direction from emissive material (TODO: Should be abstracted)
 				const Vector2f drnd		 = session.tile()->random().get2D();
-				const Vector3f local_dir = Sampling::hemi(drnd[0], drnd[1]);
+				const Vector3f local_dir = Sampling::cos_hemi(drnd[0], drnd[1]);
 				const Vector3f dir		 = Tangent::fromTangentSpace(gp.N, gp.Nx, gp.Ny, local_dir);
 
 				Ray ray = Ray(pp.Position, dir);
@@ -433,7 +439,7 @@ public:
 
 				LightEvalOutput out;
 				emission->eval(in, out, session);
-				out.Weight /= pp.PDF.Value * Sampling::hemi_pdf();
+				out.Weight *= sampleInv / (pp.PDF.Value * Sampling::cos_hemi_pdf(local_dir(2)));
 
 				for (size_t j = 0; j < mParameters.MaxRayDepth; ++j) {
 					Vector3f pos;
@@ -443,20 +449,20 @@ public:
 					if (!session.traceBounceRay(ray, pos, ngp, entity, material))
 						break;
 
-					if (entity && material && material->canBeShaded()) {
+					if (entity && material) {
 						IntersectionPoint ip;
 						ip.setForSurface(ray, pos, ngp);
 
-						MaterialSampleInput sin;
-						sin.Context		   = MaterialSampleContext::fromIP(ip);
-						sin.ShadingContext = ShadingContext::fromIP(session.threadID(), ip);
-
-						MaterialSampleOutput sout;
-						material->sample(sin, sout, session);
-
 						if (material->hasDeltaDistribution()) {
 							// Continue
-							out.Weight *= SpectralBlobUtils::HeroOnly() * sout.Weight / sout.PDF_S;
+							MaterialSampleInput sin;
+							sin.Context		   = MaterialSampleContext::fromIP(ip);
+							sin.ShadingContext = ShadingContext::fromIP(session.threadID(), ip);
+
+							MaterialSampleOutput sout;
+							material->sample(sin, sout, session);
+
+							out.Weight *= sout.Weight / sout.PDF_S;
 							ray = ray.next(ip.P, sout.globalL(ip), ip.Surface.N,
 										   RF_Monochrome | RF_Light, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX);
 						} else {
@@ -464,15 +470,15 @@ public:
 							Photon::Photon photon;
 							photon.Position		= ip.P;
 							photon.Direction	= -ray.Direction;
-							photon.Power		= sout.Weight * sampleInv;
-							photon.WavelengthNM = sin.ShadingContext.WavelengthNM;
+							photon.Power		= out.Weight;
+							photon.WavelengthNM = ray.WavelengthNM;
 
 							if (ray.Flags & RF_Monochrome) { // If monochrome, spread hero to each channel
 								photon.Power		= photon.Power[0] / PR_SPECTRAL_BLOB_SIZE;
 								photon.WavelengthNM = photon.WavelengthNM[0];
 							}
 
-							mContext->Map.store(photon);
+							mContext->Map.storeUnsafe(photon);
 
 							photonsStored++;
 							break;
@@ -539,7 +545,7 @@ private:
 		mContext->CurrentSearchRadius2 = std::max(mContext->CurrentSearchRadius2, 0.00001f);
 		PR_LOG(L_DEBUG) << "PPM Radius2=" << mContext->CurrentSearchRadius2 << std::endl;
 
-		mContext->CurrentKernelInvNorm = 1.0f / kernelnorm(mContext->CurrentSearchRadius2);
+		mContext->CurrentKernelInvNorm = 1.0f / kernelarea(mContext->CurrentSearchRadius2);
 	}
 
 	void setupContext(RenderContext* renderer)

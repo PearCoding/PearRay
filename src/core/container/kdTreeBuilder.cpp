@@ -509,9 +509,8 @@ void kdTreeBuilder::build(size_t size)
 		V.combine(prim->box);
 	}
 
-	if (V.isPlanar()) {
+	if (V.isPlanar())
 		V.inflate();
-	}
 
 	std::vector<Event> events;
 	events.reserve(size * 2);

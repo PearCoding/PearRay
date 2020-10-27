@@ -6,10 +6,10 @@ PhotonMap::PhotonMap(const BoundingBox& bbox, float gridDelta)
 	, mStoredPhotons(0)
 	, mGridDelta(gridDelta)
 	, mInvGridDelta(1.0f / gridDelta)
-	, mBoundingBox(bbox)
-	, mGridX(std::max<uint32>(1, std::ceil(bbox.edge(0) * mInvGridDelta)))
-	, mGridY(std::max<uint32>(1, std::ceil(bbox.edge(1) * mInvGridDelta)))
-	, mGridZ(std::max<uint32>(1, std::ceil(bbox.edge(2) * mInvGridDelta)))
+	, mBoundingBox(bbox.expanded(0.001f))
+	, mGridX(std::max<uint32>(1, std::ceil(mBoundingBox.edge(0) * mInvGridDelta)))
+	, mGridY(std::max<uint32>(1, std::ceil(mBoundingBox.edge(1) * mInvGridDelta)))
+	, mGridZ(std::max<uint32>(1, std::ceil(mBoundingBox.edge(2) * mInvGridDelta)))
 {
 	PR_ASSERT(mGridDelta > PR_EPSILON, "Grid delta has to greater 0");
 	PR_ASSERT(std::isfinite(mInvGridDelta), "Inverse of grid delta has to be valid");
@@ -117,6 +117,11 @@ void PhotonMap::store(const Photon& pht)
 	if (!mBoundingBox.contains(pht.Position))
 		return;
 
+	storeUnsafe(pht);
+}
+
+void PhotonMap::storeUnsafe(const Photon& pht)
+{
 	mStoredPhotons++;
 	const auto key = toCoords(pht.Position[0], pht.Position[1], pht.Position[2]);
 

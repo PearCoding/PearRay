@@ -3,27 +3,6 @@
 #include "trace/HitPoint.h"
 
 namespace PR {
-BoundingBox::BoundingBox()
-	: mUpperBound(-PR_INF, -PR_INF, -PR_INF)
-	, mLowerBound(PR_INF, PR_INF, PR_INF)
-{
-}
-
-BoundingBox::BoundingBox(const Vector3f& upperbound, const Vector3f& lowerbound)
-	: mUpperBound(upperbound.array().max(lowerbound.array()).matrix())
-	, mLowerBound(lowerbound.array().min(upperbound.array()).matrix())
-{
-}
-
-BoundingBox::BoundingBox(float width, float height, float depth)
-	: mUpperBound(width / 2, height / 2, depth / 2)
-	, mLowerBound(-width / 2, -height / 2, -depth / 2)
-{
-	PR_ASSERT(width >= 0, "width has to be positive");
-	PR_ASSERT(height >= 0, "height has to be positive");
-	PR_ASSERT(depth >= 0, "depth has to be positive");
-}
-
 void BoundingBox::inflate(float eps, bool maxDir)
 {
 	Vector3f diff = (mUpperBound - mLowerBound).cwiseAbs();
@@ -154,18 +133,6 @@ Plane BoundingBox::getFace(FaceSide side) const
 					 Vector3f(-diff(0), 0, 0),
 					 Vector3f(0, 0, diff(2)));
 	}
-}
-
-void BoundingBox::combine(const Vector3f& point)
-{
-	mUpperBound = mUpperBound.array().max(point.array()).matrix();
-	mLowerBound = mLowerBound.array().min(point.array()).matrix();
-}
-
-void BoundingBox::combine(const BoundingBox& other)
-{
-	combine(other.lowerBound());
-	combine(other.upperBound());
 }
 
 Vector3f BoundingBox::corner(int n) const

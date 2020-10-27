@@ -45,6 +45,7 @@ public:
 	inline SpectralBlob estimate(const PhotonSphere& sphere, const CheckFunction& checkFunc, const AccumFunction& accumFunc, size_t& found) const;
 
 	inline void store(const Photon& point);
+	inline void storeUnsafe(const Photon& point); // Do not check for the boundary
 
 private:
 	struct KeyCoord {

@@ -4,6 +4,11 @@ inline bool IEntity::isRenderable() const { return true; }
 inline bool IEntity::isCollidable() const { return false; }
 inline float IEntity::collisionCost() const { return 1; }
 
+inline BoundingBox IEntity::calcWorldBoundingBox() const
+{
+	return localBoundingBox().transformed(transform());
+}
+
 inline BoundingBox IEntity::worldBoundingBox() const
 {
 	if (mWorldBoundingBox_Cache.isValid())

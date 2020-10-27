@@ -419,9 +419,8 @@ void kdTreeBuilderNaive::build(size_t size)
 		V.combine(prim->box);
 	}
 
-	if (V.isPlanar()) {
+	if (V.isPlanar())
 		V.inflate();
-	}
 
 	mRoot = buildNode(mObserver, mCostCallback, mAddedCallback,
 					  primitives, V, 0,

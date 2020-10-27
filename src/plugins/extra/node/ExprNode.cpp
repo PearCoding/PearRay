@@ -231,7 +231,7 @@ public:
 	void beforeRender(RenderContext* ctx) override
 	{
 		FloatScalarNode::beforeRender(ctx);
-		mExpr->setupThreadData(ctx->threads());
+		mExpr->setupThreadData(ctx->threadCount());
 	}
 
 	std::string dumpInformation() const override
@@ -277,7 +277,7 @@ public:
 	void beforeRender(RenderContext* ctx) override
 	{
 		FloatSpectralNode::beforeRender(ctx);
-		mExpr->setupThreadData(ctx->threads());
+		mExpr->setupThreadData(ctx->threadCount());
 	}
 
 	std::string dumpInformation() const override
@@ -308,7 +308,7 @@ public:
 	void beforeRender(RenderContext* ctx) override
 	{
 		FloatVectorNode::beforeRender(ctx);
-		mExpr->setupThreadData(ctx->threads());
+		mExpr->setupThreadData(ctx->threadCount());
 	}
 
 	std::string dumpInformation() const override

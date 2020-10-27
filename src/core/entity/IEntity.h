@@ -104,7 +104,7 @@ public:
 
 private:
 	uint8 mVisibilityFlags;
-	BoundingBox calcWorldBoundingBox() const;
+	inline BoundingBox calcWorldBoundingBox() const;
 	BoundingBox mWorldBoundingBox_Cache;
 };
 } // namespace PR
