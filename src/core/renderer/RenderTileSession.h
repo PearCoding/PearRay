@@ -44,7 +44,7 @@ public:
 	inline const RayGroup& getRayGroup(const Ray& ray) const { return getRayGroup(ray.GroupID); }
 	const RayGroup& getRayGroup(uint32 id) const;
 
-	bool traceBounceRay(const Ray& ray, Vector3f& pos, GeometryPoint& pt, IEntity*& entity, IMaterial*& material) const;
+	bool traceSingleRay(const Ray& ray, Vector3f& pos, GeometryPoint& pt, IEntity*& entity, IMaterial*& material) const;
 	bool traceShadowRay(const Ray& ray, float distance, uint32 entity_id) const;
 	bool traceOcclusionRay(const Ray& ray) const;
 

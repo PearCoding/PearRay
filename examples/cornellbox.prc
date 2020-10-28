@@ -8,13 +8,14 @@
 	(integrator
 		:type 'ppm'
 		:max_ray_depth 16
-		:light_sampe_count 1
-		:msi true
+		:contract_ratio 0.2
+		:max_light_ray_depth 16
+		:soft_max_light_ray_depth 6
 	)
 	(sampler
 		:slot 'aa'
 		:type 'mjitt'
-		:sample_count 1024
+		:sample_count 128
 	)
 	; Outputs
 	(output

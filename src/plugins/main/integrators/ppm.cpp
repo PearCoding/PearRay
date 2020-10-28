@@ -21,6 +21,7 @@
 #include "trace/IntersectionPoint.h"
 
 #include "IntegratorUtils.h"
+#include "Walker.h"
 
 #include "Logger.h"
 
@@ -30,12 +31,14 @@
 
 namespace PR {
 struct PPMParameters {
-	size_t MaxRayDepthHard	 = 16;
-	size_t MaxRayDepthSoft	 = 4;
-	size_t MaxPhotonsPerPass = 1000000;
-	float MaxGatherRadius	 = 0.1f;
-	float SqueezeWeight2	 = 0.0f;
-	float ContractRatio		 = 0.4f;
+	size_t MaxCameraRayDepthHard = 16;
+	size_t MaxCameraRayDepthSoft = 2;
+	size_t MaxLightRayDepthHard	 = 8;
+	size_t MaxLightRayDepthSoft	 = 2;
+	size_t MaxPhotonsPerPass	 = 1000000;
+	float MaxGatherRadius		 = 0.1f;
+	float SqueezeWeight2		 = 0.0f;
+	float ContractRatio			 = 0.4f;
 };
 
 struct PPMLightCache {
@@ -69,16 +72,27 @@ enum GatherMode {
 // TODO
 constexpr float WAVELENGTH_START = 400;
 constexpr float WAVELENGTH_END	 = 760;
-constexpr float WAVEBAND		 = WAVELENGTH_END - WAVELENGTH_START;
+constexpr float WAVEBAND		 = 5;
 inline static SpectralBlob sampleWavelength(Random& rnd)
 {
-	return SpectralBlob(rnd.getFloat(), rnd.getFloat(), rnd.getFloat(), rnd.getFloat()) * (WAVELENGTH_END - WAVELENGTH_START) + WAVELENGTH_START;
+	constexpr float span  = WAVELENGTH_END - WAVELENGTH_START;
+	constexpr float delta = span / PR_SPECTRAL_BLOB_SIZE;
+
+	SpectralBlob wvls;
+	const float start = rnd.getFloat() * span;	  // Wavelength inside the span
+	wvls(0)			  = start + WAVELENGTH_START; // Hero wavelength
+	PR_OPT_LOOP
+	for (size_t i = 1; i < PR_SPECTRAL_BLOB_SIZE; ++i)
+		wvls(i) = WAVELENGTH_START + std::fmod(start + i * delta, span);
+	return wvls;
 }
 
 inline static SpectralBlob wavelengthFilter(const SpectralBlob& a, const SpectralBlob& b)
 {
+	constexpr float PDF = 1 - 0.25f * WAVEBAND / (WAVELENGTH_END - WAVELENGTH_START); // Area of box[-w/2,w/2] x box[0,1] convolution
+
 	return ((a - b).cwiseAbs() <= (WAVEBAND / 2))
-		.select(SpectralBlob((WAVELENGTH_END - WAVELENGTH_START) / WAVEBAND),
+		.select(SpectralBlob(1 / PDF),
 				SpectralBlob::Zero());
 }
 
@@ -96,11 +110,8 @@ struct Contribution {
 };
 const static Contribution ZERO_CONTRIB = Contribution{ 0.0f, SpectralBlob::Zero(), SpectralBlob::Zero() };
 
-constexpr float SHADOW_RAY_MIN = 0.0001f;
-constexpr float SHADOW_RAY_MAX = PR_INF;
-constexpr float BOUNCE_RAY_MIN = SHADOW_RAY_MIN;
-constexpr float BOUNCE_RAY_MAX = PR_INF;
-
+using LightPathWalker  = Walker<true>;	// Enable russian roulette
+using CameraPathWalker = Walker<false>; // No russian roulette needed, as only delta materials scatter
 template <GatherMode GM>
 class IntPPMInstance : public IIntegratorInstance {
 public:
@@ -108,6 +119,10 @@ public:
 		: mContext(context)
 		, mParameters(parameters)
 	{
+		mLightPathWalker.MaxRayDepthHard  = mParameters.MaxLightRayDepthHard;
+		mLightPathWalker.MaxRayDepthSoft  = mParameters.MaxLightRayDepthSoft;
+		mCameraPathWalker.MaxRayDepthHard = mParameters.MaxCameraRayDepthHard;
+		mCameraPathWalker.MaxRayDepthSoft = mParameters.MaxCameraRayDepthSoft;// Obsolete
 	}
 
 	virtual ~IntPPMInstance() = default;
@@ -119,105 +134,20 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		// Sample light
-		InfiniteLightSampleInput inL;
-		inL.Point = spt;
-		inL.RND	  = session.tile()->random().get2D();
-		InfiniteLightSampleOutput outL;
-		infLight->sample(inL, outL, session);
-
-		// An unlikely event, but a zero pdf has to be catched before blowing up other parts
-		if (PR_UNLIKELY(outL.PDF_S <= PR_EPSILON))
+		auto sample = IntegratorUtils::sampleInfiniteLight(session, spt, infLight);
+		if (!sample.has_value())
 			return ZERO_CONTRIB;
+		else {
+			// Evaluate surface
+			MaterialEvalInput in{ MaterialEvalContext::fromIP(spt, sample.value().Direction), ShadingContext::fromIP(session.threadID(), spt) };
+			MaterialEvalOutput out;
+			material->eval(in, out, session);
+			token = LightPathToken(out.Type);
 
-		if (infLight->hasDeltaDistribution())
-			outL.PDF_S = 1;
-
-		// Trace shadow ray
-		const Ray shadow		= spt.Ray.next(spt.P, outL.Outgoing, spt.Surface.N, RF_Shadow, SHADOW_RAY_MIN, SHADOW_RAY_MAX);
-		const bool hitSomething = session.traceOcclusionRay(shadow);
-
-		SpectralBlob evalW;
-		if (hitSomething) { // If we hit something before the light/background, the light path is occluded
-			evalW = SpectralBlob::Zero();
-		} else {
-			evalW = outL.Radiance;
-		}
-
-		// Evaluate surface
-		MaterialEvalInput in{ MaterialEvalContext::fromIP(spt, shadow.Direction), ShadingContext::fromIP(session.threadID(), spt) };
-		MaterialEvalOutput out;
-		material->eval(in, out, session);
-		token = LightPathToken(out.Type);
-
-		// Calculate hero mis pdf
-		const float matPDF = (spt.Ray.Flags & RF_Monochrome) ? out.PDF_S[0] : (out.PDF_S.sum() / PR_SPECTRAL_BLOB_SIZE);
-		const float msiL   = MIS(1, outL.PDF_S, 1, matPDF);
-		return Contribution{ msiL, out.Weight / outL.PDF_S, evalW };
-	}
-
-	// Step one brdf
-	void stepPath(RenderTileSession& session, LightPath& path,
-				  IntersectionPoint& spt, SpectralBlob& importance,
-				  IEntity*& entity, IMaterial*& material)
-	{
-		PR_PROFILE_THIS;
-
-		if (spt.Ray.IterationDepth + 1 >= mParameters.MaxRayDepthHard) {
-			material = nullptr;
-			return;
-		}
-
-		// Sample BxDF
-		MaterialSampleInput in{
-			MaterialSampleContext::fromIP(spt),
-			ShadingContext::fromIP(session.threadID(), spt),
-			session.tile()->random().get2D()
-		};
-		MaterialSampleOutput out;
-		material->sample(in, out, session);
-
-		if (PR_UNLIKELY(out.PDF_S[0] <= PR_EPSILON)) {
-			material = nullptr;
-			return;
-		}
-
-		// Construct next ray
-		Ray next = spt.Ray.next(spt.P, out.globalL(spt), spt.Surface.N, RF_Bounce, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX);
-		if (material->isSpectralVarying())
-			next.Flags |= RF_Monochrome;
-
-		path.addToken(LightPathToken(out.Type)); // (1)
-
-		importance *= out.Weight;
-
-		// Trace bounce ray
-		GeometryPoint npt;
-		Vector3f npos;
-		if (session.traceBounceRay(next, npos, npt, entity, material)) {
-			session.tile()->statistics().addEntityHitCount();
-			spt.setForSurface(next, npos, npt);
-		} else {
-			session.tile()->statistics().addBackgroundHitCount();
-			material = nullptr;
-			entity	 = nullptr;
-		}
-	}
-
-	// Every camera vertex
-	inline void walkPath(RenderTileSession& session, LightPath& path,
-						 IntersectionPoint& spt, SpectralBlob& importance,
-						 IEntity*& entity, IMaterial*& material)
-	{
-		// Early drop out for invalid splashes
-		if (PR_UNLIKELY(!material))
-			return;
-
-		PR_PROFILE_THIS;
-
-		while (material && material->hasDeltaDistribution()) {
-			session.tile()->statistics().addDepthCount();
-			stepPath(session, path, spt, importance, entity, material);
+			// Calculate hero mis pdf
+			const float matPDF = (spt.Ray.Flags & RF_Monochrome) ? out.PDF_S[0] : (out.PDF_S.sum() / PR_SPECTRAL_BLOB_SIZE);
+			const float msiL   = MIS(1, sample.value().PDF_S, 1, matPDF);
+			return Contribution{ msiL, out.Weight / sample.value().PDF_S, sample.value().Weight };
 		}
 	}
 
@@ -244,7 +174,7 @@ public:
 			material->eval(min, mout, session);
 			const float f = kernel(d2 / query.Distance2);
 
-			accum += /*wavelengthFilter(spt.Ray.WavelengthNM, photon.WavelengthNM) */ photon.Power * mout.Weight * f;
+			accum += wavelengthFilter(spt.Ray.WavelengthNM, photon.WavelengthNM) * photon.Power * mout.Weight * f;
 		};
 
 		size_t found = 0;
@@ -295,71 +225,58 @@ public:
 			}
 		}
 
-		IntersectionPoint actual_spt = spt;
-		IEntity* actual_entity		 = entity;
-		IMaterial* actual_material	 = material;
-		SpectralBlob importance		 = SpectralBlob::Ones();
+		mCameraPathWalker.traverseBSDF(
+			session, SpectralBlob::Ones(), spt, entity, material,
+			[&](const SpectralBlob& weight, const IntersectionPoint& ip, IEntity*, IMaterial* material_hit) {
+				session.tile()->statistics().addEntityHitCount();
+				session.tile()->statistics().addDepthCount();
 
-		walkPath(session, path, actual_spt, importance, actual_entity, actual_material);
-		if (actual_material == nullptr) {
-			if (actual_entity == nullptr) { // Background was hit
-				path.addToken(LightPathToken::Background());
-				for (auto light : session.tile()->context()->scene()->nonDeltaInfiniteLights()) {
-					InfiniteLightEvalInput lin;
-					lin.Point = &actual_spt;
-					lin.Ray	  = actual_spt.Ray;
-					InfiniteLightEvalOutput lout;
-					light->eval(lin, lout, session);
+				if (!material_hit->hasDeltaDistribution()) {
+					const auto gather_contrib = gather(session, ip, material_hit);
+					if (gather_contrib.MIS > PR_EPSILON) {
+						path.addToken(LightPathToken::Emissive());
+						session.pushSpectralFragment(SpectralBlob(gather_contrib.MIS),
+													 weight * gather_contrib.Importance, gather_contrib.Radiance,
+													 ip.Ray, path);
+						path.popToken(1);
+					}
 
-					if (lout.PDF_S <= PR_EPSILON)
-						continue;
+					// Infinite Lights
+					// 1 sample per inf-light
+					for (auto light : session.tile()->context()->scene()->infiniteLights()) {
+						LightPathToken token;
+						const auto contrib = infiniteLight(session, ip, token, light.get(), material_hit);
 
-					session.pushSpectralFragment(SpectralBlob::Ones(), importance, lout.Radiance, actual_spt.Ray, path);
+						if (contrib.MIS <= PR_EPSILON)
+							continue;
+
+						path.addToken(token);
+						path.addToken(LightPathToken::Background());
+						session.pushSpectralFragment(SpectralBlob(contrib.MIS), weight * contrib.Importance, contrib.Radiance, ip.Ray, path);
+						path.popToken(2);
+					}
+					return false;
+				} else {
+					return true; // Only traverse for delta materials
 				}
-
-				path.popToken();
-			} else {
-				// Error or max depth reached
-				session.pushSpectralFragment(SpectralBlob::Ones(), importance, SpectralBlob::Zero(), actual_spt.Ray, path);
-			}
-		} else {
-			const auto gather_contrib = gather(session, actual_spt, actual_material);
-			if (gather_contrib.MIS > PR_EPSILON) {
-				path.addToken(LightPathToken::Emissive());
-				session.pushSpectralFragment(SpectralBlob(gather_contrib.MIS),
-											 importance * gather_contrib.Importance, gather_contrib.Radiance,
-											 actual_spt.Ray, path);
-				path.popToken(1);
-			}
-
-			// Infinite Lights
-			// 1 sample per inf-light
-			for (auto light : session.tile()->context()->scene()->infiniteLights()) {
-				LightPathToken token;
-				const auto contrib = infiniteLight(session, actual_spt, token, light.get(), actual_material);
-
-				if (contrib.MIS <= PR_EPSILON)
-					continue;
-
-				path.addToken(token);
-				path.addToken(LightPathToken::Background());
-				session.pushSpectralFragment(SpectralBlob(contrib.MIS), importance * contrib.Importance, contrib.Radiance, spt.Ray, path);
-				path.popToken(2);
-			}
-		}
+			},
+			[&](SpectralBlob& weight, const MaterialSampleInput&, const MaterialSampleOutput& sout, IEntity*, IMaterial*) {
+				weight *= sout.Weight;
+				path.addToken(sout.Type);
+			},
+			[&](const SpectralBlob& weight, const Ray& ray) {
+				IntegratorUtils::handleBackground(session, path, weight, ray);
+			});
 		path.popTokenUntil(1);
 	}
 
 	void handleShadingGroup(RenderTileSession& session, const ShadingGroup& sg)
 	{
 		PR_PROFILE_THIS;
-		const size_t maxPathSize = mParameters.MaxRayDepthHard + 2;
+		const size_t maxPathSize = mParameters.MaxCameraRayDepthHard + 2;
 
 		LightPath path(maxPathSize);
 		path.addToken(LightPathToken::Camera());
-
-		session.tile()->statistics().addDepthCount(sg.size());
-		session.tile()->statistics().addEntityHitCount(sg.size());
 
 		for (size_t i = 0; i < sg.size(); ++i) {
 			IntersectionPoint spt;
@@ -378,10 +295,86 @@ public:
 			while (session.pipeline()->hasShadingGroup()) {
 				auto sg = session.pipeline()->popShadingGroup(session);
 				if (sg.isBackground())
-					IntegratorUtils::handleBackground(session, sg);
+					IntegratorUtils::handleBackgroundGroup(session, sg);
 				else
 					handleShadingGroup(session, sg);
 			}
+		}
+	}
+
+	void emitPhotons(RenderTileSession& session, const PPMLightCache& light)
+	{
+		// The actual photon count is the result of the multiplication with the hero wavelength component count
+		const float sampleInv = 1.0f / (PR_SPECTRAL_BLOB_SIZE * light.Photons);
+
+		// Cache
+		uint32 lastEmissionID = PR_INVALID_ID;
+		IEmission* emission	  = nullptr;
+
+		size_t photonsShoot = 0;
+		for (; photonsShoot < light.Photons; ++photonsShoot) {
+			// Randomly select point on light surface
+			const auto pp = light.Entity->sampleParameterPoint(session.tile()->random().get2D());
+
+			EntityGeometryQueryPoint qp;
+			qp.Position	   = pp.Position;
+			qp.UV		   = pp.UV;
+			qp.PrimitiveID = pp.PrimitiveID;
+			qp.View		   = Vector3f::Zero();
+
+			GeometryPoint gp;
+			light.Entity->provideGeometryPoint(qp, gp);
+
+			// Randomly sample direction from emissive material (TODO: Should be abstracted)
+			const Vector2f drnd		 = session.tile()->random().get2D();
+			const Vector3f local_dir = Sampling::cos_hemi(drnd[0], drnd[1]);
+			const Vector3f dir		 = Tangent::fromTangentSpace(gp.N, gp.Nx, gp.Ny, local_dir);
+
+			Ray ray = Ray(pp.Position, dir);
+			ray.Flags |= RF_Light;
+			ray.WavelengthNM = sampleWavelength(session.tile()->random());
+
+			if (PR_UNLIKELY(gp.EmissionID != lastEmissionID)) {
+				lastEmissionID = gp.EmissionID;
+				emission	   = session.getEmission(gp.EmissionID);
+			}
+
+			LightEvalInput in;
+			in.Entity					   = light.Entity;
+			in.ShadingContext.Face		   = gp.PrimitiveID;
+			in.ShadingContext.dUV		   = gp.dUV;
+			in.ShadingContext.UV		   = gp.UV;
+			in.ShadingContext.ThreadIndex  = session.threadID();
+			in.ShadingContext.WavelengthNM = ray.WavelengthNM;
+
+			LightEvalOutput out;
+			emission->eval(in, out, session);
+			out.Weight *= sampleInv / (pp.PDF.Value * Sampling::cos_hemi_pdf(local_dir(2)));
+
+			mLightPathWalker.traverseBSDFSimple(
+				session, out.Weight, ray,
+				[&](const SpectralBlob& weight, const IntersectionPoint& ip, IEntity* entity, IMaterial* material) {
+					session.tile()->statistics().addEntityHitCount();
+					session.tile()->statistics().addDepthCount();
+
+					PR_UNUSED(entity);
+					if (!material->hasDeltaDistribution()) { // Always store when diffuse
+						Photon::Photon photon;
+						photon.Position		= ip.P;
+						photon.Direction	= -ray.Direction;
+						photon.Power		= weight;
+						photon.WavelengthNM = ray.WavelengthNM;
+
+						if (ray.Flags & RF_Monochrome) { // If monochrome, spread hero to each channel
+							photon.Power		= photon.Power[0] / PR_SPECTRAL_BLOB_SIZE;
+							photon.WavelengthNM = photon.WavelengthNM[0];
+						}
+
+						mContext->Map.storeUnsafe(photon);
+					}
+					return true;
+				},
+				[](const SpectralBlob&, const Ray&) {} /* Ignore non hits */);
 		}
 	}
 
@@ -395,123 +388,8 @@ public:
 		threadData.Handled = true;
 
 		// TODO: Use wavefront approach!
-		for (const auto& light : threadData.Lights) {
-			// The actual photon count is the result of the multiplication with the hero wavelength component count
-			const float sampleInv = 1.0f / (PR_SPECTRAL_BLOB_SIZE * light.Photons);
-
-			// Cache
-			uint32 lastEmissionID = PR_INVALID_ID;
-			IEmission* emission	  = nullptr;
-
-			size_t photonsShoot	 = 0;
-			size_t photonsStored = 0;
-			for (; photonsShoot < light.Photons; ++photonsShoot) {
-				// Randomly select point on light surface
-				const auto pp = light.Entity->sampleParameterPoint(session.tile()->random().get2D());
-
-				EntityGeometryQueryPoint qp;
-				qp.Position	   = pp.Position;
-				qp.UV		   = pp.UV;
-				qp.PrimitiveID = pp.PrimitiveID;
-				qp.View		   = Vector3f::Zero();
-
-				GeometryPoint gp;
-				light.Entity->provideGeometryPoint(qp, gp);
-
-				// Randomly sample direction from emissive material (TODO: Should be abstracted)
-				const Vector2f drnd		 = session.tile()->random().get2D();
-				const Vector3f local_dir = Sampling::cos_hemi(drnd[0], drnd[1]);
-				const Vector3f dir		 = Tangent::fromTangentSpace(gp.N, gp.Nx, gp.Ny, local_dir);
-
-				Ray ray = Ray(pp.Position, dir);
-				ray.Flags |= RF_Light;
-
-				if (PR_UNLIKELY(gp.EmissionID != lastEmissionID)) {
-					lastEmissionID = gp.EmissionID;
-					emission	   = session.getEmission(gp.EmissionID);
-				}
-
-				LightEvalInput in;
-				in.Entity					   = light.Entity;
-				in.ShadingContext.Face		   = gp.PrimitiveID;
-				in.ShadingContext.dUV		   = gp.dUV;
-				in.ShadingContext.UV		   = gp.UV;
-				in.ShadingContext.ThreadIndex  = session.threadID();
-				in.ShadingContext.WavelengthNM = sampleWavelength(session.tile()->random());
-
-				LightEvalOutput out;
-				emission->eval(in, out, session);
-				out.Weight *= sampleInv / (pp.PDF.Value * Sampling::cos_hemi_pdf(local_dir(2)));
-
-				for (size_t j = 0; j < mParameters.MaxRayDepthHard; ++j) {
-					Vector3f pos;
-					GeometryPoint ngp;
-					IEntity* entity		= nullptr;
-					IMaterial* material = nullptr;
-					if (!session.traceBounceRay(ray, pos, ngp, entity, material))
-						break;
-
-					if (entity && material) {
-						IntersectionPoint ip;
-						ip.setForSurface(ray, pos, ngp);
-
-						if (!material->hasDeltaDistribution()) { // Always store when diffuse
-							Photon::Photon photon;
-							photon.Position		= ip.P;
-							photon.Direction	= -ray.Direction;
-							photon.Power		= out.Weight;
-							photon.WavelengthNM = ray.WavelengthNM;
-
-							if (ray.Flags & RF_Monochrome) { // If monochrome, spread hero to each channel
-								photon.Power		= photon.Power[0] / PR_SPECTRAL_BLOB_SIZE;
-								photon.WavelengthNM = photon.WavelengthNM[0];
-							}
-
-							mContext->Map.storeUnsafe(photon);
-
-							photonsStored++;
-						}
-
-						// Russian roulette
-						if (j >= mParameters.MaxRayDepthSoft) {
-							constexpr float DEPTH_DROP_RATE = 0.80f;
-							constexpr float SCATTER_EPS		= 1e-4f;
-
-							const float roussian_prob = session.tile()->random().getFloat();
-							const float weight_f	  = out.Weight.maxCoeff();
-							const float scatProb	  = std::min<float>(1.0f, weight_f * pow(DEPTH_DROP_RATE, (int)j - (int)mParameters.MaxRayDepthSoft));
-							if (roussian_prob > scatProb || scatProb <= SCATTER_EPS)
-								break;
-
-							out.Weight /= scatProb;
-						}
-
-						// Continue
-						MaterialSampleInput sin;
-						sin.Context		   = MaterialSampleContext::fromIP(ip);
-						sin.ShadingContext = ShadingContext::fromIP(session.threadID(), ip);
-
-						MaterialSampleOutput sout;
-						material->sample(sin, sout, session);
-						out.Weight *= sout.Weight;
-
-						if (out.Weight.isZero(PR_EPSILON) || sout.PDF_S[0] <= PR_EPSILON)
-							break;
-
-						int rflags = RF_Light;
-						if (material->hasDeltaDistribution())
-							rflags |= RF_Monochrome;
-						else
-							out.Weight /= sout.PDF_S[0];
-
-						ray = ray.next(ip.P, sout.globalL(ip), ip.Surface.N,
-									   rflags, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX);
-					} else { // Nothing found, abort
-						break;
-					}
-				}
-			}
-		}
+		for (const auto& light : threadData.Lights)
+			emitPhotons(session, light);
 	}
 
 	void onTile(RenderTileSession& session) override
@@ -529,6 +407,9 @@ public:
 private:
 	PPMContext* mContext;
 	const PPMParameters mParameters;
+
+	LightPathWalker mLightPathWalker;
+	CameraPathWalker mCameraPathWalker;
 };
 
 template <GatherMode GM>
@@ -667,10 +548,12 @@ class IntPPMFactory : public IIntegratorFactory {
 public:
 	explicit IntPPMFactory(const ParameterGroup& params)
 	{
-		mParameters.MaxPhotonsPerPass = std::max<size_t>(100, params.getUInt("photons", mParameters.MaxPhotonsPerPass));
-		mParameters.MaxRayDepthHard	  = (size_t)params.getUInt("max_ray_depth", mParameters.MaxRayDepthHard);
-		mParameters.MaxRayDepthSoft	  = std::min(mParameters.MaxRayDepthHard, (size_t)params.getUInt("soft_max_ray_depth", mParameters.MaxRayDepthSoft));
-		mParameters.MaxGatherRadius	  = std::max(0.00001f, params.getNumber("max_gather_radius", mParameters.MaxGatherRadius));
+		mParameters.MaxPhotonsPerPass	  = std::max<size_t>(100, params.getUInt("photons", mParameters.MaxPhotonsPerPass));
+		mParameters.MaxCameraRayDepthHard = (size_t)params.getUInt("max_ray_depth", mParameters.MaxCameraRayDepthHard);
+		mParameters.MaxCameraRayDepthSoft = std::min(mParameters.MaxCameraRayDepthHard, (size_t)params.getUInt("soft_max_ray_depth", mParameters.MaxCameraRayDepthSoft));
+		mParameters.MaxLightRayDepthHard  = (size_t)params.getUInt("max_light_ray_depth", mParameters.MaxLightRayDepthHard);
+		mParameters.MaxLightRayDepthSoft  = std::min(mParameters.MaxLightRayDepthHard, (size_t)params.getUInt("soft_max_light_ray_depth", mParameters.MaxLightRayDepthSoft));
+		mParameters.MaxGatherRadius		  = std::max(0.00001f, params.getNumber("max_gather_radius", mParameters.MaxGatherRadius));
 
 		mParameters.SqueezeWeight2 = std::max(0.0f, std::min(1.0f, params.getNumber("squeeze_weight", mParameters.SqueezeWeight2)));
 		mParameters.SqueezeWeight2 *= mParameters.SqueezeWeight2;

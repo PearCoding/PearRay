@@ -9,11 +9,12 @@
 	(integrator
 		:type 'ppm'
 		:max_ray_depth 10
+		:contract_ratio 0.2
 	)
 	(sampler
 		:slot 'aa'
 		:type 'SOBOL'
-		:sample_count 8
+		:sample_count 1024
 	)
 	; Outputs
 	(output
@@ -49,10 +50,6 @@
 		:name 'backWall'
 		:type 'diffuse'
 		:albedo (refl 0.725000 0.710000 0.680000)
-	)
-	(spectrum
-		:name 'ceiling_diffuse_color'
-		:data 
 	)
 	(material
 		:name 'ceiling'

@@ -45,11 +45,6 @@ struct Contribution {
 };
 const static Contribution ZERO_CONTRIB = Contribution{ 0.0f, SpectralBlob::Zero(), SpectralBlob::Zero() };
 
-constexpr float SHADOW_RAY_MIN = 0.0001f;
-constexpr float SHADOW_RAY_MAX = PR_INF;
-constexpr float BOUNCE_RAY_MIN = SHADOW_RAY_MIN;
-constexpr float BOUNCE_RAY_MAX = PR_INF;
-
 class IntDirectInstance : public IIntegratorInstance {
 public:
 	explicit IntDirectInstance(RenderContext* ctx, size_t lightSamples, size_t maxRayDepthSoft, size_t maxRayDepthHard, bool mis)
@@ -233,7 +228,7 @@ public:
 		Vector3f npos;
 		IEntity* nentity = nullptr;
 		IMaterial* nmaterial;
-		if (session.traceBounceRay(next, npos, npt, nentity, nmaterial)) {
+		if (session.traceSingleRay(next, npos, npt, nentity, nmaterial)) {
 			IntersectionPoint spt2;
 			spt2.setForSurface(next, npos, npt);
 			const float aNdotV = std::abs(spt2.Surface.NdotV);
@@ -439,7 +434,7 @@ public:
 			while (session.pipeline()->hasShadingGroup()) {
 				auto sg = session.pipeline()->popShadingGroup(session);
 				if (sg.isBackground())
-					IntegratorUtils::handleBackground(session, sg);
+					IntegratorUtils::handleBackgroundGroup(session, sg);
 				else
 					handleShadingGroup(session, sg);
 			}

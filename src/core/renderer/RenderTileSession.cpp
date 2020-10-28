@@ -62,10 +62,15 @@ const RayGroup& RenderTileSession::getRayGroup(uint32 id) const
 	return mPipeline->getRayGroup(id);
 }
 
-bool RenderTileSession::traceBounceRay(const Ray& ray, Vector3f& pos, GeometryPoint& pt, IEntity*& entity, IMaterial*& material) const
+bool RenderTileSession::traceSingleRay(const Ray& ray, Vector3f& pos, GeometryPoint& pt, IEntity*& entity, IMaterial*& material) const
 {
 	PR_PROFILE_THIS;
-	mTile->statistics().addBounceRayCount();
+	if (ray.Flags & RF_Camera)
+		mTile->statistics().addCameraRayCount();
+	else if (ray.Flags & RF_Light)
+		mTile->statistics().addLightRayCount();
+	else
+		mTile->statistics().addBounceRayCount();
 
 	HitEntry entry;
 	if (!mTile->context()->scene()->traceSingleRay(ray, entry))
