@@ -153,7 +153,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::filesystem::path& file
 				} else {
 					const float* ptr = channel->ptr();
 					toneMapper.setColorMode(sett.TCM);
-					toneMapper.map(&ptr[y * channel->heightPitch() + x * channel->widthPitch()],
+					toneMapper.map(&ptr[y * channel->heightPitch() + x * channel->widthPitch()], nullptr,
 								   &line[id], 3, 1); // RGB
 				}
 

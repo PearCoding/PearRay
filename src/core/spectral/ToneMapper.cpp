@@ -9,7 +9,7 @@ ToneMapper::ToneMapper()
 {
 }
 
-void ToneMapper::map(const float* PR_RESTRICT xyzIn, float* PR_RESTRICT rgbOut, size_t outElems, size_t pixelCount) const
+void ToneMapper::map(const float* PR_RESTRICT xyzIn, const float* PR_RESTRICT weightIn, float* PR_RESTRICT rgbOut, size_t outElems, size_t pixelCount) const
 {
 	constexpr size_t IElems = 3;
 	PR_ASSERT(outElems >= 3, "Expected atleast an RGB buffer");
@@ -53,6 +53,19 @@ void ToneMapper::map(const float* PR_RESTRICT xyzIn, float* PR_RESTRICT rgbOut, 
 			rgbOut[i * outElems + 2] = Y;
 		}
 		break;
+	}
+
+	if (weightIn) {
+		PR_OPT_LOOP
+		for (size_t i = 0; i < pixelCount; ++i) {
+			const float w = weightIn[i];
+			if (w > PR_EPSILON) {
+				const float iw = 1 / w;
+				rgbOut[i * outElems + 0] *= iw;
+				rgbOut[i * outElems + 1] *= iw;
+				rgbOut[i * outElems + 2] *= iw;
+			}
+		}
 	}
 
 	if (mScale != 1) {

@@ -7,6 +7,36 @@
 
 using namespace PR;
 namespace PRPY {
+static void check3DBuffer(const py::buffer_info& info, size_t width, size_t height)
+{
+	if (info.format != py::format_descriptor<float>::format())
+		throw std::runtime_error("Incompatible format: expected a float array!");
+
+	if (info.ndim != 3)
+		throw std::runtime_error("Incompatible buffer dimension. Expected 3d");
+
+	if (info.itemsize != sizeof(float))
+		throw std::runtime_error("Incompatible format: Expected float item size");
+
+	if ((size_t)info.shape[0] != height
+		|| (size_t)info.shape[1] != width)
+		throw std::runtime_error("Incompatible shape: Outermost dimensions do not equal tone mapper");
+}
+
+static void checkColorBuffer(const py::buffer_info& info, size_t width, size_t height)
+{
+	check3DBuffer(info, width, height);
+	if (info.shape[2] != (ssize_t)3)
+		throw std::runtime_error("Incompatible descriptor: Expected sample size is not equal channel count");
+}
+
+static void checkWeightBuffer(const py::buffer_info& info, size_t width, size_t height)
+{
+	check3DBuffer(info, width, height);
+	if (info.shape[2] != (ssize_t)1)
+		throw std::runtime_error("Incompatible descriptor:  Expected only one channel");
+}
+
 PR_NO_SANITIZE_ADDRESS
 void setup_tonemapper(py::module& m)
 {
@@ -36,23 +66,16 @@ void setup_tonemapper(py::module& m)
 					   const ToneMapper& mapper,
 					   Array specIn) {
 			py::buffer_info info1 = specIn.request();
-			if (info1.format != py::format_descriptor<float>::format())
-				throw std::runtime_error("Incompatible format: expected a float array!");
-
-			if (info1.ndim != 3)
-				throw std::runtime_error("Incompatible buffer dimension. Expected 3d");
-
-			if (info1.itemsize != sizeof(float))
-				throw std::runtime_error("Incompatible format: Expected float item size");
-
-			if (info1.shape[2] != (ssize_t)3)
-				throw std::runtime_error("Incompatible descriptor: Expected sample size is not equal channel count");
-
-			if ((size_t)info1.shape[0] != c.height()
-				|| (size_t)info1.shape[1] != c.width())
-				throw std::runtime_error("Incompatible shape: Outermost dimensions do not equal tone mapper");
-
+			checkColorBuffer(info1, c.width(), c.height());
 			c.map(mapper, (float*)info1.ptr);
+		})
+		.def("mapWeighted", [](ColorBuffer& c, const ToneMapper& mapper, Array specIn, Array weightIn) {
+			py::buffer_info info1 = specIn.request();
+			checkColorBuffer(info1, c.width(), c.height());
+			py::buffer_info info2 = weightIn.request();
+			checkWeightBuffer(info2, c.width(), c.height());
+
+			c.map(mapper, (float*)info1.ptr, (float*)info2.ptr);
 		})
 		.def("asLinearWithChannels", [](const ColorBuffer& c) {
 			return py::array_t<float>(
@@ -72,21 +95,38 @@ void setup_tonemapper(py::module& m)
 					   Array specIn, size_t elems) {
 			// specIn
 			py::buffer_info info1 = specIn.request();
-			if (info1.format != py::format_descriptor<float>::format())
-				throw std::runtime_error("Incompatible format: expected a float array!");
-
-			if (info1.ndim != 3)
-				throw std::runtime_error("Incompatible buffer dimension. Expected 3d");
-
-			if (info1.itemsize != sizeof(float))
-				throw std::runtime_error("Incompatible format: Expected float item size");
-
-			if (info1.shape[2] != 3)
-				throw std::runtime_error("Incompatible descriptor: Expected sample size is not equal channel count");
+			checkColorBuffer(info1, info1.shape[1], info1.shape[0]);
 
 			// rgbOut
 			float* mem = new float[info1.shape[0] * info1.shape[1] * elems];
-			tm.map((float*)info1.ptr,
+			tm.map((float*)info1.ptr, nullptr,
+				   mem, elems,
+				   info1.shape[0] * info1.shape[1]);
+
+			py::capsule free_when_done(mem, [](void* f) {
+				delete[] reinterpret_cast<float*>(f);
+			});
+
+			return py::array_t<float>(
+				std::vector<size_t>({ (size_t)info1.shape[1], (size_t)info1.shape[0], elems }),
+				std::vector<size_t>({ info1.shape[1] * elems * sizeof(float),
+									  elems * sizeof(float),
+									  sizeof(float) }),
+				mem,
+				free_when_done);
+		})
+		.def("mapWeighted", [](ToneMapper& tm, Array specIn, Array weightIn, size_t elems) {
+			// specIn
+			py::buffer_info info1 = specIn.request();
+			checkColorBuffer(info1, info1.shape[1], info1.shape[0]);
+
+			// weightIn
+			py::buffer_info info2 = weightIn.request();
+			checkWeightBuffer(info2, info1.shape[1], info1.shape[0]);
+
+			// rgbOut
+			float* mem = new float[info1.shape[0] * info1.shape[1] * elems];
+			tm.map((float*)info1.ptr, (float*)info2.ptr,
 				   mem, elems,
 				   info1.shape[0] * info1.shape[1]);
 

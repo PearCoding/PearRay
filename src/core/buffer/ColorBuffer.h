@@ -21,7 +21,7 @@ public:
 	ColorBuffer(ColorBuffer&& other) = default;
 	ColorBuffer& operator=(ColorBuffer&& other) = default;
 
-	void map(const ToneMapper& mapper, const float* xyzIn);
+	void map(const ToneMapper& mapper, const float* xyzIn, const float* weightIn = nullptr);
 
 	void flipY();
 

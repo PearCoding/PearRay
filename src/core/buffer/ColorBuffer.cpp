@@ -30,10 +30,10 @@ ColorBuffer::~ColorBuffer()
 }
 
 void ColorBuffer::map(const ToneMapper& mapper,
-					  const float* specIn)
+					  const float* specIn, const float* weightIn)
 {
 	PR_ASSERT(mData, "Expected valid buffer");
-	mapper.map(specIn, mData->Ptr, channels(), mData->Width * mData->Height);
+	mapper.map(specIn, weightIn, mData->Ptr, channels(), mData->Width * mData->Height);
 }
 
 void ColorBuffer::flipY()
