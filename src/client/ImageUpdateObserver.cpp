@@ -11,7 +11,6 @@ ImageUpdateObserver::ImageUpdateObserver(Environment* environment)
 	, mIterationCycleCount(0)
 	, mUpdateCycleSeconds(0)
 	, mUseTags(false)
-	, mMaxIterationCount(0)
 {
 	PR_ASSERT(mEnvironment, "Invalid environment");
 }
@@ -28,7 +27,6 @@ void ImageUpdateObserver::begin(RenderContext* renderContext, const ProgramSetti
 	mIterationCount		 = 0;
 	mIterationCycleCount = settings.ImgUpdateIteration;
 	mUpdateCycleSeconds	 = settings.ImgUpdate;
-	mMaxIterationCount	 = renderContext->maxIterationCount();
 
 	mLastUpdate = std::chrono::high_resolution_clock::now();
 }
@@ -51,7 +49,7 @@ void ImageUpdateObserver::update(const UpdateInfo& info)
 
 void ImageUpdateObserver::onIteration(const UpdateInfo& info)
 {
-	if (info.CurrentIteration < mMaxIterationCount && mIterationCycleCount > 0 && mIterationCount >= mIterationCycleCount) {
+	if (mIterationCycleCount > 0 && mIterationCount >= mIterationCycleCount) {
 		save(info);
 		mIterationCount = 0;
 	}
@@ -67,7 +65,6 @@ void ImageUpdateObserver::save(const UpdateInfo& info)
 	output_options.Image.IterationMeta	= info.CurrentIteration;
 	output_options.Image.TimeMeta		= std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - info.Start).count();
 	output_options.Image.WriteMeta		= true;
-	output_options.Image.SpectralFactor = std::max(1.0f, mMaxIterationCount - info.CurrentIteration - 1.0f);
 
 	if (mUseTags) {
 		std::stringstream stream;

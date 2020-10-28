@@ -74,7 +74,6 @@ public:
 
 	RenderTileStatistics statistics() const;
 	RenderStatus status() const;
-	inline uint32 maxIterationCount() const { return mMaxIterationCount; }
 
 	inline std::shared_ptr<FrameBufferSystem> output() const { return mOutputMap; }
 	inline std::shared_ptr<Scene> scene() const { return mScene; }
@@ -95,7 +94,6 @@ private:
 	const uint32 mIndex;
 	const Point2i mViewOffset;
 	const Size2i mViewSize;
-	const uint32 mMaxIterationCount;
 
 	std::shared_ptr<Scene> mScene;
 	std::shared_ptr<FrameBufferSystem> mOutputMap;

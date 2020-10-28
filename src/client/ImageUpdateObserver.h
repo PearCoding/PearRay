@@ -30,6 +30,5 @@ private:
 	time_point_t mLastUpdate;
 
 	bool mUseTags;
-	uint32 mMaxIterationCount;
 };
 } // namespace PR

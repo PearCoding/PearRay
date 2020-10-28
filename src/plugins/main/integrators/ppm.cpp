@@ -35,7 +35,7 @@ struct PPMParameters {
 	size_t MaxPhotonsPerPass = 1000000;
 	float MaxGatherRadius	 = 0.1f;
 	float SqueezeWeight2	 = 0.0f;
-	float ContractRatio		 = 0.25f;
+	float ContractRatio		 = 0.4f;
 };
 
 struct PPMLightCache {
@@ -396,7 +396,8 @@ public:
 
 		// TODO: Use wavefront approach!
 		for (const auto& light : threadData.Lights) {
-			const float sampleInv = 1.0f / light.Photons;
+			// The actual photon count is the result of the multiplication with the hero wavelength component count
+			const float sampleInv = 1.0f / (PR_SPECTRAL_BLOB_SIZE * light.Photons);
 
 			// Cache
 			uint32 lastEmissionID = PR_INVALID_ID;
@@ -709,7 +710,7 @@ public:
 
 	const std::vector<std::string>& getNames() const override
 	{
-		const static std::vector<std::string> names({ "ppm", "sppm", "photon" });
+		const static std::vector<std::string> names({ "ppm", "sppm", "pppm", "photon" });
 		return names;
 	}
 

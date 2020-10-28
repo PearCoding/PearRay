@@ -25,7 +25,6 @@ RenderContext::RenderContext(uint32 index, const Point2i& viewOffset, const Size
 	: mIndex(index)
 	, mViewOffset(viewOffset)
 	, mViewSize(viewSize)
-	, mMaxIterationCount(settings.maxSampleCount())
 	, mScene(scene)
 	, mOutputMap()
 	, mEmissiveSurfaceArea(0.0f)
@@ -120,8 +119,7 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 				   << "  InfLights:       " << mScene->infiniteLights().size() << std::endl
 				   << "  Emissive Area:   " << mEmissiveSurfaceArea << std::endl
 				   << "  Scene Extent:    " << mScene->boundingBox().width() << " x " << mScene->boundingBox().height() << " x " << mScene->boundingBox().depth() << std::endl
-				   << "  Spectral Domain: [" << mRenderSettings.spectralStart << ", " << mRenderSettings.spectralEnd << "]" << std::endl
-				   << "  Max Iterations:  " << mMaxIterationCount << std::endl;
+				   << "  Spectral Domain: [" << mRenderSettings.spectralStart << ", " << mRenderSettings.spectralEnd << "]" << std::endl;
 
 	// Start
 	mIntegrator->onStart();
