@@ -6,7 +6,7 @@
 	:camera 'Camera'
 	; Settings
 	(integrator
-		:type 'ppm'
+		:type 'direct'
 		:max_ray_depth 16
 		:contract_ratio 0.2
 		:max_light_ray_depth 16
