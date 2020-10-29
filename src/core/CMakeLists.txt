@@ -61,6 +61,11 @@ set(PR_Src
   integrator/IIntegrator.cpp
   integrator/IIntegrator.h
   integrator/IIntegratorFactory.h
+  light/Light.cpp
+  light/Light.h
+  light/LightSampler.cpp
+  light/LightSampler.h
+  light/LightSampler.inl
   material/IMaterial.cpp
   material/IMaterial.h
   material/IMaterial.inl
