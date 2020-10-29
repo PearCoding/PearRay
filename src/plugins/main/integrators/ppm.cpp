@@ -27,8 +27,6 @@
 
 /* Implementation of Propabilistic Progressive Photon Mapping */
 
-#define MIS(n1, p1, n2, p2) IS::balance_term((n1), (p1), (n2), (p2))
-
 namespace PR {
 struct PPMParameters {
 	size_t MaxCameraRayDepthHard = 16;
@@ -103,12 +101,12 @@ inline static float kernelarea(float R2) { return PR_PI * R2 / 3.0f; }*/
 inline static float kernel(float nr2) { return 1 - nr2; }
 inline static float kernelarea(float R2) { return PR_PI * R2 / 2.0f; }
 
-struct Contribution {
-	float MIS;
+struct PPMContribution {
 	SpectralBlob Importance;
 	SpectralBlob Radiance;
 };
-const static Contribution ZERO_CONTRIB = Contribution{ 0.0f, SpectralBlob::Zero(), SpectralBlob::Zero() };
+using Contribution					   = PPMContribution;
+const static Contribution ZERO_CONTRIB = Contribution{ SpectralBlob::Zero(), SpectralBlob::Zero() };
 
 using LightPathWalker  = Walker<true>;	// Enable russian roulette
 using CameraPathWalker = Walker<false>; // No russian roulette needed, as only delta materials scatter
@@ -122,7 +120,7 @@ public:
 		mLightPathWalker.MaxRayDepthHard  = mParameters.MaxLightRayDepthHard;
 		mLightPathWalker.MaxRayDepthSoft  = mParameters.MaxLightRayDepthSoft;
 		mCameraPathWalker.MaxRayDepthHard = mParameters.MaxCameraRayDepthHard;
-		mCameraPathWalker.MaxRayDepthSoft = mParameters.MaxCameraRayDepthSoft;// Obsolete
+		mCameraPathWalker.MaxRayDepthSoft = mParameters.MaxCameraRayDepthSoft; // Obsolete
 	}
 
 	virtual ~IntPPMInstance() = default;
@@ -144,10 +142,7 @@ public:
 			material->eval(in, out, session);
 			token = LightPathToken(out.Type);
 
-			// Calculate hero mis pdf
-			const float matPDF = (spt.Ray.Flags & RF_Monochrome) ? out.PDF_S[0] : (out.PDF_S.sum() / PR_SPECTRAL_BLOB_SIZE);
-			const float msiL   = MIS(1, sample.value().PDF_S, 1, matPDF);
-			return Contribution{ msiL, out.Weight / sample.value().PDF_S, sample.value().Weight };
+			return Contribution{ out.Weight / sample.value().PDF_S, sample.value().Weight };
 		}
 	}
 
@@ -187,7 +182,7 @@ public:
 		//if (found >= 1) {
 		accum *= mContext->CurrentKernelInvNorm;
 		// TODO: Add PPM and other parts together!
-		return Contribution{ 1.0f, SpectralBlob::Ones(), accum };
+		return Contribution{ SpectralBlob::Ones(), accum };
 		/*} else {
 			return ZERO_CONTRIB;
 		}*/
@@ -233,13 +228,11 @@ public:
 
 				if (!material_hit->hasDeltaDistribution()) {
 					const auto gather_contrib = gather(session, ip, material_hit);
-					if (gather_contrib.MIS > PR_EPSILON) {
-						path.addToken(LightPathToken::Emissive());
-						session.pushSpectralFragment(SpectralBlob(gather_contrib.MIS),
-													 weight * gather_contrib.Importance, gather_contrib.Radiance,
-													 ip.Ray, path);
-						path.popToken(1);
-					}
+					path.addToken(LightPathToken::Emissive());
+					session.pushSpectralFragment(SpectralBlob::Ones(),
+												 weight * gather_contrib.Importance, gather_contrib.Radiance,
+												 ip.Ray, path);
+					path.popToken(1);
 
 					// Infinite Lights
 					// 1 sample per inf-light
@@ -247,12 +240,9 @@ public:
 						LightPathToken token;
 						const auto contrib = infiniteLight(session, ip, token, light.get(), material_hit);
 
-						if (contrib.MIS <= PR_EPSILON)
-							continue;
-
 						path.addToken(token);
 						path.addToken(LightPathToken::Background());
-						session.pushSpectralFragment(SpectralBlob(contrib.MIS), weight * contrib.Importance, contrib.Radiance, ip.Ray, path);
+						session.pushSpectralFragment(SpectralBlob::Ones(), weight * contrib.Importance, contrib.Radiance, ip.Ray, path);
 						path.popToken(2);
 					}
 					return false;

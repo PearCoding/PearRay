@@ -46,11 +46,12 @@ struct DiParameters {
 	bool MIS					 = true;
 };
 
-struct Contribution {
+struct DiContribution {
 	float MIS; // The system supports SpectralBlob MIS, but for path tracing intermediates float is sufficient
 	SpectralBlob Importance;
 	SpectralBlob Radiance;
 };
+using Contribution					   = DiContribution;
 const static Contribution ZERO_CONTRIB = Contribution{ 0.0f, SpectralBlob::Zero(), SpectralBlob::Zero() };
 
 using CameraPathWalker = Walker<true>; // Enable russian roulette
