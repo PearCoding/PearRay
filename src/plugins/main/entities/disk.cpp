@@ -20,10 +20,9 @@ public:
 	DiskEntity(uint32 id, const std::string& name,
 			   float radius,
 			   int32 matID, int32 lightID)
-		: IEntity(id, name)
+		: IEntity(id, lightID, name)
 		, mDisk(radius)
 		, mMaterialID(matID)
-		, mLightID(lightID)
 		, mPDF_Cache(0.0f)
 	{
 	}
@@ -34,14 +33,9 @@ public:
 		return "disk";
 	}
 
-	bool isLight() const override
-	{
-		return mLightID >= 0;
-	}
-
 	float localSurfaceArea(uint32 id) const override
 	{
-		if (id == 0 || mMaterialID < 0 || id == (uint32)mMaterialID)
+		if (id == PR_INVALID_ID || id == mMaterialID)
 			return mDisk.surfaceArea();
 		else
 			return 0;
@@ -104,7 +98,7 @@ public:
 		pt.EntityID	   = id();
 		pt.PrimitiveID = 0;
 		pt.MaterialID  = mMaterialID;
-		pt.EmissionID  = mLightID;
+		pt.EmissionID  = emissionID();
 		pt.DisplaceID  = 0;
 	}
 
@@ -118,8 +112,7 @@ public:
 
 private:
 	Disk mDisk;
-	int32 mMaterialID;
-	int32 mLightID;
+	uint32 mMaterialID;
 
 	float mPDF_Cache;
 };
@@ -136,12 +129,12 @@ public:
 		std::string emsName = params.getString("emission", "");
 		std::string matName = params.getString("material", "");
 
-		int32 matID					   = -1;
+		uint32 matID				   = PR_INVALID_ID;
 		std::shared_ptr<IMaterial> mat = ctx.environment()->getMaterial(matName);
 		if (mat)
 			matID = mat->id();
 
-		int32 emsID					   = -1;
+		uint32 emsID				   = PR_INVALID_ID;
 		std::shared_ptr<IEmission> ems = ctx.environment()->getEmission(emsName);
 		if (ems)
 			emsID = ems->id();

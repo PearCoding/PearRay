@@ -50,7 +50,7 @@ public:
 		return "subdivmesh";
 	}
 
-	bool isLight() const override
+	bool hasEmission() const override
 	{
 		return mLightID >= 0;
 	}

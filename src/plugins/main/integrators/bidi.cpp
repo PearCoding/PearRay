@@ -110,13 +110,13 @@ public:
 		PR_PROFILE_THIS;
 
 		// Early drop out for invalid splashes
-		if (!entity->isLight() && PR_UNLIKELY(!material))
+		if (!entity->hasEmission() && PR_UNLIKELY(!material))
 			return;
 
 		session.pushSPFragment(spt, path);
 
 		// Only consider camera rays, as everything else is handled eventually by MIS
-		if (entity->isLight()) {
+		if (entity->hasEmission()) {
 			IEmission* ems = session.getEmission(spt.Surface.Geometry.EmissionID);
 			if (PR_LIKELY(ems)) {
 				// Evaluate light

@@ -231,7 +231,7 @@ public:
 
 			// If we hit a light from the frontside, apply the lighting to current path (Emissive Term)
 			if ((mParameters.MIS || material->hasDeltaDistribution())
-				&& nentity->isLight()
+				&& nentity->hasEmission()
 				&& next.Direction.dot(spt2.Surface.Geometry.N) < -PR_EPSILON // Check if frontside
 				&& nentity->id() != spt.Surface.Geometry.EntityID			 // Check if not self
 				&& PR_LIKELY(spt2.Depth2 > PR_EPSILON)) {					 // Check if not too close
@@ -363,7 +363,7 @@ public:
 		PR_PROFILE_THIS;
 
 		// Early drop out for invalid splashes
-		if (!entity->isLight() && PR_UNLIKELY(!material))
+		if (!entity->hasEmission() && PR_UNLIKELY(!material))
 			return;
 
 #ifndef PR_ALL_RAYS_CONTRIBUTE_SP
@@ -371,7 +371,7 @@ public:
 #endif
 
 		// Only consider camera rays, as everything else is handled eventually by MIS
-		if (entity->isLight()) {
+		if (entity->hasEmission()) {
 			IEmission* ems = session.getEmission(spt.Surface.Geometry.EmissionID);
 			if (PR_LIKELY(ems)) {
 				// Evaluate light

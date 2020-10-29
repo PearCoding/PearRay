@@ -21,11 +21,10 @@ public:
 
 	PlaneEntity(uint32 id, const std::string& name,
 				const Vector3f& xAxis, const Vector3f& yAxis,
-				int32 matID, int32 lightID)
-		: IEntity(id, name)
+				uint32 matID, uint32 lightID)
+		: IEntity(id, lightID, name)
 		, mPlane(Vector3f::Zero(), xAxis, yAxis)
 		, mMaterialID(matID)
-		, mLightID(lightID)
 		, mPDF_Cache(0.0f)
 	{
 	}
@@ -36,14 +35,9 @@ public:
 		return "plane";
 	}
 
-	bool isLight() const override
-	{
-		return mLightID >= 0;
-	}
-
 	float localSurfaceArea(uint32 id) const override
 	{
-		if (id == 0 || mMaterialID < 0 || id == (uint32)mMaterialID)
+		if (id == PR_INVALID_ID || id == mMaterialID)
 			return mPlane.surfaceArea();
 		else
 			return 0;
@@ -51,7 +45,7 @@ public:
 
 	float worldSurfaceArea(uint32 id) const override
 	{
-		if (id == 0 || mMaterialID < 0 || id == (uint32)mMaterialID)
+		if (id == PR_INVALID_ID || id == mMaterialID)
 			return (transform().linear() * mPlane.xAxis()).norm() * (transform().linear() * mPlane.yAxis()).norm();
 		else
 			return 0;
@@ -204,7 +198,7 @@ public:
 		pt.EntityID	   = id();
 		pt.PrimitiveID = 0;
 		pt.MaterialID  = mMaterialID;
-		pt.EmissionID  = mLightID;
+		pt.EmissionID  = emissionID();
 		pt.DisplaceID  = 0;
 	}
 
@@ -242,8 +236,7 @@ private:
 	float mWidth;
 	float mHeight;
 
-	const int32 mMaterialID;
-	const int32 mLightID;
+	const uint32 mMaterialID;
 
 	float mPDF_Cache;
 }; // namespace PR
@@ -263,12 +256,12 @@ public:
 		std::string emsName = params.getString("emission", "");
 		std::string matName = params.getString("material", "");
 
-		int32 matID					   = -1;
+		uint32 matID				   = PR_INVALID_ID;
 		std::shared_ptr<IMaterial> mat = ctx.environment()->getMaterial(matName);
 		if (mat)
 			matID = mat->id();
 
-		int32 emsID					   = -1;
+		uint32 emsID				   = PR_INVALID_ID;
 		std::shared_ptr<IEmission> ems = ctx.environment()->getEmission(emsName);
 		if (ems)
 			emsID = ems->id();

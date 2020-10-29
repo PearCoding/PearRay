@@ -24,12 +24,11 @@ public:
 	QuadricEntity(uint32 id, const std::string& name,
 				  const std::array<float, 10>& parameters,
 				  const Vector3f& minB, const Vector3f& maxB,
-				  int32 matID, int32 lightID)
-		: IEntity(id, name)
+				  uint32 matID, uint32 lightID)
+		: IEntity(id, lightID, name)
 		, mBoundingBox(minB, maxB)
 		, mParameters(parameters)
 		, mMaterialID(matID)
-		, mLightID(lightID)
 	{
 	}
 	virtual ~QuadricEntity() {}
@@ -37,11 +36,6 @@ public:
 	std::string type() const override
 	{
 		return "quadric";
-	}
-
-	bool isLight() const override
-	{
-		return mLightID >= 0;
 	}
 
 	float localSurfaceArea(uint32 /*id*/) const override
@@ -152,7 +146,7 @@ public:
 		pt.EntityID	   = id();
 		pt.PrimitiveID = query.PrimitiveID;
 		pt.MaterialID  = mMaterialID;
-		pt.EmissionID  = mLightID;
+		pt.EmissionID  = emissionID();
 		pt.DisplaceID  = 0;
 	}
 
@@ -160,8 +154,7 @@ private:
 	BoundingBox mBoundingBox;
 	std::array<float, 10> mParameters;
 
-	int32 mMaterialID;
-	int32 mLightID;
+	const uint32 mMaterialID;
 };
 
 class QuadricEntityPlugin : public IEntityPlugin {
@@ -178,12 +171,12 @@ public:
 		std::string emsName = params.getString("emission", "");
 		std::string matName = params.getString("material", "");
 
-		int32 matID					   = -1;
+		uint32 matID				   = PR_INVALID_ID;
 		std::shared_ptr<IMaterial> mat = ctx.Env->getMaterial(matName);
 		if (mat)
 			matID = mat->id();
 
-		int32 emsID					   = -1;
+		uint32 emsID				   = PR_INVALID_ID;
 		std::shared_ptr<IEmission> ems = ctx.Env->getEmission(emsName);
 		if (ems)
 			emsID = ems->id();

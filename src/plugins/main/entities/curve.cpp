@@ -24,9 +24,8 @@ public:
 	CurveEntity(uint32 id, const std::string& name,
 				const T& curve,
 				Vector2f width,
-				int32 materialID, int32 lightID)
-		: IEntity(id, name)
-		, mLightID(lightID)
+				uint32 materialID, uint32 lightID)
+		: IEntity(id, lightID, name)
 		, mMaterialID(materialID)
 		, mCurve(curve)
 		, mWidth(width)
@@ -41,11 +40,6 @@ public:
 		return "curve";
 	}
 
-	bool isLight() const override
-	{
-		return mLightID >= 0;
-	}
-
 	float localSurfaceArea(uint32 /*id*/) const override
 	{
 		return mApproxSurfaceArea;
@@ -53,7 +47,7 @@ public:
 
 	bool isCollidable() const override
 	{
-		return mMaterialID >= 0 && mCurve.isValid();
+		return mMaterialID != PR_INVALID_ID && mCurve.isValid();
 	}
 
 	float collisionCost() const override
@@ -159,7 +153,7 @@ public:
 		pt.EntityID	   = id();
 		pt.PrimitiveID = query.PrimitiveID;
 		pt.MaterialID  = mMaterialID;
-		pt.EmissionID  = mLightID;
+		pt.EmissionID  = emissionID();
 		pt.DisplaceID  = 0;
 	}
 
@@ -267,8 +261,7 @@ private:
 		}
 	}
 
-	int32 mLightID;
-	int32 mMaterialID;
+	uint32 mMaterialID;
 	T mCurve;
 	Vector2f mWidth;
 
@@ -292,13 +285,13 @@ public:
 		Vector2f width = params.getVector2f("width", Vector2f(1, 1));
 
 		std::string matName			   = params.getString("material", "");
-		int32 matID					   = -1;
+		uint32 matID				   = PR_INVALID_ID;
 		std::shared_ptr<IMaterial> mat = ctx.Env->getMaterial(matName);
 		if (mat)
 			matID = static_cast<int32>(mat->id());
 
 		std::string emsName			   = params.getString("emission", "");
-		int32 emsID					   = -1;
+		uint32 emsID				   = PR_INVALID_ID;
 		std::shared_ptr<IEmission> ems = ctx.Env->getEmission(emsName);
 		if (ems)
 			emsID = static_cast<int32>(ems->id());

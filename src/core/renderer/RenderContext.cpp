@@ -77,7 +77,7 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 	/* Setup entities */
 	mEmissiveSurfaceArea = 0.0f;
 	for (auto entity : mScene->entities()) {
-		if (entity->isLight()) {
+		if (entity->hasEmission()) {
 			mEmissiveSurfaceArea += entity->worldSurfaceArea();
 			mLights.push_back(entity);
 		}

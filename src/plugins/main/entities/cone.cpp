@@ -23,12 +23,11 @@ public:
 
 	ConeEntity(uint32 id, const std::string& name,
 			   float radius, float height,
-			   int32 matID, int32 lightID)
-		: IEntity(id, name)
+			   uint32 matID, uint32 lightID)
+		: IEntity(id, lightID, name)
 		, mDisk(radius)
 		, mHeight(height)
 		, mMaterialID(matID)
-		, mLightID(lightID)
 		, mOffset(0, 0, 0)
 		, mPDF_Cache(0.0f)
 	{
@@ -40,18 +39,13 @@ public:
 		return "cone";
 	}
 
-	bool isLight() const override
-	{
-		return mLightID >= 0;
-	}
-
 	// TODO: Local surface -> Global surface
 	float localSurfaceArea(uint32 id) const override
 	{
 		constexpr float K = 150.0f / 360;
 		const float L2	  = mHeight * mHeight + mDisk.radius() * mDisk.radius();
 
-		if (id == 0 || mMaterialID < 0 || id == (uint32)mMaterialID)
+		if (id == PR_INVALID_ID || id == mMaterialID)
 			return mDisk.localSurfaceArea() + K * PR_PI * L2;
 		else
 			return 0;
@@ -187,7 +181,7 @@ public:
 		pt.EntityID	   = id();
 		pt.PrimitiveID = query.PrimitiveID;
 		pt.MaterialID  = mMaterialID;
-		pt.EmissionID  = mLightID;
+		pt.EmissionID  = emissionID();
 		pt.DisplaceID  = 0;
 	}
 
@@ -216,12 +210,11 @@ private:
 	Disk mDisk;
 	float mHeight;
 
-	int32 mMaterialID;
-	int32 mLightID;
+	uint32 mMaterialID;
 	Vector3f mOffset;
 
 	float mPDF_Cache;
-}; // namespace PR
+};
 
 class ConeEntityPlugin : public IEntityPlugin {
 public:
@@ -236,12 +229,12 @@ public:
 		std::string emsName = params.getString("emission", "");
 		std::string matName = params.getString("material", "");
 
-		int32 matID					   = -1;
+		uint32 matID				   = PR_INVALID_ID;
 		std::shared_ptr<IMaterial> mat = ctx.Env->getMaterial(matName);
 		if (mat)
 			matID = mat->id();
 
-		int32 emsID					   = -1;
+		uint32 emsID				   = PR_INVALID_ID;
 		std::shared_ptr<IEmission> ems = ctx.Env->getEmission(emsName);
 		if (ems)
 			emsID = ems->id();

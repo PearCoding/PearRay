@@ -17,6 +17,7 @@ class IMaterial;
 class IEmission;
 class IInfiniteLight;
 class INode;
+class LightSampler;
 class RenderContext;
 
 class RayStream;
@@ -63,6 +64,8 @@ private:
 	std::vector<std::shared_ptr<IInfiniteLight>> mDeltaInfLights;
 	std::vector<std::shared_ptr<IInfiniteLight>> mNonDeltaInfLights;
 	std::vector<std::shared_ptr<INode>> mNodes;
+
+	std::shared_ptr<LightSampler> mLightSampler;
 
 	std::unique_ptr<struct SceneInternal> mInternal;
 	BoundingBox mBoundingBox;

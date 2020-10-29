@@ -77,9 +77,8 @@ public:
 	MeshEntity(uint32 id, const std::string& name,
 			   const std::shared_ptr<Mesh>& mesh,
 			   const std::vector<uint32>& materials,
-			   int32 lightID)
-		: IEntity(id, name)
-		, mLightID(lightID)
+			   uint32 lightID)
+		: IEntity(id, lightID, name)
 		, mMaterials(materials)
 		, mMesh(mesh)
 		, mBoundingBox(mesh->base()->constructBoundingBox())
@@ -90,11 +89,6 @@ public:
 	std::string type() const override
 	{
 		return "mesh";
-	}
-
-	bool isLight() const override
-	{
-		return mLightID >= 0;
 	}
 
 	float localSurfaceArea(uint32 id) const override
@@ -200,12 +194,11 @@ public:
 
 		pt.EntityID	   = id();
 		pt.PrimitiveID = query.PrimitiveID;
-		pt.EmissionID  = mLightID;
+		pt.EmissionID  = emissionID();
 		pt.DisplaceID  = 0;
 	}
 
 private:
-	const int32 mLightID;
 	std::vector<uint32> mMaterials;
 	std::shared_ptr<Mesh> mMesh;
 	const BoundingBox mBoundingBox;
@@ -232,7 +225,7 @@ public:
 		}
 
 		std::string emsName			   = params.getString("emission", "");
-		int32 emsID					   = -1;
+		uint32 emsID				   = PR_INVALID_ID;
 		std::shared_ptr<IEmission> ems = ctx.environment()->getEmission(emsName);
 		if (ems)
 			emsID = ems->id();

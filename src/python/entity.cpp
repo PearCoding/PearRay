@@ -27,7 +27,7 @@ void setup_entity(py::module& m)
 		.value("LOCALAREA", EF_LocalArea);
 
 	py::class_<IEntity, std::shared_ptr<IEntity>, ITransformable>(m, "IEntity")
-		.def("isLight", &IEntity::isLight)
+		.def("hasEmission", &IEntity::hasEmission)
 		.def("localSurfaceArea", &IEntity::localSurfaceArea)
 		.def("worldSurfaceArea", &IEntity::worldSurfaceArea)
 		.def("isCollidable", &IEntity::isCollidable)

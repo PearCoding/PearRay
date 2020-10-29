@@ -52,7 +52,7 @@ struct PR_LIB_CORE EntitySamplingInfo {
 
 class PR_LIB_CORE IEntity : public ITransformable {
 public:
-	IEntity(uint32 id, const std::string& name);
+	IEntity(uint32 id, uint32 emission_id, const std::string& name);
 	virtual ~IEntity();
 
 	bool isRenderable() const override;
@@ -69,9 +69,8 @@ public:
 	virtual std::string dumpInformation() const override;
 
 	// Mandatory Interface
-	virtual bool isLight() const								= 0;
-	virtual float localSurfaceArea(uint32 materialID = 0) const = 0;
-	virtual float worldSurfaceArea(uint32 materialID = 0) const { return volumeScalefactor() * localSurfaceArea(materialID); }
+	virtual float localSurfaceArea(uint32 materialID = PR_INVALID_ID) const = 0;
+	virtual float worldSurfaceArea(uint32 materialID = PR_INVALID_ID) const { return volumeScalefactor() * localSurfaceArea(materialID); }
 
 	virtual BoundingBox localBoundingBox() const = 0;
 
@@ -102,8 +101,13 @@ public:
 	// IObject
 	virtual void beforeSceneBuild() override;
 
+	// Light
+	inline bool hasEmission() const { return mEmissionID != PR_INVALID_ID; }
+	inline uint32 emissionID() const { return mEmissionID; }
+
 private:
 	uint8 mVisibilityFlags;
+	const uint32 mEmissionID;
 	inline BoundingBox calcWorldBoundingBox() const;
 	BoundingBox mWorldBoundingBox_Cache;
 };

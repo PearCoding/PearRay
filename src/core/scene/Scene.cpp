@@ -5,6 +5,7 @@
 #include "entity/GeometryDev.h"
 #include "entity/GeometryRepr.h"
 #include "infinitelight/IInfiniteLight.h"
+#include "light/LightSampler.h"
 #include "material/IMaterial.h"
 #include "renderer/RenderContext.h"
 #include "serialization/FileSerializer.h"
@@ -60,6 +61,8 @@ Scene::Scene(const std::shared_ptr<ICamera>& activeCamera,
 		o->afterSceneBuild(this);
 	for (auto o : mEntities)
 		o->afterSceneBuild(this);
+
+	mLightSampler = std::make_shared<LightSampler>(this);
 }
 
 Scene::~Scene()
@@ -208,8 +211,7 @@ void Scene::traceRays(RayStream& rays, HitStream& hits) const
 	RTCIntersectContext ctx;
 	RTCRayHit16 rhits;
 
-	alignas(64)
-	int valids[PACKAGE_SIZE];
+	alignas(64) int valids[PACKAGE_SIZE];
 	std::fill_n(valids, PACKAGE_SIZE, VALID_ALL); // All are valid
 
 	while (rays.hasNextSpan()) {

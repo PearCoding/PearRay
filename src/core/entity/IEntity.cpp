@@ -2,9 +2,10 @@
 #include "Logger.h"
 
 namespace PR {
-IEntity::IEntity(uint32 id, const std::string& name)
+IEntity::IEntity(uint32 id, uint32 emission_id, const std::string& name)
 	: ITransformable(id, name)
 	, mVisibilityFlags(EVF_All)
+	, mEmissionID(emission_id)
 {
 }
 
@@ -30,7 +31,7 @@ std::string IEntity::dumpInformation() const
 	std::stringstream stream;
 	stream << ITransformable::dumpInformation()
 		   << "  <IEntity>: " << std::endl
-		   << "    IsLight:          " << (isLight() ? "true" : "false") << std::endl
+		   << "    HasEmission:      " << (hasEmission() ? "true" : "false") << std::endl
 		   << "    IsCollidable:     " << (isCollidable() ? "true" : "false") << std::endl
 		   << "    IsCameraVisible:  " << ((visibilityFlags() & EVF_Camera) ? "true" : "false") << std::endl
 		   << "    IsLightVisible:   " << ((visibilityFlags() & EVF_Light) ? "true" : "false") << std::endl

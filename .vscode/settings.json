@@ -85,7 +85,8 @@
       "boundingbox": "cpp",
       "boundingsphere": "cpp",
       "polytope": "cpp",
-      "light": "cpp"
+      "light": "cpp",
+      "texture": "cpp"
     },
     "files.exclude": {
         "**/.git": true,
