@@ -212,9 +212,9 @@ public:
 				EmissionEvalOutput outL;
 				ems->eval(inL, outL, session);
 
-				if (PR_LIKELY(!outL.Weight.isZero())) {
+				if (PR_LIKELY(!outL.Radiance.isZero())) {
 					path.addToken(LightPathToken(ST_EMISSIVE, SE_NONE));
-					session.pushSpectralFragment(SpectralBlob::Ones(), SpectralBlob::Ones(), outL.Weight, spt.Ray, path);
+					session.pushSpectralFragment(SpectralBlob::Ones(), SpectralBlob::Ones(), outL.Radiance, spt.Ray, path);
 					path.popToken();
 				}
 			}
@@ -339,10 +339,10 @@ public:
 
 			EmissionEvalOutput out;
 			emission->eval(in, out, session);
-			out.Weight *= sampleInv / (pp.PDF.Value * Sampling::cos_hemi_pdf(local_dir(2)));
+			out.Radiance *= sampleInv / (pp.PDF.Value * Sampling::cos_hemi_pdf(local_dir(2)));
 
 			mLightPathWalker.traverseBSDFSimple(
-				session, out.Weight, ray,
+				session, out.Radiance, ray,
 				[&](const SpectralBlob& weight, const IntersectionPoint& ip, IEntity* entity, IMaterial* material) {
 					session.tile()->statistics().addEntityHitCount();
 					session.tile()->statistics().addDepthCount();

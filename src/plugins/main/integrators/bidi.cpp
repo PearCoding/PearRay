@@ -126,9 +126,9 @@ public:
 				EmissionEvalOutput outL;
 				ems->eval(inL, outL, session);
 
-				if (PR_LIKELY(!outL.Weight.isZero())) {
+				if (PR_LIKELY(!outL.Radiance.isZero())) {
 					path.addToken(LightPathToken(ST_EMISSIVE, SE_NONE));
-					session.pushSpectralFragment(SpectralBlob::Ones(), SpectralBlob::Ones(), outL.Weight, spt.Ray, path);
+					session.pushSpectralFragment(SpectralBlob::Ones(), SpectralBlob::Ones(), outL.Radiance, spt.Ray, path);
 					path.popToken();
 				}
 			}

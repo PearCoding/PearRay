@@ -5,6 +5,7 @@
 #include "infinitelight/IInfiniteLightPlugin.h"
 #include "math/Projection.h"
 #include "math/Tangent.h"
+#include "shader/NodeUtils.h"
 #include "shader/ShadingContext.h"
 
 namespace PR {
@@ -43,6 +44,8 @@ public:
 		out.Outgoing = mDirection_Cache;
 		out.PDF_S	 = PR_INF;
 	}
+
+	float power() const override { return NodeUtils::average(SpectralBlob(550.0f) /*TODO*/, mIrradiance.get()); }
 
 	std::string dumpInformation() const override
 	{

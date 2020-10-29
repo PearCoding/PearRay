@@ -6,9 +6,9 @@
 #include "math/Sampling.h"
 #include "math/Spherical.h"
 #include "math/Tangent.h"
-#include "shader/ShadingContext.h"
-
 #include "sampler/Distribution2D.h"
+#include "shader/NodeUtils.h"
+#include "shader/ShadingContext.h"
 
 namespace PR {
 // Four variants available
@@ -82,6 +82,8 @@ public:
 		coord.WavelengthNM = in.WavelengthNM;
 		out.Radiance	   = mRadiance->eval(coord);
 	}
+
+	float power() const override { return NodeUtils::average(SpectralBlob(550.0f) /*TODO*/, mRadiance.get()); }
 
 	std::string dumpInformation() const override
 	{

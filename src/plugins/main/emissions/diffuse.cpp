@@ -4,6 +4,7 @@
 #include "emission/IEmissionPlugin.h"
 #include "entity/IEntity.h"
 #include "math/Projection.h"
+#include "shader/NodeUtils.h"
 
 namespace PR {
 class DiffuseEmission : public IEmission {
@@ -14,12 +15,14 @@ public:
 	{
 	}
 
-	// Given in luminous flux (cd/m^2)
+	// Given in radiance (W/(sr m^2))
 	void eval(const EmissionEvalInput& in, EmissionEvalOutput& out,
 			  const RenderTileSession&) const override
 	{
-		out.Weight = mRadiance->eval(in.ShadingContext);
+		out.Radiance = mRadiance->eval(in.ShadingContext);
 	}
+
+	float power() const override { return NodeUtils::average(SpectralBlob(550.0f)/*TODO*/, mRadiance.get()); }
 
 private:
 	std::shared_ptr<FloatSpectralNode> mRadiance;

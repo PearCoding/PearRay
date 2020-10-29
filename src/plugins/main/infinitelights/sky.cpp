@@ -78,6 +78,10 @@ public:
 		out.Radiance = radiance(in.WavelengthNM, ea);
 	}
 
+	float power() const override { return radiance(SpectralBlob(550.0f) /*TODO*/,
+												   ElevationAzimuth::fromDirection(Vector3f(0, 0, 1)))
+									   .mean(); }
+
 	std::string dumpInformation() const override
 	{
 		std::stringstream stream;

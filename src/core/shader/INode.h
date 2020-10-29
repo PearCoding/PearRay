@@ -1,7 +1,7 @@
 #pragma once
 
-#include "shader/ShadingContext.h"
 #include "IObject.h"
+#include "shader/ShadingContext.h"
 
 namespace PR {
 

@@ -47,7 +47,7 @@ void Light::eval(const LightEvalInput& in, LightEvalOutput& out, const RenderTil
 		mEmission->eval(eein, eeout, session);
 
 		const auto entPDF = ent->sampleParameterPointPDF();
-		out.Radiance	  = eeout.Weight;
+		out.Radiance	  = eeout.Radiance;
 		out.PDF.Value	  = entPDF.Value * Sampling::cos_hemi_pdf(in.Point->Surface.NdotV);
 		out.PDF.IsArea	  = entPDF.IsArea;
 	} else { // No point information, giveup
@@ -101,7 +101,7 @@ void Light::sample(const LightSampleInput& in, LightSampleOutput& out, const Ren
 		EmissionEvalOutput eeout;
 		mEmission->eval(eein, eeout, session);
 
-		out.Radiance   = eeout.Weight;
+		out.Radiance   = eeout.Radiance;
 		out.PDF.Value  = pp.PDF.Value * Sampling::cos_hemi_pdf(local_dir(2));
 		out.PDF.IsArea = pp.PDF.IsArea;
 		out.Outgoing   = dir;

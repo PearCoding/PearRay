@@ -146,7 +146,7 @@ public:
 			inL.ShadingContext = ShadingContext::fromIP(session.threadID(), IntersectionPoint::forSurface(shadow, lightPos, lightPt));
 			EmissionEvalOutput outL;
 			ems->eval(inL, outL, session);
-			lightW = outL.Weight;
+			lightW = outL.Radiance;
 		}
 
 		// Evaluate surface
@@ -252,7 +252,7 @@ public:
 										: 1.0f;
 
 					path.addToken(LightPathToken(ST_EMISSIVE, SE_NONE));
-					session.pushSpectralFragment(SpectralBlob(next_mis * mis), weighted_importance, outL.Weight, next, path);
+					session.pushSpectralFragment(SpectralBlob(next_mis * mis), weighted_importance, outL.Radiance, next, path);
 					path.popToken();
 				}
 			}
@@ -381,9 +381,9 @@ public:
 				EmissionEvalOutput outL;
 				ems->eval(inL, outL, session);
 
-				if (PR_LIKELY(!outL.Weight.isZero())) {
+				if (PR_LIKELY(!outL.Radiance.isZero())) {
 					path.addToken(LightPathToken(ST_EMISSIVE, SE_NONE));
-					session.pushSpectralFragment(SpectralBlob::Ones(), SpectralBlob::Ones(), outL.Weight, spt.Ray, path);
+					session.pushSpectralFragment(SpectralBlob::Ones(), SpectralBlob::Ones(), outL.Radiance, spt.Ray, path);
 					path.popToken();
 				}
 			}

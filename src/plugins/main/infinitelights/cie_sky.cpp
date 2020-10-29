@@ -44,6 +44,8 @@ public:
 		out.Radiance = radiance(in.WavelengthNM, out.Outgoing);
 	}
 
+	float power() const override { return radiance(SpectralBlob(550.0f) /*TODO*/, Vector3f(0, 0, 1)).mean(); }
+
 	std::string dumpInformation() const override
 	{
 		std::stringstream stream;

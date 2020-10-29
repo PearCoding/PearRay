@@ -40,6 +40,14 @@ inline float EquidistantSpectrumView::lookup(float wavelength) const
 	return mData[index] * (1 - t) + mData[index + 1] * t;
 }
 
+inline float EquidistantSpectrumView::average() const
+{
+	float sum = 0;
+	for (size_t i = 0; i < mSampleCount; ++i)
+		sum += mData[i];
+	return sum / mSampleCount;
+}
+
 ////////////////////////////////////
 EquidistantSpectrum::RefData::RefData(float* data, bool external)
 	: Data(data)
@@ -90,6 +98,14 @@ inline float EquidistantSpectrum::lookup(float wavelength) const
 	const float t	= std::min<float>(mSampleCount - 1, af) - index;
 
 	return mRef->Data[index] * (1 - t) + mRef->Data[index + 1] * t;
+}
+
+inline float EquidistantSpectrum::average() const
+{
+	float sum = 0;
+	for (size_t i = 0; i < mSampleCount; ++i)
+		sum += mRef->Data[i];
+	return sum / mSampleCount;
 }
 
 } // namespace PR

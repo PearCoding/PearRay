@@ -154,6 +154,8 @@ set(PR_Src
   spectral/ToneMapper.cpp
   spectral/ToneMapper.h
   shader/INode.h
+  shader/NodeUtils.h
+  shader/NodeUtils.cpp
   shader/ShadingContext.h
   shader/ShadingGroup.cpp
   shader/ShadingGroup.h

@@ -29,6 +29,7 @@ public:
 	inline const float* data() const;
 
 	inline float lookup(float wavelength) const;
+	inline float average() const;
 
 private:
 	const float* mData;
@@ -51,6 +52,7 @@ public:
 	inline float* data();
 
 	inline float lookup(float wavelength) const;
+	inline float average() const;
 
 private:
 	struct RefData {
