@@ -8,12 +8,12 @@ namespace PR {
 class RenderTileSession;
 
 // Evaluation
-struct PR_LIB_CORE LightEvalInput {
+struct PR_LIB_CORE EmissionEvalInput {
 	PR::ShadingContext ShadingContext;
 	class IEntity* Entity;
 };
 
-struct PR_LIB_CORE LightEvalOutput {
+struct PR_LIB_CORE EmissionEvalOutput {
 	SpectralBlob Weight;
 };
 
@@ -30,7 +30,7 @@ public:
 	/*
 		Evaluate the light based on incident direction and point information.
 	*/
-	virtual void eval(const LightEvalInput& in, LightEvalOutput& out, const RenderTileSession& session) const = 0;
+	virtual void eval(const EmissionEvalInput& in, EmissionEvalOutput& out, const RenderTileSession& session) const = 0;
 
 	virtual std::string dumpInformation() const;
 

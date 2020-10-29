@@ -120,10 +120,10 @@ public:
 			IEmission* ems = session.getEmission(spt.Surface.Geometry.EmissionID);
 			if (PR_LIKELY(ems)) {
 				// Evaluate light
-				LightEvalInput inL;
+				EmissionEvalInput inL;
 				inL.Entity		   = entity;
 				inL.ShadingContext = ShadingContext::fromIP(session.threadID(), spt);
-				LightEvalOutput outL;
+				EmissionEvalOutput outL;
 				ems->eval(inL, outL, session);
 
 				if (PR_LIKELY(!outL.Weight.isZero())) {

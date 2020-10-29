@@ -141,10 +141,10 @@ public:
 			lightW = SpectralBlob::Zero();
 		} else {
 			// Evaluate light
-			LightEvalInput inL;
+			EmissionEvalInput inL;
 			inL.Entity		   = light;
 			inL.ShadingContext = ShadingContext::fromIP(session.threadID(), IntersectionPoint::forSurface(shadow, lightPos, lightPt));
-			LightEvalOutput outL;
+			EmissionEvalOutput outL;
 			ems->eval(inL, outL, session);
 			lightW = outL.Weight;
 		}
@@ -238,10 +238,10 @@ public:
 				IEmission* ems = session.getEmission(spt2.Surface.Geometry.EmissionID);
 				if (PR_LIKELY(ems)) {
 					// Evaluate light
-					LightEvalInput inL;
+					EmissionEvalInput inL;
 					inL.Entity		   = nentity;
 					inL.ShadingContext = ShadingContext::fromIP(session.threadID(), spt2);
-					LightEvalOutput outL;
+					EmissionEvalOutput outL;
 					ems->eval(inL, outL, session);
 
 					const auto pdfL = session.sampleLightPDF(EntitySamplingInfo{ spt.Surface.P, spt.Surface.N },
@@ -375,10 +375,10 @@ public:
 			IEmission* ems = session.getEmission(spt.Surface.Geometry.EmissionID);
 			if (PR_LIKELY(ems)) {
 				// Evaluate light
-				LightEvalInput inL;
+				EmissionEvalInput inL;
 				inL.Entity		   = entity;
 				inL.ShadingContext = ShadingContext::fromIP(session.threadID(), spt);
-				LightEvalOutput outL;
+				EmissionEvalOutput outL;
 				ems->eval(inL, outL, session);
 
 				if (PR_LIKELY(!outL.Weight.isZero())) {

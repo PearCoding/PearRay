@@ -77,11 +77,9 @@ public:
 			out.PDF_S	 = Sampling::cos_hemi_pdf(out.Outgoing(2));
 		}
 
-		out.Outgoing = Tangent::fromTangentSpace(in.Point.Surface.N, in.Point.Surface.Nx, in.Point.Surface.Ny, out.Outgoing);
-
 		ShadingContext coord;
 		coord.UV		   = uv;
-		coord.WavelengthNM = in.Point.Ray.WavelengthNM;
+		coord.WavelengthNM = in.WavelengthNM;
 		out.Radiance	   = mRadiance->eval(coord);
 	}
 

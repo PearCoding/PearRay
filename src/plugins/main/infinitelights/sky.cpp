@@ -75,8 +75,7 @@ public:
 		const float denom = 2 * PR_PI * PR_PI * f;
 		out.PDF_S *= (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
 
-		out.Outgoing = Tangent::fromTangentSpace(in.Point.Surface.N, in.Point.Surface.Nx, in.Point.Surface.Ny, out.Outgoing);
-		out.Radiance = radiance(in.Point.Ray.WavelengthNM, ea);
+		out.Radiance = radiance(in.WavelengthNM, ea);
 	}
 
 	std::string dumpInformation() const override

@@ -37,7 +37,7 @@ public:
 				const RenderTileSession&) const override
 	{
 		ShadingContext ctx;
-		ctx.WavelengthNM = in.Point.Ray.WavelengthNM;
+		ctx.WavelengthNM = in.WavelengthNM;
 
 		out.Radiance = mIrradiance->eval(ctx); // As there is only one direction (delta), irradiance is equal to radiance
 		out.Outgoing = mDirection_Cache;

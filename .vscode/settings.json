@@ -84,7 +84,8 @@
       "openglsupport": "cpp",
       "boundingbox": "cpp",
       "boundingsphere": "cpp",
-      "polytope": "cpp"
+      "polytope": "cpp",
+      "light": "cpp"
     },
     "files.exclude": {
         "**/.git": true,

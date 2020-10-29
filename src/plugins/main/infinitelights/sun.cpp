@@ -66,7 +66,7 @@ public:
 
 		PR_OPT_LOOP
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-			out.Radiance[i] = mSpectrum.lookup(in.Point.Ray.WavelengthNM[i]);
+			out.Radiance[i] = mSpectrum.lookup(in.WavelengthNM[i]);
 	}
 
 	std::string dumpInformation() const override
@@ -123,7 +123,7 @@ public:
 	{
 		PR_OPT_LOOP
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-			out.Radiance[i] = mSpectrum.lookup(in.Point.Ray.WavelengthNM[i]);
+			out.Radiance[i] = mSpectrum.lookup(in.WavelengthNM[i]);
 		out.Outgoing = mDirection;
 		out.PDF_S	 = PR_INF;
 	}

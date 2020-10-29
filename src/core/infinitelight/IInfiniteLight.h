@@ -15,8 +15,8 @@ struct PR_LIB_CORE InfiniteLightEvalOutput {
 };
 
 struct PR_LIB_CORE InfiniteLightSampleInput {
-	IntersectionPoint Point;
 	Vector2f RND;
+	SpectralBlob WavelengthNM;
 };
 
 struct PR_LIB_CORE InfiniteLightSampleOutput {

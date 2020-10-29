@@ -15,7 +15,7 @@ public:
 	}
 
 	// Given in luminous flux (cd/m^2)
-	void eval(const LightEvalInput& in, LightEvalOutput& out,
+	void eval(const EmissionEvalInput& in, EmissionEvalOutput& out,
 			  const RenderTileSession&) const override
 	{
 		out.Weight = mRadiance->eval(in.ShadingContext);

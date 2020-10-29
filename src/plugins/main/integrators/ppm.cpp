@@ -206,10 +206,10 @@ public:
 			IEmission* ems = session.getEmission(spt.Surface.Geometry.EmissionID);
 			if (PR_LIKELY(ems)) {
 				// Evaluate light
-				LightEvalInput inL;
+				EmissionEvalInput inL;
 				inL.Entity		   = entity;
 				inL.ShadingContext = ShadingContext::fromIP(session.threadID(), spt);
-				LightEvalOutput outL;
+				EmissionEvalOutput outL;
 				ems->eval(inL, outL, session);
 
 				if (PR_LIKELY(!outL.Weight.isZero())) {
@@ -329,7 +329,7 @@ public:
 				emission	   = session.getEmission(gp.EmissionID);
 			}
 
-			LightEvalInput in;
+			EmissionEvalInput in;
 			in.Entity					   = light.Entity;
 			in.ShadingContext.Face		   = gp.PrimitiveID;
 			in.ShadingContext.dUV		   = gp.dUV;
@@ -337,7 +337,7 @@ public:
 			in.ShadingContext.ThreadIndex  = session.threadID();
 			in.ShadingContext.WavelengthNM = ray.WavelengthNM;
 
-			LightEvalOutput out;
+			EmissionEvalOutput out;
 			emission->eval(in, out, session);
 			out.Weight *= sampleInv / (pp.PDF.Value * Sampling::cos_hemi_pdf(local_dir(2)));
 

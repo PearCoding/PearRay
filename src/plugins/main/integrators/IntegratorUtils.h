@@ -24,8 +24,8 @@ public:
 
 		// Sample light
 		InfiniteLightSampleInput inL;
-		inL.Point = spt;
-		inL.RND	  = session.tile()->random().get2D();
+		inL.WavelengthNM = spt.Ray.WavelengthNM;
+		inL.RND			 = session.tile()->random().get2D();
 		InfiniteLightSampleOutput outL;
 		infLight->sample(inL, outL, session);
 

@@ -41,10 +41,7 @@ public:
 	{
 		out.Outgoing = Sampling::cos_hemi(in.RND[0], in.RND[1]);
 		out.PDF_S	 = Sampling::cos_hemi_pdf(out.Outgoing(2));
-		out.Radiance = radiance(in.Point.Ray.WavelengthNM, out.Outgoing);
-
-		// To world space
-		out.Outgoing = Tangent::fromTangentSpace(in.Point.Surface.N, in.Point.Surface.Nx, in.Point.Surface.Ny, out.Outgoing);
+		out.Radiance = radiance(in.WavelengthNM, out.Outgoing);
 	}
 
 	std::string dumpInformation() const override
