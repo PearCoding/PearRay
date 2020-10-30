@@ -182,6 +182,11 @@ void Scene::setupScene()
 	rtcGetSceneBounds(mInternal->Scene, &bounds);
 	mBoundingBox = BoundingBox(Vector3f(bounds.lower_x, bounds.lower_y, bounds.lower_z),
 							   Vector3f(bounds.upper_x, bounds.upper_y, bounds.upper_z));
+
+	// Extrace origin centered bounding sphere
+	mBoundingSphere = Sphere();
+	mBoundingSphere.combine(mBoundingBox.upperBound());
+	mBoundingSphere.combine(mBoundingBox.lowerBound());
 }
 
 constexpr unsigned int MASK_ALL = 0xFFFFFFF;

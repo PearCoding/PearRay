@@ -8,6 +8,7 @@
 #include "integrator/IIntegrator.h"
 #include "integrator/IIntegratorFactory.h"
 #include "integrator/IIntegratorPlugin.h"
+#include "light/LightSampler.h"
 #include "material/IMaterial.h"
 #include "math/ImportanceSampling.h"
 #include "math/Sampling.h"
@@ -18,7 +19,6 @@
 #include "renderer/RenderTileSession.h"
 #include "renderer/StreamPipeline.h"
 #include "sampler/SampleArray.h"
-#include "trace/IntersectionPoint.h"
 
 #include "IntegratorUtils.h"
 #include "Walker.h"
@@ -40,8 +40,7 @@ struct PPMParameters {
 };
 
 struct PPMLightCache {
-	IEntity* Entity;
-	float SurfaceArea;
+	const PR::Light* Light;
 	uint64 Photons;
 };
 
@@ -113,9 +112,11 @@ using CameraPathWalker = Walker<false>; // No russian roulette needed, as only d
 template <GatherMode GM>
 class IntPPMInstance : public IIntegratorInstance {
 public:
-	explicit IntPPMInstance(PPMContext* context, const PPMParameters& parameters)
+	explicit IntPPMInstance(PPMContext* context,
+							const std::shared_ptr<LightSampler>& lightSampler, const PPMParameters& parameters)
 		: mContext(context)
 		, mParameters(parameters)
+		, mLightSampler(lightSampler)
 	{
 		mLightPathWalker.MaxRayDepthHard  = mParameters.MaxLightRayDepthHard;
 		mLightPathWalker.MaxRayDepthSoft  = mParameters.MaxLightRayDepthSoft;
@@ -124,27 +125,6 @@ public:
 	}
 
 	virtual ~IntPPMInstance() = default;
-
-	// Estimate direct (infinite) light
-	Contribution infiniteLight(RenderTileSession& session, const IntersectionPoint& spt,
-							   LightPathToken& token,
-							   IInfiniteLight* infLight, IMaterial* material)
-	{
-		PR_PROFILE_THIS;
-
-		auto sample = IntegratorUtils::sampleInfiniteLight(session, spt, infLight);
-		if (!sample.has_value())
-			return ZERO_CONTRIB;
-		else {
-			// Evaluate surface
-			MaterialEvalInput in{ MaterialEvalContext::fromIP(spt, sample.value().Direction), ShadingContext::fromIP(session.threadID(), spt) };
-			MaterialEvalOutput out;
-			material->eval(in, out, session);
-			token = LightPathToken(out.Type);
-
-			return Contribution{ out.Weight / sample.value().PDF_S, sample.value().Weight };
-		}
-	}
 
 	Contribution gather(const RenderTileSession& session, const IntersectionPoint& spt, IMaterial* material)
 	{
@@ -233,18 +213,6 @@ public:
 												 weight * gather_contrib.Importance, gather_contrib.Radiance,
 												 ip.Ray, path);
 					path.popToken(1);
-
-					// Infinite Lights
-					// 1 sample per inf-light
-					for (auto light : session.tile()->context()->scene()->infiniteLights()) {
-						LightPathToken token;
-						const auto contrib = infiniteLight(session, ip, token, light.get(), material_hit);
-
-						path.addToken(token);
-						path.addToken(LightPathToken::Background());
-						session.pushSpectralFragment(SpectralBlob::Ones(), weight * contrib.Importance, contrib.Radiance, ip.Ray, path);
-						path.popToken(2);
-					}
 					return false;
 				} else {
 					return true; // Only traverse for delta materials
@@ -297,52 +265,24 @@ public:
 		// The actual photon count is the result of the multiplication with the hero wavelength component count
 		const float sampleInv = 1.0f / (PR_SPECTRAL_BLOB_SIZE * light.Photons);
 
-		// Cache
-		uint32 lastEmissionID = PR_INVALID_ID;
-		IEmission* emission	  = nullptr;
-
 		size_t photonsShoot = 0;
 		for (; photonsShoot < light.Photons; ++photonsShoot) {
-			// Randomly select point on light surface
-			const auto pp = light.Entity->sampleParameterPoint(session.tile()->random().get2D());
+			LightSampleInput lsin;
+			lsin.WavelengthNM	= sampleWavelength(session.tile()->random());
+			lsin.RND			= session.tile()->random().get4D();
+			lsin.SamplePosition = true;
+			LightSampleOutput lsout;
+			light.Light->sample(lsin, lsout, session);
 
-			EntityGeometryQueryPoint qp;
-			qp.Position	   = pp.Position;
-			qp.UV		   = pp.UV;
-			qp.PrimitiveID = pp.PrimitiveID;
-			qp.View		   = Vector3f::Zero();
-
-			GeometryPoint gp;
-			light.Entity->provideGeometryPoint(qp, gp);
-
-			// Randomly sample direction from emissive material (TODO: Should be abstracted)
-			const Vector2f drnd		 = session.tile()->random().get2D();
-			const Vector3f local_dir = Sampling::cos_hemi(drnd[0], drnd[1]);
-			const Vector3f dir		 = Tangent::fromTangentSpace(gp.N, gp.Nx, gp.Ny, local_dir);
-
-			Ray ray = Ray(pp.Position, dir);
+			Ray ray = Ray(lsout.Position, -lsout.Outgoing);
 			ray.Flags |= RF_Light;
-			ray.WavelengthNM = sampleWavelength(session.tile()->random());
+			ray.WavelengthNM = lsin.WavelengthNM;
 
-			if (PR_UNLIKELY(gp.EmissionID != lastEmissionID)) {
-				lastEmissionID = gp.EmissionID;
-				emission	   = session.getEmission(gp.EmissionID);
-			}
-
-			EmissionEvalInput in;
-			in.Entity					   = light.Entity;
-			in.ShadingContext.Face		   = gp.PrimitiveID;
-			in.ShadingContext.dUV		   = gp.dUV;
-			in.ShadingContext.UV		   = gp.UV;
-			in.ShadingContext.ThreadIndex  = session.threadID();
-			in.ShadingContext.WavelengthNM = ray.WavelengthNM;
-
-			EmissionEvalOutput out;
-			emission->eval(in, out, session);
-			out.Radiance *= sampleInv / (pp.PDF.Value * Sampling::cos_hemi_pdf(local_dir(2)));
+			const float pdf				= std::isinf(lsout.PDF.Value) ? 1 : lsout.PDF.Value;
+			const SpectralBlob radiance = lsout.Radiance * (sampleInv / pdf);
 
 			mLightPathWalker.traverseBSDFSimple(
-				session, out.Radiance, ray,
+				session, radiance, ray,
 				[&](const SpectralBlob& weight, const IntersectionPoint& ip, IEntity* entity, IMaterial* material) {
 					session.tile()->statistics().addEntityHitCount();
 					session.tile()->statistics().addDepthCount();
@@ -397,6 +337,7 @@ public:
 private:
 	PPMContext* mContext;
 	const PPMParameters mParameters;
+	const std::shared_ptr<LightSampler> mLightSampler;
 
 	LightPathWalker mLightPathWalker;
 	CameraPathWalker mCameraPathWalker;
@@ -421,7 +362,7 @@ public:
 			setupContext(renderer);
 		}
 		mThreadMutex.unlock();
-		return std::make_shared<IntPPMInstance<GM>>(mContext.get(), mParameters);
+		return std::make_shared<IntPPMInstance<GM>>(mContext.get(), renderer->scene()->lightSampler(), mParameters);
 	}
 
 private:
@@ -442,11 +383,13 @@ private:
 		mContext->CurrentKernelInvNorm = 1.0f / kernelarea(mContext->CurrentSearchRadius2);
 	}
 
+	using LightMap = std::unordered_map<const Light*, PPMLightCache>;
 	void setupContext(RenderContext* renderer)
 	{
-		std::unordered_map<IEntity*, PPMLightCache> lights;
+		LightMap lights;
 		assignLights(renderer, lights);
 		assignTiles(renderer, lights);
+		LightMap().swap(lights); // Delete
 
 		// Make sure the photon map is always cleared before photon pass
 		renderer->addIterationCallback([this](uint32 iter) {
@@ -456,43 +399,37 @@ private:
 		// TODO: What if the integrator context gets destroyed?
 	}
 
-	void assignLights(RenderContext* renderer, std::unordered_map<IEntity*, PPMLightCache>& lights)
+	void assignLights(RenderContext* renderer, LightMap& lights)
 	{
 		const uint64 Photons	= mParameters.MaxPhotonsPerPass;
 		const uint64 MinPhotons = Photons * 0.02f; // Should be a parameter
-		const auto& lightList	= renderer->lights();
+		const auto lightSampler = renderer->scene()->lightSampler();
+		const auto& lightList	= lightSampler->lights();
 
 		const uint64 k = MinPhotons * lightList.size();
 		if (k >= Photons) { // Not enough photons given.
 			PR_LOG(L_WARNING) << "Not enough photons per pass given. At least " << k << " is needed." << std::endl;
 
 			for (const auto& light : lightList)
-				lights[light.get()] = PPMLightCache{ light.get(), light->worldSurfaceArea(), MinPhotons };
+				lights[light.get()] = PPMLightCache{ light.get(), MinPhotons };
 		} else {
 			const uint64 d = Photons - k;
 
-			// Extract surface area information
-			float fullArea = 0;
-			for (const auto& light : lightList) {
-				PPMLightCache cache;
-				cache.Entity	  = light.get();
-				cache.SurfaceArea = light->worldSurfaceArea();
-				fullArea += cache.SurfaceArea;
-				lights[light.get()] = std::move(cache);
-			}
-
-			// Assign photons based on surface
+			// Assign photons based on relative contribution to the scene
 			PR_LOG(L_DEBUG) << "PPM Lights" << std::endl;
 			for (const auto& light : lightList) {
-				PPMLightCache& cache = lights[light.get()];
-				cache.Photons		 = MinPhotons + std::ceil(d * (cache.SurfaceArea / fullArea));
+				PPMLightCache cache;
+				cache.Light	  = light.get();
+				cache.Photons = MinPhotons + std::ceil(d * cache.Light->relativeContribution());
 
-				PR_LOG(L_DEBUG) << "  -> Light '" << light->name() << "' " << cache.Photons << " photons " << cache.SurfaceArea << "m2" << std::endl;
+				PR_LOG(L_DEBUG) << "  -> Light '" << light->name() << "' " << cache.Photons << " photons "
+								<< cache.Light->relativeContribution() * 100 << "%" << std::endl;
+				lights[cache.Light] = std::move(cache);
 			}
 		}
 	}
 
-	void assignTiles(RenderContext* renderer, const std::unordered_map<IEntity*, PPMLightCache>& lights)
+	void assignTiles(RenderContext* renderer, const LightMap& lights)
 	{
 		const uint64 Photons		  = mParameters.MaxPhotonsPerPass;
 		const uint64 PhotonsPerThread = std::ceil(Photons / static_cast<float>(renderer->threadCount()));
@@ -517,7 +454,7 @@ private:
 				photonsPerThread[t] += photons;
 
 				if (photons > 0)
-					mContext->Threads[t].Lights.push_back(PPMLightCache{ light.second.Entity, light.second.SurfaceArea, photons });
+					mContext->Threads[t].Lights.push_back(PPMLightCache{ light.second.Light, photons });
 			}
 		}
 
@@ -525,7 +462,7 @@ private:
 		for (size_t t = 0; t < renderer->threadCount(); ++t) {
 			PR_LOG(L_DEBUG) << "PPM Thread has " << mContext->Threads[t].Lights.size() << " lights" << std::endl;
 			for (const auto& ltd : mContext->Threads[t].Lights)
-				PR_LOG(L_DEBUG) << "  -> Light '" << ltd.Entity->name() << "' with " << ltd.Photons << " photons" << std::endl;
+				PR_LOG(L_DEBUG) << "  -> Light '" << ltd.Light->name() << "' with " << ltd.Photons << " photons" << std::endl;
 		}
 	}
 
@@ -550,7 +487,7 @@ public:
 
 		mParameters.ContractRatio = std::max(0.0f, std::min(1.0f, params.getNumber("contract_ratio", mParameters.ContractRatio)));
 
-		std::string mode = params.getString("gather_mode", "sphere");
+		std::string mode = params.getString("gather_mode", "dome");
 		std::transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
 		if (mode == "dome")
 			mGatherMode = GM_Dome;

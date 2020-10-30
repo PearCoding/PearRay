@@ -3,12 +3,15 @@
 #include "SceneLoadContext.h"
 #include "infinitelight/IInfiniteLight.h"
 #include "infinitelight/IInfiniteLightPlugin.h"
+#include "math/Concentric.h"
 #include "math/Projection.h"
+#include "math/Sampling.h"
 #include "math/Spherical.h"
 #include "math/Tangent.h"
+#include "sampler/Distribution2D.h"
+#include "scene/Scene.h"
 #include "shader/ShadingContext.h"
 
-#include "sampler/Distribution2D.h"
 #include "skysun/SkyModel.h"
 #include "skysun/SunLocation.h"
 
@@ -27,6 +30,7 @@ public:
 		, mScale(scale)
 		, mTransform(trans)
 		, mInvTransform(trans.inverse())
+		, mSceneRadius(0)
 	{
 		buildDistribution();
 	}
@@ -61,14 +65,13 @@ public:
 	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,
 				const RenderTileSession&) const override
 	{
-		Vector2f uv = mDistribution->sampleContinuous(in.RND, out.PDF_S);
+		Vector2f uv = mDistribution->sampleContinuous(Vector2f(in.RND(0), in.RND(1)), out.PDF_S);
 		ElevationAzimuth ea;
 
-		if constexpr (ExtendToGround) {
+		if constexpr (ExtendToGround)
 			ea = ElevationAzimuth{ 2 * ELEVATION_RANGE * (uv(1) - 0.5f), AZIMUTH_RANGE * uv(0) };
-		} else {
+		else
 			ea = ElevationAzimuth{ ELEVATION_RANGE * uv(1), AZIMUTH_RANGE * uv(0) };
-		}
 
 		out.Outgoing	  = mTransform * ea.toDirection();
 		const float f	  = std::cos(ea.Elevation);
@@ -76,6 +79,16 @@ public:
 		out.PDF_S *= (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
 
 		out.Radiance = radiance(in.WavelengthNM, ea);
+		out.Position = mSceneRadius * out.Outgoing;
+		if (in.Point) // If we call it outside an intersection point, make light position such that lP - iP = direction
+			out.Position += in.Point->P;
+		else if (in.SamplePosition) {
+			// Instead of sampling position, sample direction again
+			constexpr float CosAtan05 = 0.894427190999915f; // cos(atan(0.5))
+			const Vector3f local	  = Sampling::uniform_cone(in.RND(2), in.RND(3), CosAtan05);
+			out.Outgoing			  = Tangent::align(out.Outgoing, local);
+			out.PDF_S *= Sampling::uniform_cone_pdf(CosAtan05);
+		}
 	}
 
 	float power() const override { return radiance(SpectralBlob(550.0f) /*TODO*/,
@@ -93,6 +106,14 @@ public:
 			   << "    Extended:     " << (ExtendToGround ? "true" : "false") << std::endl;
 		// TODO
 		return stream.str();
+	}
+
+	void afterSceneBuild(Scene* scene) override
+	{
+		IInfiniteLight::afterSceneBuild(scene);
+		mSceneRadius = scene->boundingSphere().radius() * 1.05f /*Scale a little bit*/;
+
+		PR_LOG(L_INFO) << "fdsfgsdfsdf" << mSceneRadius << std::endl;
 	}
 
 private:
@@ -156,6 +177,8 @@ private:
 	const float mScale;
 	const Eigen::Matrix3f mTransform;
 	const Eigen::Matrix3f mInvTransform;
+
+	float mSceneRadius;
 };
 
 class SkyLightFactory : public IInfiniteLightPlugin {

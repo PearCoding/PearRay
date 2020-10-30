@@ -6,6 +6,7 @@
 #include "math/Sampling.h"
 #include "math/Spherical.h"
 #include "math/Tangent.h"
+#include "scene/Scene.h"
 #include "shader/ShadingContext.h"
 
 #include "skysun/SkyModel.h"
@@ -26,6 +27,7 @@ public:
 		, mGroundBrightness(groundBrightness)
 		, mTransform(trans)
 		, mInvTransform(trans.inverse())
+		, mSceneRadius(0)
 	{
 	}
 
@@ -36,11 +38,18 @@ public:
 		out.PDF_S	 = in.Point ? Sampling::cos_hemi_pdf(std::abs(in.Point->Surface.N.dot(in.Ray.Direction))) : 1.0f;
 	}
 
+	inline static Vector3f sampleDir(float u0, float u1, float& pdf)
+	{
+		Vector3f out = Sampling::cos_hemi(u0, u1);
+		pdf			 = Sampling::cos_hemi_pdf(out(2));
+		return out;
+	}
+
 	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,
 				const RenderTileSession&) const override
 	{
-		out.Outgoing = Sampling::cos_hemi(in.RND[0], in.RND[1]);
-		out.PDF_S	 = Sampling::cos_hemi_pdf(out.Outgoing(2));
+		out.Outgoing = sampleDir(in.RND[0], in.RND[1], out.PDF_S);
+		out.Position = mSceneRadius * out.Outgoing;
 		out.Radiance = radiance(in.WavelengthNM, out.Outgoing);
 	}
 
@@ -61,6 +70,12 @@ public:
 			   << "    GroundTint:       " << mGroundTint->dumpInformation() << std::endl
 			   << "    GroundBrightness: " << mGroundBrightness->dumpInformation() << std::endl;
 		return stream.str();
+	}
+
+	void afterSceneBuild(Scene* scene) override
+	{
+		IInfiniteLight::afterSceneBuild(scene);
+		mSceneRadius = scene->boundingSphere().radius() * 1.05f /*Scale a little bit*/;
 	}
 
 private:
@@ -90,6 +105,8 @@ private:
 	const std::shared_ptr<FloatScalarNode> mGroundBrightness;
 	const Eigen::Matrix3f mTransform;
 	const Eigen::Matrix3f mInvTransform;
+
+	float mSceneRadius;
 };
 
 class CIESkyLightFactory : public IInfiniteLightPlugin {

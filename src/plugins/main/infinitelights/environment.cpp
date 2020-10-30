@@ -7,6 +7,7 @@
 #include "math/Spherical.h"
 #include "math/Tangent.h"
 #include "sampler/Distribution2D.h"
+#include "scene/Scene.h"
 #include "shader/NodeUtils.h"
 #include "shader/ShadingContext.h"
 
@@ -31,6 +32,7 @@ public:
 		, mBackground(background)
 		, mTransform(trans)
 		, mInvTransform(trans.inverse())
+		, mSceneRadius(0)
 	{
 	}
 
@@ -65,15 +67,15 @@ public:
 	{
 		Vector2f uv;
 		if constexpr (UseDistribution) {
-			uv			 = mDistribution->sampleContinuous(in.RND, out.PDF_S);
+			uv			 = mDistribution->sampleContinuous(Vector2f(in.RND(0), in.RND(1)), out.PDF_S);
 			out.Outgoing = mTransform * Spherical::cartesian_from_uv(uv(0), uv(1));
 
 			const float sinTheta = std::sin(uv(1) * PR_PI);
 			const float denom	 = 2 * PR_PI * PR_PI * sinTheta;
 			out.PDF_S *= (denom <= PR_EPSILON) ? 0.0f : 1 / denom;
 		} else {
-			uv			 = in.RND;
-			out.Outgoing = Sampling::cos_hemi(in.RND[0], in.RND[1]);
+			uv			 = Vector2f(in.RND(0), in.RND(1));
+			out.Outgoing = Sampling::cos_hemi(uv(0), uv(1));
 			out.PDF_S	 = Sampling::cos_hemi_pdf(out.Outgoing(2));
 		}
 
@@ -81,6 +83,9 @@ public:
 		coord.UV		   = uv;
 		coord.WavelengthNM = in.WavelengthNM;
 		out.Radiance	   = mRadiance->eval(coord);
+		out.Position	   = mSceneRadius * out.Outgoing;
+		if (in.Point)
+			out.Position += in.Point->P;
 	}
 
 	float power() const override { return NodeUtils::average(SpectralBlob(550.0f) /*TODO*/, mRadiance.get()); }
@@ -101,6 +106,12 @@ public:
 		return stream.str();
 	}
 
+	void afterSceneBuild(Scene* scene) override
+	{
+		IInfiniteLight::afterSceneBuild(scene);
+		mSceneRadius = scene->boundingSphere().radius() * 1.05f /*Scale a little bit*/;
+	}
+
 private:
 	const std::shared_ptr<Distribution2D> mDistribution;
 
@@ -110,6 +121,8 @@ private:
 	const std::shared_ptr<FloatSpectralNode> mBackground;
 	const Eigen::Matrix3f mTransform;
 	const Eigen::Matrix3f mInvTransform;
+
+	float mSceneRadius;
 };
 
 class EnvironmentLightFactory : public IInfiniteLightPlugin {

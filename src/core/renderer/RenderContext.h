@@ -69,8 +69,7 @@ public:
 	inline const RenderSettings& settings() const { return mRenderSettings; }
 
 	// Light
-	inline const std::vector<std::shared_ptr<IEntity>>& lights() const { return mLights; }
-	inline float emissiveSurfaceArea() const { return mEmissiveSurfaceArea; }
+	inline const std::vector<std::shared_ptr<IEntity>>& lights() const { return mLights; } // Deprecated
 
 	RenderTileStatistics statistics() const;
 	RenderStatus status() const;
@@ -99,7 +98,6 @@ private:
 	std::shared_ptr<FrameBufferSystem> mOutputMap;
 
 	std::vector<std::shared_ptr<IEntity>> mLights;
-	float mEmissiveSurfaceArea;
 
 	mutable std::mutex mTileMutex;
 	std::unique_ptr<RenderTileMap> mTileMap;

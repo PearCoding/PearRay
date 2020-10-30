@@ -14,8 +14,8 @@
 	  :radius 1
 	)
 	(integrator 
-	  :type 'direct'
-	  :max_ray_depth 64
+	  :type 'ppm'
+	  ;:max_ray_depth 64
 	)
 	; Outputs
 	(output
@@ -32,12 +32,12 @@
 		:type 'sky'
 		:turbidity 3
 	)
-	(light
-		:name 'sun'
-		:type 'sun'
-		:turbidity 3
-		:radius 4
-	)
+	;(light
+	;	:name 'sun'
+	;	:type 'sun'
+	;	:turbidity 3
+	;	:radius 4
+	;)
 	; Materials
 	(material
 		:name 'Material1'
@@ -93,8 +93,8 @@
 		:name 'Ground'
 		:type 'plane'
 		:material 'Ground'
-		:x_axis [200,0,0]
-		:y_axis [0,100,0]
-		:position [-100,0,-1.85]
+		:x_axis [20,0,0]
+		:y_axis [0,10,0]
+		:position [-10,0,-1.85]
 	)
 )

@@ -4,10 +4,12 @@
 #include "geometry/Disk.h"
 #include "infinitelight/IInfiniteLight.h"
 #include "infinitelight/IInfiniteLightPlugin.h"
+#include "math/Concentric.h"
 #include "math/ImportanceSampling.h"
 #include "math/Sampling.h"
 #include "math/Spherical.h"
 #include "math/Tangent.h"
+#include "scene/Scene.h"
 #include "shader/ShadingContext.h"
 #include "spectral/EquidistantSpectrum.h"
 
@@ -20,15 +22,22 @@ constexpr float SUN_WAVELENGTH_END		= 760.0f;
 constexpr size_t SUN_WAVELENGTH_SAMPLES = 64;
 constexpr float SUN_VIS_RADIUS			= PR_DEG2RAD * 0.5358f * 0.5f; // Given in angular radius
 
+inline float calculatePosDiskRadius(float scene_radius, float cosTheta)
+{
+	return scene_radius * std::sqrt((1 - cosTheta) * (1 + cosTheta));
+}
 class SunLight : public IInfiniteLight {
 public:
-	SunLight(uint32 id, const std::string& name, const ElevationAzimuth& ea, float turbidity, float radius, float scale, const Eigen::Matrix3f& trans)
+	SunLight(uint32 id, const std::string& name, const ElevationAzimuth& ea, float turbidity, float radius, float scale,
+			 const Eigen::Matrix3f& trans)
 		: IInfiniteLight(id, name)
 		, mSpectrum(SUN_WAVELENGTH_SAMPLES, SUN_WAVELENGTH_START, SUN_WAVELENGTH_END)
 		, mEA(ea)
 		, mDirection(trans * ea.toDirection().normalized())
 		, mCosTheta(std::cos(SUN_VIS_RADIUS * radius))
 		, mPDF(Sampling::uniform_cone_pdf(mCosTheta))
+		, mSceneRadius(0)
+		, mPosDiskRadius(0)
 	{
 		Tangent::frame(mDirection, mDx, mDy);
 
@@ -64,12 +73,27 @@ public:
 		out.Outgoing	   = Tangent::fromTangentSpace(mDirection, mDx, mDy, dir);
 		out.PDF_S		   = mPDF;
 
+		if (in.Point) {
+			out.Position = in.Point->P + mSceneRadius * out.Outgoing;
+		} else if (in.SamplePosition) {
+			const Vector2f uv = mPosDiskRadius * Concentric::square2disc(Vector2f(in.RND(0), in.RND(1)));
+			out.Position	  = mSceneRadius * out.Outgoing + uv(0) * mDx + uv(1) * mDy;
+			// TODO: PDF?
+		}
+
 		PR_OPT_LOOP
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
 			out.Radiance[i] = mSpectrum.lookup(in.WavelengthNM[i]);
 	}
-	
+
 	float power() const override { return mSpectrum.average(); }
+
+	void afterSceneBuild(Scene* scene) override
+	{
+		IInfiniteLight::afterSceneBuild(scene);
+		mSceneRadius   = scene->boundingSphere().radius();
+		mPosDiskRadius = calculatePosDiskRadius(mSceneRadius, std::abs(mDirection(2)));
+	}
 
 	std::string dumpInformation() const override
 	{
@@ -91,16 +115,24 @@ private:
 	Vector3f mDy;
 	const float mCosTheta;
 	const float mPDF;
+
+	float mSceneRadius;
+	float mPosDiskRadius;
 };
 
 class SunDeltaLight : public IInfiniteLight {
 public:
-	SunDeltaLight(uint32 id, const std::string& name, const ElevationAzimuth& ea, float turbidity, float scale, const Eigen::Matrix3f& trans)
+	SunDeltaLight(uint32 id, const std::string& name, const ElevationAzimuth& ea, float turbidity, float scale,
+				  const Eigen::Matrix3f& trans)
 		: IInfiniteLight(id, name)
 		, mSpectrum(SUN_WAVELENGTH_SAMPLES, SUN_WAVELENGTH_START, SUN_WAVELENGTH_END)
 		, mEA(ea)
 		, mDirection(trans * ea.toDirection().normalized())
+		, mSceneRadius(0)
+		, mPosDiskRadius(0)
 	{
+		Tangent::frame(mDirection, mDx, mDy);
+
 		const float solid_angle = 2 * PR_PI * (1 - std::cos(SUN_VIS_RADIUS));
 		for (size_t i = 0; i < mSpectrum.sampleCount(); ++i)
 			mSpectrum[i] = computeSunRadiance(mSpectrum.wavelengthStart() + i * mSpectrum.delta(),
@@ -126,11 +158,27 @@ public:
 		PR_OPT_LOOP
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
 			out.Radiance[i] = mSpectrum.lookup(in.WavelengthNM[i]);
+
 		out.Outgoing = mDirection;
 		out.PDF_S	 = PR_INF;
+
+		if (in.Point) {
+			out.Position = in.Point->P + mSceneRadius * out.Outgoing;
+		} else if (in.SamplePosition) {
+			const Vector2f uv = mPosDiskRadius * Concentric::square2disc(Vector2f(in.RND(0), in.RND(1)));
+			out.Position	  = mSceneRadius * out.Outgoing + uv(0) * mDx + uv(1) * mDy;
+			// TODO: PDF?
+		}
 	}
 
 	float power() const override { return mSpectrum.average(); }
+
+	void afterSceneBuild(Scene* scene) override
+	{
+		IInfiniteLight::afterSceneBuild(scene);
+		mSceneRadius   = scene->boundingSphere().radius();
+		mPosDiskRadius = calculatePosDiskRadius(mSceneRadius, std::abs(mDirection(2)));
+	}
 
 	std::string dumpInformation() const override
 	{
@@ -148,6 +196,11 @@ private:
 	EquidistantSpectrum mSpectrum;
 	const ElevationAzimuth mEA;
 	const Vector3f mDirection;
+	Vector3f mDx;
+	Vector3f mDy;
+
+	float mSceneRadius;
+	float mPosDiskRadius;
 };
 
 class SunLightFactory : public IInfiniteLightPlugin {

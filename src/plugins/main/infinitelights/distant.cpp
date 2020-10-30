@@ -3,12 +3,19 @@
 #include "SceneLoadContext.h"
 #include "infinitelight/IInfiniteLight.h"
 #include "infinitelight/IInfiniteLightPlugin.h"
+#include "math/Concentric.h"
 #include "math/Projection.h"
 #include "math/Tangent.h"
+#include "renderer/RenderTileSession.h"
+#include "scene/Scene.h"
 #include "shader/NodeUtils.h"
 #include "shader/ShadingContext.h"
 
 namespace PR {
+inline float calculatePosDiskRadius(float scene_radius, float cosTheta)
+{
+	return scene_radius * std::sqrt((1 - cosTheta) * (1 + cosTheta));
+}
 class DistantLight : public IInfiniteLight {
 public:
 	DistantLight(uint32 id, const std::string& name,
@@ -17,6 +24,8 @@ public:
 		: IInfiniteLight(id, name)
 		, mDirection(direction)
 		, mIrradiance(spec)
+		, mSceneRadius(0)
+		, mPosDiskRadius(0)
 	{
 	}
 
@@ -40,8 +49,16 @@ public:
 		ShadingContext ctx;
 		ctx.WavelengthNM = in.WavelengthNM;
 
+		if (in.Point) {
+			out.Position = in.Point->P + mSceneRadius * mOutgoing_Cache;
+		} else if (in.SamplePosition) {
+			const Vector2f uv = mPosDiskRadius * Concentric::square2disc(Vector2f(in.RND(0), in.RND(1)));
+			out.Position	  = mSceneRadius * mOutgoing_Cache + uv(0) * mDx + uv(1) * mDy;
+			// TODO: PDF?
+		}
+
 		out.Radiance = mIrradiance->eval(ctx); // As there is only one direction (delta), irradiance is equal to radiance
-		out.Outgoing = mDirection_Cache;
+		out.Outgoing = mOutgoing_Cache;
 		out.PDF_S	 = PR_INF;
 	}
 
@@ -53,7 +70,7 @@ public:
 
 		stream << std::boolalpha << IInfiniteLight::dumpInformation()
 			   << "  <DistantLight>:" << std::endl
-			   << "    Irradiance: " << (mIrradiance ? mIrradiance->dumpInformation() : "NONE") << std::endl
+			   << "    Irradiance: " << mIrradiance->dumpInformation() << std::endl
 			   << "    Direction:  " << PR_FMT_MAT(mDirection) << std::endl;
 
 		return stream.str();
@@ -63,14 +80,29 @@ public:
 	{
 		IObject::beforeSceneBuild();
 
-		mDirection_Cache = normalMatrix() * (-mDirection);
-		mDirection_Cache.normalize();
+		mOutgoing_Cache = normalMatrix() * mDirection;
+		mOutgoing_Cache.normalize();
+
+		Tangent::frame(mOutgoing_Cache, mDx, mDy);
+	}
+
+	void afterSceneBuild(Scene* scene) override
+	{
+		IInfiniteLight::afterSceneBuild(scene);
+		mSceneRadius   = scene->boundingSphere().radius();
+		mPosDiskRadius = calculatePosDiskRadius(mSceneRadius, std::abs(mOutgoing_Cache(2)));
 	}
 
 private:
-	Vector3f mDirection;
-	std::shared_ptr<FloatSpectralNode> mIrradiance;
-	Vector3f mDirection_Cache;
+	const Vector3f mDirection;
+	const std::shared_ptr<FloatSpectralNode> mIrradiance;
+	Vector3f mOutgoing_Cache;
+
+	Vector3f mDx;
+	Vector3f mDy;
+
+	float mSceneRadius;
+	float mPosDiskRadius;
 };
 
 class DistantLightFactory : public IInfiniteLightPlugin {

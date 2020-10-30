@@ -6,10 +6,7 @@
 	:camera 'Camera'
 	; Settings
 	(integrator
-		:type 'DIRECT'
-		:max_ray_depth 64
-		:light_sampe_count 1
-		:msi true
+		:type 'ppm'
 	)
 	(sampler
 		:slot 'aa'

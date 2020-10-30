@@ -6,7 +6,7 @@
 	:camera 'Camera'
 	; Settings
 	(integrator
-		:type 'direct'
+		:type 'ppm'
 		:max_ray_depth 16
 		:contract_ratio 0.2
 		:max_light_ray_depth 16
@@ -37,6 +37,12 @@
 		:transform [1.0,0.0,0.0,0.0,0.0,0.0,-1.0,-3.93462872505188,0.0,1.0,0.0,1.0,0.0,0.0,0.0,1.0]
 	)
 	; Lights
+	(light
+		:name 'sky'
+		:type 'sky'
+		:turbidity 3
+	)
+
 	(emission
 		:name 'light_em'
 		:type 'standard'
@@ -103,7 +109,7 @@
 		:name 'CornellBox-Original'
 		:type 'mesh'
 		:materials 'light'
-		:emission 'light_em'
+		;:emission 'light_em'
 		:mesh 'CornellBox-Original'
 		:transform [1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0]
 	)

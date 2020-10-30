@@ -3,6 +3,7 @@
 #include "Profiler.h"
 #include "entity/IEntity.h"
 #include "geometry/BoundingBox.h"
+#include "geometry/Sphere.h"
 #include "math/Compression.h"
 #include "ray/RayStream.h"
 #include "trace/HitStream.h"
@@ -41,6 +42,8 @@ public:
 	const std::vector<std::shared_ptr<IInfiniteLight>>& nonDeltaInfiniteLights() const { return mNonDeltaInfLights; }
 	const std::vector<std::shared_ptr<INode>>& nodes() const { return mNodes; }
 
+	std::shared_ptr<LightSampler> lightSampler() const { return mLightSampler; }
+
 	std::shared_ptr<ICamera> activeCamera() const { return mActiveCamera; }
 
 	void traceRays(RayStream& rays, HitStream& hits) const;
@@ -48,7 +51,8 @@ public:
 	bool traceShadowRay(const Ray& ray, float distance, uint32 entity_id) const;
 	bool traceOcclusionRay(const Ray& ray) const;
 
-	inline BoundingBox boundingBox() const { return mBoundingBox; }
+	inline const BoundingBox& boundingBox() const { return mBoundingBox; }
+	inline const Sphere& boundingSphere() const { return mBoundingSphere; }
 
 	void beforeRender(RenderContext* ctx);
 	void afterRender(RenderContext* ctx);
@@ -69,5 +73,6 @@ private:
 
 	std::unique_ptr<struct SceneInternal> mInternal;
 	BoundingBox mBoundingBox;
+	Sphere mBoundingSphere;
 };
 } // namespace PR

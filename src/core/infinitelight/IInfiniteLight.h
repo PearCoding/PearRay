@@ -15,13 +15,16 @@ struct PR_LIB_CORE InfiniteLightEvalOutput {
 };
 
 struct PR_LIB_CORE InfiniteLightSampleInput {
-	Vector2f RND;
+	Vector4f RND;
 	SpectralBlob WavelengthNM;
+	const IntersectionPoint* Point = nullptr;
+	bool SamplePosition			   = false;
 };
 
 struct PR_LIB_CORE InfiniteLightSampleOutput {
 	SpectralBlob Radiance;
 	float PDF_S;
+	Vector3f Position;
 	Vector3f Outgoing;
 };
 

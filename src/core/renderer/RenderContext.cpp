@@ -11,6 +11,7 @@
 #include "entity/IEntity.h"
 #include "infinitelight/IInfiniteLight.h"
 #include "integrator/IIntegrator.h"
+#include "light/LightSampler.h"
 #include "material/IMaterial.h"
 #include "math/Projection.h"
 #include "math/Scattering.h"
@@ -27,7 +28,6 @@ RenderContext::RenderContext(uint32 index, const Point2i& viewOffset, const Size
 	, mViewSize(viewSize)
 	, mScene(scene)
 	, mOutputMap()
-	, mEmissiveSurfaceArea(0.0f)
 	, mTileMap()
 	, mThreadsWaitingForIteration(0)
 	, mIncrementalCurrentIteration(0)
@@ -75,17 +75,12 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 	PR_ASSERT(mOutputMap, "Output Map must be already created!");
 
 	/* Setup entities */
-	mEmissiveSurfaceArea = 0.0f;
 	for (auto entity : mScene->entities()) {
 		if (entity->hasEmission()) {
-			mEmissiveSurfaceArea += entity->worldSurfaceArea();
 			mLights.push_back(entity);
 		}
 	}
-
-	if (mEmissiveSurfaceArea < PR_EPSILON)
-		mEmissiveSurfaceArea = 0.0f;
-
+	
 	/* Setup threads */
 	uint32 threadCount = Thread::hardwareThreadCount();
 	if (threads < 0)
@@ -109,17 +104,19 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 	mOutputMap->clear();
 
 	// Get other informations
-	PR_LOG(L_INFO) << "Rendering with:    " << std::endl
-				   << "  Threads:         " << threadCount << std::endl
-				   << "  Tiles:           " << rtx << " x " << rty << std::endl
-				   << "  Entities:        " << mScene->entities().size() << std::endl
-				   << "  Lights:          " << mLights.size() << std::endl
-				   << "  Materials:       " << mScene->materials().size() << std::endl
-				   << "  Emissions:       " << mScene->emissions().size() << std::endl
-				   << "  InfLights:       " << mScene->infiniteLights().size() << std::endl
-				   << "  Emissive Area:   " << mEmissiveSurfaceArea << std::endl
-				   << "  Scene Extent:    " << mScene->boundingBox().width() << " x " << mScene->boundingBox().height() << " x " << mScene->boundingBox().depth() << std::endl
-				   << "  Spectral Domain: [" << mRenderSettings.spectralStart << ", " << mRenderSettings.spectralEnd << "]" << std::endl;
+	PR_LOG(L_INFO) << "Rendering with:" << std::endl
+				   << "  Threads:                " << threadCount << std::endl
+				   << "  Tiles:                  " << rtx << " x " << rty << std::endl
+				   << "  Entities:               " << mScene->entities().size() << std::endl
+				   << "  Lights:                 " << mLights.size() << std::endl
+				   << "  Materials:              " << mScene->materials().size() << std::endl
+				   << "  Emissions:              " << mScene->emissions().size() << std::endl
+				   << "  InfLights:              " << mScene->infiniteLights().size() << std::endl
+				   << "  Emissive Surface Area:  " << mScene->lightSampler()->emissiveSurfaceArea() << std::endl
+				   << "  Emissive Surface Power: " << mScene->lightSampler()->emissiveSurfacePower() << std::endl
+				   << "  Emissive Power:         " << mScene->lightSampler()->emissivePower() << std::endl
+				   << "  Scene Extent:           " << mScene->boundingBox().width() << " x " << mScene->boundingBox().height() << " x " << mScene->boundingBox().depth() << std::endl
+				   << "  Spectral Domain:        [" << mRenderSettings.spectralStart << ", " << mRenderSettings.spectralEnd << "]" << std::endl;
 
 	// Start
 	mIntegrator->onStart();
