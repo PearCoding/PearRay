@@ -29,6 +29,30 @@ std::string Light::name() const
 		return reinterpret_cast<IEntity*>(mEntity)->name();
 }
 
+uint32 Light::id() const
+{
+	if (isInfinite())
+		return reinterpret_cast<IInfiniteLight*>(mEntity)->id();
+	else
+		return reinterpret_cast<IEntity*>(mEntity)->id();
+}
+
+uint32 Light::entityID() const
+{
+	if (isInfinite())
+		return PR_INVALID_ID;
+	else
+		return reinterpret_cast<IEntity*>(mEntity)->id();
+}
+
+uint32 Light::infiniteLightID() const
+{
+	if (isInfinite())
+		return reinterpret_cast<IInfiniteLight*>(mEntity)->id();
+	else
+		return PR_INVALID_ID;
+}
+
 bool Light::hasDeltaDistribution() const { return isInfinite() && reinterpret_cast<IInfiniteLight*>(mEntity)->hasDeltaDistribution(); }
 
 void Light::eval(const LightEvalInput& in, LightEvalOutput& out, const RenderTileSession& session) const
@@ -81,11 +105,12 @@ void Light::sample(const LightSampleInput& in, LightSampleOutput& out, const Ren
 		InfiniteLightSampleOutput ilsout;
 		infL->sample(ilsin, ilsout, session);
 
-		out.Radiance   = ilsout.Radiance;
-		out.PDF.Value  = ilsout.PDF_S;
-		out.PDF.IsArea = false;
-		out.Outgoing   = ilsout.Outgoing;
-		out.Position   = ilsout.Position;
+		out.Radiance	  = ilsout.Radiance;
+		out.PDF.Value	  = ilsout.PDF_S;
+		out.PDF.IsArea	  = false;
+		out.Outgoing	  = ilsout.Outgoing;
+		out.LightPosition = ilsout.LightPosition;
+		out.CosLight	  = 1;
 	} else {
 		IEntity* ent  = reinterpret_cast<IEntity*>(mEntity);
 		const auto pp = ent->sampleParameterPoint(Vector2f(in.RND[0], in.RND[1]));
@@ -110,10 +135,10 @@ void Light::sample(const LightSampleInput& in, LightSampleOutput& out, const Ren
 		EmissionEvalOutput eeout;
 		mEmission->eval(eein, eeout, session);
 
-		out.Radiance   = eeout.Radiance;
-		out.PDF.Value  = pp.PDF.Value;
-		out.PDF.IsArea = pp.PDF.IsArea;
-		out.Position   = pp.Position;
+		out.Radiance	  = eeout.Radiance;
+		out.PDF.Value	  = pp.PDF.Value;
+		out.PDF.IsArea	  = pp.PDF.IsArea;
+		out.LightPosition = pp.Position;
 
 		if (!in.Point) {
 			// Randomly sample direction from emissive material (TODO: Should be abstracted -> Use Emission)
@@ -125,7 +150,24 @@ void Light::sample(const LightSampleInput& in, LightSampleOutput& out, const Ren
 		} else { // Connect to given surface
 			out.Outgoing = (pp.Position - in.Point->P).normalized();
 		}
+
+		out.CosLight = -out.Outgoing.dot(gp.N);
 	}
 }
 
+LightPDF Light::pdf() const
+{ // TODO: This is very incomplete
+	if (isInfinite()) {
+		IInfiniteLight* infL = reinterpret_cast<IInfiniteLight*>(mEntity);
+		if (infL->hasDeltaDistribution())
+			return LightPDF{ PR_INF, false };
+		else
+			return LightPDF{ PR_INV_2_PI, false }; // TODO
+	} else {
+		IEntity* ent   = reinterpret_cast<IEntity*>(mEntity);
+		const auto pdf = ent->sampleParameterPointPDF();
+		// TODO: What if no point was given? This is incomplete
+		return LightPDF{ pdf.Value, pdf.IsArea };
+	}
+}
 } // namespace PR

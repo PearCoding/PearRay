@@ -74,10 +74,10 @@ public:
 		out.PDF_S		   = mPDF;
 
 		if (in.Point) {
-			out.Position = in.Point->P + mSceneRadius * out.Outgoing;
+			out.LightPosition = in.Point->P + mSceneRadius * out.Outgoing;
 		} else if (in.SamplePosition) {
 			const Vector2f uv = mPosDiskRadius * Concentric::square2disc(Vector2f(in.RND(0), in.RND(1)));
-			out.Position	  = mSceneRadius * out.Outgoing + uv(0) * mDx + uv(1) * mDy;
+			out.LightPosition = mSceneRadius * out.Outgoing + uv(0) * mDx + uv(1) * mDy;
 			// TODO: PDF?
 		}
 
@@ -163,10 +163,10 @@ public:
 		out.PDF_S	 = PR_INF;
 
 		if (in.Point) {
-			out.Position = in.Point->P + mSceneRadius * out.Outgoing;
+			out.LightPosition = in.Point->P + mSceneRadius * out.Outgoing;
 		} else if (in.SamplePosition) {
 			const Vector2f uv = mPosDiskRadius * Concentric::square2disc(Vector2f(in.RND(0), in.RND(1)));
-			out.Position	  = mSceneRadius * out.Outgoing + uv(0) * mDx + uv(1) * mDy;
+			out.LightPosition = mSceneRadius * out.Outgoing + uv(0) * mDx + uv(1) * mDy;
 			// TODO: PDF?
 		}
 	}

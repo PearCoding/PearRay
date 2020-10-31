@@ -50,10 +50,10 @@ public:
 		ctx.WavelengthNM = in.WavelengthNM;
 
 		if (in.Point) {
-			out.Position = in.Point->P + mSceneRadius * mOutgoing_Cache;
+			out.LightPosition = in.Point->P + mSceneRadius * mOutgoing_Cache;
 		} else if (in.SamplePosition) {
 			const Vector2f uv = mPosDiskRadius * Concentric::square2disc(Vector2f(in.RND(0), in.RND(1)));
-			out.Position	  = mSceneRadius * mOutgoing_Cache + uv(0) * mDx + uv(1) * mDy;
+			out.LightPosition = mSceneRadius * mOutgoing_Cache + uv(0) * mDx + uv(1) * mDy;
 			// TODO: PDF?
 		}
 

@@ -20,7 +20,6 @@ SPECSCENESTR = """
         :type 'DIRECT'
         :max_ray_depth 4
         :light_sampe_count 1
-        :mis {mis}
     )
     (sampler
         :slot 'aa'
@@ -83,7 +82,6 @@ FULLSCENESTR = """
         :type 'DIRECT'
         :max_ray_depth 4
         :light_sampe_count 1
-        :mis {mis}
     )
     (sampler
         :slot 'aa'
@@ -178,37 +176,20 @@ class TestWhitefurnance(unittest.TestCase):
         for i in range(len(POINTS)):
             self.checkAt(img, POINTS[i][0], POINTS[i][1])
 
-    def test_spec_nonmis(self):
-        img = self.render(SPECSCENESTR.format(mis="false", size=IMGSIZE))
+    def test_spec(self):
+        img = self.render(SPECSCENESTR.format(size=IMGSIZE))
         self.checkStandardPos(img)
         self.assertAlmostEqual(self.mean(img), SPEC_RESULT, places=4)
 
-    def test_spec_mis(self):
-        img = self.render(SPECSCENESTR.format(mis="true", size=IMGSIZE))
-        self.checkStandardPos(img)
-        self.assertAlmostEqual(self.mean(img), SPEC_RESULT, places=4)
-
-    def test_non_hero_nonmis(self):
+    def test_non_hero(self):
         img = self.render(FULLSCENESTR.format(
-            mis="false", hero="false", size=IMGSIZE))
+            hero="false", size=IMGSIZE))
         self.checkStandardPos(img)
         self.assertAlmostEqual(self.mean(img), CIE_RESULT, places=4)
-
-    def test_non_hero_mis(self):
+        
+    def test_full(self):
         img = self.render(FULLSCENESTR.format(
-            mis="true", hero="false", size=IMGSIZE))
-        self.checkStandardPos(img)
-        self.assertAlmostEqual(self.mean(img), CIE_RESULT, places=4)
-
-    def test_full_nonmis(self):
-        img = self.render(FULLSCENESTR.format(
-            mis="false", hero="true", size=IMGSIZE))
-        self.checkStandardPos(img)
-        self.assertAlmostEqual(self.mean(img), CIE_RESULT, places=4)
-
-    def test_full_mis(self):
-        img = self.render(FULLSCENESTR.format(
-            mis="true", hero="true", size=IMGSIZE))
+            hero="true", size=IMGSIZE))
         self.checkStandardPos(img)
         self.assertAlmostEqual(self.mean(img), CIE_RESULT, places=4)
 

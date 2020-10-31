@@ -12,43 +12,6 @@
 namespace PR {
 class IntegratorUtils {
 public:
-	struct Sample {
-		SpectralBlob Weight;
-		float PDF_S;
-		Vector3f Direction;
-	};
-
-	static inline std::optional<Sample> sampleInfiniteLight(RenderTileSession& session, const IntersectionPoint& spt, IInfiniteLight* infLight)
-	{
-		PR_PROFILE_THIS;
-
-		// Sample light
-		InfiniteLightSampleInput inL;
-		inL.WavelengthNM = spt.Ray.WavelengthNM;
-		inL.RND			 = session.tile()->random().get4D();
-		InfiniteLightSampleOutput outL;
-		infLight->sample(inL, outL, session);
-
-		// An unlikely event, but a zero pdf has to be catched before blowing up other parts
-		if (PR_UNLIKELY(outL.PDF_S <= PR_EPSILON))
-			return {};
-
-		if (infLight->hasDeltaDistribution())
-			outL.PDF_S = 1;
-
-		// Trace shadow ray
-		const Ray shadow		= spt.Ray.next(spt.P, outL.Outgoing, spt.Surface.N, RF_Shadow, SHADOW_RAY_MIN, SHADOW_RAY_MAX);
-		const bool hitSomething = session.traceOcclusionRay(shadow);
-
-		SpectralBlob evalW;
-		if (hitSomething) // If we hit something before the light/background, the light path is occluded
-			evalW = SpectralBlob::Zero();
-		else
-			evalW = outL.Radiance;
-
-		return std::make_optional(Sample{ evalW, outL.PDF_S, outL.Outgoing });
-	}
-
 	static inline void handleBackgroundGroup(RenderTileSession& session, const ShadingGroup& sg)
 	{
 		PR_PROFILE_THIS;
@@ -77,11 +40,10 @@ public:
 		}
 	}
 
-	static inline void handleBackground(RenderTileSession& session, LightPath& path,
-										const SpectralBlob& weight, const Ray& ray)
+	template<typename Func>
+	static inline void handleBackground(RenderTileSession& session, const Ray& ray, const Func& func)
 	{
 		session.tile()->statistics().addBackgroundHitCount();
-		path.addToken(LightPathToken::Background());
 		for (auto light : session.tile()->context()->scene()->nonDeltaInfiniteLights()) {
 			InfiniteLightEvalInput lin;
 			lin.Point = nullptr; // TODO
@@ -92,9 +54,8 @@ public:
 			if (PR_UNLIKELY(lout.PDF_S <= PR_EPSILON))
 				continue;
 
-			session.pushSpectralFragment(SpectralBlob::Ones(), weight, lout.Radiance, ray, path);
+			func(lout);
 		}
-		path.popToken();
 	}
 };
 

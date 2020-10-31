@@ -27,4 +27,15 @@ inline const Light* LightSampler::sample(const LightSampleInput& in, LightSample
 	}
 }
 
+LightPDF LightSampler::pdf(const IEntity* entity) const
+{
+	if (!entity->hasEmission() || mLightEntityMap.count(entity) == 0)
+		return LightPDF{ 0.0f, false };
+
+	const uint32 lightID = mLightEntityMap.at(entity);
+	const Light* light = mLights[lightID].get();
+	const auto pdf	   = light->pdf();
+	return LightPDF{ pdf.Value * mSelector->discretePdf(lightID), pdf.IsArea };
+}
+
 } // namespace PR

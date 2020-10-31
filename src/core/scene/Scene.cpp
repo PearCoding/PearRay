@@ -371,7 +371,7 @@ bool Scene::traceShadowRay(const Ray& ray, float distance, uint32 entity_id) con
 
 	rtcOccluded1(mInternal->Scene, (RTCIntersectContext*)&ctx, &rray);
 
-	return rray.tfar != -PR_INF;
+	return rray.tfar == -PR_INF;
 }
 
 bool Scene::traceOcclusionRay(const Ray& ray) const

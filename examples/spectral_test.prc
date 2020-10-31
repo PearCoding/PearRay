@@ -10,7 +10,6 @@
 		:type 'DIRECT'
 		:max_ray_depth 1
 		:light_sampe_count 1
-		:msi false
 	)
 	(sampler
 		:slot 'aa'

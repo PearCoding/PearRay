@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Light.h"
+#include "entity/IEntity.h"
 #include "math/Distribution1D.h"
 
 namespace PR {
@@ -17,6 +18,7 @@ public:
 
 	inline const Light* sample(float rnd, float& pdf) const;
 	inline const Light* sample(const LightSampleInput& in, LightSampleOutput& out, const RenderTileSession& session) const;
+	inline LightPDF pdf(const IEntity* entity) const;
 
 	inline const LightList& lights() const { return mLights; }
 
@@ -25,7 +27,10 @@ public:
 	inline float emissivePower() const { return mEmissivePower; }
 
 private:
+	using LightEntityMap = std::unordered_map<const IEntity*, size_t>;
+
 	LightList mLights;
+	LightEntityMap mLightEntityMap;
 	std::unique_ptr<Distribution1D> mSelector;
 	float mEmissiveSurfaceArea;
 	float mEmissiveSurfacePower;

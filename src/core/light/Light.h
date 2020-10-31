@@ -27,8 +27,9 @@ struct PR_LIB_CORE LightSampleInput {
 struct PR_LIB_CORE LightSampleOutput {
 	SpectralBlob Radiance;
 	LightPDF PDF;
-	Vector3f Position;
-	Vector3f Outgoing; // Direction towards the light (and if given -> Position)
+	Vector3f LightPosition; // If requested, position of light (abstract) surface
+	float CosLight;			// Cosinus between light normal and direction
+	Vector3f Outgoing;		// Direction towards the light
 };
 
 class IInfiniteLight;
@@ -41,14 +42,17 @@ public:
 	virtual ~Light() {}
 
 	std::string name() const;
+	uint32 id() const;
+	uint32 entityID() const;
+	uint32 infiniteLightID() const;
 
 	inline bool isInfinite() const { return mEmission == nullptr; }
-	inline bool isHit(IEntity* entity) const { return (isInfinite() && entity == nullptr) || (!isInfinite() && entity == mEntity); }
 	bool hasDeltaDistribution() const;
 	inline float relativeContribution() const { return mRelativeContribution; }
 
 	void eval(const LightEvalInput& in, LightEvalOutput& out, const RenderTileSession& session) const;
 	void sample(const LightSampleInput& in, LightSampleOutput& out, const RenderTileSession& session) const;
+	LightPDF pdf() const; // TODO: Maybe more information?
 
 	inline static Light makeInfLight(IInfiniteLight* infLight, float relContribution)
 	{
@@ -59,6 +63,9 @@ public:
 	{
 		return Light(entity, emission, relContribution);
 	}
+
+	inline IEntity* asEntity() const { return reinterpret_cast<IEntity*>(mEntity); }
+	inline IInfiniteLight* asInfiniteLight() const { return reinterpret_cast<IInfiniteLight*>(mEntity); }
 
 private:
 	Light(IInfiniteLight* infLight, float relContribution);

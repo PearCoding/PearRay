@@ -37,6 +37,11 @@ public:
 		return Vector3f(next1D(), next1D(), next1D());
 	}
 
+	inline Vector4f next4D()
+	{
+		return Vector4f(next1D(), next1D(), next1D(), next1D());
+	}
+
 	inline float& operator[](size_t ind)
 	{
 		PR_ASSERT(ind < mValues.size(), "Out of sample array bound");

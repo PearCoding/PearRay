@@ -78,30 +78,6 @@ public:
 
 	virtual ~IntBiDiInstance() = default;
 
-	// Estimate direct (infinite) light
-	Contribution infiniteLight(RenderTileSession& session, const IntersectionPoint& spt,
-							   LightPathToken& token,
-							   IInfiniteLight* infLight, IMaterial* material)
-	{
-		PR_PROFILE_THIS;
-
-		auto sample = IntegratorUtils::sampleInfiniteLight(session, spt, infLight);
-		if (!sample.has_value())
-			return ZERO_CONTRIB;
-		else {
-			// Evaluate surface
-			MaterialEvalInput in{ MaterialEvalContext::fromIP(spt, sample.value().Direction), ShadingContext::fromIP(session.threadID(), spt) };
-			MaterialEvalOutput out;
-			material->eval(in, out, session);
-			token = LightPathToken(out.Type);
-
-			// Calculate hero mis pdf
-			const float matPDF = (spt.Ray.Flags & RF_Monochrome) ? out.PDF_S[0] : (out.PDF_S.sum() / PR_SPECTRAL_BLOB_SIZE);
-			const float msiL   = MIS(1, sample.value().PDF_S, 1, matPDF);
-			return Contribution{ msiL, out.Weight / sample.value().PDF_S, sample.value().Weight };
-		}
-	}
-
 	// First camera vertex
 	void handleCameraPath(RenderTileSession& session, LightPath& path,
 						  const IntersectionPoint& spt,
@@ -142,21 +118,6 @@ public:
 
 				if (!material_hit->hasDeltaDistribution()) {
 					// TODO: Handle connections!
-
-					// Infinite Lights
-					// 1 sample per inf-light
-					for (auto light : session.tile()->context()->scene()->infiniteLights()) {
-						LightPathToken token;
-						const auto contrib = infiniteLight(session, ip, token, light.get(), material_hit);
-
-						if (contrib.MIS <= PR_EPSILON)
-							continue;
-
-						path.addToken(token);
-						path.addToken(LightPathToken::Background());
-						session.pushSpectralFragment(SpectralBlob(contrib.MIS), weight * contrib.Importance, contrib.Radiance, ip.Ray, path);
-						path.popToken(2);
-					}
 					return false;
 				} else {
 					return true; // Only traverse for delta materials
@@ -167,7 +128,11 @@ public:
 				path.addToken(sout.Type);
 			},
 			[&](const SpectralBlob& weight, const Ray& ray) {
-				IntegratorUtils::handleBackground(session, path, weight, ray);
+				path.addToken(LightPathToken::Background());
+				IntegratorUtils::handleBackground(session, ray, [&](const InfiniteLightEvalOutput& ileout) {
+					session.pushSpectralFragment(SpectralBlob::Ones(), weight, ileout.Radiance, ray, path);
+				});
+				path.popToken();
 			});
 		path.popTokenUntil(1);
 	}

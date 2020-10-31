@@ -12,7 +12,7 @@ LightSampler::LightSampler(Scene* scene)
 	, mEmissiveSurfacePower(0)
 	, mEmissivePower(0)
 {
-	const float scene_area = 2 * PR_PI * scene->boundingSphere().radius();/*Approximative*/ //scene->boundingSphere().surfaceArea();
+	const float scene_area = 2 * PR_PI * scene->boundingSphere().radius(); /*Approximative*/ //scene->boundingSphere().surfaceArea();
 
 	const auto& entities  = scene->entities();
 	const auto& emissions = scene->emissions();
@@ -100,6 +100,7 @@ LightSampler::LightSampler(Scene* scene)
 
 		IEmission* emission = emissions[ems_id].get();
 		mLights.emplace_back(std::make_unique<Light>(Light::makeAreaLight(e.get(), emission, intensities[k])));
+		mLightEntityMap[e.get()] = k;
 		++k;
 	}
 

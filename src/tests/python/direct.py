@@ -51,7 +51,6 @@ SCENESTR = """
       :type 'direct'
       :max_ray_depth 1
       :light_sample_count 1
-      :mis {mis}
     )
     (sampler
       :slot 'aa'
@@ -126,6 +125,8 @@ class TestDirect(unittest.TestCase):
 
         ctx.start(8, 8)
         ctx.waitForFinish()
+        
+        self.assertAlmostEqual(np.average(ctx.output.pixelweight), 64, places=3)
 
         return np.divide(ctx.output.spectral, ctx.output.pixelweight)
 
@@ -135,12 +136,8 @@ class TestDirect(unittest.TestCase):
             expected = analytical(points[i])
             self.assertAlmostEqual(res, expected, places=3)
 
-    def test_nonmis(self):
-        img = self.render(SCENESTR.format(mis="false", size=IMGSIZE))
-        self.checkAt(img, POINTS)
-
-    def test_mis(self):
-        img = self.render(SCENESTR.format(mis="true", size=IMGSIZE))
+    def test_direct(self):
+        img = self.render(SCENESTR.format(size=IMGSIZE))
         self.checkAt(img, POINTS)
 
 

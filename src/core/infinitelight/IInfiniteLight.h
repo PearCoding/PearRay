@@ -24,7 +24,7 @@ struct PR_LIB_CORE InfiniteLightSampleInput {
 struct PR_LIB_CORE InfiniteLightSampleOutput {
 	SpectralBlob Radiance;
 	float PDF_S;
-	Vector3f Position;
+	Vector3f LightPosition;
 	Vector3f Outgoing;
 };
 

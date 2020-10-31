@@ -79,15 +79,15 @@ public:
 		out.PDF_S *= (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
 
 		out.Radiance = radiance(in.WavelengthNM, ea);
-		out.Position = mSceneRadius * out.Outgoing;
 		if (in.Point) // If we call it outside an intersection point, make light position such that lP - iP = direction
-			out.Position += in.Point->P;
+			out.LightPosition = in.Point->P + mSceneRadius * out.Outgoing;
 		else if (in.SamplePosition) {
+			out.LightPosition = 2 * mSceneRadius * out.Outgoing;
 			// Instead of sampling position, sample direction again
-			constexpr float CosAtan05 = 0.894427190999915f; // cos(atan(0.5))
+			constexpr float CosAtan05 = 0.894427190999915f; // cos(atan(0.5)) = 2/sqrt(5)
 			const Vector3f local	  = Sampling::uniform_cone(in.RND(2), in.RND(3), CosAtan05);
 			out.Outgoing			  = Tangent::align(out.Outgoing, local);
-			out.PDF_S *= Sampling::uniform_cone_pdf(CosAtan05);
+			out.PDF_S *= Sampling::uniform_cone_pdf(CosAtan05) / mSceneRadius;
 		}
 	}
 
@@ -112,8 +112,6 @@ public:
 	{
 		IInfiniteLight::afterSceneBuild(scene);
 		mSceneRadius = scene->boundingSphere().radius() * 1.05f /*Scale a little bit*/;
-
-		PR_LOG(L_INFO) << "fdsfgsdfsdf" << mSceneRadius << std::endl;
 	}
 
 private:

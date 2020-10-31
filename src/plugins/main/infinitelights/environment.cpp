@@ -83,9 +83,17 @@ public:
 		coord.UV		   = uv;
 		coord.WavelengthNM = in.WavelengthNM;
 		out.Radiance	   = mRadiance->eval(coord);
-		out.Position	   = mSceneRadius * out.Outgoing;
-		if (in.Point)
-			out.Position += in.Point->P;
+
+		if (in.Point) // If we call it outside an intersection point, make light position such that lP - iP = direction
+			out.LightPosition = in.Point->P + mSceneRadius * out.Outgoing;
+		else if (in.SamplePosition) {
+			out.LightPosition = 2 * mSceneRadius * out.Outgoing;
+			// Instead of sampling position, sample direction again
+			constexpr float CosAtan05 = 0.894427190999915f; // cos(atan(0.5)) = 2/sqrt(5)
+			const Vector3f local	  = Sampling::uniform_cone(in.RND(2), in.RND(3), CosAtan05);
+			out.Outgoing			  = Tangent::align(out.Outgoing, local);
+			out.PDF_S *= Sampling::uniform_cone_pdf(CosAtan05) / mSceneRadius;
+		}
 	}
 
 	float power() const override { return NodeUtils::average(SpectralBlob(550.0f) /*TODO*/, mRadiance.get()); }

@@ -46,9 +46,13 @@ public:
 
 	std::shared_ptr<ICamera> activeCamera() const { return mActiveCamera; }
 
+	/// Traces a stream of rays and produces a stream of hits
 	void traceRays(RayStream& rays, HitStream& hits) const;
+	/// Traces a single ray and returns true if something was hit. Information about the hit are updated if a hit was found
 	bool traceSingleRay(const Ray& ray, HitEntry& entry) const;
+	/// Traces a single ray and returns true if something lays within the given distance, except entity_id
 	bool traceShadowRay(const Ray& ray, float distance, uint32 entity_id) const;
+	/// Traces a single ray and returns true if something was hit
 	bool traceOcclusionRay(const Ray& ray) const;
 
 	inline const BoundingBox& boundingBox() const { return mBoundingBox; }

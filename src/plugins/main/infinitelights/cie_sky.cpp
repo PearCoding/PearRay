@@ -48,9 +48,9 @@ public:
 	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,
 				const RenderTileSession&) const override
 	{
-		out.Outgoing = sampleDir(in.RND[0], in.RND[1], out.PDF_S);
-		out.Position = mSceneRadius * out.Outgoing;
-		out.Radiance = radiance(in.WavelengthNM, out.Outgoing);
+		out.Outgoing	  = sampleDir(in.RND[0], in.RND[1], out.PDF_S);
+		out.LightPosition = mSceneRadius * out.Outgoing;
+		out.Radiance	  = radiance(in.WavelengthNM, out.Outgoing);
 	}
 
 	float power() const override { return radiance(SpectralBlob(550.0f) /*TODO*/, Vector3f(0, 0, 1)).mean(); }

@@ -162,7 +162,7 @@ public:
 		//if (found >= 1) {
 		accum *= mContext->CurrentKernelInvNorm;
 		// TODO: Add PPM and other parts together!
-		return Contribution{ SpectralBlob::Ones(), accum };
+		return Contribution{ SpectralBlob::Ones(), accum /*SpectralBlob(found/float(mParameters.MaxPhotonsPerPass))*/ };
 		/*} else {
 			return ZERO_CONTRIB;
 		}*/
@@ -223,7 +223,11 @@ public:
 				path.addToken(sout.Type);
 			},
 			[&](const SpectralBlob& weight, const Ray& ray) {
-				IntegratorUtils::handleBackground(session, path, weight, ray);
+				path.addToken(LightPathToken::Background());
+				IntegratorUtils::handleBackground(session, ray, [&](const InfiniteLightEvalOutput& ileout) {
+					session.pushSpectralFragment(SpectralBlob::Ones(), weight, ileout.Radiance, ray, path);
+				});
+				path.popToken();
 			});
 		path.popTokenUntil(1);
 	}
@@ -274,7 +278,7 @@ public:
 			LightSampleOutput lsout;
 			light.Light->sample(lsin, lsout, session);
 
-			Ray ray = Ray(lsout.Position, -lsout.Outgoing);
+			Ray ray = Ray(lsout.LightPosition, -lsout.Outgoing);
 			ray.Flags |= RF_Light;
 			ray.WavelengthNM = lsin.WavelengthNM;
 

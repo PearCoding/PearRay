@@ -6,7 +6,7 @@
 	:camera 'Camera'
 	; Settings
 	(integrator
-		:type 'ppm'
+		:type 'direct'
 		:max_ray_depth 16
 		:contract_ratio 0.2
 		:max_light_ray_depth 16
@@ -21,6 +21,7 @@
 	(output
 		:name 'image'
 		(channel :type 'color' :color 'srgb' )
+		(channel :type 'blend')
 		(channel :type 'var')
 	)
 	; Camera
@@ -109,7 +110,7 @@
 		:name 'CornellBox-Original'
 		:type 'mesh'
 		:materials 'light'
-		;:emission 'light_em'
+		:emission 'light_em'
 		:mesh 'CornellBox-Original'
 		:transform [1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0]
 	)
