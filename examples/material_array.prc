@@ -14,9 +14,7 @@
 	  :radius 1
 	)
 	(integrator 
-	  ;:type 'direct'
-		:type 'debug'
-		:mode 'colored_entity_id'
+	  :type 'direct'
 	  ;:max_ray_depth 64
 	)
 	; Outputs

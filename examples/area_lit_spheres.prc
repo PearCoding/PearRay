@@ -6,7 +6,7 @@
 	:camera 'Camera'
 	; Settings
 	(integrator
-		:type 'ao'
+		:type 'direct'
 		:max_ray_depth 8
 		:light_sampe_count 1
 		:msi false
