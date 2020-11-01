@@ -1,6 +1,6 @@
 #pragma once
 
-#include "IObject.h"
+#include "PR_Config.h"
 
 #include <string>
 
@@ -13,7 +13,7 @@ enum EntityFlags {
 #define ENTITY_CLASS \
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-class PR_LIB_CORE ITransformable : public IObject {
+class PR_LIB_CORE ITransformable {
 public:
 	ENTITY_CLASS
 
@@ -45,9 +45,6 @@ public:
 	inline Eigen::Matrix3f invNormalMatrix() const;
 
 	virtual std::string dumpInformation() const;
-
-	// IObject
-	virtual void beforeSceneBuild() override;
 
 private:
 	std::string mName;

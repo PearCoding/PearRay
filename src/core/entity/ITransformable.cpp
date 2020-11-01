@@ -6,8 +6,7 @@
 
 namespace PR {
 ITransformable::ITransformable(uint32 id, const std::string& name)
-	: IObject()
-	, mName(name)
+	: mName(name)
 	, mID(id)
 	, mFlags(0)
 	, mTransform(Transform::Identity())
@@ -22,33 +21,11 @@ ITransformable::~ITransformable()
 {
 }
 
-void ITransformable::beforeSceneBuild()
-{
-	IObject::beforeSceneBuild();
-
-#ifdef PR_DEBUG
-	// Make some feasibilty checks before scene is build
-	Eigen::Matrix3f rot;
-	Eigen::Matrix3f sca;
-	mTransform.computeRotationScaling(&rot, &sca);
-
-	Eigen::Matrix3f irot;
-	Eigen::Matrix3f isca;
-	mInvTransformCache.computeRotationScaling(&irot, &isca);
-
-	if (sca.squaredNorm() <= PR_EPSILON)
-		PR_LOG(L_WARNING) << "ITransformable " << mName << " has zero scale attribute" << std::endl;
-
-	if (std::abs((sca * isca).sum() - 3) > PR_EPSILON)
-		PR_LOG(L_WARNING) << "ITransformable " << mName << " scale and inverse scale do not match" << std::endl;
-#endif
-}
-
 void ITransformable::cache()
 {
-	mJacobianDeterminant = std::abs(mTransform.linear().determinant());
-	mInvTransformCache	= mTransform.inverse();
-	mNormalMatrixCache	= mTransform.linear().inverse().transpose();
+	mJacobianDeterminant  = std::abs(mTransform.linear().determinant());
+	mInvTransformCache	  = mTransform.inverse();
+	mNormalMatrixCache	  = mTransform.linear().inverse().transpose();
 	mInvNormalMatrixCache = mNormalMatrixCache.inverse();
 }
 

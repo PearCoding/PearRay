@@ -1,6 +1,5 @@
 #pragma once
 
-#include "IObject.h"
 #include "MaterialData.h"
 
 namespace PR {
@@ -11,7 +10,7 @@ enum MaterialFlags {
 	MF_SpectralVarying	 = 0x2 // The sampled direction (not the weight) is different for each wavelength
 };
 
-class PR_LIB_CORE IMaterial : public IObject {
+class PR_LIB_CORE IMaterial {
 public:
 	IMaterial(uint32 id);
 	virtual ~IMaterial() {}

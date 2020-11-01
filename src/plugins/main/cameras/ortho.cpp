@@ -26,7 +26,13 @@ public:
 		, mLocalDirection(ld)
 		, mLocalRight(lr)
 		, mLocalUp(lu)
+		, mDirection_Cache((normalMatrix() * mLocalDirection).normalized())
+		, mRight_Cache((normalMatrix() * mLocalRight).normalized() * 0.5f * mWidth)
+		, mUp_Cache((normalMatrix() * mLocalUp).normalized() * 0.5f * mHeight)
 	{
+		PR_LOG(L_DEBUG) << name << ": Dir" << PR_FMT_MAT(mDirection_Cache)
+						<< " Right" << PR_FMT_MAT(mRight_Cache)
+						<< " Up" << PR_FMT_MAT(mUp_Cache) << std::endl;
 	}
 
 	virtual ~OrthoCamera()
@@ -59,20 +65,6 @@ public:
 		d = mDirection_Cache;
 	}
 
-	// Cache
-	void beforeSceneBuild() override
-	{
-		ICamera::beforeSceneBuild();
-
-		mDirection_Cache = (normalMatrix() * mLocalDirection).normalized();
-		mRight_Cache	 = (normalMatrix() * mLocalRight).normalized() * 0.5f * mWidth;
-		mUp_Cache		 = (normalMatrix() * mLocalUp).normalized() * 0.5f * mHeight;
-
-		PR_LOG(L_DEBUG) << name() << ": Dir" << PR_FMT_MAT(mDirection_Cache)
-						<< " Right" << PR_FMT_MAT(mRight_Cache)
-						<< " Up" << PR_FMT_MAT(mUp_Cache) << std::endl;
-	}
-
 private:
 	const float mWidth;
 	const float mHeight;
@@ -84,10 +76,9 @@ private:
 	const Vector3f mLocalRight;
 	const Vector3f mLocalUp;
 
-	// Cache:
-	Vector3f mDirection_Cache;
-	Vector3f mRight_Cache;
-	Vector3f mUp_Cache;
+	const Vector3f mDirection_Cache;
+	const Vector3f mRight_Cache;
+	const Vector3f mUp_Cache;
 };
 
 class OrthoCameraPlugin : public ICameraPlugin {

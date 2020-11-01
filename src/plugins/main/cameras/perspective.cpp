@@ -30,6 +30,7 @@ public:
 		, mLocalRight(lr)
 		, mLocalUp(lu)
 	{
+		cache();
 	}
 
 	virtual ~PerspectiveCamera()
@@ -80,11 +81,8 @@ public:
 		d.normalize();
 	}
 
-	// Cache
-	void beforeSceneBuild() override
+	void cache()
 	{
-		ICamera::beforeSceneBuild();
-
 		mDirection_Cache = (normalMatrix() * mLocalDirection).normalized();
 		mRight_Cache	 = (normalMatrix() * mLocalRight).normalized();
 		mUp_Cache		 = (normalMatrix() * mLocalUp).normalized();

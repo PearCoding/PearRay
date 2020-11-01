@@ -4,8 +4,7 @@
 
 namespace PR {
 IEmission::IEmission(uint32 id)
-	: IObject()
-	, mID(id)
+	: mID(id)
 {
 }
 

@@ -23,7 +23,7 @@ public:
 		: IEntity(id, lightID, name)
 		, mDisk(radius)
 		, mMaterialID(matID)
-		, mPDF_Cache(0.0f)
+		, mPDF_Cache(radius > PR_EPSILON ? 1.0f / worldSurfaceArea() : 0)
 	{
 	}
 	virtual ~DiskEntity() {}
@@ -102,19 +102,10 @@ public:
 		pt.DisplaceID  = 0;
 	}
 
-	void beforeSceneBuild() override
-	{
-		IEntity::beforeSceneBuild();
-
-		const float area = localSurfaceArea(0);
-		mPDF_Cache		 = (area > PR_EPSILON ? 1.0f / area : 0);
-	}
-
 private:
-	Disk mDisk;
-	uint32 mMaterialID;
-
-	float mPDF_Cache;
+	const Disk mDisk;
+	const uint32 mMaterialID;
+	const float mPDF_Cache;
 };
 
 class DiskEntityPlugin : public IEntityPlugin {

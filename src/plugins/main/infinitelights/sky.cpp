@@ -1,6 +1,7 @@
 #include "Environment.h"
 #include "Logger.h"
 #include "SceneLoadContext.h"
+#include "ServiceObserver.h"
 #include "infinitelight/IInfiniteLight.h"
 #include "infinitelight/IInfiniteLightPlugin.h"
 #include "math/Concentric.h"
@@ -22,7 +23,8 @@ constexpr float GROUND_PENALTY = 0.001f; // Scale down ground albedo in distribu
 template <bool ExtendToGround>
 class SkyLight : public IInfiniteLight {
 public:
-	SkyLight(uint32 id, const std::string& name, const SkyModel& model,
+	SkyLight(const std::shared_ptr<ServiceObserver>& so, 
+			 uint32 id, const std::string& name, const SkyModel& model,
 			 float scale, const Eigen::Matrix3f& trans)
 		: IInfiniteLight(id, name)
 		, mDistribution()
@@ -31,8 +33,19 @@ public:
 		, mTransform(trans)
 		, mInvTransform(trans.inverse())
 		, mSceneRadius(0)
+		, mServiceObserver(so)
 	{
 		buildDistribution();
+
+		if(mServiceObserver)
+			mCBID = mServiceObserver->registerAfterSceneBuild([this](Scene* scene){
+				mSceneRadius = scene->boundingSphere().radius() * 1.05f /*Scale a little bit*/;
+			});
+	}
+
+	virtual ~SkyLight() {
+		if(mServiceObserver)
+			mServiceObserver->unregister(mCBID);
 	}
 
 	void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out,
@@ -108,12 +121,6 @@ public:
 		return stream.str();
 	}
 
-	void afterSceneBuild(Scene* scene) override
-	{
-		IInfiniteLight::afterSceneBuild(scene);
-		mSceneRadius = scene->boundingSphere().radius() * 1.05f /*Scale a little bit*/;
-	}
-
 private:
 	inline void buildDistribution()
 	{
@@ -177,6 +184,9 @@ private:
 	const Eigen::Matrix3f mInvTransform;
 
 	float mSceneRadius;
+
+	const std::shared_ptr<ServiceObserver> mServiceObserver;
+	ServiceObserver::CallbackID mCBID;
 };
 
 class SkyLightFactory : public IInfiniteLightPlugin {
@@ -193,10 +203,12 @@ public:
 		ElevationAzimuth sunEA = computeSunEA(ctx.parameters());
 		//PR_LOG(L_INFO) << "Sun: " << PR_RAD2DEG * sunEA.Elevation << "° " << PR_RAD2DEG * sunEA.Azimuth << "°" << std::endl;
 
+		const std::shared_ptr<ServiceObserver> so = ctx.hasEnvironment() ? ctx.environment()->serviceObserver() : nullptr;
+
 		if (params.getBool("extend", true))
-			return std::make_shared<SkyLight<true>>(id, name, SkyModel(ground_albedo, sunEA, ctx.parameters()), scale, trans);
+			return std::make_shared<SkyLight<true>>(so, id, name, SkyModel(ground_albedo, sunEA, ctx.parameters()), scale, trans);
 		else
-			return std::make_shared<SkyLight<false>>(id, name, SkyModel(ground_albedo, sunEA, ctx.parameters()), scale, trans);
+			return std::make_shared<SkyLight<false>>(so, id, name, SkyModel(ground_albedo, sunEA, ctx.parameters()), scale, trans);
 	}
 
 	const std::vector<std::string>& getNames() const override

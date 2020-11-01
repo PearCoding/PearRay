@@ -1,6 +1,7 @@
 #include "Environment.h"
 #include "Logger.h"
 #include "SceneLoadContext.h"
+#include "ServiceObserver.h"
 #include "geometry/Disk.h"
 #include "infinitelight/IInfiniteLight.h"
 #include "infinitelight/IInfiniteLightPlugin.h"
@@ -26,18 +27,21 @@ inline float calculatePosDiskRadius(float scene_radius, float cosTheta)
 {
 	return scene_radius * std::sqrt((1 - cosTheta) * (1 + cosTheta));
 }
+
 class SunLight : public IInfiniteLight {
 public:
-	SunLight(uint32 id, const std::string& name, const ElevationAzimuth& ea, float turbidity, float radius, float scale,
+	SunLight(const std::shared_ptr<ServiceObserver>& so, 
+			 uint32 id, const std::string& name, const ElevationAzimuth& ea, float turbidity, float radius, float scale,
 			 const Eigen::Matrix3f& trans)
 		: IInfiniteLight(id, name)
 		, mSpectrum(SUN_WAVELENGTH_SAMPLES, SUN_WAVELENGTH_START, SUN_WAVELENGTH_END)
 		, mEA(ea)
-		, mDirection(trans * ea.toDirection().normalized())
+		, mDirection(trans * normalMatrix() * ea.toDirection().normalized())
 		, mCosTheta(std::cos(SUN_VIS_RADIUS * radius))
 		, mPDF(Sampling::uniform_cone_pdf(mCosTheta))
 		, mSceneRadius(0)
 		, mPosDiskRadius(0)
+		, mServiceObserver(so)
 	{
 		Tangent::frame(mDirection, mDx, mDy);
 
@@ -46,6 +50,17 @@ public:
 			mSpectrum[i] = computeSunRadiance(mSpectrum.wavelengthStart() + i * mSpectrum.delta(),
 											  mEA.theta(), turbidity)
 						   * scale;
+						   
+		if(mServiceObserver)
+			mCBID = mServiceObserver->registerAfterSceneBuild([this](Scene* scene){
+				mSceneRadius   = scene->boundingSphere().radius();
+				mPosDiskRadius = calculatePosDiskRadius(mSceneRadius, std::abs(mDirection(2)));
+			});
+	}
+
+	virtual ~SunLight() {
+		if(mServiceObserver)
+			mServiceObserver->unregister(mCBID);
 	}
 
 	void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out,
@@ -88,13 +103,6 @@ public:
 
 	float power() const override { return mSpectrum.average(); }
 
-	void afterSceneBuild(Scene* scene) override
-	{
-		IInfiniteLight::afterSceneBuild(scene);
-		mSceneRadius   = scene->boundingSphere().radius();
-		mPosDiskRadius = calculatePosDiskRadius(mSceneRadius, std::abs(mDirection(2)));
-	}
-
 	std::string dumpInformation() const override
 	{
 		std::stringstream stream;
@@ -118,18 +126,23 @@ private:
 
 	float mSceneRadius;
 	float mPosDiskRadius;
+
+	const std::shared_ptr<ServiceObserver> mServiceObserver;
+	ServiceObserver::CallbackID mCBID;
 };
 
 class SunDeltaLight : public IInfiniteLight {
 public:
-	SunDeltaLight(uint32 id, const std::string& name, const ElevationAzimuth& ea, float turbidity, float scale,
+	SunDeltaLight(const std::shared_ptr<ServiceObserver>& so, 
+			 	  uint32 id, const std::string& name, const ElevationAzimuth& ea, float turbidity, float scale,
 				  const Eigen::Matrix3f& trans)
 		: IInfiniteLight(id, name)
 		, mSpectrum(SUN_WAVELENGTH_SAMPLES, SUN_WAVELENGTH_START, SUN_WAVELENGTH_END)
 		, mEA(ea)
-		, mDirection(trans * ea.toDirection().normalized())
+		, mDirection(trans * normalMatrix() * ea.toDirection().normalized())
 		, mSceneRadius(0)
 		, mPosDiskRadius(0)
+		, mServiceObserver(so)
 	{
 		Tangent::frame(mDirection, mDx, mDy);
 
@@ -138,6 +151,17 @@ public:
 			mSpectrum[i] = computeSunRadiance(mSpectrum.wavelengthStart() + i * mSpectrum.delta(),
 											  mEA.theta(), turbidity)
 						   * solid_angle * scale;
+			
+		if(mServiceObserver)
+			mCBID = mServiceObserver->registerAfterSceneBuild([this](Scene* scene){
+				mSceneRadius   = scene->boundingSphere().radius();
+				mPosDiskRadius = calculatePosDiskRadius(mSceneRadius, std::abs(mDirection(2)));
+			});
+	}
+
+	virtual ~SunDeltaLight() {
+		if(mServiceObserver)
+			mServiceObserver->unregister(mCBID);
 	}
 
 	bool hasDeltaDistribution() const override { return true; }
@@ -173,13 +197,6 @@ public:
 
 	float power() const override { return mSpectrum.average(); }
 
-	void afterSceneBuild(Scene* scene) override
-	{
-		IInfiniteLight::afterSceneBuild(scene);
-		mSceneRadius   = scene->boundingSphere().radius();
-		mPosDiskRadius = calculatePosDiskRadius(mSceneRadius, std::abs(mDirection(2)));
-	}
-
 	std::string dumpInformation() const override
 	{
 		std::stringstream stream;
@@ -201,6 +218,9 @@ private:
 
 	float mSceneRadius;
 	float mPosDiskRadius;
+
+	const std::shared_ptr<ServiceObserver> mServiceObserver;
+	ServiceObserver::CallbackID mCBID;
 };
 
 class SunLightFactory : public IInfiniteLightPlugin {
@@ -217,10 +237,12 @@ public:
 		const float turbidity  = ctx.parameters().getNumber("turbidity", 3.0f);
 		const float scale	   = ctx.parameters().getNumber("scale", 1.0f);
 
+		const std::shared_ptr<ServiceObserver> so = ctx.hasEnvironment() ? ctx.environment()->serviceObserver() : nullptr;
+
 		if (radius <= PR_EPSILON)
-			return std::make_shared<SunDeltaLight>(id, name, sunEA, turbidity, scale, trans);
+			return std::make_shared<SunDeltaLight>(so, id, name, sunEA, turbidity, scale, trans);
 		else
-			return std::make_shared<SunLight>(id, name, sunEA,
+			return std::make_shared<SunLight>(so, id, name, sunEA,
 											  turbidity, radius, scale, trans);
 	}
 

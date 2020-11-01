@@ -4,8 +4,7 @@
 
 namespace PR {
 IMaterial::IMaterial(uint32 id)
-	: IObject()
-	, mCanBeShaded(true)
+	: mCanBeShaded(true)
 	, mShadow(true)
 	, mSelfShadow(true)
 	, mCameraVisible(true)

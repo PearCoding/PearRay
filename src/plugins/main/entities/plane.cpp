@@ -27,7 +27,9 @@ public:
 		, mMaterialID(matID)
 		, mPDF_Cache(0.0f)
 	{
+		cache();
 	}
+	
 	virtual ~PlaneEntity() {}
 
 	std::string type() const override
@@ -205,12 +207,11 @@ public:
 	inline void centerOn()
 	{
 		mPlane.setPosition(-0.5f * mPlane.xAxis() - 0.5f * mPlane.yAxis());
+		cache();
 	}
 
-	void beforeSceneBuild() override
+	void cache()
 	{
-		IEntity::beforeSceneBuild();
-
 		mS		= transform() * mPlane.position();
 		mEx		= transform().linear() * mPlane.xAxis();
 		mEy		= transform().linear() * mPlane.yAxis();
@@ -222,7 +223,7 @@ public:
 		mEy.normalize();
 		mEz.normalize();
 
-		const float garea = worldSurfaceArea(0);
+		const float garea = worldSurfaceArea(PR_INVALID_ID);
 		mPDF_Cache		  = (garea > PR_EPSILON ? 1.0f / garea : 0);
 	}
 

@@ -1,5 +1,6 @@
 namespace PR {
 
+inline std::shared_ptr<ServiceObserver> QueryEnvironment::serviceObserver() const { return mServiceObserver; }
 inline std::shared_ptr<PluginManager> QueryEnvironment::pluginManager() const { return mPluginManager; }
 inline std::shared_ptr<CameraManager> QueryEnvironment::cameraManager() const { return mCameraManager; }
 inline std::shared_ptr<EmissionManager> QueryEnvironment::emissionManager() const { return mEmissionManager; }

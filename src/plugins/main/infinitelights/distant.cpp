@@ -1,6 +1,7 @@
 #include "Environment.h"
 #include "PrettyPrint.h"
 #include "SceneLoadContext.h"
+#include "ServiceObserver.h"
 #include "infinitelight/IInfiniteLight.h"
 #include "infinitelight/IInfiniteLightPlugin.h"
 #include "math/Concentric.h"
@@ -18,15 +19,30 @@ inline float calculatePosDiskRadius(float scene_radius, float cosTheta)
 }
 class DistantLight : public IInfiniteLight {
 public:
-	DistantLight(uint32 id, const std::string& name,
+	DistantLight(const std::shared_ptr<ServiceObserver>& so, 
+				 uint32 id, const std::string& name,
 				 const Vector3f& direction,
 				 const std::shared_ptr<FloatSpectralNode>& spec)
 		: IInfiniteLight(id, name)
 		, mDirection(direction)
 		, mIrradiance(spec)
+		, mOutgoing_Cache((normalMatrix() * mDirection).normalized())
 		, mSceneRadius(0)
 		, mPosDiskRadius(0)
+		, mServiceObserver(so)
 	{
+		Tangent::frame(mOutgoing_Cache, mDx, mDy);
+
+		if(mServiceObserver)
+			mCBID = mServiceObserver->registerAfterSceneBuild([this](Scene* scene){
+				mSceneRadius   = scene->boundingSphere().radius();
+				mPosDiskRadius = calculatePosDiskRadius(mSceneRadius, std::abs(mOutgoing_Cache(2)));
+			});
+	}
+
+	virtual ~DistantLight() {
+		if(mServiceObserver)
+			mServiceObserver->unregister(mCBID);
 	}
 
 	bool hasDeltaDistribution() const override { return true; }
@@ -76,33 +92,19 @@ public:
 		return stream.str();
 	}
 
-	void beforeSceneBuild() override
-	{
-		IObject::beforeSceneBuild();
-
-		mOutgoing_Cache = normalMatrix() * mDirection;
-		mOutgoing_Cache.normalize();
-
-		Tangent::frame(mOutgoing_Cache, mDx, mDy);
-	}
-
-	void afterSceneBuild(Scene* scene) override
-	{
-		IInfiniteLight::afterSceneBuild(scene);
-		mSceneRadius   = scene->boundingSphere().radius();
-		mPosDiskRadius = calculatePosDiskRadius(mSceneRadius, std::abs(mOutgoing_Cache(2)));
-	}
-
 private:
 	const Vector3f mDirection;
 	const std::shared_ptr<FloatSpectralNode> mIrradiance;
-	Vector3f mOutgoing_Cache;
+	const Vector3f mOutgoing_Cache;
 
 	Vector3f mDx;
 	Vector3f mDy;
 
 	float mSceneRadius;
 	float mPosDiskRadius;
+
+	const std::shared_ptr<ServiceObserver> mServiceObserver;
+	ServiceObserver::CallbackID mCBID;
 };
 
 class DistantLightFactory : public IInfiniteLightPlugin {
@@ -114,7 +116,8 @@ public:
 		const std::string name	 = params.getString("name", "__unknown");
 		const Vector3f direction = params.getVector3f("direction", Vector3f(0, 0, 1));
 
-		return std::make_shared<DistantLight>(id, name, direction,
+		return std::make_shared<DistantLight>(ctx.hasEnvironment() ? ctx.environment()->serviceObserver() : nullptr,
+											  id, name, direction,
 											  ctx.lookupSpectralNode("irradiance", 1));
 	}
 

@@ -98,9 +98,6 @@ public:
 
 	virtual void provideGeometryPoint(const EntityGeometryQueryPoint& query, GeometryPoint& pt) const = 0;
 
-	// IObject
-	virtual void beforeSceneBuild() override;
-
 	// Light
 	inline bool hasEmission() const { return mEmissionID != PR_INVALID_ID; }
 	inline uint32 emissionID() const { return mEmissionID; }
@@ -108,8 +105,6 @@ public:
 private:
 	uint8 mVisibilityFlags;
 	const uint32 mEmissionID;
-	inline BoundingBox calcWorldBoundingBox() const;
-	BoundingBox mWorldBoundingBox_Cache;
 };
 } // namespace PR
 

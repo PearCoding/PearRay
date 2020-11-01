@@ -1,6 +1,5 @@
 #pragma once
 
-#include "IObject.h"
 #include "shader/ShadingContext.h"
 
 namespace PR {
@@ -11,7 +10,7 @@ enum NodeType {
 	NT_FloatVector	 = 2
 };
 
-class INode : public IObject {
+class INode {
 public:
 	virtual ~INode() = default;
 
@@ -20,8 +19,7 @@ public:
 
 protected:
 	inline explicit INode(NodeType type)
-		: IObject()
-		, mType(type)
+		: mType(type)
 	{
 	}
 

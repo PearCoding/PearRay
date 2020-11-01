@@ -2,6 +2,7 @@
 #include "Platform.h"
 #include "ResourceManager.h"
 #include "SceneLoadContext.h"
+#include "ServiceObserver.h"
 #include "cache/Cache.h"
 #include "camera/CameraManager.h"
 #include "camera/ICamera.h"
@@ -39,7 +40,8 @@
 
 namespace PR {
 QueryEnvironment::QueryEnvironment(const std::filesystem::path& plugdir)
-	: mPluginManager(std::make_shared<PluginManager>(plugdir))
+	: mServiceObserver(std::make_shared<ServiceObserver>())
+	, mPluginManager(std::make_shared<PluginManager>(plugdir))
 	, mCameraManager(std::make_shared<CameraManager>())
 	, mEmissionManager(std::make_shared<EmissionManager>())
 	, mEntityManager(std::make_shared<EntityManager>())

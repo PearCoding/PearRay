@@ -20,13 +20,15 @@ class IInfiniteLight;
 class INode;
 class LightSampler;
 class RenderContext;
+class ServiceObserver;
 
 class RayStream;
 class HitStream;
 
 class PR_LIB_CORE Scene {
 public:
-	Scene(const std::shared_ptr<ICamera>& activeCamera,
+	Scene(const std::shared_ptr<ServiceObserver>& serviceObserver,
+		  const std::shared_ptr<ICamera>& activeCamera,
 		  const std::vector<std::shared_ptr<IEntity>>& entities,
 		  const std::vector<std::shared_ptr<IMaterial>>& materials,
 		  const std::vector<std::shared_ptr<IEmission>>& emissions,
@@ -46,6 +48,8 @@ public:
 
 	std::shared_ptr<ICamera> activeCamera() const { return mActiveCamera; }
 
+	std::shared_ptr<ServiceObserver> serviceObserver() const { return mServiceObserver; }
+
 	/// Traces a stream of rays and produces a stream of hits
 	void traceRays(RayStream& rays, HitStream& hits) const;
 	/// Traces a single ray and returns true if something was hit. Information about the hit are updated if a hit was found
@@ -63,6 +67,8 @@ public:
 
 private:
 	void setupScene();
+
+	const std::shared_ptr<ServiceObserver> mServiceObserver;
 
 	std::shared_ptr<ICamera> mActiveCamera;
 	std::vector<std::shared_ptr<IEntity>> mEntities;

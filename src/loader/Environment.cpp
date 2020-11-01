@@ -2,6 +2,7 @@
 #include "Platform.h"
 #include "ResourceManager.h"
 #include "SceneLoadContext.h"
+#include "ServiceObserver.h"
 #include "cache/Cache.h"
 #include "camera/CameraManager.h"
 #include "camera/ICamera.h"
@@ -140,7 +141,8 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory()
 
 	std::shared_ptr<Scene> scene;
 	try {
-		scene = std::make_shared<Scene>(activeCamera,
+		scene = std::make_shared<Scene>(mServiceObserver,
+										activeCamera,
 										entities,
 										materials,
 										emissions,

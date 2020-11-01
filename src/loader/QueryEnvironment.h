@@ -16,6 +16,7 @@ class NodeManager;
 class PluginManager;
 class RenderFactory;
 class SamplerManager;
+class ServiceObserver;
 class SpectralMapperManager;
 class SpectralUpsampler;
 
@@ -24,6 +25,8 @@ class PR_LIB_LOADER QueryEnvironment {
 public:
 	explicit QueryEnvironment(const std::filesystem::path& plugdir);
 	virtual ~QueryEnvironment();
+
+	inline std::shared_ptr<ServiceObserver> serviceObserver() const;
 
 	inline std::shared_ptr<PluginManager> pluginManager() const;
 	inline std::shared_ptr<CameraManager> cameraManager() const;
@@ -40,6 +43,8 @@ public:
 	inline std::shared_ptr<SpectralUpsampler> defaultSpectralUpsampler() const { return mDefaultSpectralUpsampler; }
 
 protected:
+	const std::shared_ptr<ServiceObserver> mServiceObserver;
+
 	// Order matters: PluginManager should be before other managers
 	std::shared_ptr<PluginManager> mPluginManager;
 	std::shared_ptr<CameraManager> mCameraManager;

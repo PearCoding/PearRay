@@ -1,6 +1,7 @@
 set(PR_Src
-  IObject.h
   Random.h
+  ServiceObserver.h
+  ServiceObserver.inl
   buffer/AOV.h
   buffer/ColorBuffer.cpp
   buffer/ColorBuffer.h

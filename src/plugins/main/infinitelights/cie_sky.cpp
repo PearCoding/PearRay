@@ -1,6 +1,7 @@
 #include "Environment.h"
 #include "Logger.h"
 #include "SceneLoadContext.h"
+#include "ServiceObserver.h"
 #include "infinitelight/IInfiniteLight.h"
 #include "infinitelight/IInfiniteLightPlugin.h"
 #include "math/Sampling.h"
@@ -17,7 +18,8 @@ namespace PR {
 template <bool Cloudy>
 class CIESimpleSkyLight : public IInfiniteLight {
 public:
-	CIESimpleSkyLight(uint32 id, const std::string& name,
+	CIESimpleSkyLight(const std::shared_ptr<ServiceObserver>& so, 
+					  uint32 id, const std::string& name,
 					  const std::shared_ptr<FloatSpectralNode>& zenithTint,
 					  const std::shared_ptr<FloatSpectralNode>& groundTint, const std::shared_ptr<FloatScalarNode>& groundBrightness,
 					  const Eigen::Matrix3f& trans)
@@ -28,7 +30,17 @@ public:
 		, mTransform(trans)
 		, mInvTransform(trans.inverse())
 		, mSceneRadius(0)
+		, mServiceObserver(so)
 	{
+		if(mServiceObserver)
+			mCBID = mServiceObserver->registerAfterSceneBuild([this](Scene* scene){
+				mSceneRadius = scene->boundingSphere().radius() * 1.05f /*Scale a little bit*/;
+			});
+	}
+
+	virtual ~CIESimpleSkyLight() {
+		if(mServiceObserver)
+			mServiceObserver->unregister(mCBID);
 	}
 
 	void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out,
@@ -72,12 +84,6 @@ public:
 		return stream.str();
 	}
 
-	void afterSceneBuild(Scene* scene) override
-	{
-		IInfiniteLight::afterSceneBuild(scene);
-		mSceneRadius = scene->boundingSphere().radius() * 1.05f /*Scale a little bit*/;
-	}
-
 private:
 	inline SpectralBlob radiance(const SpectralBlob& wvl, const Vector3f& D) const
 	{
@@ -107,6 +113,9 @@ private:
 	const Eigen::Matrix3f mInvTransform;
 
 	float mSceneRadius;
+
+	const std::shared_ptr<ServiceObserver> mServiceObserver;
+	ServiceObserver::CallbackID mCBID;
 };
 
 class CIESkyLightFactory : public IInfiniteLightPlugin {
@@ -127,10 +136,12 @@ public:
 
 		const auto groundBrightness = ctx.lookupScalarNode("ground_brightness", 0.2f);
 
+		const std::shared_ptr<ServiceObserver> so = ctx.hasEnvironment() ? ctx.environment()->serviceObserver() : nullptr;
+
 		if (type == "uniform_sky")
-			return std::make_shared<CIESimpleSkyLight<false>>(id, name, zenithTint, groundTint, groundBrightness, trans);
+			return std::make_shared<CIESimpleSkyLight<false>>(so, id, name, zenithTint, groundTint, groundBrightness, trans);
 		else if (type == "cloudy_sky")
-			return std::make_shared<CIESimpleSkyLight<true>>(id, name, zenithTint, groundTint, groundBrightness, trans);
+			return std::make_shared<CIESimpleSkyLight<true>>(so, id, name, zenithTint, groundTint, groundBrightness, trans);
 		else {
 			PR_ASSERT(false, "CIESkyFactory plugin does not handle all offered types of operations!");
 			return nullptr;

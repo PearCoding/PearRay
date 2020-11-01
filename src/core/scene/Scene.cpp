@@ -1,5 +1,6 @@
 #include "Scene.h"
 #include "Platform.h"
+#include "ServiceObserver.h"
 #include "camera/ICamera.h"
 #include "emission/IEmission.h"
 #include "entity/GeometryDev.h"
@@ -21,13 +22,15 @@
 //#define PR_USE_FILTER_SHADOW
 
 namespace PR {
-Scene::Scene(const std::shared_ptr<ICamera>& activeCamera,
+Scene::Scene(const std::shared_ptr<ServiceObserver>& serviceObserver,
+			 const std::shared_ptr<ICamera>& activeCamera,
 			 const std::vector<std::shared_ptr<IEntity>>& entities,
 			 const std::vector<std::shared_ptr<IMaterial>>& materials,
 			 const std::vector<std::shared_ptr<IEmission>>& emissions,
 			 const std::vector<std::shared_ptr<IInfiniteLight>>& infLights,
 			 const std::vector<std::shared_ptr<INode>>& nodes)
-	: mActiveCamera(activeCamera)
+	: mServiceObserver(serviceObserver)
+	, mActiveCamera(activeCamera)
 	, mEntities(entities)
 	, mMaterials(materials)
 	, mEmissions(emissions)
@@ -35,32 +38,10 @@ Scene::Scene(const std::shared_ptr<ICamera>& activeCamera,
 	, mNodes(nodes)
 {
 	PR_LOG(L_DEBUG) << "Setup before scene build..." << std::endl;
-	mActiveCamera->beforeSceneBuild();
-	for (auto o : mEmissions)
-		o->beforeSceneBuild();
-	for (auto o : mInfLights)
-		o->beforeSceneBuild();
-	for (auto o : mMaterials)
-		o->beforeSceneBuild();
-	for (auto o : mEntities)
-		o->beforeSceneBuild();
-	for (auto o : mNodes)
-		o->beforeSceneBuild();
-
+	mServiceObserver->callBeforeSceneBuild();
 	setupScene();
-
 	PR_LOG(L_DEBUG) << "Setup after scene build..." << std::endl;
-	mActiveCamera->afterSceneBuild(this);
-	for (auto o : mNodes)
-		o->afterSceneBuild(this);
-	for (auto o : mEmissions)
-		o->afterSceneBuild(this);
-	for (auto o : mInfLights)
-		o->afterSceneBuild(this);
-	for (auto o : mMaterials)
-		o->afterSceneBuild(this);
-	for (auto o : mEntities)
-		o->afterSceneBuild(this);
+	mServiceObserver->callAfterSceneBuild(this);
 
 	mLightSampler = std::make_shared<LightSampler>(this);
 }
@@ -71,18 +52,7 @@ Scene::~Scene()
 void Scene::beforeRender(RenderContext* ctx)
 {
 	PR_LOG(L_DEBUG) << "Setup before render start..." << std::endl;
-
-	mActiveCamera->beforeRender(ctx);
-	for (auto o : mEmissions)
-		o->beforeRender(ctx);
-	for (auto o : mInfLights)
-		o->beforeRender(ctx);
-	for (auto o : mMaterials)
-		o->beforeRender(ctx);
-	for (auto o : mEntities)
-		o->beforeRender(ctx);
-	for (auto o : mNodes)
-		o->beforeRender(ctx);
+	mServiceObserver->callBeforeRender(ctx);
 
 	mDeltaInfLights.clear();
 	mNonDeltaInfLights.clear();
@@ -97,18 +67,7 @@ void Scene::beforeRender(RenderContext* ctx)
 void Scene::afterRender(RenderContext* ctx)
 {
 	PR_LOG(L_DEBUG) << "Setup after render stop..." << std::endl;
-
-	mActiveCamera->afterRender(ctx);
-	for (auto o : mEmissions)
-		o->afterRender(ctx);
-	for (auto o : mInfLights)
-		o->afterRender(ctx);
-	for (auto o : mMaterials)
-		o->afterRender(ctx);
-	for (auto o : mEntities)
-		o->afterRender(ctx);
-	for (auto o : mNodes)
-		o->afterRender(ctx);
+	mServiceObserver->callAfterRender(ctx);
 }
 
 static void embree_error_function(void* /*userPtr*/, RTCError /*code*/, const char* str)

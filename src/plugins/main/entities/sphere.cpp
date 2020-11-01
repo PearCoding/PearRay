@@ -26,9 +26,10 @@ public:
 		, mSphere(r)
 		, mMaterialID(matID)
 		, mOptimizeSampling(true)
-		, mPDF_Cache(0.0f)
+		, mPDF_Cache(r > PR_EPSILON ? 1/worldSurfaceArea(PR_INVALID_ID) : 0.0f)
 	{
 	}
+
 	virtual ~SphereEntity() {}
 
 	std::string type() const override
@@ -66,7 +67,7 @@ public:
 
 	bool isCollidable() const override
 	{
-		return mMaterialID > 0 && mSphere.radius() >= PR_EPSILON;
+		return mMaterialID != PR_INVALID_ID && mSphere.radius() >= PR_EPSILON;
 	}
 
 	float collisionCost() const override
@@ -147,20 +148,14 @@ public:
 	}
 
 	inline void optimizeSampling(bool b) { mOptimizeSampling = b; }
-	void beforeSceneBuild() override
-	{
-		IEntity::beforeSceneBuild();
 
-		const float area = localSurfaceArea(0);
-		mPDF_Cache		 = area > PR_EPSILON ? 1.0f / area : 0;
-	}
 
 private:
-	Sphere mSphere;
+	const Sphere mSphere;
 	const uint32 mMaterialID;
 	bool mOptimizeSampling;
 
-	float mPDF_Cache;
+	const float mPDF_Cache;
 };
 
 class SphereEntityPlugin : public IEntityPlugin {

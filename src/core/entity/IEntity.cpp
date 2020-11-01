@@ -13,19 +13,6 @@ IEntity::~IEntity()
 {
 }
 
-void IEntity::beforeSceneBuild()
-{
-	ITransformable::beforeSceneBuild();
-
-	mWorldBoundingBox_Cache = calcWorldBoundingBox();
-
-	if (mWorldBoundingBox_Cache.isPlanar())
-		mWorldBoundingBox_Cache.inflate();
-
-	if (!mWorldBoundingBox_Cache.isValid())
-		PR_LOG(L_WARNING) << "Entity " << name() << " world bounding box is invalid!" << std::endl;
-}
-
 std::string IEntity::dumpInformation() const
 {
 	std::stringstream stream;

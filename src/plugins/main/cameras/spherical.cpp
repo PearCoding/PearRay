@@ -30,7 +30,13 @@ public:
 		, mLocalDirection(ld)
 		, mLocalRight(lr)
 		, mLocalUp(lu)
+		, mDirection_Cache((normalMatrix() * mLocalDirection).normalized())
+		, mRight_Cache((normalMatrix() * mLocalRight).normalized())
+		, mUp_Cache((normalMatrix() * mLocalUp).normalized())
 	{
+		PR_LOG(L_DEBUG) << name << ": Dir" << PR_FMT_MAT(mDirection_Cache)
+						<< " Right" << PR_FMT_MAT(mRight_Cache)
+						<< " Up" << PR_FMT_MAT(mUp_Cache) << std::endl;
 	}
 
 	virtual ~SphericalCamera()
@@ -71,20 +77,6 @@ public:
 									   Vector3f(sP * cT, cP * cT, sT));
 	}
 
-	// Cache
-	void beforeSceneBuild() override
-	{
-		ICamera::beforeSceneBuild();
-
-		mDirection_Cache = (normalMatrix() * mLocalDirection).normalized();
-		mRight_Cache	 = (normalMatrix() * mLocalRight).normalized();
-		mUp_Cache		 = (normalMatrix() * mLocalUp).normalized();
-
-		PR_LOG(L_DEBUG) << name() << ": Dir" << PR_FMT_MAT(mDirection_Cache)
-						<< " Right" << PR_FMT_MAT(mRight_Cache)
-						<< " Up" << PR_FMT_MAT(mUp_Cache) << std::endl;
-	}
-
 private:
 	const float mThetaStart;
 	const float mThetaEnd;
@@ -99,9 +91,9 @@ private:
 	const Vector3f mLocalUp;
 
 	// Cache:
-	Vector3f mDirection_Cache;
-	Vector3f mRight_Cache;
-	Vector3f mUp_Cache;
+	const Vector3f mDirection_Cache;
+	const Vector3f mRight_Cache;
+	const Vector3f mUp_Cache;
 };
 
 class SphericalCameraPlugin : public ICameraPlugin {

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "IObject.h"
 #include "shader/ShadingContext.h"
 #include <memory>
 
@@ -17,7 +16,7 @@ struct PR_LIB_CORE EmissionEvalOutput {
 	SpectralBlob Radiance;
 };
 
-class PR_LIB_CORE IEmission : public IObject {
+class PR_LIB_CORE IEmission {
 public:
 	IEmission(uint32 id);
 	virtual ~IEmission() {}
