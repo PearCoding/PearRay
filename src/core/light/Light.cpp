@@ -112,8 +112,9 @@ void Light::sample(const LightSampleInput& in, LightSampleOutput& out, const Ren
 		out.LightPosition = ilsout.LightPosition;
 		out.CosLight	  = 1;
 	} else {
-		IEntity* ent  = reinterpret_cast<IEntity*>(mEntity);
-		const auto pp = ent->sampleParameterPoint(Vector2f(in.RND[0], in.RND[1]));
+		IEntity* ent			   = reinterpret_cast<IEntity*>(mEntity);
+		const EntitySamplePoint pp = in.SamplingInfo ? ent->sampleParameterPoint(*in.SamplingInfo, Vector2f(in.RND[0], in.RND[1]))
+													 : ent->sampleParameterPoint(Vector2f(in.RND[0], in.RND[1]));
 
 		EntityGeometryQueryPoint qp;
 		qp.Position	   = pp.Position;
@@ -155,7 +156,7 @@ void Light::sample(const LightSampleInput& in, LightSampleOutput& out, const Ren
 	}
 }
 
-LightPDF Light::pdf() const
+LightPDF Light::pdf(const EntitySamplingInfo* info) const
 { // TODO: This is very incomplete
 	if (isInfinite()) {
 		IInfiniteLight* infL = reinterpret_cast<IInfiniteLight*>(mEntity);
@@ -165,7 +166,7 @@ LightPDF Light::pdf() const
 			return LightPDF{ PR_INV_2_PI, false }; // TODO
 	} else {
 		IEntity* ent   = reinterpret_cast<IEntity*>(mEntity);
-		const auto pdf = ent->sampleParameterPointPDF();
+		const auto pdf = info ? ent->sampleParameterPointPDF(*info) : ent->sampleParameterPointPDF();
 		// TODO: What if no point was given? This is incomplete
 		return LightPDF{ pdf.Value, pdf.IsArea };
 	}

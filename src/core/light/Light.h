@@ -17,11 +17,13 @@ struct PR_LIB_CORE LightEvalOutput {
 	LightPDF PDF;
 };
 
+struct EntitySamplingInfo;
 struct PR_LIB_CORE LightSampleInput {
 	Vector4f RND;
 	SpectralBlob WavelengthNM;
-	const IntersectionPoint* Point = nullptr;
-	bool SamplePosition			   = false;
+	const IntersectionPoint* Point		   = nullptr;
+	const EntitySamplingInfo* SamplingInfo = nullptr;
+	bool SamplePosition					   = false;
 };
 
 struct PR_LIB_CORE LightSampleOutput {
@@ -52,7 +54,7 @@ public:
 
 	void eval(const LightEvalInput& in, LightEvalOutput& out, const RenderTileSession& session) const;
 	void sample(const LightSampleInput& in, LightSampleOutput& out, const RenderTileSession& session) const;
-	LightPDF pdf() const; // TODO: Maybe more information?
+	LightPDF pdf(const EntitySamplingInfo* info = nullptr) const;
 
 	inline static Light makeInfLight(IInfiniteLight* infLight, float relContribution)
 	{

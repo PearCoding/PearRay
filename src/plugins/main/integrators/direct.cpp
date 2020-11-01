@@ -74,10 +74,13 @@ public:
 	{
 		PR_PROFILE_THIS;
 
+		const EntitySamplingInfo sampleInfo = { spt.P, spt.Surface.N };
+
 		LightSampleInput lsin;
 		lsin.RND			= mSampler.next4D();
 		lsin.WavelengthNM	= spt.Ray.WavelengthNM;
 		lsin.Point			= &spt;
+		lsin.SamplingInfo	= &sampleInfo;
 		lsin.SamplePosition = true;
 		LightSampleOutput lsout;
 		const Light* light = mLightSampler->sample(lsin, lsout, session);
@@ -205,8 +208,9 @@ public:
 					EmissionEvalOutput outL;
 					ems->eval(inL, outL, session);
 
-					const auto pdfL = mLightSampler->pdf(nentity);
-					next_mis		= allowMIS ? MIS(
+					const EntitySamplingInfo sampleInfo = { spt.P, spt.Surface.N };
+					const auto pdfL						= mLightSampler->pdf(nentity, &sampleInfo);
+					next_mis							= allowMIS ? MIS(
 									  1, out.PDF_S[0],
 									  mParameters.MaxLightSamples, pdfL.IsArea ? IS::toSolidAngle(pdfL.Value, spt2.Depth2, aNdotV) : pdfL.Value)
 										: 1.0f;
@@ -224,7 +228,7 @@ public:
 			IntegratorUtils::handleBackground(session, next, [&](const InfiniteLightEvalOutput& ileout) {
 				hasScattered	   = true;
 				const float matPDF = (spt.Ray.Flags & RF_Monochrome) ? out.PDF_S[0] : (out.PDF_S.sum() / PR_SPECTRAL_BLOB_SIZE);
-				const float msiL   = allowMIS ? MIS(1, matPDF, 1, ileout.PDF_S) : 1.0f;
+				const float msiL   = allowMIS ? MIS(1, matPDF, mParameters.MaxLightSamples, ileout.PDF_S) : 1.0f;
 				session.pushSpectralFragment(SpectralBlob(msiL * mis), weighted_importance, ileout.Radiance, next, path);
 			});
 			if (!hasScattered) // Make sure atleast the weights are updated

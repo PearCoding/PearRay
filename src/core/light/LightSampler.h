@@ -18,7 +18,7 @@ public:
 
 	inline const Light* sample(float rnd, float& pdf) const;
 	inline const Light* sample(const LightSampleInput& in, LightSampleOutput& out, const RenderTileSession& session) const;
-	inline LightPDF pdf(const IEntity* entity) const;
+	inline LightPDF pdf(const IEntity* entity, const EntitySamplingInfo* info = nullptr) const;
 
 	inline const LightList& lights() const { return mLights; }
 

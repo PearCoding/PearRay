@@ -86,7 +86,9 @@
       "boundingsphere": "cpp",
       "polytope": "cpp",
       "light": "cpp",
-      "texture": "cpp"
+      "texture": "cpp",
+      "plane": "cpp",
+      "shape": "cpp"
     },
     "files.exclude": {
         "**/.git": true,
