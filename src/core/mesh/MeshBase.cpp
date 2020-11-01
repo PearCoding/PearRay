@@ -124,21 +124,20 @@ float MeshBase::faceArea(size_t f, const Eigen::Affine3f& tm) const
 	}
 }
 
-float MeshBase::surfaceArea(uint32 slot, const Eigen::Affine3f& transform) const
+float MeshBase::surfaceArea(uint32 matID, const Eigen::Affine3f& transform) const
 {
 	PR_PROFILE_THIS;
+	
+	if (matID == PR_INVALID_ID)
+		return surfaceArea(transform);
 
-	if (!(features() & MF_HAS_MATERIAL)) {
-		if (slot == 0)
-			return surfaceArea(transform);
-		else
-			return 0;
-	}
+	if (!(features() & MF_HAS_MATERIAL))
+		return 0;
 
 	float a		   = 0;
 	size_t counter = 0;
 	for (uint32 mat : mMaterialSlots) {
-		if (mat == slot)
+		if (mat == matID)
 			a += faceArea(counter, transform);
 
 		++counter;

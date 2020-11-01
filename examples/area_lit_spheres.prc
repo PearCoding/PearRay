@@ -6,7 +6,7 @@
 	:camera 'Camera'
 	; Settings
 	(integrator
-		:type 'DIRECT'
+		:type 'ao'
 		:max_ray_depth 8
 		:light_sampe_count 1
 		:msi false
@@ -25,6 +25,7 @@
 	(output
 		:name 'image'
 		(channel :type 'color' :color 'xyz' )
+		(channel :type 'depth' )
 	)
 	; Camera
 	(camera

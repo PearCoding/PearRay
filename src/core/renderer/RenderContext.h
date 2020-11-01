@@ -68,9 +68,6 @@ public:
 	// Settings
 	inline const RenderSettings& settings() const { return mRenderSettings; }
 
-	// Light
-	inline const std::vector<std::shared_ptr<IEntity>>& lights() const { return mLights; } // Deprecated
-
 	RenderTileStatistics statistics() const;
 	RenderStatus status() const;
 
@@ -96,8 +93,6 @@ private:
 
 	std::shared_ptr<Scene> mScene;
 	std::shared_ptr<FrameBufferSystem> mOutputMap;
-
-	std::vector<std::shared_ptr<IEntity>> mLights;
 
 	mutable std::mutex mTileMutex;
 	std::unique_ptr<RenderTileMap> mTileMap;

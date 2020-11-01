@@ -7,6 +7,7 @@
 #include "material/IMaterial.h"
 #include "math/Projection.h"
 #include "math/Tangent.h"
+#include "spectral/SpectralUpsampler.h"
 
 #include "path/LightPath.h"
 #include "renderer/RenderTile.h"
@@ -49,41 +50,56 @@ static struct {
 	{ "", VFM_ColoredEntityID }
 };
 
-constexpr int RANDOM_COLOR_COUNT							= 23;
-static const SpectralBlob sRandomColors[RANDOM_COLOR_COUNT] = {
-	SpectralBlob(0.450000f, 0.376630f, 0.112500f, 1),
-	SpectralBlob(0.112500f, 0.450000f, 0.405978f, 1),
-	SpectralBlob(0.112500f, 0.450000f, 0.229891f, 1),
-	SpectralBlob(0.450000f, 0.112500f, 0.376630f, 1),
-	SpectralBlob(0.435326f, 0.450000f, 0.112500f, 1),
-	SpectralBlob(0.112500f, 0.141848f, 0.450000f, 1),
-	SpectralBlob(0.435326f, 0.112500f, 0.450000f, 1),
-	SpectralBlob(0.112500f, 0.450000f, 0.141848f, 1),
-	SpectralBlob(0.347283f, 0.450000f, 0.112500f, 1),
-	SpectralBlob(0.450000f, 0.112500f, 0.200543f, 1),
-	SpectralBlob(0.112500f, 0.229891f, 0.450000f, 1),
-	SpectralBlob(0.450000f, 0.288587f, 0.112500f, 1),
-	SpectralBlob(0.347283f, 0.112500f, 0.450000f, 1),
-	SpectralBlob(0.450000f, 0.112500f, 0.288587f, 1),
-	SpectralBlob(0.450000f, 0.112500f, 0.112500f, 1),
-	SpectralBlob(0.450000f, 0.200543f, 0.112500f, 1),
-	SpectralBlob(0.171196f, 0.450000f, 0.112500f, 1),
-	SpectralBlob(0.112500f, 0.450000f, 0.317935f, 1),
-	SpectralBlob(0.259239f, 0.450000f, 0.112500f, 1),
-	SpectralBlob(0.259239f, 0.112500f, 0.450000f, 1),
-	SpectralBlob(0.112500f, 0.405978f, 0.450000f, 1),
-	SpectralBlob(0.171196f, 0.112500f, 0.450000f, 1),
-	SpectralBlob(0.112500f, 0.317935f, 0.450000f, 1)
+using RGB = std::array<float, 3>;
+
+constexpr int RANDOM_COLOR_COUNT				   = 23;
+static const RGB sRandomColors[RANDOM_COLOR_COUNT] = {
+	{ 0.450000f, 0.376630f, 0.112500f },
+	{ 0.112500f, 0.450000f, 0.405978f },
+	{ 0.112500f, 0.450000f, 0.229891f },
+	{ 0.450000f, 0.112500f, 0.376630f },
+	{ 0.435326f, 0.450000f, 0.112500f },
+	{ 0.112500f, 0.141848f, 0.450000f },
+	{ 0.435326f, 0.112500f, 0.450000f },
+	{ 0.112500f, 0.450000f, 0.141848f },
+	{ 0.347283f, 0.450000f, 0.112500f },
+	{ 0.450000f, 0.112500f, 0.200543f },
+	{ 0.112500f, 0.229891f, 0.450000f },
+	{ 0.450000f, 0.288587f, 0.112500f },
+	{ 0.347283f, 0.112500f, 0.450000f },
+	{ 0.450000f, 0.112500f, 0.288587f },
+	{ 0.450000f, 0.112500f, 0.112500f },
+	{ 0.450000f, 0.200543f, 0.112500f },
+	{ 0.171196f, 0.450000f, 0.112500f },
+	{ 0.112500f, 0.450000f, 0.317935f },
+	{ 0.259239f, 0.450000f, 0.112500f },
+	{ 0.259239f, 0.112500f, 0.450000f },
+	{ 0.112500f, 0.405978f, 0.450000f },
+	{ 0.171196f, 0.112500f, 0.450000f },
+	{ 0.112500f, 0.317935f, 0.450000f }
 };
 
-static const SpectralBlob TrueColor	 = SpectralBlob(0, 1, 0, 1);
-static const SpectralBlob FalseColor = SpectralBlob(1, 0, 0, 1);
+static const RGB TrueColor	= { 0, 1, 0 };
+static const RGB FalseColor = { 1, 0, 0 };
+static const RGB RedColor	= { 1, 0, 0 };
+static const RGB GreenColor = { 0, 1, 0 };
+static const RGB BlueColor	= { 0, 0, 1 };
+
+struct VFParametricCache {
+	std::array<ParametricBlob, RANDOM_COLOR_COUNT> RandomColors;
+	ParametricBlob True;
+	ParametricBlob False;
+	ParametricBlob Red;
+	ParametricBlob Green;
+	ParametricBlob Blue;
+};
 
 class IntVFInstance : public IIntegratorInstance {
 public:
-	explicit IntVFInstance(VisualFeedbackMode mode, bool applyDot)
+	explicit IntVFInstance(const VFParametricCache& parametricCache, VisualFeedbackMode mode, bool applyDot)
 		: mMode(mode)
 		, mApplyDot(applyDot)
+		, mParametric(parametricCache)
 	{
 	}
 
@@ -104,57 +120,80 @@ public:
 			SpectralBlob weight	  = SpectralBlob::Ones() * abs(spt.Surface.NdotV);
 			switch (mMode) {
 			case VFM_ColoredEntityID:
-				radiance = sRandomColors[spt.Surface.Geometry.EntityID % RANDOM_COLOR_COUNT];
+				radiance = SpectralUpsampler::compute(
+					mParametric.RandomColors[spt.Surface.Geometry.EntityID % RANDOM_COLOR_COUNT],
+					spt.Ray.WavelengthNM);
 				if (mApplyDot)
 					radiance *= weight;
 				break;
 			case VFM_ColoredMaterialID:
-				radiance = sRandomColors[spt.Surface.Geometry.MaterialID % RANDOM_COLOR_COUNT];
+				radiance = SpectralUpsampler::compute(
+					mParametric.RandomColors[spt.Surface.Geometry.MaterialID % RANDOM_COLOR_COUNT],
+					spt.Ray.WavelengthNM);
 				if (mApplyDot)
 					radiance *= weight;
 				break;
 			case VFM_ColoredEmissionID:
-				radiance = sRandomColors[spt.Surface.Geometry.EmissionID % RANDOM_COLOR_COUNT];
+				radiance = SpectralUpsampler::compute(
+					mParametric.RandomColors[spt.Surface.Geometry.EmissionID % RANDOM_COLOR_COUNT],
+					spt.Ray.WavelengthNM);
 				if (mApplyDot)
 					radiance *= weight;
 				break;
 			case VFM_ColoredDisplaceID:
-				radiance = sRandomColors[spt.Surface.Geometry.DisplaceID % RANDOM_COLOR_COUNT];
+				radiance = SpectralUpsampler::compute(
+					mParametric.RandomColors[spt.Surface.Geometry.DisplaceID % RANDOM_COLOR_COUNT],
+					spt.Ray.WavelengthNM);
 				if (mApplyDot)
 					radiance *= weight;
 				break;
 			case VFM_ColoredPrimitiveID:
-				radiance = sRandomColors[spt.Surface.Geometry.PrimitiveID % RANDOM_COLOR_COUNT];
+				radiance = SpectralUpsampler::compute(
+					mParametric.RandomColors[spt.Surface.Geometry.PrimitiveID % RANDOM_COLOR_COUNT],
+					spt.Ray.WavelengthNM);
 				if (mApplyDot)
 					radiance *= weight;
 				break;
 			case VFM_ColoredRayID:
-				radiance = sRandomColors[hitEntry.RayID % RANDOM_COLOR_COUNT];
+				radiance = SpectralUpsampler::compute(
+					mParametric.RandomColors[hitEntry.RayID % RANDOM_COLOR_COUNT],
+					spt.Ray.WavelengthNM);
 				if (mApplyDot)
 					radiance *= weight;
 				break;
 			case VFM_RayDirection: {
 				Vector3f rescaledDir = 0.5f * (spt.Ray.Direction + Vector3f(1, 1, 1));
-				radiance			 = SpectralBlob{ rescaledDir[0], rescaledDir[1], rescaledDir[2], 1 };
+				const auto r		 = SpectralUpsampler::compute(mParametric.Red, spt.Ray.WavelengthNM);
+				const auto g		 = SpectralUpsampler::compute(mParametric.Green, spt.Ray.WavelengthNM);
+				const auto b		 = SpectralUpsampler::compute(mParametric.Blue, spt.Ray.WavelengthNM);
+				radiance			 = r * rescaledDir[0] + g * rescaledDir[1] + b * rescaledDir[2];
 				if (mApplyDot)
 					radiance *= weight;
 			} break;
-			case VFM_Parameter:
-				radiance = SpectralBlob{ hitEntry.Parameter[0], hitEntry.Parameter[1], hitEntry.Parameter[2], 1 };
+			case VFM_Parameter: {
+				const auto r = SpectralUpsampler::compute(mParametric.Red, spt.Ray.WavelengthNM);
+				const auto g = SpectralUpsampler::compute(mParametric.Green, spt.Ray.WavelengthNM);
+				const auto b = SpectralUpsampler::compute(mParametric.Blue, spt.Ray.WavelengthNM);
+				radiance	 = r * hitEntry.Parameter[0] + g * hitEntry.Parameter[1] + b * hitEntry.Parameter[2];
 				if (mApplyDot)
 					radiance *= weight;
-				break;
+			} break;
 			case VFM_Inside:
-				radiance = Scattering::is_inside_global(spt.Surface.NdotV) ? TrueColor : FalseColor;
+				radiance = SpectralUpsampler::compute(
+					Scattering::is_inside_global(spt.Surface.NdotV) ? mParametric.True : mParametric.False,
+					spt.Ray.WavelengthNM);
 				if (mApplyDot)
 					radiance *= weight;
 				break;
 			case VFM_NdotV: {
 				const float originalNdotV = spt.Ray.Direction.dot(spt.Surface.Geometry.N);
-				if (originalNdotV < 0)
-					radiance = SpectralBlob{ 0, -originalNdotV, 0, 1 };
-				else
-					radiance = SpectralBlob{ originalNdotV, 0, 0, 1 };
+				if (originalNdotV < 0) {
+					const auto g = SpectralUpsampler::compute(mParametric.Green, spt.Ray.WavelengthNM);
+					radiance	 = g * (-originalNdotV);
+				} else {
+					const auto r = SpectralUpsampler::compute(mParametric.Red, spt.Ray.WavelengthNM);
+					radiance	 = r * originalNdotV;
+				}
 			} break;
 			case VFM_ValidateMaterial: {
 				IMaterial* mat = session.getMaterial(spt.Surface.Geometry.MaterialID);
@@ -170,7 +209,10 @@ public:
 					const float weightDiff = (samp_out.Weight - eval_out.Weight).cwiseAbs().sum();
 					const float relPDFDiff = (samp_out.PDF_S - eval_out.PDF_S).cwiseAbs().sum();
 
-					radiance = SpectralBlob{ 1 - weightDiff, 1 - relPDFDiff, 1, 1 };
+					const auto r = SpectralUpsampler::compute(mParametric.Red, spt.Ray.WavelengthNM);
+					const auto g = SpectralUpsampler::compute(mParametric.Green, spt.Ray.WavelengthNM);
+					const auto b = SpectralUpsampler::compute(mParametric.Blue, spt.Ray.WavelengthNM);
+					radiance	 = r * (1 - weightDiff) + g * (1 - relPDFDiff) + b;
 				}
 			}
 			}
@@ -200,14 +242,16 @@ public:
 private:
 	const VisualFeedbackMode mMode;
 	const bool mApplyDot;
+	const VFParametricCache mParametric;
 };
 
 class IntVF : public IIntegrator {
 public:
-	explicit IntVF(VisualFeedbackMode mode, bool applyDot)
+	explicit IntVF(const VFParametricCache& parametricCache, VisualFeedbackMode mode, bool applyDot)
 		: IIntegrator()
 		, mMode(mode)
 		, mApplyDot(applyDot)
+		, mParametric(parametricCache)
 	{
 	}
 
@@ -215,18 +259,20 @@ public:
 
 	std::shared_ptr<IIntegratorInstance> createThreadInstance(RenderContext*, size_t) override
 	{
-		return std::make_shared<IntVFInstance>(mMode, mApplyDot);
+		return std::make_shared<IntVFInstance>(mParametric, mMode, mApplyDot);
 	}
 
 private:
 	const VisualFeedbackMode mMode;
 	const bool mApplyDot;
+	const VFParametricCache mParametric;
 };
 
 class IntVFFactory : public IIntegratorFactory {
 public:
-	explicit IntVFFactory(const ParameterGroup& params)
+	explicit IntVFFactory(const VFParametricCache& parametricCache, const ParameterGroup& params)
 		: mParams(params)
+		, mParametric(parametricCache)
 	{
 	}
 
@@ -243,18 +289,33 @@ public:
 				break;
 			}
 		}
-		return std::make_shared<IntVF>(mode, mParams.getBool("weighting", true));
+		return std::make_shared<IntVF>(mParametric, mode, mParams.getBool("weighting", true));
 	}
 
 private:
 	ParameterGroup mParams;
+	const VFParametricCache mParametric;
 };
 
 class IntVFFactoryFactory : public IIntegratorPlugin {
 public:
 	std::shared_ptr<IIntegratorFactory> create(uint32, const std::string&, const SceneLoadContext& ctx) override
 	{
-		return std::make_shared<IntVFFactory>(ctx.parameters());
+		// Prepare color cache
+		VFParametricCache parametric;
+		if (ctx.hasEnvironment()) {
+			const auto mapper = ctx.environment()->defaultSpectralUpsampler();
+			for (size_t i = 0; i < RANDOM_COLOR_COUNT; ++i)
+				mapper->prepare(sRandomColors[i].data(), parametric.RandomColors[i].data(), 1);
+
+			mapper->prepare(TrueColor.data(), parametric.True.data(), 1);
+			mapper->prepare(FalseColor.data(), parametric.False.data(), 1);
+			mapper->prepare(RedColor.data(), parametric.Red.data(), 1);
+			mapper->prepare(GreenColor.data(), parametric.Green.data(), 1);
+			mapper->prepare(BlueColor.data(), parametric.Blue.data(), 1);
+		}
+
+		return std::make_shared<IntVFFactory>(parametric, ctx.parameters());
 	}
 
 	const std::vector<std::string>& getNames() const override

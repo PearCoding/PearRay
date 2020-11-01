@@ -22,6 +22,9 @@ public:
 
 	inline const LightList& lights() const { return mLights; }
 
+	inline size_t emissiveEntityCount() const { return mLightEntityMap.size(); }
+	inline size_t lightCount() const { return mLights.size(); }
+
 	inline float emissiveSurfaceArea() const { return mEmissiveSurfaceArea; }
 	inline float emissiveSurfacePower() const { return mEmissiveSurfacePower; }
 	inline float emissivePower() const { return mEmissivePower; }

@@ -6,7 +6,8 @@
 	:camera 'Camera'
 	; Settings
 	(integrator
-		:type 'direct'
+		:type 'debug'
+		:mode 'colored_entity_id'
 		:max_ray_depth 16
 		:contract_ratio 0.2
 		:max_light_ray_depth 16

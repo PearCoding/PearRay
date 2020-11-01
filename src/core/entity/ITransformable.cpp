@@ -14,14 +14,14 @@ ITransformable::ITransformable(uint32 id, const std::string& name)
 	, mNormalMatrixCache(Eigen::Matrix3f::Identity())
 	, mInvNormalMatrixCache(Eigen::Matrix3f::Identity())
 {
-	cache();
+	cacheInternal();
 }
 
 ITransformable::~ITransformable()
 {
 }
 
-void ITransformable::cache()
+void ITransformable::cacheInternal()
 {
 	mJacobianDeterminant  = std::abs(mTransform.linear().determinant());
 	mInvTransformCache	  = mTransform.inverse();

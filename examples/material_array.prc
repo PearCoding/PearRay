@@ -14,7 +14,9 @@
 	  :radius 1
 	)
 	(integrator 
-	  :type 'ppm'
+	  ;:type 'direct'
+		:type 'debug'
+		:mode 'colored_entity_id'
 	  ;:max_ray_depth 64
 	)
 	; Outputs
@@ -27,17 +29,17 @@
 		:name 'Camera'
 		:type 'standard'
 	)
-	(light
-		:name 'sky'
-		:type 'sky'
-		:turbidity 3
-	)
 	;(light
-	;	:name 'sun'
-	;	:type 'sun'
+	;	:name 'sky'
+	;	:type 'sky'
 	;	:turbidity 3
-	;	:radius 4
 	;)
+	(light
+		:name 'sun'
+		:type 'sun'
+		:turbidity 3
+		:radius 4
+	)
 	; Materials
 	(material
 		:name 'Material1'

@@ -61,7 +61,6 @@ void RenderContext::reset()
 	mIncrementalCurrentIteration = 0;
 
 	mThreads.clear();
-	mLights.clear();
 }
 
 void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
@@ -73,13 +72,6 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 	reset();
 
 	PR_ASSERT(mOutputMap, "Output Map must be already created!");
-
-	/* Setup entities */
-	for (auto entity : mScene->entities()) {
-		if (entity->hasEmission()) {
-			mLights.push_back(entity);
-		}
-	}
 	
 	/* Setup threads */
 	uint32 threadCount = Thread::hardwareThreadCount();
@@ -108,7 +100,7 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 				   << "  Threads:                " << threadCount << std::endl
 				   << "  Tiles:                  " << rtx << " x " << rty << std::endl
 				   << "  Entities:               " << mScene->entities().size() << std::endl
-				   << "  Lights:                 " << mLights.size() << std::endl
+				   << "  Lights:                 " << mScene->lightSampler()->emissiveEntityCount() << std::endl
 				   << "  Materials:              " << mScene->materials().size() << std::endl
 				   << "  Emissions:              " << mScene->emissions().size() << std::endl
 				   << "  InfLights:              " << mScene->infiniteLights().size() << std::endl
@@ -116,7 +108,9 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 				   << "  Emissive Surface Power: " << mScene->lightSampler()->emissiveSurfacePower() << std::endl
 				   << "  Emissive Power:         " << mScene->lightSampler()->emissivePower() << std::endl
 				   << "  Scene Extent:           " << mScene->boundingBox().width() << " x " << mScene->boundingBox().height() << " x " << mScene->boundingBox().depth() << std::endl
+   				   << "  Scene Origin Radius:    " << mScene->boundingSphere().radius() << std::endl
 				   << "  Spectral Domain:        [" << mRenderSettings.spectralStart << ", " << mRenderSettings.spectralEnd << "]" << std::endl;
+				   
 
 	// Start
 	mIntegrator->onStart();

@@ -113,6 +113,8 @@ public:
 		mCameraPathWalker.traverseBSDF(
 			session, SpectralBlob::Ones(), spt, entity, material,
 			[&](const SpectralBlob& weight, const IntersectionPoint& ip, IEntity*, IMaterial* material_hit) {
+				PR_UNUSED(weight);
+				PR_UNUSED(ip);
 				session.tile()->statistics().addEntityHitCount();
 				session.tile()->statistics().addDepthCount();
 

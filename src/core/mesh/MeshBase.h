@@ -74,7 +74,7 @@ public:
 	size_t memoryFootprint() const;
 
 	float faceArea(size_t f, const Eigen::Affine3f& transform) const;
-	float surfaceArea(uint32 slot, const Eigen::Affine3f& transform) const;
+	float surfaceArea(uint32 matID, const Eigen::Affine3f& transform) const;
 	float surfaceArea(const Eigen::Affine3f& transform) const;
 
 	inline bool isValid() const;

@@ -42,9 +42,9 @@ public:
 		}
 	}
 
-	inline static SpectralBlob compute(const ParametricBlob& p, const SpectralBlob& in)
+	inline static SpectralBlob compute(const ParametricBlob& p, const SpectralBlob& wvls)
 	{
-		const SpectralBlob x = (p(0) * in + p(1)) * in + p(2);
+		const SpectralBlob x = (p(0) * wvls + p(1)) * wvls + p(2);
 		const SpectralBlob y = (x.square() + 1.0f).rsqrt();
 		return 0.5f * x * y + 0.5f;
 	}

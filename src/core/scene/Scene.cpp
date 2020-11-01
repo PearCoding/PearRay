@@ -49,6 +49,7 @@ Scene::Scene(const std::shared_ptr<ServiceObserver>& serviceObserver,
 Scene::~Scene()
 {
 }
+
 void Scene::beforeRender(RenderContext* ctx)
 {
 	PR_LOG(L_DEBUG) << "Setup before render start..." << std::endl;
@@ -132,9 +133,8 @@ void Scene::setupScene()
 	rtcSetSceneBuildQuality(mInternal->Scene, RTC_BUILD_QUALITY_HIGH);
 	rtcCommitScene(mInternal->Scene);
 
-	if (rtcGetDeviceError(mInternal->Device) != RTC_ERROR_NONE) {
+	if (rtcGetDeviceError(mInternal->Device) != RTC_ERROR_NONE)
 		throw std::runtime_error("Could not build scene");
-	}
 
 	// Extract scene boundary
 	mBoundingBox	= BoundingBox();

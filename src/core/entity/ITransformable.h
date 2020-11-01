@@ -53,7 +53,7 @@ private:
 
 	Transform mTransform;
 
-	void cache();
+	void cacheInternal();
 	float mJacobianDeterminant;
 	Transform mInvTransformCache;
 	Eigen::Matrix3f mNormalMatrixCache;

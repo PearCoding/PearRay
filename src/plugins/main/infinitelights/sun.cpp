@@ -23,11 +23,6 @@ constexpr float SUN_WAVELENGTH_END		= 760.0f;
 constexpr size_t SUN_WAVELENGTH_SAMPLES = 64;
 constexpr float SUN_VIS_RADIUS			= PR_DEG2RAD * 0.5358f * 0.5f; // Given in angular radius
 
-inline float calculatePosDiskRadius(float scene_radius, float cosTheta)
-{
-	return scene_radius * std::sqrt((1 - cosTheta) * (1 + cosTheta));
-}
-
 class SunLight : public IInfiniteLight {
 public:
 	SunLight(const std::shared_ptr<ServiceObserver>& so, 
@@ -40,7 +35,6 @@ public:
 		, mCosTheta(std::cos(SUN_VIS_RADIUS * radius))
 		, mPDF(Sampling::uniform_cone_pdf(mCosTheta))
 		, mSceneRadius(0)
-		, mPosDiskRadius(0)
 		, mServiceObserver(so)
 	{
 		Tangent::frame(mDirection, mDx, mDy);
@@ -54,7 +48,6 @@ public:
 		if(mServiceObserver)
 			mCBID = mServiceObserver->registerAfterSceneBuild([this](Scene* scene){
 				mSceneRadius   = scene->boundingSphere().radius();
-				mPosDiskRadius = calculatePosDiskRadius(mSceneRadius, std::abs(mDirection(2)));
 			});
 	}
 
@@ -91,9 +84,9 @@ public:
 		if (in.Point) {
 			out.LightPosition = in.Point->P + mSceneRadius * out.Outgoing;
 		} else if (in.SamplePosition) {
-			const Vector2f uv = mPosDiskRadius * Concentric::square2disc(Vector2f(in.RND(0), in.RND(1)));
+			const Vector2f uv = mSceneRadius * Concentric::square2disc(Vector2f(in.RND(2), in.RND(3)));
 			out.LightPosition = mSceneRadius * out.Outgoing + uv(0) * mDx + uv(1) * mDy;
-			// TODO: PDF?
+			out.PDF_S *= 1/(2*PR_PI*mSceneRadius);
 		}
 
 		PR_OPT_LOOP
@@ -125,8 +118,7 @@ private:
 	const float mPDF;
 
 	float mSceneRadius;
-	float mPosDiskRadius;
-
+	
 	const std::shared_ptr<ServiceObserver> mServiceObserver;
 	ServiceObserver::CallbackID mCBID;
 };
@@ -141,7 +133,6 @@ public:
 		, mEA(ea)
 		, mDirection(trans * normalMatrix() * ea.toDirection().normalized())
 		, mSceneRadius(0)
-		, mPosDiskRadius(0)
 		, mServiceObserver(so)
 	{
 		Tangent::frame(mDirection, mDx, mDy);
@@ -155,7 +146,6 @@ public:
 		if(mServiceObserver)
 			mCBID = mServiceObserver->registerAfterSceneBuild([this](Scene* scene){
 				mSceneRadius   = scene->boundingSphere().radius();
-				mPosDiskRadius = calculatePosDiskRadius(mSceneRadius, std::abs(mDirection(2)));
 			});
 	}
 
@@ -189,9 +179,9 @@ public:
 		if (in.Point) {
 			out.LightPosition = in.Point->P + mSceneRadius * out.Outgoing;
 		} else if (in.SamplePosition) {
-			const Vector2f uv = mPosDiskRadius * Concentric::square2disc(Vector2f(in.RND(0), in.RND(1)));
+			const Vector2f uv = mSceneRadius * Concentric::square2disc(Vector2f(in.RND(0), in.RND(1)));
 			out.LightPosition = mSceneRadius * out.Outgoing + uv(0) * mDx + uv(1) * mDy;
-			// TODO: PDF?
+			out.PDF_S = 1/(2*PR_PI*mSceneRadius);
 		}
 	}
 
@@ -217,7 +207,6 @@ private:
 	Vector3f mDy;
 
 	float mSceneRadius;
-	float mPosDiskRadius;
 
 	const std::shared_ptr<ServiceObserver> mServiceObserver;
 	ServiceObserver::CallbackID mCBID;

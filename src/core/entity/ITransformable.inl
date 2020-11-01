@@ -38,7 +38,7 @@ inline uint8 ITransformable::flags() const
 inline void ITransformable::setTransform(const Transform& transform)
 {
 	mTransform = transform;
-	cache();
+	cacheInternal();
 }
 
 inline ITransformable::Transform ITransformable::transform() const

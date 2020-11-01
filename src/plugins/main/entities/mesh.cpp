@@ -93,7 +93,7 @@ public:
 
 	float localSurfaceArea(uint32 id) const override
 	{
-		return mMesh->base()->surfaceArea(id == PR_INVALID_ID ? 0 : id, Eigen::Affine3f::Identity());
+		return mMesh->base()->surfaceArea(id, Eigen::Affine3f::Identity());
 	}
 
 	bool isCollidable() const override
