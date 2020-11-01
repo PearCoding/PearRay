@@ -19,10 +19,10 @@ class PlaneEntity : public IEntity {
 public:
 	ENTITY_CLASS
 
-	PlaneEntity(uint32 id, const std::string& name,
+	PlaneEntity(uint32 id, const std::string& name, const Transformf& transform,
 				const Vector3f& xAxis, const Vector3f& yAxis,
 				uint32 matID, uint32 lightID)
-		: IEntity(id, lightID, name)
+		: IEntity(id, lightID, name, transform)
 		, mPlane(Vector3f::Zero(), xAxis, yAxis)
 		, mMaterialID(matID)
 		, mPDF_Cache(0.0f)
@@ -37,7 +37,7 @@ public:
 		return "plane";
 	}
 
-	float localSurfaceArea(uint32 id) const override
+	virtual float localSurfaceArea(uint32 id) const override
 	{
 		if (id == PR_INVALID_ID || id == mMaterialID)
 			return mPlane.surfaceArea();
@@ -45,7 +45,7 @@ public:
 			return 0;
 	}
 
-	float worldSurfaceArea(uint32 id) const override
+	virtual float worldSurfaceArea(uint32 id) const override
 	{
 		if (id == PR_INVALID_ID || id == mMaterialID)
 			return (transform().linear() * mPlane.xAxis()).norm() * (transform().linear() * mPlane.yAxis()).norm();
@@ -63,7 +63,7 @@ public:
 		return 1;
 	}
 
-	BoundingBox localBoundingBox() const override
+	virtual BoundingBox localBoundingBox() const override
 	{
 		return mPlane.toBoundingBox();
 	}
@@ -267,7 +267,7 @@ public:
 		if (ems)
 			emsID = ems->id();
 
-		auto obj = std::make_shared<PlaneEntity>(id, name, width * xAxis, height * yAxis, matID, emsID);
+		auto obj = std::make_shared<PlaneEntity>(id, name, ctx.transform(), width * xAxis, height * yAxis, matID, emsID);
 		if (params.getBool("centering", false))
 			obj->centerOn();
 

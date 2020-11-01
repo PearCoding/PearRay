@@ -36,6 +36,11 @@ using Point1f = float;
 using Point2f = Eigen::Array2f;
 using Point3f = Eigen::Array3f;
 
+// Unfortunately we have to disable alignment for the transformations.
+// A SIGSEV is raised in release build otherwise.
+// It may be a bug in Eigen or somewhere in my own code.
+using Transformf = Eigen::Transform<float, 3, Eigen::Affine, Eigen::DontAlign>;
+
 using Size1i = int32;
 struct Size2i {
 	Size1i Width;

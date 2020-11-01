@@ -6,7 +6,10 @@ inline float IEntity::collisionCost() const { return 1; }
 
 inline BoundingBox IEntity::worldBoundingBox() const
 {
-	return localBoundingBox().transformed(transform());
+	auto bb = localBoundingBox().transformed(transform());
+	if (bb.isPlanar())
+		bb.inflate();
+	return bb;
 }
 
 inline uint8 IEntity::visibilityFlags() const { return mVisibilityFlags; }

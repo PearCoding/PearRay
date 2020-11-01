@@ -5,28 +5,20 @@
 #include "Logger.h"
 
 namespace PR {
-ITransformable::ITransformable(uint32 id, const std::string& name)
+ITransformable::ITransformable(uint32 id, const std::string& name, const Transformf& transform)
 	: mName(name)
 	, mID(id)
 	, mFlags(0)
-	, mTransform(Transform::Identity())
-	, mInvTransformCache(Transform::Identity())
-	, mNormalMatrixCache(Eigen::Matrix3f::Identity())
-	, mInvNormalMatrixCache(Eigen::Matrix3f::Identity())
+	, mTransform(transform)
+	, mInvTransformCache(mTransform.inverse())
+	, mNormalMatrixCache(mTransform.linear().inverse().transpose())
+	, mInvNormalMatrixCache(mNormalMatrixCache.inverse())
+	, mJacobianDeterminant(std::abs(mTransform.linear().determinant()))
 {
-	cacheInternal();
 }
 
 ITransformable::~ITransformable()
 {
-}
-
-void ITransformable::cacheInternal()
-{
-	mJacobianDeterminant  = std::abs(mTransform.linear().determinant());
-	mInvTransformCache	  = mTransform.inverse();
-	mNormalMatrixCache	  = mTransform.linear().inverse().transpose();
-	mInvNormalMatrixCache = mNormalMatrixCache.inverse();
 }
 
 std::string ITransformable::dumpInformation() const

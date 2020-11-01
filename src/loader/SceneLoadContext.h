@@ -65,6 +65,9 @@ public:
 	inline const ParameterGroup& parameters() const { return mParameters; }
 	inline ParameterGroup& parameters() { return mParameters; }
 
+	inline const Transformf& transform() const { return mTransform; }
+	inline Transformf& transform() { return mTransform; }
+
 	inline void setEnvironment(Environment* env) { mEnvironment = env; }
 	inline Environment* environment() const { return mEnvironment; }
 	inline bool hasEnvironment() const { return mEnvironment != nullptr; }
@@ -76,6 +79,7 @@ public:
 
 private:
 	ParameterGroup mParameters;
+	Transformf mTransform;
 	std::vector<std::filesystem::path> mFileStack;
 	Environment* mEnvironment = nullptr;
 };

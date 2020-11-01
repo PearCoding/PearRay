@@ -52,15 +52,13 @@ struct PR_LIB_CORE EntitySamplingInfo {
 
 class PR_LIB_CORE IEntity : public ITransformable {
 public:
-	IEntity(uint32 id, uint32 emission_id, const std::string& name);
+	IEntity(uint32 id, uint32 emission_id, const std::string& name, const Transformf& transform);
 	virtual ~IEntity();
 
 	bool isRenderable() const override;
 
 	inline uint8 visibilityFlags() const;
 	inline void setVisibilityFlags(uint8 flags);
-
-	inline BoundingBox worldBoundingBox() const;
 
 	// Optional Interface
 	virtual bool isCollidable() const;
@@ -70,9 +68,10 @@ public:
 
 	// Mandatory Interface
 	virtual float localSurfaceArea(uint32 materialID = PR_INVALID_ID) const = 0;
-	virtual float worldSurfaceArea(uint32 materialID = PR_INVALID_ID) const { return volumeScalefactor() * localSurfaceArea(materialID); }
+	virtual float worldSurfaceArea(uint32 materialID = PR_INVALID_ID) const { return volumeScalefactor() * this->localSurfaceArea(materialID); }
 
 	virtual BoundingBox localBoundingBox() const = 0;
+	inline BoundingBox worldBoundingBox() const;
 
 	virtual GeometryRepr constructGeometryRepresentation(const GeometryDev& dev) const = 0;
 

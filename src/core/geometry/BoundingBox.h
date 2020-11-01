@@ -6,6 +6,8 @@ namespace PR {
 class Plane;
 struct HitPoint;
 
+constexpr float BoundingBoxPlanarEPS = 0.0001f;
+
 /**
  * A axis aligned bounding box (AABB)
  */
@@ -55,7 +57,7 @@ public:
 	inline float faceArea(int dim) const;
 
 	inline bool isValid() const;
-	inline bool isPlanar(float eps = PR_EPSILON) const;
+	inline bool isPlanar(float eps = BoundingBoxPlanarEPS) const;
 
 	inline bool contains(const Vector3f& point) const;
 
@@ -75,7 +77,7 @@ public:
 	/* Make sure bounding box has a valid volume.
 	 * @param maxDir If true, will inflate in max direction, otherwise max and min direction.
 	 */
-	void inflate(float eps = 0.0001f, bool maxDir = false);
+	void inflate(float eps = BoundingBoxPlanarEPS, bool maxDir = false);
 
 	/**
 	 * @brief Expand boundingbox of the given amount in each dimension

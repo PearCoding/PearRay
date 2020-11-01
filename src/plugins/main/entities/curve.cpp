@@ -21,11 +21,11 @@ class CurveEntity : public IEntity {
 public:
 	ENTITY_CLASS
 
-	CurveEntity(uint32 id, const std::string& name,
+	CurveEntity(uint32 id, const std::string& name, const Transformf& transform,
 				const T& curve,
 				Vector2f width,
 				uint32 materialID, uint32 lightID)
-		: IEntity(id, lightID, name)
+		: IEntity(id, lightID, name, transform)
 		, mMaterialID(materialID)
 		, mCurve(curve)
 		, mWidth(width)
@@ -296,12 +296,12 @@ public:
 		if (ems)
 			emsID = static_cast<int32>(ems->id());
 
-#define _CURVE(D)                                                                                       \
-	case D: {                                                                                           \
-		FixedCurve3<D + 1> curve;                                                                       \
-		for (size_t i = 0; i <= curve.degree(); ++i)                                                    \
-			curve.points()[i] = Vector3f(points[3 * i], points[3 * i + 1], points[3 * i + 2]);          \
-		return std::make_shared<CurveEntity<FixedCurve3<D + 1>>>(id, name, curve, width, matID, emsID); \
+#define _CURVE(D)                                                                                                        \
+	case D: {                                                                                                            \
+		FixedCurve3<D + 1> curve;                                                                                        \
+		for (size_t i = 0; i <= curve.degree(); ++i)                                                                     \
+			curve.points()[i] = Vector3f(points[3 * i], points[3 * i + 1], points[3 * i + 2]);                           \
+		return std::make_shared<CurveEntity<FixedCurve3<D + 1>>>(id, name, ctx.transform(), curve, width, matID, emsID); \
 	}
 
 		switch (degree) {
@@ -318,7 +318,7 @@ public:
 			for (size_t i = 0; i < list.size(); ++i)
 				list[i] = Vector3f(points[3 * i], points[3 * i + 1], points[3 * i + 2]);
 
-			return std::make_shared<CurveEntity<Curve3>>(id, name,
+			return std::make_shared<CurveEntity<Curve3>>(id, name, ctx.transform(),
 														 Curve3(list), width,
 														 matID, emsID);
 		}

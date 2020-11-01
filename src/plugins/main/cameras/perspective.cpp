@@ -16,10 +16,10 @@ class PerspectiveCamera : public ICamera {
 public:
 	ENTITY_CLASS
 
-	PerspectiveCamera(uint32 id, const std::string& name,
+	PerspectiveCamera(uint32 id, const std::string& name, const Transformf& transform,
 					  float w, float h, float fstop, float apert, float nearT, float farT,
 					  const Vector3f& ld, const Vector3f& lr, const Vector3f& lu)
-		: ICamera(id, name)
+		: ICamera(id, name, transform)
 		, mWidth(w)
 		, mHeight(h)
 		, mFStop(fstop)
@@ -156,9 +156,9 @@ public:
 		const bool hasDOF = apr > PR_EPSILON && fstop > PR_EPSILON;
 
 		if (hasDOF)
-			return std::make_shared<PerspectiveCamera<true>>(id, name, w, h, fstop, apr, nT, fT, ld, lr, lu);
+			return std::make_shared<PerspectiveCamera<true>>(id, name, ctx.transform(), w, h, fstop, apr, nT, fT, ld, lr, lu);
 		else
-			return std::make_shared<PerspectiveCamera<false>>(id, name, w, h, fstop, apr, nT, fT, ld, lr, lu);
+			return std::make_shared<PerspectiveCamera<false>>(id, name, ctx.transform(), w, h, fstop, apr, nT, fT, ld, lr, lu);
 	}
 
 	const std::vector<std::string>& getNames() const

@@ -379,8 +379,7 @@ void SceneLoader::addIntegrator(const DL::DataGroup& group, SceneLoadContext& ct
 	ctx.environment()->renderSettings().integratorFactory = intgr;
 }
 
-void SceneLoader::setupTransformable(const DL::DataGroup& group,
-									 const std::shared_ptr<PR::ITransformable>& entity, SceneLoadContext& /*ctx*/)
+Transformf SceneLoader::extractTransform(const DL::DataGroup& group)
 {
 	DL::Data transformD = group.getFromKey("transform");
 	DL::Data posD		= group.getFromKey("position");
@@ -388,14 +387,14 @@ void SceneLoader::setupTransformable(const DL::DataGroup& group,
 	DL::Data scaleD		= group.getFromKey("scale");
 
 	if (transformD.type() == DL::DT_Group) {
-		bool ok						= false;
-		ITransformable::Transform t = ITransformable::Transform(MathParser::getMatrix(transformD.getGroup(), ok));
+		bool ok		 = false;
+		Transformf t = Transformf(MathParser::getMatrix(transformD.getGroup(), ok));
 		t.makeAffine();
 
 		if (!ok)
-			PR_LOG(L_WARNING) << "Couldn't set transform for entity " << entity->name() << std::endl;
-		else
-			entity->setTransform(t);
+			PR_LOG(L_WARNING) << "Couldn't set transform " << std::endl;
+
+		return t;
 	} else {
 		bool ok				   = true;
 		Vector3f pos		   = Vector3f(0, 0, 0);
@@ -406,14 +405,14 @@ void SceneLoader::setupTransformable(const DL::DataGroup& group,
 			pos = MathParser::getVector(posD.getGroup(), ok);
 
 			if (!ok)
-				PR_LOG(L_WARNING) << "Couldn't set position for entity " << entity->name() << std::endl;
+				PR_LOG(L_WARNING) << "Couldn't set position " << std::endl;
 		}
 
 		if (ok && rotD.type() == DL::DT_Group) {
 			rot = MathParser::getRotation(rotD, ok);
 
 			if (!ok)
-				PR_LOG(L_WARNING) << "Couldn't set rotation for entity " << entity->name() << std::endl;
+				PR_LOG(L_WARNING) << "Couldn't set rotation " << std::endl;
 		}
 
 		if (ok && scaleD.isNumber()) {
@@ -423,19 +422,19 @@ void SceneLoader::setupTransformable(const DL::DataGroup& group,
 			sca = MathParser::getVector(scaleD.getGroup(), ok);
 
 			if (!ok)
-				PR_LOG(L_WARNING) << "Couldn't set scale for entity " << entity->name() << std::endl;
+				PR_LOG(L_WARNING) << "Couldn't set scale " << std::endl;
 		}
 
 		if (!ok) {
-			return;
+			return Transformf::Identity();
 		} else {
 			rot.normalize();
 
-			ITransformable::Transform trans;
+			Transformf trans;
 			trans.fromPositionOrientationScale(pos, rot, sca);
 			trans.makeAffine();
 
-			entity->setTransform(trans);
+			return trans;
 		}
 	}
 }
@@ -476,16 +475,15 @@ void SceneLoader::addEntity(const DL::DataGroup& group,
 	}
 
 	ctx.parameters() = populateObjectParameters(group, ctx);
-	auto entity		 = fac->create(id, type, ctx);
+	if (parent)
+		ctx.transform() = parent->transform() * extractTransform(group);
+	else
+		ctx.transform() = extractTransform(group);
+
+	auto entity = fac->create(id, type, ctx);
 	if (!entity) {
 		PR_LOG(L_ERROR) << "[Loader] Could not create entity of type " << type << std::endl;
 		return;
-	}
-
-	setupTransformable(group, entity, ctx);
-
-	if (parent) {
-		entity->setTransform(parent->transform() * entity->transform());
 	}
 
 	if (localAreaD.type() == DL::DT_Bool) {
@@ -549,13 +547,12 @@ void SceneLoader::addCamera(const DL::DataGroup& group, SceneLoadContext& ctx)
 	}
 
 	ctx.parameters() = populateObjectParameters(group, ctx);
+	ctx.transform()	 = extractTransform(group);
 	auto camera		 = fac->create(id, type, ctx);
 	if (!camera) {
 		PR_LOG(L_ERROR) << "[Loader] Could not create camera of type " << type << std::endl;
 		return;
 	}
-
-	setupTransformable(group, camera, ctx);
 
 	manag->addObject(camera);
 }
@@ -584,13 +581,12 @@ void SceneLoader::addLight(const DL::DataGroup& group, SceneLoadContext& ctx)
 	}
 
 	ctx.parameters() = populateObjectParameters(group, ctx);
+	ctx.transform()	 = extractTransform(group);
 	auto light		 = fac->create(id, type, ctx);
 	if (!light) {
 		PR_LOG(L_ERROR) << "[Loader] Could not create light of type " << type << std::endl;
 		return;
 	}
-
-	setupTransformable(group, light, ctx);
 
 	ctx.environment()->infiniteLightManager()->addObject(light);
 }

@@ -21,11 +21,11 @@ class QuadricEntity : public IEntity {
 public:
 	ENTITY_CLASS
 
-	QuadricEntity(uint32 id, const std::string& name,
+	QuadricEntity(uint32 id, const std::string& name, const Transformf& transform,
 				  const std::array<float, 10>& parameters,
 				  const Vector3f& minB, const Vector3f& maxB,
 				  uint32 matID, uint32 lightID)
-		: IEntity(id, lightID, name)
+		: IEntity(id, lightID, name, transform)
 		, mBoundingBox(minB, maxB)
 		, mParameters(parameters)
 		, mMaterialID(matID)
@@ -193,7 +193,7 @@ public:
 			return nullptr;
 		}
 
-		return std::make_shared<QuadricEntity>(id, name, parameters, minB, maxB, matID, emsID);
+		return std::make_shared<QuadricEntity>(id, name, ctx.transform(), parameters, minB, maxB, matID, emsID);
 	}
 
 	const std::vector<std::string>& getNames() const

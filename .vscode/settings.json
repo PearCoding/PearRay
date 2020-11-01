@@ -89,7 +89,8 @@
       "texture": "cpp",
       "plane": "cpp",
       "shape": "cpp",
-      "csignal": "cpp"
+      "csignal": "cpp",
+      "transform": "cpp"
     },
     "files.exclude": {
         "**/.git": true,

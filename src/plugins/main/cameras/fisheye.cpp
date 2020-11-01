@@ -27,11 +27,11 @@ class FisheyeCamera : public ICamera {
 public:
 	ENTITY_CLASS
 
-	FisheyeCamera(uint32 id, const std::string& name,
+	FisheyeCamera(uint32 id, const std::string& name, const Transformf& transform,
 				  float fov, float nearT, float farT,
 				  const Vector3f& ld, const Vector3f& lr, const Vector3f& lu,
 				  MapType mapType)
-		: ICamera(id, name)
+		: ICamera(id, name, transform)
 		, mFOV(fov)
 		, mNearT(nearT)
 		, mFarT(farT)
@@ -136,7 +136,7 @@ private:
 };
 
 template <bool ClipRange>
-static inline std::shared_ptr<ICamera> createCamera(uint32 id, const ParameterGroup& params)
+static inline std::shared_ptr<ICamera> createCamera(uint32 id, const ParameterGroup& params, const Transformf& transform)
 {
 	std::string name	   = params.getString("name", "__unnamed__");
 	std::string mapTypeStr = params.getString("map", "circular");
@@ -148,7 +148,7 @@ static inline std::shared_ptr<ICamera> createCamera(uint32 id, const ParameterGr
 	else if (mapTypeStr == "full")
 		mapType = MT_Full;
 
-	return std::make_shared<FisheyeCamera<ClipRange>>(id, name,
+	return std::make_shared<FisheyeCamera<ClipRange>>(id, name, transform,
 													  params.getNumber("fov", 180.0f * PR_DEG2RAD),
 													  params.getNumber("near", NEAR_DEFAULT),
 													  params.getNumber("far", FAR_DEFAULT),
@@ -164,9 +164,9 @@ public:
 	{
 		bool clip_range = ctx.parameters().getBool("clip_range", true);
 		if (clip_range)
-			return createCamera<true>(id, ctx.parameters());
+			return createCamera<true>(id, ctx.parameters(), ctx.transform());
 		else
-			return createCamera<false>(id, ctx.parameters());
+			return createCamera<false>(id, ctx.parameters(), ctx.transform());
 	}
 
 	const std::vector<std::string>& getNames() const

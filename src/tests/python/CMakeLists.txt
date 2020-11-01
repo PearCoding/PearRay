@@ -16,6 +16,5 @@ FUNCTION(PUSH_PY_TEST name)
 	set_tests_properties(${name}_py PROPERTIES DEPENDS pypearray)
 ENDFUNCTION(PUSH_PY_TEST)
 
-PUSH_PY_TEST(entity)
 PUSH_PY_TEST(direct)
 PUSH_PY_TEST(whitefurnance)

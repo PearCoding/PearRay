@@ -12,6 +12,7 @@ namespace PR {
 
 SceneLoadContext::SceneLoadContext(Environment* env)
 	: mParameters()
+	, mTransform(Transformf::Identity())
 	, mFileStack()
 	, mEnvironment(env)
 {
@@ -19,6 +20,7 @@ SceneLoadContext::SceneLoadContext(Environment* env)
 
 SceneLoadContext::SceneLoadContext(const std::filesystem::path& filename)
 	: mParameters()
+	, mTransform(Transformf::Identity())
 	, mFileStack()
 	, mEnvironment(nullptr)
 {
@@ -27,6 +29,7 @@ SceneLoadContext::SceneLoadContext(const std::filesystem::path& filename)
 
 SceneLoadContext::SceneLoadContext(Environment* env, const std::filesystem::path& filename)
 	: mParameters()
+	, mTransform(Transformf::Identity())
 	, mFileStack()
 	, mEnvironment(env)
 {

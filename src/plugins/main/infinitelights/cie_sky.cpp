@@ -18,12 +18,12 @@ namespace PR {
 template <bool Cloudy>
 class CIESimpleSkyLight : public IInfiniteLight {
 public:
-	CIESimpleSkyLight(const std::shared_ptr<ServiceObserver>& so, 
-					  uint32 id, const std::string& name,
+	CIESimpleSkyLight(const std::shared_ptr<ServiceObserver>& so,
+					  uint32 id, const std::string& name, const Transformf& transform,
 					  const std::shared_ptr<FloatSpectralNode>& zenithTint,
 					  const std::shared_ptr<FloatSpectralNode>& groundTint, const std::shared_ptr<FloatScalarNode>& groundBrightness,
 					  const Eigen::Matrix3f& trans)
-		: IInfiniteLight(id, name)
+		: IInfiniteLight(id, name, transform)
 		, mZenithTint(zenithTint)
 		, mGroundTint(groundTint)
 		, mGroundBrightness(groundBrightness)
@@ -32,14 +32,15 @@ public:
 		, mSceneRadius(0)
 		, mServiceObserver(so)
 	{
-		if(mServiceObserver)
-			mCBID = mServiceObserver->registerAfterSceneBuild([this](Scene* scene){
+		if (mServiceObserver)
+			mCBID = mServiceObserver->registerAfterSceneBuild([this](Scene* scene) {
 				mSceneRadius = scene->boundingSphere().radius() * 1.05f /*Scale a little bit*/;
 			});
 	}
 
-	virtual ~CIESimpleSkyLight() {
-		if(mServiceObserver)
+	virtual ~CIESimpleSkyLight()
+	{
+		if (mServiceObserver)
 			mServiceObserver->unregister(mCBID);
 	}
 
@@ -139,9 +140,9 @@ public:
 		const std::shared_ptr<ServiceObserver> so = ctx.hasEnvironment() ? ctx.environment()->serviceObserver() : nullptr;
 
 		if (type == "uniform_sky")
-			return std::make_shared<CIESimpleSkyLight<false>>(so, id, name, zenithTint, groundTint, groundBrightness, trans);
+			return std::make_shared<CIESimpleSkyLight<false>>(so, id, name, ctx.transform(), zenithTint, groundTint, groundBrightness, trans);
 		else if (type == "cloudy_sky")
-			return std::make_shared<CIESimpleSkyLight<true>>(so, id, name, zenithTint, groundTint, groundBrightness, trans);
+			return std::make_shared<CIESimpleSkyLight<true>>(so, id, name, ctx.transform(), zenithTint, groundTint, groundBrightness, trans);
 		else {
 			PR_ASSERT(false, "CIESkyFactory plugin does not handle all offered types of operations!");
 			return nullptr;

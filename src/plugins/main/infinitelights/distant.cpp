@@ -20,10 +20,10 @@ inline float calculatePosDiskRadius(float scene_radius, float cosTheta)
 class DistantLight : public IInfiniteLight {
 public:
 	DistantLight(const std::shared_ptr<ServiceObserver>& so, 
-				 uint32 id, const std::string& name,
+				 uint32 id, const std::string& name, const Transformf& transform,
 				 const Vector3f& direction,
 				 const std::shared_ptr<FloatSpectralNode>& spec)
-		: IInfiniteLight(id, name)
+		: IInfiniteLight(id, name, transform)
 		, mDirection(direction)
 		, mIrradiance(spec)
 		, mOutgoing_Cache((normalMatrix() * mDirection).normalized())
@@ -117,7 +117,7 @@ public:
 		const Vector3f direction = params.getVector3f("direction", Vector3f(0, 0, 1));
 
 		return std::make_shared<DistantLight>(ctx.hasEnvironment() ? ctx.environment()->serviceObserver() : nullptr,
-											  id, name, direction,
+											  id, name, ctx.transform(), direction,
 											  ctx.lookupSpectralNode("irradiance", 1));
 	}
 

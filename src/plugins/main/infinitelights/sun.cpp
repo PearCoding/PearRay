@@ -25,10 +25,11 @@ constexpr float SUN_VIS_RADIUS			= PR_DEG2RAD * 0.5358f * 0.5f; // Given in angu
 
 class SunLight : public IInfiniteLight {
 public:
-	SunLight(const std::shared_ptr<ServiceObserver>& so, 
-			 uint32 id, const std::string& name, const ElevationAzimuth& ea, float turbidity, float radius, float scale,
+	SunLight(const std::shared_ptr<ServiceObserver>& so,
+			 uint32 id, const std::string& name, const Transformf& transform,
+			 const ElevationAzimuth& ea, float turbidity, float radius, float scale,
 			 const Eigen::Matrix3f& trans)
-		: IInfiniteLight(id, name)
+		: IInfiniteLight(id, name, transform)
 		, mSpectrum(SUN_WAVELENGTH_SAMPLES, SUN_WAVELENGTH_START, SUN_WAVELENGTH_END)
 		, mEA(ea)
 		, mDirection(trans * normalMatrix() * ea.toDirection().normalized())
@@ -44,15 +45,16 @@ public:
 			mSpectrum[i] = computeSunRadiance(mSpectrum.wavelengthStart() + i * mSpectrum.delta(),
 											  mEA.theta(), turbidity)
 						   * scale;
-						   
-		if(mServiceObserver)
-			mCBID = mServiceObserver->registerAfterSceneBuild([this](Scene* scene){
-				mSceneRadius   = scene->boundingSphere().radius();
+
+		if (mServiceObserver)
+			mCBID = mServiceObserver->registerAfterSceneBuild([this](Scene* scene) {
+				mSceneRadius = scene->boundingSphere().radius();
 			});
 	}
 
-	virtual ~SunLight() {
-		if(mServiceObserver)
+	virtual ~SunLight()
+	{
+		if (mServiceObserver)
 			mServiceObserver->unregister(mCBID);
 	}
 
@@ -86,7 +88,7 @@ public:
 		} else if (in.SamplePosition) {
 			const Vector2f uv = mSceneRadius * Concentric::square2disc(Vector2f(in.RND(2), in.RND(3)));
 			out.LightPosition = mSceneRadius * out.Outgoing + uv(0) * mDx + uv(1) * mDy;
-			out.PDF_S *= 1/(2*PR_PI*mSceneRadius);
+			out.PDF_S *= 1 / (2 * PR_PI * mSceneRadius);
 		}
 
 		PR_OPT_LOOP
@@ -118,17 +120,18 @@ private:
 	const float mPDF;
 
 	float mSceneRadius;
-	
+
 	const std::shared_ptr<ServiceObserver> mServiceObserver;
 	ServiceObserver::CallbackID mCBID;
 };
 
 class SunDeltaLight : public IInfiniteLight {
 public:
-	SunDeltaLight(const std::shared_ptr<ServiceObserver>& so, 
-			 	  uint32 id, const std::string& name, const ElevationAzimuth& ea, float turbidity, float scale,
+	SunDeltaLight(const std::shared_ptr<ServiceObserver>& so,
+				  uint32 id, const std::string& name, const Transformf& transform,
+				  const ElevationAzimuth& ea, float turbidity, float scale,
 				  const Eigen::Matrix3f& trans)
-		: IInfiniteLight(id, name)
+		: IInfiniteLight(id, name, transform)
 		, mSpectrum(SUN_WAVELENGTH_SAMPLES, SUN_WAVELENGTH_START, SUN_WAVELENGTH_END)
 		, mEA(ea)
 		, mDirection(trans * normalMatrix() * ea.toDirection().normalized())
@@ -142,15 +145,16 @@ public:
 			mSpectrum[i] = computeSunRadiance(mSpectrum.wavelengthStart() + i * mSpectrum.delta(),
 											  mEA.theta(), turbidity)
 						   * solid_angle * scale;
-			
-		if(mServiceObserver)
-			mCBID = mServiceObserver->registerAfterSceneBuild([this](Scene* scene){
-				mSceneRadius   = scene->boundingSphere().radius();
+
+		if (mServiceObserver)
+			mCBID = mServiceObserver->registerAfterSceneBuild([this](Scene* scene) {
+				mSceneRadius = scene->boundingSphere().radius();
 			});
 	}
 
-	virtual ~SunDeltaLight() {
-		if(mServiceObserver)
+	virtual ~SunDeltaLight()
+	{
+		if (mServiceObserver)
 			mServiceObserver->unregister(mCBID);
 	}
 
@@ -181,7 +185,7 @@ public:
 		} else if (in.SamplePosition) {
 			const Vector2f uv = mSceneRadius * Concentric::square2disc(Vector2f(in.RND(0), in.RND(1)));
 			out.LightPosition = mSceneRadius * out.Outgoing + uv(0) * mDx + uv(1) * mDy;
-			out.PDF_S = 1/(2*PR_PI*mSceneRadius);
+			out.PDF_S		  = 1 / (2 * PR_PI * mSceneRadius);
 		}
 	}
 
@@ -229,9 +233,9 @@ public:
 		const std::shared_ptr<ServiceObserver> so = ctx.hasEnvironment() ? ctx.environment()->serviceObserver() : nullptr;
 
 		if (radius <= PR_EPSILON)
-			return std::make_shared<SunDeltaLight>(so, id, name, sunEA, turbidity, scale, trans);
+			return std::make_shared<SunDeltaLight>(so, id, name, ctx.transform(), sunEA, turbidity, scale, trans);
 		else
-			return std::make_shared<SunLight>(so, id, name, sunEA,
+			return std::make_shared<SunLight>(so, id, name, ctx.transform(), sunEA,
 											  turbidity, radius, scale, trans);
 	}
 

@@ -13,11 +13,12 @@ enum EntityFlags {
 #define ENTITY_CLASS \
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+/// Class representing a transformable. No transform changes allowed however
 class PR_LIB_CORE ITransformable {
 public:
 	ENTITY_CLASS
 
-	ITransformable(uint32 id, const std::string& name);
+	ITransformable(uint32 id, const std::string& name, const Transformf& transform);
 	virtual ~ITransformable();
 
 	inline uint32 id() const;
@@ -31,33 +32,26 @@ public:
 	inline void setFlags(uint8 f);
 	inline uint8 flags() const;
 
-	// Unfortunately we have to disable alignment for the transformations.
-	// A SIGSEV is raised in release build otherwise.
-	// It may be a bug in Eigen or somewhere in my own code.
-	typedef Eigen::Transform<float, 3, Eigen::Affine, Eigen::DontAlign> Transform;
-	inline void setTransform(const Transform& transform);
-	inline Transform transform() const;
-	inline Transform invTransform() const;
+	inline const Transformf& transform() const;
+	inline const Transformf& invTransform() const;
 	inline float volumeScalefactor() const;
 
 	/* Matrix to be used by normals */
-	inline Eigen::Matrix3f normalMatrix() const;
-	inline Eigen::Matrix3f invNormalMatrix() const;
+	inline const Eigen::Matrix3f& normalMatrix() const;
+	inline const Eigen::Matrix3f& invNormalMatrix() const;
 
 	virtual std::string dumpInformation() const;
 
 private:
 	std::string mName;
-	uint32 mID;
+	const uint32 mID;
 	uint8 mFlags;
 
-	Transform mTransform;
-
-	void cacheInternal();
-	float mJacobianDeterminant;
-	Transform mInvTransformCache;
-	Eigen::Matrix3f mNormalMatrixCache;
-	Eigen::Matrix3f mInvNormalMatrixCache;
+	const Transformf mTransform;
+	const Transformf mInvTransformCache;
+	const Eigen::Matrix3f mNormalMatrixCache;
+	const Eigen::Matrix3f mInvNormalMatrixCache;
+	const float mJacobianDeterminant;
 };
 } // namespace PR
 

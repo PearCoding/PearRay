@@ -15,10 +15,10 @@ class OrthoCamera : public ICamera {
 public:
 	ENTITY_CLASS
 
-	OrthoCamera(uint32 id, const std::string& name,
+	OrthoCamera(uint32 id, const std::string& name, const Transformf& transform,
 				float w, float h, float nearT, float farT,
 				const Vector3f& ld, const Vector3f& lr, const Vector3f& lu)
-		: ICamera(id, name)
+		: ICamera(id, name, transform)
 		, mWidth(w)
 		, mHeight(h)
 		, mNearT(nearT)
@@ -88,7 +88,7 @@ public:
 		const ParameterGroup& params = ctx.parameters();
 		std::string name			 = params.getString("name", "__unnamed__");
 
-		return std::make_shared<OrthoCamera>(id, name,
+		return std::make_shared<OrthoCamera>(id, name, ctx.transform(),
 											 params.getNumber("width", 1),
 											 params.getNumber("height", 1),
 											 params.getNumber("near", NEAR_DEFAULT),

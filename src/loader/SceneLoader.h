@@ -35,8 +35,6 @@ private:
 														  const LoadOptions& opts,
 														  SceneLoadContext& ctx);
 	static void setupEnvironment(const std::vector<DL::DataGroup>& groups, SceneLoadContext& ctx);
-	static void setupTransformable(const DL::DataGroup& group,
-								   const std::shared_ptr<PR::ITransformable>& entity, SceneLoadContext& ctx);
 	static void addCamera(const DL::DataGroup& group, SceneLoadContext& ctx);
 	static void addEmission(const DL::DataGroup& group, SceneLoadContext& ctx);
 	static void addEntity(const DL::DataGroup& group,
@@ -58,5 +56,7 @@ private:
 	static Parameter unpackShadingNetwork(const DL::DataGroup& group, SceneLoadContext& ctx);
 
 	static void include(const std::string& filename, SceneLoadContext& ctx);
+
+	static Transformf extractTransform(const DL::DataGroup& group);
 };
 } // namespace PR

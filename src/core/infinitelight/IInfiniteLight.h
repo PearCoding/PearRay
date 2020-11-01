@@ -31,7 +31,7 @@ struct PR_LIB_CORE InfiniteLightSampleOutput {
 class RenderTileSession;
 class PR_LIB_CORE IInfiniteLight : public ITransformable {
 public:
-	IInfiniteLight(uint32 id, const std::string& name);
+	IInfiniteLight(uint32 id, const std::string& name, const Transformf& transform);
 	virtual ~IInfiniteLight() {}
 
 	virtual bool hasDeltaDistribution() const { return false; }

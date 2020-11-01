@@ -2,8 +2,8 @@
 #include "Logger.h"
 
 namespace PR {
-IEntity::IEntity(uint32 id, uint32 emission_id, const std::string& name)
-	: ITransformable(id, name)
+IEntity::IEntity(uint32 id, uint32 emission_id, const std::string& name, const Transformf& transform)
+	: ITransformable(id, name, transform)
 	, mVisibilityFlags(EVF_All)
 	, mEmissionID(emission_id)
 {

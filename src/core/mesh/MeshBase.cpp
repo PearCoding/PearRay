@@ -128,11 +128,8 @@ float MeshBase::surfaceArea(uint32 matID, const Eigen::Affine3f& transform) cons
 {
 	PR_PROFILE_THIS;
 	
-	if (matID == PR_INVALID_ID)
+	if (matID == PR_INVALID_ID || !(features() & MF_HAS_MATERIAL))
 		return surfaceArea(transform);
-
-	if (!(features() & MF_HAS_MATERIAL))
-		return 0;
 
 	float a		   = 0;
 	size_t counter = 0;

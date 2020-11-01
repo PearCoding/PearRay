@@ -20,13 +20,14 @@ class SphereEntity : public IEntity {
 public:
 	ENTITY_CLASS
 
-	SphereEntity(uint32 id, const std::string& name, float r,
+	SphereEntity(uint32 id, const std::string& name, const Transformf& transform,
+				 float r,
 				 uint32 matID, uint32 lightID)
-		: IEntity(id, lightID, name)
+		: IEntity(id, lightID, name, transform)
 		, mSphere(r)
 		, mMaterialID(matID)
 		, mOptimizeSampling(true)
-		, mPDF_Cache(r > PR_EPSILON ? 1/worldSurfaceArea(PR_INVALID_ID) : 0.0f)
+		, mPDF_Cache(r > PR_EPSILON ? 1 / worldSurfaceArea(PR_INVALID_ID) : 0.0f)
 	{
 	}
 
@@ -37,7 +38,7 @@ public:
 		return "sphere";
 	}
 
-	float localSurfaceArea(uint32 id) const override
+	virtual float localSurfaceArea(uint32 id) const override
 	{
 		if (id == PR_INVALID_ID || id == mMaterialID)
 			return mSphere.surfaceArea();
@@ -45,7 +46,7 @@ public:
 			return 0;
 	}
 
-	float worldSurfaceArea(uint32 id) const override
+	virtual float worldSurfaceArea(uint32 id) const override
 	{
 		if (id == PR_INVALID_ID || id == mMaterialID) {
 			Eigen::Matrix3f sca;
@@ -67,7 +68,7 @@ public:
 
 	bool isCollidable() const override
 	{
-		return mMaterialID != PR_INVALID_ID && mSphere.radius() >= PR_EPSILON;
+		return mSphere.radius() >= PR_EPSILON;
 	}
 
 	float collisionCost() const override
@@ -149,7 +150,6 @@ public:
 
 	inline void optimizeSampling(bool b) { mOptimizeSampling = b; }
 
-
 private:
 	const Sphere mSphere;
 	const uint32 mMaterialID;
@@ -179,7 +179,7 @@ public:
 		if (ems)
 			emsID = ems->id();
 
-		auto obj = std::make_shared<SphereEntity>(id, name, r, matID, emsID);
+		auto obj = std::make_shared<SphereEntity>(id, name, ctx.transform(), r, matID, emsID);
 		obj->optimizeSampling(params.getBool("optimize_sampling", true));
 		return obj;
 	}

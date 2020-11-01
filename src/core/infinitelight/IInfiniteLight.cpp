@@ -3,8 +3,8 @@
 #include <sstream>
 
 namespace PR {
-IInfiniteLight::IInfiniteLight(uint32 id, const std::string& name)
-	: ITransformable(id, name)
+IInfiniteLight::IInfiniteLight(uint32 id, const std::string& name, const Transformf& transform)
+	: ITransformable(id, name, transform)
 {
 }
 

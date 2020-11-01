@@ -17,10 +17,10 @@ class DiskEntity : public IEntity {
 public:
 	ENTITY_CLASS
 
-	DiskEntity(uint32 id, const std::string& name,
+	DiskEntity(uint32 id, const std::string& name, const Transformf& transform, 
 			   float radius,
 			   int32 matID, int32 lightID)
-		: IEntity(id, lightID, name)
+		: IEntity(id, lightID, name, transform)
 		, mDisk(radius)
 		, mMaterialID(matID)
 		, mPDF_Cache(radius > PR_EPSILON ? 1.0f / worldSurfaceArea() : 0)
@@ -130,7 +130,7 @@ public:
 		if (ems)
 			emsID = ems->id();
 
-		return std::make_shared<DiskEntity>(id, name, radius, matID, emsID);
+		return std::make_shared<DiskEntity>(id, name, ctx.transform(), radius, matID, emsID);
 	}
 
 	const std::vector<std::string>& getNames() const

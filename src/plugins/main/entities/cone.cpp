@@ -21,10 +21,10 @@ class ConeEntity : public IEntity {
 public:
 	ENTITY_CLASS
 
-	ConeEntity(uint32 id, const std::string& name,
+	ConeEntity(uint32 id, const std::string& name, const Transformf& transform,
 			   float radius, float height,
 			   uint32 matID, uint32 lightID)
-		: IEntity(id, lightID, name)
+		: IEntity(id, lightID, name, transform)
 		, mDisk(radius)
 		, mHeight(height)
 		, mMaterialID(matID)
@@ -239,7 +239,7 @@ public:
 		if (ems)
 			emsID = ems->id();
 
-		auto obj = std::make_shared<ConeEntity>(id, name, radius, height, matID, emsID);
+		auto obj = std::make_shared<ConeEntity>(id, name, ctx.transform(), radius, height, matID, emsID);
 		if (params.getBool("center_on", false))
 			obj->centerOn();
 

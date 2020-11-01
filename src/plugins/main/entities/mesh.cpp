@@ -74,11 +74,11 @@ class MeshEntity : public IEntity {
 public:
 	ENTITY_CLASS
 
-	MeshEntity(uint32 id, const std::string& name,
+	MeshEntity(uint32 id, const std::string& name, const Transformf& transform,
 			   const std::shared_ptr<Mesh>& mesh,
 			   const std::vector<uint32>& materials,
 			   uint32 lightID)
-		: IEntity(id, lightID, name)
+		: IEntity(id, lightID, name, transform)
 		, mMaterials(materials)
 		, mMesh(mesh)
 		, mBoundingBox(mesh->base()->constructBoundingBox())
@@ -91,7 +91,7 @@ public:
 		return "mesh";
 	}
 
-	float localSurfaceArea(uint32 id) const override
+	virtual float localSurfaceArea(uint32 id) const override
 	{
 		return mMesh->base()->surfaceArea(id, Eigen::Affine3f::Identity());
 	}
@@ -106,7 +106,7 @@ public:
 		return (float)mMesh->base()->faceCount();
 	}
 
-	BoundingBox localBoundingBox() const override
+	virtual BoundingBox localBoundingBox() const override
 	{
 		return mBoundingBox;
 	}
@@ -243,11 +243,11 @@ public:
 			}
 
 			if (mesh->features() & MF_HAS_UV)
-				return std::make_shared<MeshEntity<true>>(id, name,
+				return std::make_shared<MeshEntity<true>>(id, name, ctx.transform(),
 														  mesh_p,
 														  materials, emsID);
 			else
-				return std::make_shared<MeshEntity<false>>(id, name,
+				return std::make_shared<MeshEntity<false>>(id, name, ctx.transform(),
 														   mesh_p,
 														   materials, emsID);
 		}
