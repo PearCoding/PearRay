@@ -142,8 +142,8 @@ public:
 		material->sample(sin, sout, session);
 
 		if (!material->hasDeltaDistribution()) {
-			sout.Weight /= sout.PDF_S[0];
-			nextPDF = sout.PDF_S[0];
+			sout.Weight /= sout.ForwardPDF_S[0];
+			nextPDF = sout.ForwardPDF_S[0];
 		} else {
 			nextPDF = 1;
 		}
@@ -165,7 +165,7 @@ public:
 		if (material->isSpectralVarying())
 			alphaM *= SpectralBlobUtils::HeroOnly();
 
-		if (alphaM.isZero(PR_EPSILON) || PR_UNLIKELY(sout.PDF_S[0] <= PR_EPSILON))
+		if (alphaM.isZero(PR_EPSILON) || PR_UNLIKELY(sout.ForwardPDF_S[0] <= PR_EPSILON))
 			return {};
 
 		path.addToken(sout.Type);
@@ -246,8 +246,8 @@ public:
 		material->sample(sin, sout, session);
 
 		if (!material->hasDeltaDistribution()) {
-			sout.Weight /= sout.PDF_S[0];
-			nextPDF = sout.PDF_S[0];
+			sout.Weight /= sout.ForwardPDF_S[0];
+			nextPDF = sout.ForwardPDF_S[0];
 		} else {
 			nextPDF = 1;
 		}
@@ -269,7 +269,7 @@ public:
 		if (material->isSpectralVarying())
 			alphaM *= SpectralBlobUtils::HeroOnly();
 
-		if (alphaM.isZero(PR_EPSILON) || PR_UNLIKELY(sout.PDF_S[0] <= PR_EPSILON))
+		if (alphaM.isZero(PR_EPSILON) || PR_UNLIKELY(sout.ForwardPDF_S[0] <= PR_EPSILON))
 			return {};
 
 		path.addToken(sout.Type);

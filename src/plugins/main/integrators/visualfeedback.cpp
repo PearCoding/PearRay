@@ -206,13 +206,14 @@ public:
 					MaterialEvalOutput eval_out;
 					mat->eval(eval_in, eval_out, session);
 
-					const float weightDiff = (samp_out.Weight - eval_out.Weight).cwiseAbs().sum();
-					const float relPDFDiff = (samp_out.PDF_S - eval_out.PDF_S).cwiseAbs().sum();
+					const float weightDiff		   = (samp_out.Weight - eval_out.Weight).cwiseAbs().sum();
+					const float relForwardPDFDiff  = (samp_out.ForwardPDF_S - eval_out.ForwardPDF_S).cwiseAbs().sum();
+					const float relBackwardPDFDiff = (samp_out.BackwardPDF_S - eval_out.BackwardPDF_S).cwiseAbs().sum();
 
 					const auto r = SpectralUpsampler::compute(mParametric.Red, spt.Ray.WavelengthNM);
 					const auto g = SpectralUpsampler::compute(mParametric.Green, spt.Ray.WavelengthNM);
 					const auto b = SpectralUpsampler::compute(mParametric.Blue, spt.Ray.WavelengthNM);
-					radiance	 = r * (1 - weightDiff) + g * (1 - relPDFDiff) + b;
+					radiance	 = r * (1 - weightDiff) + g * (1 - relForwardPDFDiff) + b * (1 - relBackwardPDFDiff);
 				}
 			}
 			}

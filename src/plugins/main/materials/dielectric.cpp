@@ -50,15 +50,17 @@ public:
 		PR_PROFILE_THIS;
 
 		// Delta distributions do not allow evaluation
-		out.PDF_S  = 0.0f;
-		out.Weight = SpectralBlob::Zero();
+		out.ForwardPDF_S  = 0.0f;
+		out.BackwardPDF_S = 0.0f;
+		out.Weight		  = SpectralBlob::Zero();
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
 				const RenderTileSession&) const override
 	{
 		PR_PROFILE_THIS;
-		out.PDF_S = 1;
+		out.ForwardPDF_S  = 1;
+		out.BackwardPDF_S = 1;
 
 		float eta;
 		float F = fresnelTermHero(in.Context.NdotV(), in.ShadingContext, eta);
@@ -66,7 +68,7 @@ public:
 		if constexpr (IsThin) {
 			// Account for scattering between interfaces
 			if (F < 1.0f)
-				F += (1 - F) * F / (F + 1); 
+				F += (1 - F) * F / (F + 1);
 		}
 
 		if (in.RND[0] <= F) {

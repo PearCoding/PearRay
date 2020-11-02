@@ -29,9 +29,10 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		out.Weight = mSpecularity->eval(in.ShadingContext);
-		out.PDF_S  = 1;
-		out.Type   = MST_SpecularReflection;
+		out.Weight		  = mSpecularity->eval(in.ShadingContext);
+		out.ForwardPDF_S  = 1;
+		out.BackwardPDF_S = 1;
+		out.Type		  = MST_SpecularReflection;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -39,10 +40,11 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		out.Weight	 = mSpecularity->eval(in.ShadingContext);
-		out.Type	 = MST_SpecularReflection;
-		out.PDF_S	 = 1;
-		out.L = Scattering::reflect(in.Context.V);
+		out.Weight		  = mSpecularity->eval(in.ShadingContext);
+		out.Type		  = MST_SpecularReflection;
+		out.ForwardPDF_S  = 1;
+		out.BackwardPDF_S = 1;
+		out.L			  = Scattering::reflect(in.Context.V);
 	}
 
 	std::string dumpInformation() const override

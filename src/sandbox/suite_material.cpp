@@ -47,7 +47,8 @@ static void handle_material_eval_case(const std::string& name,
 	IntersectionPoint spt = standardSP();
 
 	std::vector<float> rgb(WIDTH * HEIGHT * 3);
-	std::vector<float> pdf(WIDTH * HEIGHT * 3);
+	std::vector<float> fpdf(WIDTH * HEIGHT * 3);
+	std::vector<float> bpdf(WIDTH * HEIGHT * 3);
 	float sum = 0.0f;
 	for (size_t y = 0; y < HEIGHT; ++y) {
 		for (size_t x = 0; x < WIDTH; ++x) {
@@ -60,12 +61,15 @@ static void handle_material_eval_case(const std::string& name,
 			MaterialEvalOutput out;
 			material->eval(in, out, RenderTileSession());
 
-			pdf[y * WIDTH * 3 + x * 3 + 0] = out.PDF_S[0];
-			pdf[y * WIDTH * 3 + x * 3 + 1] = out.PDF_S[1];
-			pdf[y * WIDTH * 3 + x * 3 + 2] = out.PDF_S[2];
-			rgb[y * WIDTH * 3 + x * 3 + 0] = out.Weight[0];
-			rgb[y * WIDTH * 3 + x * 3 + 1] = out.Weight[1];
-			rgb[y * WIDTH * 3 + x * 3 + 2] = out.Weight[2];
+			fpdf[y * WIDTH * 3 + x * 3 + 0] = out.ForwardPDF_S[0];
+			fpdf[y * WIDTH * 3 + x * 3 + 1] = out.ForwardPDF_S[1];
+			fpdf[y * WIDTH * 3 + x * 3 + 2] = out.ForwardPDF_S[2];
+			bpdf[y * WIDTH * 3 + x * 3 + 0] = out.BackwardPDF_S[0];
+			bpdf[y * WIDTH * 3 + x * 3 + 1] = out.BackwardPDF_S[1];
+			bpdf[y * WIDTH * 3 + x * 3 + 2] = out.BackwardPDF_S[2];
+			rgb[y * WIDTH * 3 + x * 3 + 0]	= out.Weight[0];
+			rgb[y * WIDTH * 3 + x * 3 + 1]	= out.Weight[1];
+			rgb[y * WIDTH * 3 + x * 3 + 2]	= out.Weight[2];
 
 			sum += out.Weight[0] * std::abs(std::sin(theta)) * 0.5f * (THETA_D * PHI_D);
 		}
@@ -76,7 +80,8 @@ static void handle_material_eval_case(const std::string& name,
 		std::cout << "WARNING: Not energy conserving!" << std::endl;
 
 	save_image(DIR + name + ".exr", WIDTH, HEIGHT, rgb);
-	save_image(DIR + name + "_pdf.exr", WIDTH, HEIGHT, pdf);
+	save_image(DIR + name + "_forward_pdf.exr", WIDTH, HEIGHT, fpdf);
+	save_image(DIR + name + "_backward_pdf.exr", WIDTH, HEIGHT, bpdf);
 }
 
 static void handle_material_sample_case(const std::string& name,
@@ -85,7 +90,8 @@ static void handle_material_sample_case(const std::string& name,
 	IntersectionPoint spt = standardSP();
 
 	std::vector<float> rgb(WIDTH * HEIGHT * 3);
-	std::vector<float> pdf(WIDTH * HEIGHT * 3);
+	std::vector<float> fpdf(WIDTH * HEIGHT * 3);
+	std::vector<float> bpdf(WIDTH * HEIGHT * 3);
 	std::vector<float> dir(WIDTH * HEIGHT);
 	for (size_t y = 0; y < HEIGHT; ++y) {
 		for (size_t x = 0; x < WIDTH; ++x) {
@@ -93,12 +99,15 @@ static void handle_material_sample_case(const std::string& name,
 			MaterialSampleOutput out;
 			material->sample(in, out, RenderTileSession());
 
-			pdf[y * WIDTH * 3 + x * 3 + 0] = out.PDF_S[0];
-			pdf[y * WIDTH * 3 + x * 3 + 1] = out.PDF_S[1];
-			pdf[y * WIDTH * 3 + x * 3 + 2] = out.PDF_S[2];
-			rgb[y * WIDTH * 3 + x * 3 + 0] = out.Weight[0];
-			rgb[y * WIDTH * 3 + x * 3 + 1] = out.Weight[1];
-			rgb[y * WIDTH * 3 + x * 3 + 2] = out.Weight[2];
+			fpdf[y * WIDTH * 3 + x * 3 + 0] = out.ForwardPDF_S[0];
+			fpdf[y * WIDTH * 3 + x * 3 + 1] = out.ForwardPDF_S[1];
+			fpdf[y * WIDTH * 3 + x * 3 + 2] = out.ForwardPDF_S[2];
+			bpdf[y * WIDTH * 3 + x * 3 + 0] = out.BackwardPDF_S[0];
+			bpdf[y * WIDTH * 3 + x * 3 + 1] = out.BackwardPDF_S[1];
+			bpdf[y * WIDTH * 3 + x * 3 + 2] = out.BackwardPDF_S[2];
+			rgb[y * WIDTH * 3 + x * 3 + 0]	= out.Weight[0];
+			rgb[y * WIDTH * 3 + x * 3 + 1]	= out.Weight[1];
+			rgb[y * WIDTH * 3 + x * 3 + 2]	= out.Weight[2];
 
 			size_t dx = std::max<int>(0,
 									  std::min<int>(WIDTH - 1,
@@ -112,7 +121,8 @@ static void handle_material_sample_case(const std::string& name,
 	}
 
 	save_image(DIR + name + ".exr", WIDTH, HEIGHT, rgb);
-	save_image(DIR + name + "_pdf.exr", WIDTH, HEIGHT, pdf);
+	save_image(DIR + name + "_forward_pdf.exr", WIDTH, HEIGHT, fpdf);
+	save_image(DIR + name + "_backward_pdf.exr", WIDTH, HEIGHT, bpdf);
 	save_normalized_gray(DIR + name + "_dir.exr", WIDTH, HEIGHT, dir);
 }
 
@@ -138,7 +148,7 @@ static void mat_lambert(Environment& env)
 	ParameterGroup params;
 	params.addParameter("albedo", Parameter::fromString("white"));
 	ctx.parameters() = params;
-	auto mat	   = fac->create(id, "lambert", ctx);
+	auto mat		 = fac->create(id, "lambert", ctx);
 	if (!mat) {
 		std::cout << "ERROR: Can not instantiate lambert material!" << std::endl;
 		return;

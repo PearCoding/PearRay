@@ -181,10 +181,11 @@ public:
 							  sheen, sheenTint, clearcoat, clearcoatGloss)
 					 * std::abs(in.Context.NdotL());
 
-		float aspect = std::sqrt(1 - anisotropic * 0.9f);
-		float ax	 = std::max(0.001f, roughness * roughness / aspect);
-		float ay	 = std::max(0.001f, roughness * roughness * aspect);
-		out.PDF_S	 = Microfacet::pdf_ggx(in.Context.L, ax, ay); // FIXME: Use NdotH instead of NdotL!
+		float aspect	  = std::sqrt(1 - anisotropic * 0.9f);
+		float ax		  = std::max(0.001f, roughness * roughness / aspect);
+		float ay		  = std::max(0.001f, roughness * roughness * aspect);
+		out.ForwardPDF_S  = Microfacet::pdf_ggx(in.Context.L, ax, ay); // FIXME: Use NdotH instead of NdotL!
+		out.BackwardPDF_S = Microfacet::pdf_ggx(in.Context.V, ax, ay); // FIXME: Use NdotH instead of NdotL!
 
 		if (roughness < 0.5f)
 			out.Type = MST_DiffuseReflection;
@@ -201,22 +202,25 @@ public:
 		float pdf_s;
 		out.L = Microfacet::sample_ggx_vndf(u, v, in.Context.V, ax, ay, pdf_s);
 		//out.Outgoing = Microfacet::sample_ndf_ggx(u, v, ax, ay, pdf_s);
-		out.PDF_S = pdf_s;
+		out.ForwardPDF_S  = pdf_s;
+		out.BackwardPDF_S = Microfacet::pdf_ggx(in.Context.V, ax, ay);
 
 		const float refInvPdf = 2 * std::max(0.0f, out.L.dot(in.Context.V));
-		if (refInvPdf > PR_EPSILON)
-			out.PDF_S /= refInvPdf;
-		else
-			out.PDF_S = 0.0f; // Drop sample
-
-		if (out.L[2] <= PR_EPSILON)
-			out.PDF_S = 0;
+		if (refInvPdf > PR_EPSILON && out.L[2] > PR_EPSILON) {
+			out.ForwardPDF_S /= refInvPdf;
+			out.BackwardPDF_S /= refInvPdf;
+		} else { // Drop sample
+			out.ForwardPDF_S  = 0.0f;
+			out.BackwardPDF_S = 0.0f;
+		}
 
 		// Reflect incoming ray by the calculated half vector
 		out.L = Scattering::reflect(in.Context.V, out.L).normalized();
 
-		if (out.L[2] <= PR_EPSILON)
-			out.PDF_S = 0;
+		if (out.L[2] <= PR_EPSILON) {
+			out.ForwardPDF_S  = 0.0f;
+			out.BackwardPDF_S = 0.0f;
+		}
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,

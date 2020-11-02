@@ -149,7 +149,7 @@ public:
 
 			const float jacobian = 1 / (4 * HdotV * HdotV);
 			out.Weight			 = mSpecularity->eval(in.ShadingContext) * F * (gd * jacobian);
-			out.PDF_S			 = F * pdf * jacobian;
+			out.ForwardPDF_S	 = F * pdf * jacobian;
 		} else {
 			const SpectralBlob weight = mTransmission->eval(in.ShadingContext);
 
@@ -168,8 +168,8 @@ public:
 				const float HdotL = H.dot((Vector3f)in.Context.L);
 
 				if (HdotV * HdotL >= 0) { // Same side
-					out.Weight[i] = 0;
-					out.PDF_S[i]  = 0;
+					out.Weight[i]		= 0;
+					out.ForwardPDF_S[i] = 0;
 				}
 
 				float pdf;
@@ -181,10 +181,11 @@ public:
 				// TODO: Deaccount for solid angle compression (see mitsuba & pbrt) when non-radiance mode is evaluated
 				const float factor = n2[i] / n1[i];
 
-				out.Weight[i] = (1 - F) * weight[i] * gd * jacobian * factor * factor;
-				out.PDF_S[i]  = (1 - F) * pdf * jacobian;
+				out.Weight[i]		= (1 - F) * weight[i] * gd * jacobian * factor * factor;
+				out.ForwardPDF_S[i] = (1 - F) * pdf * jacobian;
 			}
 		}
+		out.BackwardPDF_S = out.ForwardPDF_S;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -214,8 +215,9 @@ public:
 
 		const float HdotV = std::abs(H.dot((Vector3f)in.Context.V));
 		if (HdotV <= PR_EPSILON) { // Giveup if V in respect to H is too close to the negative hemisphere
-			out.Weight = SpectralBlob::Zero();
-			out.PDF_S  = 0;
+			out.Weight		  = SpectralBlob::Zero();
+			out.ForwardPDF_S  = 0;
+			out.BackwardPDF_S = 0;
 			return;
 		}
 
@@ -231,8 +233,9 @@ public:
 			out.L	 = Scattering::reflect(in.Context.V, H);
 
 			if (out.L(2) <= PR_EPSILON) { // Side check
-				out.Weight = SpectralBlob::Zero();
-				out.PDF_S  = 0;
+				out.Weight		  = SpectralBlob::Zero();
+				out.ForwardPDF_S  = 0;
+				out.BackwardPDF_S = 0;
 				return;
 			}
 
@@ -243,14 +246,15 @@ public:
 			float _pdf;
 			const float gd = evalGD(H, in.Context.V, out.L, in.ShadingContext, _pdf);
 
-			out.Weight = mSpecularity->eval(in.ShadingContext) * prob * gd * jacobian;
-			out.PDF_S  = prob * pdf * jacobian;
+			out.Weight		 = mSpecularity->eval(in.ShadingContext) * prob * gd * jacobian;
+			out.ForwardPDF_S = prob * pdf * jacobian;
 		} else {
 			out.Type = MST_SpecularTransmission;
 			out.L	 = Scattering::refract(eta, HdotT, HdotV, in.Context.V, H);
 			if (out.L(2) >= PR_EPSILON) { // Side check
-				out.Weight = SpectralBlob::Zero();
-				out.PDF_S  = 0;
+				out.Weight		  = SpectralBlob::Zero();
+				out.ForwardPDF_S  = 0;
+				out.BackwardPDF_S = 0;
 				return;
 			}
 
@@ -264,9 +268,10 @@ public:
 			float _pdf;
 			const float gd = evalGD(H, in.Context.V, out.L, in.ShadingContext, _pdf);
 
-			out.Weight = mTransmission->eval(in.ShadingContext) * (1 - F) * gd * jacobian * factor * factor;
-			out.PDF_S  = (1 - F) * pdf * jacobian;
+			out.Weight		 = mTransmission->eval(in.ShadingContext) * (1 - F) * gd * jacobian * factor * factor;
+			out.ForwardPDF_S = (1 - F) * pdf * jacobian;
 		}
+		out.BackwardPDF_S = out.ForwardPDF_S;
 	}
 
 	std::string dumpInformation() const override

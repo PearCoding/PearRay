@@ -195,23 +195,26 @@ public:
 		SpectralBlob Spec = SpectralBlob::Zero();
 		if (in.Context.NdotL() * in.Context.NdotV() > PR_EPSILON) {
 			float pdf_s;
-			Vector3f H = Scattering::halfway_reflection(in.Context.V, in.Context.L);
-			Spec	   = mSpecularity->eval(sctx) * evalSpec(in.Context, H, sctx, pdf_s);
-			out.PDF_S  = SpectralBlob(pdf_s);
+			Vector3f H		  = Scattering::halfway_reflection(in.Context.V, in.Context.L);
+			Spec			  = mSpecularity->eval(sctx) * evalSpec(in.Context, H, sctx, pdf_s);
+			out.ForwardPDF_S  = SpectralBlob(pdf_s);
+			out.BackwardPDF_S = SpectralBlob(pdf_s); // Really?
 		}
 
-		out.PDF_S  = PR_INV_PI * (1 - F) + out.PDF_S * F;
-		out.Weight = Diff * (1 - F) + Spec * F;
+		out.ForwardPDF_S  = PR_INV_PI * (1 - F) + out.ForwardPDF_S * F;
+		out.BackwardPDF_S = PR_INV_PI * (1 - F) + out.BackwardPDF_S * F;
+		out.Weight		  = Diff * (1 - F) + Spec * F;
 		out.Weight *= std::abs(in.Context.NdotL());
 		out.Type = MST_DiffuseReflection;
 	}
 
-	void sampleDiffusePath(const MaterialSampleInput&, const ShadingContext& sctx, float u, float v, MaterialSampleOutput& out) const
+	void sampleDiffusePath(const MaterialSampleInput& in, const ShadingContext& sctx, float u, float v, MaterialSampleOutput& out) const
 	{
-		out.L	   = Sampling::cos_hemi(u, v);
-		out.PDF_S  = Sampling::cos_hemi_pdf(out.L(2));
-		out.Weight = PR_INV_PI * mAlbedo->eval(sctx) * out.L[2];
-		out.Type   = MST_DiffuseReflection;
+		out.L			  = Sampling::cos_hemi(u, v);
+		out.ForwardPDF_S  = Sampling::cos_hemi_pdf(out.L(2));
+		out.BackwardPDF_S = Sampling::cos_hemi_pdf(in.Context.NdotV());
+		out.Weight		  = PR_INV_PI * mAlbedo->eval(sctx) * out.L[2];
+		out.Type		  = MST_DiffuseReflection;
 	}
 
 	void sampleSpecularPath(const MaterialSampleInput& in, const ShadingContext& sctx, float u, float v, MaterialSampleOutput& out) const
@@ -247,8 +250,9 @@ public:
 		else
 			pdf_s = 0;
 
-		out.Type  = MST_SpecularReflection;
-		out.PDF_S = SpectralBlob(pdf_s);
+		out.Type		  = MST_SpecularReflection;
+		out.ForwardPDF_S  = SpectralBlob(pdf_s);
+		out.BackwardPDF_S = SpectralBlob(pdf_s);
 
 		float _ignore;
 		out.Weight = mSpecularity->eval(sctx) * evalSpec(in.Context.expand(out.L), O, sctx, _ignore) * NdotL;
@@ -265,21 +269,26 @@ public:
 
 		if (in.RND[0] <= decision_f) {
 			sampleSpecularPath(in, sctx, in.RND[0] / decision_f, in.RND[1], out);
-			out.PDF_S *= decision_f;
+			out.ForwardPDF_S *= decision_f;
+			out.BackwardPDF_S *= decision_f;
 			out.Type = MST_SpecularReflection;
 		} else if (mFresnelMode == FM_Conductor) {
 			// Absorb
-			out.Weight = 0.0f;
-			out.PDF_S  = 0.0f;
+			out.Weight		  = 0.0f;
+			out.ForwardPDF_S  = 0.0f;
+			out.BackwardPDF_S = 0.0f;
 		} else {
 			sampleDiffusePath(in, sctx, (in.RND[0] - decision_f) / (1 - decision_f), in.RND[1], out);
-			out.PDF_S *= 1.0f - decision_f;
+			out.ForwardPDF_S *= 1.0f - decision_f;
+			out.BackwardPDF_S *= 1.0f - decision_f;
 			out.Type = MST_DiffuseReflection;
 		}
 
 		// No translucent
-		if (out.L[2] < PR_EPSILON)
-			out.PDF_S = 0;
+		if (out.L[2] < PR_EPSILON) {
+			out.ForwardPDF_S  = 0;
+			out.BackwardPDF_S = 0;
+		}
 	}
 
 	std::string dumpInformation() const override

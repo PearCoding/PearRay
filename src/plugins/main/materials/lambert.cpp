@@ -26,10 +26,11 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		const float dot = std::max(0.0f, in.Context.NdotL());
-		out.Weight		= mAlbedo->eval(in.ShadingContext) * dot * PR_INV_PI;
-		out.PDF_S		= Sampling::cos_hemi_pdf(dot);
-		out.Type		= MST_DiffuseReflection;
+		const float dot	  = std::max(0.0f, in.Context.NdotL());
+		out.Weight		  = mAlbedo->eval(in.ShadingContext) * dot * PR_INV_PI;
+		out.ForwardPDF_S  = Sampling::cos_hemi_pdf(dot);
+		out.BackwardPDF_S = Sampling::cos_hemi_pdf(in.Context.NdotV());
+		out.Type		  = MST_DiffuseReflection;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -39,9 +40,10 @@ public:
 
 		out.L = Sampling::cos_hemi(in.RND[0], in.RND[1]);
 
-		out.Weight = mAlbedo->eval(in.ShadingContext) * out.L(2) * PR_INV_PI;
-		out.PDF_S  = Sampling::cos_hemi_pdf(out.L(2));
-		out.Type   = MST_DiffuseReflection;
+		out.Weight		  = mAlbedo->eval(in.ShadingContext) * out.L(2) * PR_INV_PI;
+		out.ForwardPDF_S  = Sampling::cos_hemi_pdf(out.L(2));
+		out.BackwardPDF_S = Sampling::cos_hemi_pdf(in.Context.NdotV());
+		out.Type		  = MST_DiffuseReflection;
 	}
 
 	std::string dumpInformation() const override

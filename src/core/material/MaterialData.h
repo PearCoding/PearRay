@@ -14,7 +14,8 @@ struct PR_LIB_CORE MaterialEvalInput {
 
 struct PR_LIB_CORE MaterialEvalOutput {
 	SpectralBlob Weight;
-	SpectralBlob PDF_S;
+	SpectralBlob ForwardPDF_S;
+	SpectralBlob BackwardPDF_S;
 	MaterialScatteringType Type;
 };
 
@@ -29,7 +30,8 @@ struct PR_LIB_CORE MaterialSampleOutput {
 	ShadingVector L;
 
 	SpectralBlob Weight;
-	SpectralBlob PDF_S;
+	SpectralBlob ForwardPDF_S;
+	SpectralBlob BackwardPDF_S;
 	MaterialScatteringType Type;
 
 	inline Vector3f globalL(const IntersectionPoint& ip) const

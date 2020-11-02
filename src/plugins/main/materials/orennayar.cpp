@@ -52,10 +52,11 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		const float dot = std::max(0.0f, in.Context.NdotL());
-		out.Weight		= calc(in.Context.L, dot, in.Context, in.ShadingContext);
-		out.Type		= MST_DiffuseReflection;
-		out.PDF_S		= Sampling::cos_hemi_pdf(dot);
+		const float dot	  = std::max(0.0f, in.Context.NdotL());
+		out.Weight		  = calc(in.Context.L, dot, in.Context, in.ShadingContext);
+		out.Type		  = MST_DiffuseReflection;
+		out.ForwardPDF_S  = Sampling::cos_hemi_pdf(dot);
+		out.BackwardPDF_S = Sampling::cos_hemi_pdf(std::max(0.0f, in.Context.NdotV()));
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -65,10 +66,11 @@ public:
 
 		out.L = Sampling::cos_hemi(in.RND[0], in.RND[1]);
 
-		float NdotL = std::max(0.0f, out.L(2));
-		out.Weight	= calc(out.L, NdotL, in.Context, in.ShadingContext);
-		out.Type	= MST_DiffuseReflection;
-		out.PDF_S	= Sampling::cos_hemi_pdf(out.L(2));
+		float NdotL		  = std::max(0.0f, out.L(2));
+		out.Weight		  = calc(out.L, NdotL, in.Context, in.ShadingContext);
+		out.Type		  = MST_DiffuseReflection;
+		out.ForwardPDF_S  = Sampling::cos_hemi_pdf(out.L(2));
+		out.BackwardPDF_S = Sampling::cos_hemi_pdf(std::max(0.0f, in.Context.NdotV()));
 	}
 
 	std::string dumpInformation() const override
