@@ -21,14 +21,11 @@ public:
 	CIESimpleSkyLight(const std::shared_ptr<ServiceObserver>& so,
 					  uint32 id, const std::string& name, const Transformf& transform,
 					  const std::shared_ptr<FloatSpectralNode>& zenithTint,
-					  const std::shared_ptr<FloatSpectralNode>& groundTint, const std::shared_ptr<FloatScalarNode>& groundBrightness,
-					  const Eigen::Matrix3f& trans)
+					  const std::shared_ptr<FloatSpectralNode>& groundTint, const std::shared_ptr<FloatScalarNode>& groundBrightness)
 		: IInfiniteLight(id, name, transform)
 		, mZenithTint(zenithTint)
 		, mGroundTint(groundTint)
 		, mGroundBrightness(groundBrightness)
-		, mTransform(trans)
-		, mInvTransform(trans.inverse())
 		, mSceneRadius(0)
 		, mServiceObserver(so)
 	{
@@ -61,7 +58,7 @@ public:
 	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,
 				const RenderTileSession&) const override
 	{
-		out.Outgoing	  = sampleDir(in.RND[0], in.RND[1], out.PDF_S);
+		out.Outgoing	  = normalMatrix() * sampleDir(in.RND[0], in.RND[1], out.PDF_S);
 		out.LightPosition = mSceneRadius * out.Outgoing;
 		out.Radiance	  = radiance(in.WavelengthNM, out.Outgoing);
 	}
@@ -88,7 +85,7 @@ public:
 private:
 	inline SpectralBlob radiance(const SpectralBlob& wvl, const Vector3f& D) const
 	{
-		const Vector3f tD = mTransform * D;
+		const Vector3f tD = invNormalMatrix() * D;
 		ShadingContext ctx;
 		ctx.UV			 = Spherical::uv_from_normal(tD);
 		ctx.WavelengthNM = wvl;
@@ -110,8 +107,6 @@ private:
 	const std::shared_ptr<FloatSpectralNode> mZenithTint;
 	const std::shared_ptr<FloatSpectralNode> mGroundTint;
 	const std::shared_ptr<FloatScalarNode> mGroundBrightness;
-	const Eigen::Matrix3f mTransform;
-	const Eigen::Matrix3f mInvTransform;
 
 	float mSceneRadius;
 
@@ -125,9 +120,8 @@ public:
 	{
 		const ParameterGroup& params = ctx.parameters();
 
-		const std::string name		= params.getString("name", "__unknown");
-		const Eigen::Matrix3f trans = params.getMatrix3f("orientation", Eigen::Matrix3f::Identity());
-		const auto zenithTint		= ctx.lookupSpectralNode("zenith", 1.0f);
+		const std::string name = params.getString("name", "__unknown");
+		const auto zenithTint  = ctx.lookupSpectralNode("zenith", 1.0f);
 
 		std::shared_ptr<FloatSpectralNode> groundTint;
 		if (params.hasParameter("ground_tint"))
@@ -140,9 +134,9 @@ public:
 		const std::shared_ptr<ServiceObserver> so = ctx.hasEnvironment() ? ctx.environment()->serviceObserver() : nullptr;
 
 		if (type == "uniform_sky")
-			return std::make_shared<CIESimpleSkyLight<false>>(so, id, name, ctx.transform(), zenithTint, groundTint, groundBrightness, trans);
+			return std::make_shared<CIESimpleSkyLight<false>>(so, id, name, ctx.transform(), zenithTint, groundTint, groundBrightness);
 		else if (type == "cloudy_sky")
-			return std::make_shared<CIESimpleSkyLight<true>>(so, id, name, ctx.transform(), zenithTint, groundTint, groundBrightness, trans);
+			return std::make_shared<CIESimpleSkyLight<true>>(so, id, name, ctx.transform(), zenithTint, groundTint, groundBrightness);
 		else {
 			PR_ASSERT(false, "CIESkyFactory plugin does not handle all offered types of operations!");
 			return nullptr;

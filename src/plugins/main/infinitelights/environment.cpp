@@ -26,14 +26,11 @@ public:
 					 uint32 id, const std::string& name, const Transformf& transform,
 					 const std::shared_ptr<FloatSpectralNode>& spec,
 					 const std::shared_ptr<FloatSpectralNode>& background,
-					 const std::shared_ptr<Distribution2D>& distribution,
-					 const Eigen::Matrix3f& trans)
+					 const std::shared_ptr<Distribution2D>& distribution)
 		: IInfiniteLight(id, name, transform)
 		, mDistribution(distribution)
 		, mRadiance(spec)
 		, mBackground(background)
-		, mTransform(trans)
-		, mInvTransform(trans.inverse())
 		, mSceneRadius(0)
 		, mServiceObserver(so)
 	{
@@ -53,7 +50,7 @@ public:
 			  const RenderTileSession&) const override
 	{
 		ShadingContext ctx;
-		ctx.UV			 = Spherical::uv_from_normal(mInvTransform * in.Ray.Direction);
+		ctx.UV			 = Spherical::uv_from_normal(invNormalMatrix() * in.Ray.Direction);
 		ctx.WavelengthNM = in.Ray.WavelengthNM;
 
 		if constexpr (UseSplit) {
@@ -81,7 +78,7 @@ public:
 		Vector2f uv;
 		if constexpr (UseDistribution) {
 			uv			 = mDistribution->sampleContinuous(Vector2f(in.RND(0), in.RND(1)), out.PDF_S);
-			out.Outgoing = mTransform * Spherical::cartesian_from_uv(uv(0), uv(1));
+			out.Outgoing = Spherical::cartesian_from_uv(uv(0), uv(1));
 
 			const float sinTheta = std::sin(uv(1) * PR_PI);
 			const float denom	 = 2 * PR_PI * PR_PI * sinTheta;
@@ -91,6 +88,7 @@ public:
 			out.Outgoing = Sampling::cos_hemi(uv(0), uv(1));
 			out.PDF_S	 = Sampling::cos_hemi_pdf(out.Outgoing(2));
 		}
+		out.Outgoing = normalMatrix() * out.Outgoing;
 
 		ShadingContext coord;
 		coord.UV		   = uv;
@@ -117,8 +115,8 @@ public:
 
 		stream << std::boolalpha << IInfiniteLight::dumpInformation()
 			   << "  <EnvironmentLight>:" << std::endl
-			   << "    Radiance:     " << (mRadiance ? mRadiance->dumpInformation() : "NONE") << std::endl
-			   << "    Background:   " << (mBackground ? mBackground->dumpInformation() : "NONE") << std::endl;
+			   << "    Radiance:     " << mRadiance->dumpInformation() << std::endl
+			   << "    Background:   " << mBackground->dumpInformation() << std::endl;
 		if (mDistribution)
 			stream << "    Distribution: " << mDistribution->width() << "x" << mDistribution->height() << std::endl;
 		else
@@ -134,8 +132,6 @@ private:
 	// Most of the time both are the same
 	const std::shared_ptr<FloatSpectralNode> mRadiance;
 	const std::shared_ptr<FloatSpectralNode> mBackground;
-	const Eigen::Matrix3f mTransform;
-	const Eigen::Matrix3f mInvTransform;
 
 	float mSceneRadius;
 
@@ -169,8 +165,6 @@ public:
 			radiance   = background;
 		}
 
-		Eigen::Matrix3f trans = params.getMatrix3f("orientation", Eigen::Matrix3f::Identity());
-
 		Vector2i recSize = radiance->queryRecommendedSize();
 		std::shared_ptr<Distribution2D> dist;
 		if (allowDistribution && recSize(0) > 1 && recSize(1) > 1) {
@@ -203,14 +197,14 @@ public:
 
 		if (dist) {
 			if (radiance == background)
-				return std::make_shared<EnvironmentLight<true, false>>(so, id, name, ctx.transform(), radiance, background, dist, trans);
+				return std::make_shared<EnvironmentLight<true, false>>(so, id, name, ctx.transform(), radiance, background, dist);
 			else
-				return std::make_shared<EnvironmentLight<true, true>>(so, id, name, ctx.transform(), radiance, background, dist, trans);
+				return std::make_shared<EnvironmentLight<true, true>>(so, id, name, ctx.transform(), radiance, background, dist);
 		} else {
 			if (radiance == background)
-				return std::make_shared<EnvironmentLight<false, false>>(so, id, name, ctx.transform(), radiance, background, dist, trans);
+				return std::make_shared<EnvironmentLight<false, false>>(so, id, name, ctx.transform(), radiance, background, dist);
 			else
-				return std::make_shared<EnvironmentLight<false, true>>(so, id, name, ctx.transform(), radiance, background, dist, trans);
+				return std::make_shared<EnvironmentLight<false, true>>(so, id, name, ctx.transform(), radiance, background, dist);
 		}
 	}
 

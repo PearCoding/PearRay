@@ -27,12 +27,11 @@ class SunLight : public IInfiniteLight {
 public:
 	SunLight(const std::shared_ptr<ServiceObserver>& so,
 			 uint32 id, const std::string& name, const Transformf& transform,
-			 const ElevationAzimuth& ea, float turbidity, float radius, float scale,
-			 const Eigen::Matrix3f& trans)
+			 const ElevationAzimuth& ea, float turbidity, float radius, float scale)
 		: IInfiniteLight(id, name, transform)
 		, mSpectrum(SUN_WAVELENGTH_SAMPLES, SUN_WAVELENGTH_START, SUN_WAVELENGTH_END)
 		, mEA(ea)
-		, mDirection(trans * normalMatrix() * ea.toDirection().normalized())
+		, mDirection((normalMatrix() * ea.toDirection()).normalized())
 		, mCosTheta(std::cos(SUN_VIS_RADIUS * radius))
 		, mPDF(Sampling::uniform_cone_pdf(mCosTheta))
 		, mSceneRadius(0)
@@ -129,12 +128,11 @@ class SunDeltaLight : public IInfiniteLight {
 public:
 	SunDeltaLight(const std::shared_ptr<ServiceObserver>& so,
 				  uint32 id, const std::string& name, const Transformf& transform,
-				  const ElevationAzimuth& ea, float turbidity, float scale,
-				  const Eigen::Matrix3f& trans)
+				  const ElevationAzimuth& ea, float turbidity, float scale)
 		: IInfiniteLight(id, name, transform)
 		, mSpectrum(SUN_WAVELENGTH_SAMPLES, SUN_WAVELENGTH_START, SUN_WAVELENGTH_END)
 		, mEA(ea)
-		, mDirection(trans * normalMatrix() * ea.toDirection().normalized())
+		, mDirection((normalMatrix() * ea.toDirection()).normalized())
 		, mSceneRadius(0)
 		, mServiceObserver(so)
 	{
@@ -223,20 +221,19 @@ public:
 		const ParameterGroup& params = ctx.parameters();
 
 		const std::string name = params.getString("name", "__unknown");
-		Eigen::Matrix3f trans  = params.getMatrix3f("orientation", Eigen::Matrix3f::Identity());
 
 		ElevationAzimuth sunEA = computeSunEA(ctx.parameters());
 		const float radius	   = ctx.parameters().getNumber("radius", 1.0f);
 		const float turbidity  = ctx.parameters().getNumber("turbidity", 3.0f);
-		const float scale	   = ctx.parameters().getNumber("scale", 1.0f);
+		const float scale	   = ctx.parameters().getNumber("power_scale", 1.0f);
 
 		const std::shared_ptr<ServiceObserver> so = ctx.hasEnvironment() ? ctx.environment()->serviceObserver() : nullptr;
 
 		if (radius <= PR_EPSILON)
-			return std::make_shared<SunDeltaLight>(so, id, name, ctx.transform(), sunEA, turbidity, scale, trans);
+			return std::make_shared<SunDeltaLight>(so, id, name, ctx.transform(), sunEA, turbidity, scale);
 		else
 			return std::make_shared<SunLight>(so, id, name, ctx.transform(), sunEA,
-											  turbidity, radius, scale, trans);
+											  turbidity, radius, scale);
 	}
 
 	const std::vector<std::string>& getNames() const override

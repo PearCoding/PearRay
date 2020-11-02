@@ -25,14 +25,10 @@ class SkyLight : public IInfiniteLight {
 public:
 	SkyLight(const std::shared_ptr<ServiceObserver>& so,
 			 uint32 id, const std::string& name, const Transformf& transform,
-			 const SkyModel& model,
-			 float scale, const Eigen::Matrix3f& trans)
+			 const SkyModel& model)
 		: IInfiniteLight(id, name, transform)
 		, mDistribution()
 		, mModel(model)
-		, mScale(scale)
-		, mTransform(trans)
-		, mInvTransform(trans.inverse())
 		, mSceneRadius(0)
 		, mServiceObserver(so)
 	{
@@ -53,7 +49,7 @@ public:
 	void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out,
 			  const RenderTileSession&) const override
 	{
-		auto ea = ElevationAzimuth::fromDirection(mInvTransform * in.Ray.Direction);
+		auto ea = ElevationAzimuth::fromDirection(invNormalMatrix() * in.Ray.Direction);
 
 		if constexpr (ExtendToGround) {
 			out.Radiance = radiance(in.Ray.WavelengthNM, ea);
@@ -88,7 +84,7 @@ public:
 		else
 			ea = ElevationAzimuth{ ELEVATION_RANGE * uv(1), AZIMUTH_RANGE * uv(0) };
 
-		out.Outgoing	  = mTransform * ea.toDirection();
+		out.Outgoing	  = normalMatrix() * ea.toDirection();
 		const float f	  = std::cos(ea.Elevation);
 		const float denom = 2 * PR_PI * PR_PI * f;
 		out.PDF_S *= (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
@@ -116,21 +112,19 @@ public:
 
 		stream << std::boolalpha << IInfiniteLight::dumpInformation()
 			   << "  <SkyLight>:" << std::endl
-			   << "    Scale:        " << mScale << std::endl
 			   << "    Distribution: " << mDistribution->width() << "x" << mDistribution->height() << std::endl
+			   << "    Ground:       " << mGround->dumpInformation() << std::endl
 			   << "    Extended:     " << (ExtendToGround ? "true" : "false") << std::endl;
-		// TODO
 		return stream.str();
 	}
 
 private:
 	inline void buildDistribution()
 	{
-		if constexpr (ExtendToGround) {
+		if constexpr (ExtendToGround)
 			mDistribution = std::make_shared<Distribution2D>(mModel.azimuthCount(), 2 * mModel.elevationCount());
-		} else {
+		else
 			mDistribution = std::make_shared<Distribution2D>(mModel.azimuthCount(), mModel.elevationCount());
-		}
 
 		PR_LOG(L_INFO) << "Generating 2d environment (" << mDistribution->width() << "x" << mDistribution->height() << ") of " << name() << std::endl;
 
@@ -138,11 +132,10 @@ private:
 		mDistribution->generate([&](size_t x, size_t y) {
 			const float azimuth = AZIMUTH_RANGE * x / (float)mModel.azimuthCount();
 			float elevation;
-			if constexpr (ExtendToGround) {
+			if constexpr (ExtendToGround)
 				elevation = (2 * ELEVATION_RANGE) * (y / (float)(2 * mModel.elevationCount()) - 0.5f);
-			} else {
+			else
 				elevation = ELEVATION_RANGE * y / (float)mModel.elevationCount();
-			}
 
 			const float f	= std::cos(elevation);
 			const float val = std::max(0.0f, f * radiance(WVLS, ElevationAzimuth{ elevation, azimuth }).maxCoeff());
@@ -172,8 +165,7 @@ private:
 			const float t	= std::min<float>(AR_SPECTRAL_BANDS - 1, af) - index;
 			PR_ASSERT(t >= 0.0f && t <= 1.0f, "t must be between 0 and 1");
 
-			float radiance = mModel.radiance(index, ea) * (1 - t) + mModel.radiance(index + 1, ea) * t;
-			blob[i]		   = mScale * radiance;
+			blob[i] = mModel.radiance(index, ea) * (1 - t) + mModel.radiance(index + 1, ea) * t;
 		}
 		return blob;
 	}
@@ -181,9 +173,6 @@ private:
 	std::shared_ptr<Distribution2D> mDistribution;
 	const std::shared_ptr<FloatSpectralNode> mGround;
 	const SkyModel mModel;
-	const float mScale;
-	const Eigen::Matrix3f mTransform;
-	const Eigen::Matrix3f mInvTransform;
 
 	float mSceneRadius;
 
@@ -198,9 +187,7 @@ public:
 		const ParameterGroup& params = ctx.parameters();
 
 		const std::string name = params.getString("name", "__unknown");
-		Eigen::Matrix3f trans  = params.getMatrix3f("orientation", Eigen::Matrix3f::Identity());
 
-		const float scale	   = ctx.parameters().getNumber("scale", 1.0f);
 		auto ground_albedo	   = ctx.lookupSpectralNode("albedo", 0.15f);
 		ElevationAzimuth sunEA = computeSunEA(ctx.parameters());
 		//PR_LOG(L_INFO) << "Sun: " << PR_RAD2DEG * sunEA.Elevation << "° " << PR_RAD2DEG * sunEA.Azimuth << "°" << std::endl;
@@ -208,9 +195,9 @@ public:
 		const std::shared_ptr<ServiceObserver> so = ctx.hasEnvironment() ? ctx.environment()->serviceObserver() : nullptr;
 
 		if (params.getBool("extend", true))
-			return std::make_shared<SkyLight<true>>(so, id, name, ctx.transform(), SkyModel(ground_albedo, sunEA, ctx.parameters()), scale, trans);
+			return std::make_shared<SkyLight<true>>(so, id, name, ctx.transform(), SkyModel(ground_albedo, sunEA, ctx.parameters()));
 		else
-			return std::make_shared<SkyLight<false>>(so, id, name, ctx.transform(), SkyModel(ground_albedo, sunEA, ctx.parameters()), scale, trans);
+			return std::make_shared<SkyLight<false>>(so, id, name, ctx.transform(), SkyModel(ground_albedo, sunEA, ctx.parameters()));
 	}
 
 	const std::vector<std::string>& getNames() const override
