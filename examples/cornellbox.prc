@@ -6,7 +6,7 @@
 	:camera 'Camera'
 	; Settings
 	(integrator
-		:type 'ppm'
+		:type 'bidi'
 		:max_ray_depth 16
 		:contract_ratio 0.2
 		:max_light_ray_depth 16
@@ -110,7 +110,7 @@
 		:name 'CornellBox-Original'
 		:type 'mesh'
 		:materials 'light'
-		;:emission 'light_em'
+		:emission 'light_em'
 		:mesh 'CornellBox-Original'
 		:transform [1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0]
 	)
