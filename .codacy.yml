@@ -1,0 +1,13 @@
+---
+engines:
+  cppcheck:
+    enabled: true
+    language: c++
+exclude_paths:
+  - '.vscode/**'
+  - '.git/**'
+  - 'build/**'
+  - 'src/tests/**'
+  - 'src/ui/3d/glad.h'
+  - 'src/ui/3d/glad.c'
+  
