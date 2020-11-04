@@ -9,7 +9,7 @@ namespace PR {
 // Special material not scattering rays and changing energy
 class NullMaterial : public IMaterial {
 public:
-	NullMaterial(uint32 id)
+	explicit NullMaterial(uint32 id)
 		: IMaterial(id)
 	{
 	}

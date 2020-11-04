@@ -44,14 +44,6 @@ struct BiDiPathVertex {
 	float PDF_A;
 };
 
-struct BiDiContribution {
-	float MIS;
-	SpectralBlob Importance;
-	SpectralBlob Radiance;
-};
-using Contribution					   = BiDiContribution;
-const static Contribution ZERO_CONTRIB = Contribution{ 0.0f, SpectralBlob::Zero(), SpectralBlob::Zero() };
-
 enum BiDiMISMode {
 	BM_Balance,
 	BM_Power

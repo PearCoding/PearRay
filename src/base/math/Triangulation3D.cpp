@@ -110,6 +110,8 @@ struct Tetrahedron {
 		, IV1(iv1)
 		, IV2(iv2)
 		, IV3(iv3)
+		, Circum(circumCenterTetrahedron(v0, v1, v2, v3))
+		, CircumRadius2((v0 - Circum).squaredNorm())
 	{
 #ifdef TETRAHEDRON_ORIENTATION
 		PR_ASSERT(determinantTetrahedron(v0, v1, v2, v3) >= 0, "Expected positive oriented tetrahedron");
@@ -134,10 +136,6 @@ struct Tetrahedron {
 		if (determinantTriangle(v0, v1, v2) < 0)
 			std::swap(Faces[3].IV1, Faces[3].IV2);
 #endif
-
-		// Calculate circum sphere
-		Circum		  = circumCenterTetrahedron(v0, v1, v2, v3);
-		CircumRadius2 = (v0 - Circum).squaredNorm();
 	}
 
 	inline bool contains(const Vector3f& p) const

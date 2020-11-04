@@ -20,7 +20,7 @@ namespace PR {
 
 class Mesh {
 public:
-	Mesh(const std::shared_ptr<MeshBase>& mesh)
+	explicit Mesh(const std::shared_ptr<MeshBase>& mesh)
 		: mBase(mesh)
 		, mWasGenerated(false)
 	{
@@ -31,7 +31,7 @@ public:
 		rtcReleaseScene(mScene);
 	}
 
-	RTCScene generate(const RTCDevice& dev)
+	inline RTCScene generate(const RTCDevice& dev)
 	{
 		if (!mWasGenerated) {
 			setupOriginal(dev);

@@ -32,6 +32,9 @@ static const char* fragmentShaderSource = PRUI_SHADER_HEADER
 
 GoochShader::GoochShader()
 	: Shader(vertexShaderSource, fragmentShaderSource)
+	, mColorWarmUniform(0)
+	, mColorColdUniform(0)
+	, mNormalMatUniform(0)
 {
 }
 

@@ -29,6 +29,7 @@ public:
 	std::array<size_t, MAX_CHANNEL_COUNT> UpdateMessageSize;
 
 	TevConnection(const std::string& ip, uint16 port)
+		: CreateMessageSize(0)
 	{
 		Con.connect(port, ip);
 		Out.setSocket(&Con, false);

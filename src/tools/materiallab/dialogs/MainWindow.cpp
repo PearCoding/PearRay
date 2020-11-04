@@ -45,8 +45,6 @@ void MainWindow::closeEvent(QCloseEvent* event)
 
 void MainWindow::readSettings()
 {
-	const QStringList docLoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation);
-
 	QSettings settings;
 
 	settings.beginGroup("MainWindow");

@@ -34,6 +34,7 @@ static const char* fragmentShaderSource = PRUI_SHADER_HEADER
 
 WireframeShader::WireframeShader(const Vector4f& c)
 	: Shader(vertexShaderSource, geometryShaderSource, fragmentShaderSource)
+	, mColorUniform(0)
 	, mColor(c)
 {
 }

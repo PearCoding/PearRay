@@ -52,9 +52,8 @@ QueryEnvironment::QueryEnvironment(const std::filesystem::path& plugdir)
 	, mNodeManager(std::make_shared<NodeManager>())
 	, mSamplerManager(std::make_shared<SamplerManager>())
 	, mSpectralMapperManager(std::make_shared<SpectralMapperManager>())
+	, mDefaultSpectralUpsampler(DefaultSRGB::loadSpectralUpsampler())
 {
-	mDefaultSpectralUpsampler = DefaultSRGB::loadSpectralUpsampler();
-
 	try {
 		loadPlugins(plugdir);
 	} catch (const std::exception& e) {

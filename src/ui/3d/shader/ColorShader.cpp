@@ -29,7 +29,9 @@ static const char* fragmentShaderSource = PRUI_SHADER_HEADER
 
 ColorShader::ColorShader()
 	: Shader(vertexShaderSource, fragmentShaderSource)
+	, mColorUniform(0)
 	, mColor(Vector4f::Zero())
+	, mBlendUniform(0)
 	, mBlendFactor(0)
 {
 }
