@@ -22,7 +22,7 @@ public:
 		out.Radiance = mRadiance->eval(in.ShadingContext);
 	}
 
-	float power() const override { return NodeUtils::average(SpectralBlob(550.0f)/*TODO*/, mRadiance.get()); }
+	SpectralBlob power(const SpectralBlob& wvl) const override { return NodeUtils::average(wvl, mRadiance.get()); }
 
 private:
 	std::shared_ptr<FloatSpectralNode> mRadiance;

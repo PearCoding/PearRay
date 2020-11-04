@@ -102,9 +102,7 @@ public:
 		}
 	}
 
-	float power() const override { return radiance(SpectralBlob(550.0f) /*TODO*/,
-												   ElevationAzimuth::fromDirection(Vector3f(0, 0, 1)))
-									   .mean(); }
+	SpectralBlob power(const SpectralBlob& wvl) const override { return radiance(wvl, ElevationAzimuth::fromDirection(Vector3f(0, 0, 1))); }
 
 	std::string dumpInformation() const override
 	{

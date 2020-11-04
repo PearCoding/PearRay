@@ -31,7 +31,7 @@ public:
 	*/
 	virtual void eval(const EmissionEvalInput& in, EmissionEvalOutput& out, const RenderTileSession& session) const = 0;
 
-	virtual float power() const = 0; // Average (W/m^2)
+	virtual SpectralBlob power(const SpectralBlob& wvl) const = 0; // Average (W/m^2)
 
 	virtual std::string dumpInformation() const;
 

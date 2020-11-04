@@ -28,6 +28,8 @@ LightSampler::LightSampler(Scene* scene)
 	if (light_count == 0)
 		return;
 
+	const SpectralBlob test_wvl(550, 520, 460, 620);
+
 	// Setup intensities
 	std::vector<float> intensities;
 	intensities.reserve(light_count);
@@ -45,7 +47,7 @@ LightSampler::LightSampler(Scene* scene)
 		IEmission* emission = emissions[ems_id].get();
 
 		const float area	  = e->worldSurfaceArea();
-		const float intensity = area * emission->power();
+		const float intensity = area * emission->power(test_wvl).mean();
 
 		mEmissiveSurfaceArea += area;
 		mEmissiveSurfacePower += intensity;
@@ -58,7 +60,7 @@ LightSampler::LightSampler(Scene* scene)
 	// Add infinite lights (approx) intensities
 	mEmissivePower = mEmissiveSurfacePower;
 	for (const auto& infL : inflights) {
-		const float intensity = scene_area * infL->power();
+		const float intensity = scene_area * infL->power(test_wvl).mean();
 		mEmissivePower += intensity;
 
 		PR_LOG(L_DEBUG) << "(Inf) Light '" << infL->name() << "' Area " << scene_area << "m2 Intensity " << intensity << "W" << std::endl;

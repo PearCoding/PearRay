@@ -42,7 +42,7 @@ public:
 	*/
 	virtual void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out, const RenderTileSession& session) const = 0;
 
-	virtual float power() const = 0; // Average (W/m^2)
+	virtual SpectralBlob power(const SpectralBlob& wvl) const = 0; // Average (W/m^2)
 
 	virtual std::string dumpInformation() const;
 };

@@ -95,7 +95,13 @@ public:
 			out.Radiance[i] = mSpectrum.lookup(in.WavelengthNM[i]);
 	}
 
-	float power() const override { return mSpectrum.average(); }
+	SpectralBlob power(const SpectralBlob& wvl) const override
+	{
+		SpectralBlob res;
+		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
+			res[i] = mSpectrum.lookup(wvl[i]);
+		return res;
+	}
 
 	std::string dumpInformation() const override
 	{
@@ -187,7 +193,13 @@ public:
 		}
 	}
 
-	float power() const override { return mSpectrum.average(); }
+	SpectralBlob power(const SpectralBlob& wvl) const override
+	{
+		SpectralBlob res;
+		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
+			res[i] = mSpectrum.lookup(wvl[i]);
+		return res;
+	}
 
 	std::string dumpInformation() const override
 	{

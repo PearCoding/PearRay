@@ -63,7 +63,7 @@ public:
 		out.Radiance	  = radiance(in.WavelengthNM, out.Outgoing);
 	}
 
-	float power() const override { return radiance(SpectralBlob(550.0f) /*TODO*/, Vector3f(0, 0, 1)).mean(); }
+	SpectralBlob power(const SpectralBlob& wvl) const override { return radiance(wvl, Vector3f(0, 0, 1)); }
 
 	std::string dumpInformation() const override
 	{

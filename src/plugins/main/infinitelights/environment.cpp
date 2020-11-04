@@ -107,7 +107,7 @@ public:
 		}
 	}
 
-	float power() const override { return NodeUtils::average(SpectralBlob(550.0f) /*TODO*/, mRadiance.get()); }
+	SpectralBlob power(const SpectralBlob& wvl) const override { return NodeUtils::average(wvl, mRadiance.get()); }
 
 	std::string dumpInformation() const override
 	{
