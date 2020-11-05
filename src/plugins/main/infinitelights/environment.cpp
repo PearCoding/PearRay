@@ -150,7 +150,7 @@ public:
 		const auto radP				 = params.getParameter("radiance");
 		const auto backgroundP		 = params.getParameter("background");
 		const bool allowDistribution = params.getBool("distribution", true);
-		const bool allowCompensation = params.getBool("compensation", true);
+		const bool allowCompensation = params.getBool("compensation", false);// Disabled per default, due to some bugs
 
 		std::shared_ptr<FloatSpectralNode> radiance;
 		std::shared_ptr<FloatSpectralNode> background;

@@ -10,4 +10,5 @@ exclude_paths:
   - 'src/tests/**'
   - 'src/ui/3d/glad.h'
   - 'src/ui/3d/glad.c'
+  - 'project.sh'
   

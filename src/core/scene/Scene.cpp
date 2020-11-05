@@ -42,8 +42,6 @@ Scene::Scene(const std::shared_ptr<ServiceObserver>& serviceObserver,
 	setupScene();
 	PR_LOG(L_DEBUG) << "Setup after scene build..." << std::endl;
 	mServiceObserver->callAfterSceneBuild(this);
-
-	mLightSampler = std::make_shared<LightSampler>(this);
 }
 
 Scene::~Scene()

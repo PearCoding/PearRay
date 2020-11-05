@@ -366,7 +366,7 @@ public:
 			setupContext(renderer);
 		}
 		mThreadMutex.unlock();
-		return std::make_shared<IntPPMInstance<GM>>(mContext.get(), renderer->scene()->lightSampler(), mParameters);
+		return std::make_shared<IntPPMInstance<GM>>(mContext.get(), renderer->lightSampler(), mParameters);
 	}
 
 private:
@@ -407,7 +407,7 @@ private:
 	{
 		const uint64 Photons	= mParameters.MaxPhotonsPerPass;
 		const uint64 MinPhotons = Photons * 0.02f; // Should be a parameter
-		const auto lightSampler = renderer->scene()->lightSampler();
+		const auto lightSampler = renderer->lightSampler();
 		const auto& lightList	= lightSampler->lights();
 
 		const uint64 k = MinPhotons * lightList.size();

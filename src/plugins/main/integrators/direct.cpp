@@ -61,7 +61,7 @@ public:
 		: mSampler((parameters.MaxCameraRayDepthHard + 1) * (parameters.MaxLightSamples * 4 + 3))
 		, mInfLightCount(ctx->scene()->infiniteLights().size())
 		, mParameters(parameters)
-		, mLightSampler(ctx->scene()->lightSampler())
+		, mLightSampler(ctx->lightSampler())
 	{
 	}
 

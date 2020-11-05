@@ -6,8 +6,8 @@ namespace PR {
 
 class PR_LIB_CORE NodeUtils {
 public:
-	static float average(const SpectralBlob& wvls, FloatScalarNode* node);
-	static SpectralBlob average(const SpectralBlob& wvls, FloatSpectralNode* node);
+	static float average(const SpectralBlob& wvls, const FloatScalarNode* node);
+	static SpectralBlob average(const SpectralBlob& wvls, const FloatSpectralNode* node);
 };
 
 } // namespace PR

@@ -72,7 +72,7 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 	reset();
 
 	PR_ASSERT(mOutputMap, "Output Map must be already created!");
-	
+
 	/* Setup threads */
 	uint32 threadCount = Thread::hardwareThreadCount();
 	if (threads < 0)
@@ -88,6 +88,10 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 	// Call all interested objects after thread count is fixed
 	mScene->beforeRender(this);
 
+	// Setup light sampler
+	mLightSampler = std::make_shared<LightSampler>(mScene.get());
+
+	// Setup tile map
 	mTileMap = std::make_unique<RenderTileMap>();
 	mTileMap->init(this, rtx, rty, mRenderSettings.tileMode);
 
@@ -100,17 +104,16 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 				   << "  Threads:                " << threadCount << std::endl
 				   << "  Tiles:                  " << rtx << " x " << rty << std::endl
 				   << "  Entities:               " << mScene->entities().size() << std::endl
-				   << "  Lights:                 " << mScene->lightSampler()->emissiveEntityCount() << std::endl
+				   << "  Lights:                 " << mLightSampler->emissiveEntityCount() << std::endl
 				   << "  Materials:              " << mScene->materials().size() << std::endl
 				   << "  Emissions:              " << mScene->emissions().size() << std::endl
 				   << "  InfLights:              " << mScene->infiniteLights().size() << std::endl
-				   << "  Emissive Surface Area:  " << mScene->lightSampler()->emissiveSurfaceArea() << std::endl
-				   << "  Emissive Surface Power: " << mScene->lightSampler()->emissiveSurfacePower() << std::endl
-				   << "  Emissive Power:         " << mScene->lightSampler()->emissivePower() << std::endl
+				   << "  Emissive Surface Area:  " << mLightSampler->emissiveSurfaceArea() << std::endl
+				   << "  Emissive Surface Power: " << mLightSampler->emissiveSurfacePower() << std::endl
+				   << "  Emissive Power:         " << mLightSampler->emissivePower() << std::endl
 				   << "  Scene Extent:           " << mScene->boundingBox().width() << " x " << mScene->boundingBox().height() << " x " << mScene->boundingBox().depth() << std::endl
-   				   << "  Scene Origin Radius:    " << mScene->boundingSphere().radius() << std::endl
+				   << "  Scene Origin Radius:    " << mScene->boundingSphere().radius() << std::endl
 				   << "  Spectral Domain:        [" << mRenderSettings.spectralStart << ", " << mRenderSettings.spectralEnd << "]" << std::endl;
-				   
 
 	// Start
 	mIntegrator->onStart();

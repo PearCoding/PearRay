@@ -17,6 +17,7 @@ class IEntity;
 class IIntegrator;
 class IMaterial;
 class FrameBufferSystem;
+class LightSampler;
 class OutputSpectralEntry;
 class RayStream;
 class RenderTileSession;
@@ -58,12 +59,12 @@ public:
 	bool isFinished() const;
 	void waitForFinish();
 
-	size_t threadCount() const { return mThreads.size(); }
+	inline size_t threadCount() const { return mThreads.size(); }
 
 	// Slow and only copies!
 	std::vector<Rect2i> currentTiles() const;
 
-	std::shared_ptr<IIntegrator> integrator() const { return mIntegrator; }
+	inline std::shared_ptr<IIntegrator> integrator() const { return mIntegrator; }
 
 	// Settings
 	inline const RenderSettings& settings() const { return mRenderSettings; }
@@ -73,6 +74,7 @@ public:
 
 	inline std::shared_ptr<FrameBufferSystem> output() const { return mOutputMap; }
 	inline std::shared_ptr<Scene> scene() const { return mScene; }
+	inline std::shared_ptr<LightSampler> lightSampler() const { return mLightSampler; }
 
 	// Set a callback called each start of iteration. The internal state of the callee is undefined
 	inline void addIterationCallback(const RenderIterationCallback& clb) { mIterationCallbacks.push_back(clb); }
@@ -105,6 +107,8 @@ private:
 	std::list<RenderThread*> mThreads;
 
 	const RenderSettings mRenderSettings;
+
+	std::shared_ptr<LightSampler> mLightSampler;
 
 	std::shared_ptr<IIntegrator> mIntegrator;
 	bool mShouldStop;

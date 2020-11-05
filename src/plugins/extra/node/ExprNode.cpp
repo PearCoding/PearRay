@@ -1,6 +1,7 @@
 #include "Environment.h"
 #include "Logger.h"
 #include "SceneLoadContext.h"
+#include "ServiceObserver.h"
 #include "renderer/RenderContext.h"
 #include "shader/INodePlugin.h"
 
@@ -14,7 +15,7 @@
 
 namespace PR {
 constexpr char POSITION_VARIABLE[]	 = "P";
-constexpr char WAVELENGTH_VARIABLE[] = "w";// TODO: Better identifier?
+constexpr char WAVELENGTH_VARIABLE[] = "w"; // TODO: Better identifier?
 constexpr char TEXTURE_U_VARIABLE[]	 = "u";
 constexpr char TEXTURE_V_VARIABLE[]	 = "v";
 
@@ -216,9 +217,21 @@ struct ExpressionContainer {
 
 class ScalarExpressionNode : public FloatScalarNode {
 public:
-	explicit ScalarExpressionNode(const std::shared_ptr<ExpressionContainer>& expr)
+	ScalarExpressionNode(const std::shared_ptr<ServiceObserver>& so,
+						 const std::shared_ptr<ExpressionContainer>& expr)
 		: mExpr(expr)
+		, mServiceObserver(so)
 	{
+		if (mServiceObserver)
+			mCBID = mServiceObserver->registerBeforeRender([this](RenderContext* ctx) {
+				mExpr->setupThreadData(ctx->threadCount());
+			});
+	}
+
+	virtual ~ScalarExpressionNode()
+	{
+		if (mServiceObserver)
+			mServiceObserver->unregister(mCBID);
 	}
 
 	float eval(const ShadingContext& ctx) const override
@@ -226,12 +239,6 @@ public:
 		mExpr->updateVaryings(ctx);
 		const double* result = mExpr->Expr.evalFP(&mExpr->VarBlocks[ctx.ThreadIndex]);
 		return result[0];
-	}
-
-	void beforeRender(RenderContext* ctx) override
-	{
-		FloatScalarNode::beforeRender(ctx);
-		mExpr->setupThreadData(ctx->threadCount());
 	}
 
 	std::string dumpInformation() const override
@@ -243,13 +250,28 @@ public:
 
 private:
 	mutable std::shared_ptr<ExpressionContainer> mExpr;
+
+	const std::shared_ptr<ServiceObserver> mServiceObserver;
+	ServiceObserver::CallbackID mCBID;
 };
 
 class SpectralExpressionNode : public FloatSpectralNode {
 public:
-	explicit SpectralExpressionNode(const std::shared_ptr<ExpressionContainer>& expr)
+	SpectralExpressionNode(const std::shared_ptr<ServiceObserver>& so,
+						   const std::shared_ptr<ExpressionContainer>& expr)
 		: mExpr(expr)
+		, mServiceObserver(so)
 	{
+		if (mServiceObserver)
+			mCBID = mServiceObserver->registerBeforeRender([this](RenderContext* ctx) {
+				mExpr->setupThreadData(ctx->threadCount());
+			});
+	}
+
+	virtual ~SpectralExpressionNode()
+	{
+		if (mServiceObserver)
+			mServiceObserver->unregister(mCBID);
 	}
 
 	// TODO: Better way?
@@ -274,12 +296,6 @@ public:
 		return Vector2i(1, 1);
 	}
 
-	void beforeRender(RenderContext* ctx) override
-	{
-		FloatSpectralNode::beforeRender(ctx);
-		mExpr->setupThreadData(ctx->threadCount());
-	}
-
 	std::string dumpInformation() const override
 	{
 		std::stringstream sstream;
@@ -289,13 +305,28 @@ public:
 
 private:
 	mutable std::shared_ptr<ExpressionContainer> mExpr;
+
+	const std::shared_ptr<ServiceObserver> mServiceObserver;
+	ServiceObserver::CallbackID mCBID;
 };
 
 class VectorExpressionNode : public FloatVectorNode {
 public:
-	explicit VectorExpressionNode(const std::shared_ptr<ExpressionContainer>& expr)
+	VectorExpressionNode(const std::shared_ptr<ServiceObserver>& so,
+						 const std::shared_ptr<ExpressionContainer>& expr)
 		: mExpr(expr)
+		, mServiceObserver(so)
 	{
+		if (mServiceObserver)
+			mCBID = mServiceObserver->registerBeforeRender([this](RenderContext* ctx) {
+				mExpr->setupThreadData(ctx->threadCount());
+			});
+	}
+
+	virtual ~VectorExpressionNode()
+	{
+		if (mServiceObserver)
+			mServiceObserver->unregister(mCBID);
 	}
 
 	Vector3f eval(const ShadingContext& ctx) const override
@@ -303,12 +334,6 @@ public:
 		mExpr->updateVaryings(ctx);
 		const double* result = mExpr->Expr.evalFP(&mExpr->VarBlocks[ctx.ThreadIndex]);
 		return Vector3f(result[0], result[1], result[2]);
-	}
-
-	void beforeRender(RenderContext* ctx) override
-	{
-		FloatVectorNode::beforeRender(ctx);
-		mExpr->setupThreadData(ctx->threadCount());
 	}
 
 	std::string dumpInformation() const override
@@ -320,6 +345,9 @@ public:
 
 private:
 	mutable std::shared_ptr<ExpressionContainer> mExpr;
+
+	const std::shared_ptr<ServiceObserver> mServiceObserver;
+	ServiceObserver::CallbackID mCBID;
 };
 
 class ExpressionPlugin : public INodePlugin {
@@ -390,12 +418,14 @@ public:
 			return nullptr;
 		}
 
+		const std::shared_ptr<ServiceObserver> so = ctx.hasEnvironment() ? ctx.environment()->serviceObserver() : nullptr;
+
 		if (isVec) {
-			return std::make_shared<VectorExpressionNode>(expr);
+			return std::make_shared<VectorExpressionNode>(so, expr);
 		} else if (expr->isSpectralVarying()) {
-			return std::make_shared<SpectralExpressionNode>(expr);
+			return std::make_shared<SpectralExpressionNode>(so, expr);
 		} else {
-			return std::make_shared<ScalarExpressionNode>(expr);
+			return std::make_shared<ScalarExpressionNode>(so, expr);
 		}
 	}
 

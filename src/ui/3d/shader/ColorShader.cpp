@@ -38,7 +38,9 @@ ColorShader::ColorShader()
 
 ColorShader::ColorShader(const Vector4f& c)
 	: Shader(vertexShaderSource, fragmentShaderSource)
+	, mColorUniform(0)
 	, mColor(c)
+	, mBlendUniform(0)
 	, mBlendFactor(1)
 {
 }

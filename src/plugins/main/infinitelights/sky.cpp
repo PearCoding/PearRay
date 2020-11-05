@@ -25,14 +25,14 @@ class SkyLight : public IInfiniteLight {
 public:
 	SkyLight(const std::shared_ptr<ServiceObserver>& so,
 			 uint32 id, const std::string& name, const Transformf& transform,
-			 const SkyModel& model)
+			 const SkyModel& model, bool allowCompensation)
 		: IInfiniteLight(id, name, transform)
 		, mDistribution()
 		, mModel(model)
 		, mSceneRadius(0)
 		, mServiceObserver(so)
 	{
-		buildDistribution();
+		buildDistribution(allowCompensation);
 
 		if (mServiceObserver)
 			mCBID = mServiceObserver->registerAfterSceneBuild([this](Scene* scene) {
@@ -111,13 +111,12 @@ public:
 		stream << std::boolalpha << IInfiniteLight::dumpInformation()
 			   << "  <SkyLight>:" << std::endl
 			   << "    Distribution: " << mDistribution->width() << "x" << mDistribution->height() << std::endl
-			   << "    Ground:       " << mGround->dumpInformation() << std::endl
 			   << "    Extended:     " << (ExtendToGround ? "true" : "false") << std::endl;
 		return stream.str();
 	}
 
 private:
-	inline void buildDistribution()
+	inline void buildDistribution(bool allowCompensation)
 	{
 		if constexpr (ExtendToGround)
 			mDistribution = std::make_shared<Distribution2D>(mModel.azimuthCount(), 2 * mModel.elevationCount());
@@ -148,7 +147,8 @@ private:
 			}
 		});
 
-		mDistribution->applyCompensation();
+		if (allowCompensation)
+			mDistribution->applyCompensation();
 	}
 
 	inline SpectralBlob radiance(const SpectralBlob& wvls, const ElevationAzimuth& ea) const
@@ -169,7 +169,6 @@ private:
 	}
 
 	std::shared_ptr<Distribution2D> mDistribution;
-	const std::shared_ptr<FloatSpectralNode> mGround;
 	const SkyModel mModel;
 
 	float mSceneRadius;
@@ -186,16 +185,17 @@ public:
 
 		const std::string name = params.getString("name", "__unknown");
 
-		auto ground_albedo	   = ctx.lookupSpectralNode("albedo", 0.15f);
-		ElevationAzimuth sunEA = computeSunEA(ctx.parameters());
+		auto ground_albedo			 = ctx.lookupSpectralNode("albedo", 0.15f);
+		const bool allowCompensation = params.getBool("compensation", false); // Disabled per default, due to some bugs
+		ElevationAzimuth sunEA		 = computeSunEA(ctx.parameters());
 		//PR_LOG(L_INFO) << "Sun: " << PR_RAD2DEG * sunEA.Elevation << "° " << PR_RAD2DEG * sunEA.Azimuth << "°" << std::endl;
 
 		const std::shared_ptr<ServiceObserver> so = ctx.hasEnvironment() ? ctx.environment()->serviceObserver() : nullptr;
 
 		if (params.getBool("extend", true))
-			return std::make_shared<SkyLight<true>>(so, id, name, ctx.transform(), SkyModel(ground_albedo, sunEA, ctx.parameters()));
+			return std::make_shared<SkyLight<true>>(so, id, name, ctx.transform(), SkyModel(ground_albedo, sunEA, ctx.parameters()), allowCompensation);
 		else
-			return std::make_shared<SkyLight<false>>(so, id, name, ctx.transform(), SkyModel(ground_albedo, sunEA, ctx.parameters()));
+			return std::make_shared<SkyLight<false>>(so, id, name, ctx.transform(), SkyModel(ground_albedo, sunEA, ctx.parameters()), allowCompensation);
 	}
 
 	const std::vector<std::string>& getNames() const override

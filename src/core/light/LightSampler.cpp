@@ -40,11 +40,11 @@ LightSampler::LightSampler(Scene* scene)
 		if (!e->hasEmission())
 			continue;
 
-		uint32 ems_id = e->emissionID();
+		const uint32 ems_id = e->emissionID();
 		if (ems_id >= emissions.size())
 			continue;
 
-		IEmission* emission = emissions[ems_id].get();
+		const IEmission* emission = emissions[ems_id].get();
 
 		const float area	  = e->worldSurfaceArea();
 		const float intensity = area * emission->power(test_wvl).mean();

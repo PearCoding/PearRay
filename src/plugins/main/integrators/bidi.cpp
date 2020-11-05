@@ -60,7 +60,7 @@ class IntBiDiInstance : public IIntegratorInstance {
 public:
 	explicit IntBiDiInstance(RenderContext* ctx, const BiDiParameters& parameters)
 		: mParameters(parameters)
-		, mLightSampler(ctx->scene()->lightSampler())
+		, mLightSampler(ctx->lightSampler())
 	{
 		mLightPathWalker.MaxRayDepthHard  = mParameters.MaxLightRayDepthHard;
 		mLightPathWalker.MaxRayDepthSoft  = mParameters.MaxLightRayDepthSoft;
@@ -102,7 +102,9 @@ public:
 
 		// Add pdf which generated this vertex
 		float pdf_A = prevPDF_A;
-		if (!mCameraVertices[ip.Ray.IterationDepth - 1].Material->hasDeltaDistribution()) {
+		if (ip.Ray.IterationDepth > 0
+			&& mCameraVertices[ip.Ray.IterationDepth - 1].Material
+			&& !mCameraVertices[ip.Ray.IterationDepth - 1].Material->hasDeltaDistribution()) {
 			pdf_A *= IS::toArea(nextPDF, ip.Depth2, std::abs(ip.Surface.NdotV));
 		}
 
@@ -223,12 +225,12 @@ public:
 				pdf_A *= IS::toArea(lightPDF.Value, ip.Depth2, std::abs(ip.Surface.NdotV));
 			else
 				pdf_A *= lightPDF.Value;
-		} else if (!mLightVertices[ip.Ray.IterationDepth - 1].Material->hasDeltaDistribution()) {
+		} else if (mLightVertices[ip.Ray.IterationDepth - 1].Material
+				   && !mLightVertices[ip.Ray.IterationDepth - 1].Material->hasDeltaDistribution()) {
 			pdf_A *= IS::toArea(nextPDF, ip.Depth2, std::abs(ip.Surface.NdotV));
 		}
 
 		// Our implementation does not support direct camera hits (no C_s0)
-
 		MaterialSampleInput sin;
 		sin.Context		   = MaterialSampleContext::fromIP(ip);
 		sin.ShadingContext = sc;
@@ -425,7 +427,7 @@ public:
 			PR_ASSERT(lightPath.currentSize() == mLightVertices.size() + 1, "Light vertices and path do not match");
 
 			handleCameraPath(session, cameraPath, spt, sg.entity(), session.getMaterial(spt.Surface.Geometry.MaterialID));
-			PR_ASSERT(cameraPath.currentSize() == mCameraVertices.size() + 1, "Camera vertices and path do not match");
+			PR_ASSERT(cameraPath.currentSize() == mCameraVertices.size(), "Camera vertices and path do not match");
 
 			// Handle connections (we skip 0 as it is handled inside path creation)
 			for (size_t t = 1; t <= mCameraVertices.size(); ++t) {

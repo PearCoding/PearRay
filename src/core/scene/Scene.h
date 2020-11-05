@@ -18,7 +18,6 @@ class IMaterial;
 class IEmission;
 class IInfiniteLight;
 class INode;
-class LightSampler;
 class RenderContext;
 class ServiceObserver;
 
@@ -36,19 +35,17 @@ public:
 		  const std::vector<std::shared_ptr<INode>>& nodes);
 	virtual ~Scene();
 
-	const std::vector<std::shared_ptr<IEntity>>& entities() const { return mEntities; }
-	const std::vector<std::shared_ptr<IMaterial>>& materials() const { return mMaterials; }
-	const std::vector<std::shared_ptr<IEmission>>& emissions() const { return mEmissions; }
-	const std::vector<std::shared_ptr<IInfiniteLight>>& infiniteLights() const { return mInfLights; }
-	const std::vector<std::shared_ptr<IInfiniteLight>>& deltaInfiniteLights() const { return mDeltaInfLights; }
-	const std::vector<std::shared_ptr<IInfiniteLight>>& nonDeltaInfiniteLights() const { return mNonDeltaInfLights; }
-	const std::vector<std::shared_ptr<INode>>& nodes() const { return mNodes; }
+	inline const std::vector<std::shared_ptr<IEntity>>& entities() const { return mEntities; }
+	inline const std::vector<std::shared_ptr<IMaterial>>& materials() const { return mMaterials; }
+	inline const std::vector<std::shared_ptr<IEmission>>& emissions() const { return mEmissions; }
+	inline const std::vector<std::shared_ptr<IInfiniteLight>>& infiniteLights() const { return mInfLights; }
+	inline const std::vector<std::shared_ptr<IInfiniteLight>>& deltaInfiniteLights() const { return mDeltaInfLights; }
+	inline const std::vector<std::shared_ptr<IInfiniteLight>>& nonDeltaInfiniteLights() const { return mNonDeltaInfLights; }
+	inline const std::vector<std::shared_ptr<INode>>& nodes() const { return mNodes; }
 
-	std::shared_ptr<LightSampler> lightSampler() const { return mLightSampler; }
+	inline std::shared_ptr<ICamera> activeCamera() const { return mActiveCamera; }
 
-	std::shared_ptr<ICamera> activeCamera() const { return mActiveCamera; }
-
-	std::shared_ptr<ServiceObserver> serviceObserver() const { return mServiceObserver; }
+	inline std::shared_ptr<ServiceObserver> serviceObserver() const { return mServiceObserver; }
 
 	/// Traces a stream of rays and produces a stream of hits
 	void traceRays(RayStream& rays, HitStream& hits) const;
@@ -78,8 +75,6 @@ private:
 	std::vector<std::shared_ptr<IInfiniteLight>> mDeltaInfLights;
 	std::vector<std::shared_ptr<IInfiniteLight>> mNonDeltaInfLights;
 	std::vector<std::shared_ptr<INode>> mNodes;
-
-	std::shared_ptr<LightSampler> mLightSampler;
 
 	std::unique_ptr<struct SceneInternal> mInternal;
 	BoundingBox mBoundingBox;
