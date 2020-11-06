@@ -12,6 +12,13 @@
 namespace PR {
 class IntegratorUtils {
 public:
+	inline static float correctShadingNormalForLight(const Vector3f& V, const Vector3f& L, const Vector3f& Ns, const Vector3f& Ng)
+	{
+		float numerator	  = std::abs(V.dot(Ns) * L.dot(Ng));
+		float denumerator = std::abs(V.dot(Ng) * L.dot(Ns));
+		return denumerator > PR_EPSILON ? numerator / denumerator : 0.0f;
+	}
+
 	static inline void handleBackgroundGroup(RenderTileSession& session, const ShadingGroup& sg)
 	{
 		PR_PROFILE_THIS;

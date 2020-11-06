@@ -247,7 +247,8 @@ public:
 			nextPDF = 1;
 		}
 
-		SpectralBlob alphaM = sout.Weight * prevWeight;
+		const float sn		= IntegratorUtils::correctShadingNormalForLight(-ip.Ray.Direction, sout.L, ip.Surface.N, ip.Surface.Geometry.N);
+		SpectralBlob alphaM = sn * sout.Weight * prevWeight;
 
 		// Russian roulette
 		if (ip.Ray.IterationDepth >= mParameters.MaxLightRayDepthSoft) {
