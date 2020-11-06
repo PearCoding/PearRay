@@ -41,7 +41,8 @@ struct BiDiPathVertex {
 	const IEntity* Entity;
 	const IMaterial* Material;
 	SpectralBlob Alpha; // Alpha term for next vertex
-	float PDF_A;
+	float ForwardPDF_A;
+	float BackwardPDF_A;
 };
 
 enum BiDiMISMode {
@@ -98,7 +99,7 @@ public:
 		const auto sc = ShadingContext::fromIP(session.threadID(), ip);
 
 		const SpectralBlob prevAlpha = (ip.Ray.IterationDepth == 0) ? SpectralBlob::Ones() : mCameraVertices[ip.Ray.IterationDepth - 1].Alpha;
-		const float prevPDF_A		 = (ip.Ray.IterationDepth == 0) ? 1 : mCameraVertices[ip.Ray.IterationDepth - 1].PDF_A;
+		const float prevPDF_A		 = (ip.Ray.IterationDepth == 0) ? 1 : mCameraVertices[ip.Ray.IterationDepth - 1].ForwardPDF_A;
 
 		// Add pdf which generated this vertex
 		float pdf_A = prevPDF_A;
@@ -136,8 +137,8 @@ public:
 		material->sample(sin, sout, session);
 
 		if (!material->hasDeltaDistribution()) {
-			sout.Weight /= sout.ForwardPDF_S[0];
-			nextPDF = sout.ForwardPDF_S[0];
+			sout.Weight /= sout.PDF_S[0];
+			nextPDF = sout.PDF_S[0];
 		} else {
 			nextPDF = 1;
 		}
@@ -159,11 +160,11 @@ public:
 		if (material->isSpectralVarying())
 			alphaM *= SpectralBlobUtils::HeroOnly();
 
-		if (alphaM.isZero(PR_EPSILON) || PR_UNLIKELY(sout.ForwardPDF_S[0] <= PR_EPSILON))
+		if (alphaM.isZero(PR_EPSILON) || PR_UNLIKELY(sout.PDF_S[0] <= PR_EPSILON))
 			return {};
 
 		path.addToken(sout.Type);
-		mCameraVertices.emplace_back(BiDiPathVertex{ ip, entity, material, alphaM, pdf_A });
+		mCameraVertices.emplace_back(BiDiPathVertex{ ip, entity, material, alphaM, pdf_A, pdf_A }); // TODO
 
 		int rflags = RF_Bounce;
 		if (material->isSpectralVarying())
@@ -187,7 +188,7 @@ public:
 		session.pushSPFragment(spt, path);
 
 		// Intiial camera vertex
-		mCameraVertices.emplace_back(BiDiPathVertex{ IntersectionPoint(), nullptr, nullptr, SpectralBlob::Ones(), 1 });
+		mCameraVertices.emplace_back(BiDiPathVertex{ IntersectionPoint(), nullptr, nullptr, SpectralBlob::Ones(), 1, 1 });
 
 		float nextPDF = 1.0f;
 		mCameraPathWalker.traverse(
@@ -216,7 +217,7 @@ public:
 		const auto sc = ShadingContext::fromIP(session.threadID(), ip);
 
 		const SpectralBlob prevWeight = (ip.Ray.IterationDepth == 0) ? lightRadiance : mLightVertices[ip.Ray.IterationDepth - 1].Alpha;
-		const float prevPDF_A		  = (ip.Ray.IterationDepth == 0) ? 1 : mLightVertices[ip.Ray.IterationDepth - 1].PDF_A;
+		const float prevPDF_A		  = (ip.Ray.IterationDepth == 0) ? 1 : mLightVertices[ip.Ray.IterationDepth - 1].ForwardPDF_A;
 
 		// Add pdf which generated this vertex
 		float pdf_A = prevPDF_A;
@@ -240,8 +241,8 @@ public:
 		material->sample(sin, sout, session);
 
 		if (!material->hasDeltaDistribution()) {
-			sout.Weight /= sout.ForwardPDF_S[0];
-			nextPDF = sout.ForwardPDF_S[0];
+			sout.Weight /= sout.PDF_S[0];
+			nextPDF = sout.PDF_S[0];
 		} else {
 			nextPDF = 1;
 		}
@@ -263,11 +264,11 @@ public:
 		if (material->isSpectralVarying())
 			alphaM *= SpectralBlobUtils::HeroOnly();
 
-		if (alphaM.isZero(PR_EPSILON) || PR_UNLIKELY(sout.ForwardPDF_S[0] <= PR_EPSILON))
+		if (alphaM.isZero(PR_EPSILON) || PR_UNLIKELY(sout.PDF_S[0] <= PR_EPSILON))
 			return {};
 
 		path.addToken(sout.Type);
-		mLightVertices.emplace_back(BiDiPathVertex{ ip, entity, material, alphaM, pdf_A });
+		mLightVertices.emplace_back(BiDiPathVertex{ ip, entity, material, alphaM, pdf_A, pdf_A }); // TODO
 
 		int rflags = RF_Bounce;
 		if (material->isSpectralVarying())
@@ -296,8 +297,10 @@ public:
 		ray.Flags |= RF_Light;
 		ray.WavelengthNM = lsin.WavelengthNM;
 
-		const float pdf				= std::isinf(lsout.PDF.Value) ? 1 : lsout.PDF.Value;
-		const SpectralBlob radiance = lsout.Radiance / pdf;
+		LightPDF pdf = lsout.Position_PDF;
+		pdf.Value *= lsout.Direction_PDF_S;
+		pdf.Value					= std::isinf(pdf.Value) ? 1 : pdf.Value;
+		const SpectralBlob radiance = lsout.Radiance / pdf.Value;
 
 		if (light->isInfinite())
 			path.addToken(LightPathToken::Background());
@@ -305,13 +308,13 @@ public:
 			path.addToken(LightPathToken::Emissive());
 
 		// Intiial light vertex
-		mLightVertices.emplace_back(BiDiPathVertex{ IntersectionPoint(), nullptr, nullptr, SpectralBlob::Ones(), 1 });
+		mLightVertices.emplace_back(BiDiPathVertex{ IntersectionPoint(), nullptr, nullptr, SpectralBlob::Ones(), 1, 1 });
 
 		float nextPDF = 1.0f;
 		mLightPathWalker.traverse(
 			session, ray,
 			[&](const IntersectionPoint& ip, IEntity* entity2, IMaterial* material2) -> std::optional<Ray> {
-				return handleLightVertex(session, path, ip, entity2, material2, radiance, lsout.PDF, nextPDF);
+				return handleLightVertex(session, path, ip, entity2, material2, radiance, pdf, nextPDF);
 			},
 			[&](const Ray&) {
 				// Do nothing! (as we do not support C_s0 connections)
@@ -390,8 +393,8 @@ public:
 		const SpectralBlob contrib = lightW * Geometry * cameraW;
 
 		// Compute MIS
-		const float pdfT  = pcv.PDF_A;
-		const float pdfS  = plv.PDF_A;
+		const float pdfT  = pcv.ForwardPDF_A;
+		const float pdfS  = plv.ForwardPDF_A;
 		const float pdfST = pdfS * pdfT; // Probability for generating this path
 		float misDenom	  = 0.0f;
 

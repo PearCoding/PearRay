@@ -60,39 +60,45 @@ public:
 	void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out,
 			  const RenderTileSession&) const override
 	{
-		const float cosine = std::max(0.0f, in.Ray.Direction.dot(mDirection));
+		const float cosine = std::max(0.0f, in.Direction.dot(mDirection));
 		//PR_ASSERT(cosine >= 0.0f && cosine <= 1.0f, "cosine must be between 0 and 1");
 
 		if (cosine < mCosTheta) {
-			out.Radiance = SpectralBlob::Zero();
-			out.PDF_S	 = 0;
+			out.Radiance		= SpectralBlob::Zero();
+			out.Direction_PDF_S = 0;
 		} else {
 			PR_OPT_LOOP
 			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-				out.Radiance[i] = mSpectrum.lookup(in.Ray.WavelengthNM[i]);
+				out.Radiance[i] = mSpectrum.lookup(in.WavelengthNM[i]);
 
-			out.PDF_S = mPDF;
+			out.Direction_PDF_S = mPDF;
 		}
 	}
 
-	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,
-				const RenderTileSession&) const override
+	void sampleDir(const InfiniteLightSampleDirInput& in, InfiniteLightSampleDirOutput& out,
+				   const RenderTileSession&) const override
 	{
-		const Vector3f dir = Sampling::uniform_cone(in.RND(0), in.RND(1), mCosTheta);
-		out.Outgoing	   = Tangent::fromTangentSpace(mDirection, mDx, mDy, dir);
-		out.PDF_S		   = mPDF;
-
-		if (in.Point) {
-			out.LightPosition = in.Point->P + mSceneRadius * out.Outgoing;
-		} else if (in.SamplePosition) {
-			const Vector2f uv = mSceneRadius * Concentric::square2disc(Vector2f(in.RND(2), in.RND(3)));
-			out.LightPosition = mSceneRadius * out.Outgoing + uv(0) * mDx + uv(1) * mDy;
-			out.PDF_S *= 1 / (2 * PR_PI * mSceneRadius);
-		}
+		const Vector3f dir	= Sampling::uniform_cone(in.DirectionRND(0), in.DirectionRND(1), mCosTheta);
+		out.Outgoing		= Tangent::fromTangentSpace(mDirection, mDx, mDy, dir);
+		out.Direction_PDF_S = mPDF;
 
 		PR_OPT_LOOP
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
 			out.Radiance[i] = mSpectrum.lookup(in.WavelengthNM[i]);
+	}
+
+	void samplePosDir(const InfiniteLightSamplePosDirInput& in, InfiniteLightSamplePosDirOutput& out,
+					  const RenderTileSession& session) const override
+	{
+		sampleDir(in, out, session);
+
+		if (in.Point) {
+			out.LightPosition = in.Point->P + mSceneRadius * out.Outgoing;
+		} else {
+			const Vector2f uv  = mSceneRadius * Concentric::square2disc(in.PositionRND);
+			out.LightPosition  = mSceneRadius * out.Outgoing + uv(0) * mDx + uv(1) * mDy;
+			out.Position_PDF_A = 1 / (2 * PR_PI * mSceneRadius);
+		}
 	}
 
 	SpectralBlob power(const SpectralBlob& wvl) const override
@@ -170,26 +176,32 @@ public:
 
 		PR_OPT_LOOP
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-			out.Radiance[i] = mSpectrum.lookup(in.Ray.WavelengthNM[i]);
-		out.PDF_S = PR_INF;
+			out.Radiance[i] = mSpectrum.lookup(in.WavelengthNM[i]);
+		out.Direction_PDF_S = PR_INF;
 	}
 
-	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,
-				const RenderTileSession&) const override
+	void sampleDir(const InfiniteLightSampleDirInput& in, InfiniteLightSampleDirOutput& out,
+				   const RenderTileSession&) const override
 	{
 		PR_OPT_LOOP
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
 			out.Radiance[i] = mSpectrum.lookup(in.WavelengthNM[i]);
 
-		out.Outgoing = mDirection;
-		out.PDF_S	 = PR_INF;
+		out.Outgoing		= mDirection;
+		out.Direction_PDF_S = PR_INF;
+	}
+
+	void samplePosDir(const InfiniteLightSamplePosDirInput& in, InfiniteLightSamplePosDirOutput& out,
+					  const RenderTileSession& session) const override
+	{
+		samplePosDir(in, out, session);
 
 		if (in.Point) {
 			out.LightPosition = in.Point->P + mSceneRadius * out.Outgoing;
-		} else if (in.SamplePosition) {
-			const Vector2f uv = mSceneRadius * Concentric::square2disc(Vector2f(in.RND(0), in.RND(1)));
-			out.LightPosition = mSceneRadius * out.Outgoing + uv(0) * mDx + uv(1) * mDy;
-			out.PDF_S		  = 1 / (2 * PR_PI * mSceneRadius);
+		} else {
+			const Vector2f uv  = mSceneRadius * Concentric::square2disc(in.PositionRND);
+			out.LightPosition  = mSceneRadius * out.Outgoing + uv(0) * mDx + uv(1) * mDy;
+			out.Position_PDF_A = 1 / (2 * PR_PI * mSceneRadius);
 		}
 	}
 

@@ -53,8 +53,20 @@ public:
 		powitacq::Vector3f wo = powitacq::Vector3f(in.Context.L(0), in.Context.L(1), in.Context.L(2));
 
 		out.Weight		  = mTint->eval(in.ShadingContext) * eval(wi, wo, in.Context.WavelengthNM);
-		out.ForwardPDF_S  = mBRDF.pdf(wi, wo);
-		out.BackwardPDF_S = mBRDF.pdf(wo, wi);
+		out.PDF_S  = mBRDF.pdf(wi, wo);
+		out.Type		  = MST_DiffuseReflection;
+	}
+
+	void pdf(const MaterialEvalInput& in, MaterialPDFOutput& out,
+			  const RenderTileSession&) const override
+	{
+		PR_PROFILE_THIS;
+
+		powitacq::Vector3f wi = powitacq::Vector3f(in.Context.V(0), in.Context.V(1), in.Context.V(2));
+		powitacq::Vector3f wo = powitacq::Vector3f(in.Context.L(0), in.Context.L(1), in.Context.L(2));
+
+		out.Weight		  = mTint->eval(in.ShadingContext) * eval(wi, wo, in.Context.WavelengthNM);
+		out.PDF_S  = mBRDF.pdf(wi, wo);
 		out.Type		  = MST_DiffuseReflection;
 	}
 
@@ -72,8 +84,7 @@ public:
 		out.Weight		  = mTint->eval(in.ShadingContext) * eval(wi, wo, in.Context.WavelengthNM);
 		out.Type		  = MST_DiffuseReflection;
 		out.L			  = Vector3f(wo[0], wo[1], wo[2]);
-		out.ForwardPDF_S  = pdf;
-		out.BackwardPDF_S = mBRDF.pdf(wo, wi);
+		out.PDF_S  = pdf;
 	}
 
 	std::string dumpInformation() const override

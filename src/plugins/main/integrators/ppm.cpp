@@ -282,7 +282,8 @@ public:
 			ray.Flags |= RF_Light;
 			ray.WavelengthNM = lsin.WavelengthNM;
 
-			const float pdf				= std::isinf(lsout.PDF.Value) ? 1 : lsout.PDF.Value;
+			float pdf					= lsout.Direction_PDF_S * lsout.Position_PDF.Value;
+			pdf							= std::isinf(pdf) ? 1 : pdf;
 			const SpectralBlob radiance = lsout.Radiance * (sampleInv / pdf);
 
 			mLightPathWalker.traverseBSDFSimple(

@@ -128,7 +128,7 @@ private:
 
 					onSample(weight, sin, sout, entity, material);
 
-					if (weight.isZero(PR_EPSILON) || PR_UNLIKELY(sout.ForwardPDF_S[0] <= PR_EPSILON))
+					if (weight.isZero(PR_EPSILON) || PR_UNLIKELY(sout.PDF_S[0] <= PR_EPSILON))
 						return {};
 
 					int rflags = RF_Bounce;
@@ -136,7 +136,7 @@ private:
 						rflags |= RF_Monochrome;
 
 					if (!material->hasDeltaDistribution())
-						weight /= sout.ForwardPDF_S[0];
+						weight /= sout.PDF_S[0];
 
 					return std::make_optional(ip.Ray.next(ip.P, sout.globalL(ip), ip.Surface.N,
 														  rflags, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX));

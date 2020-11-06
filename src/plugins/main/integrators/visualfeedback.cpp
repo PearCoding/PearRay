@@ -206,9 +206,17 @@ public:
 					MaterialEvalOutput eval_out;
 					mat->eval(eval_in, eval_out, session);
 
-					const float weightDiff		   = (samp_out.Weight - eval_out.Weight).cwiseAbs().sum();
-					const float relForwardPDFDiff  = (samp_out.ForwardPDF_S - eval_out.ForwardPDF_S).cwiseAbs().sum();
-					const float relBackwardPDFDiff = (samp_out.BackwardPDF_S - eval_out.BackwardPDF_S).cwiseAbs().sum();
+					MaterialEvalOutput pdf_out;
+					mat->pdf(eval_in, pdf_out, session);
+
+					float weightNorm = samp_out.Weight.cwiseAbs().sum();
+					weightNorm		 = weightNorm > PR_EPSILON ? 1 / weightNorm : 1.0f;
+					float pdfNorm	 = samp_out.PDF_S.cwiseAbs().sum();
+					pdfNorm			 = pdfNorm > PR_EPSILON ? 1 / pdfNorm : 1.0f;
+
+					const float weightDiff		   = (samp_out.Weight - eval_out.Weight).cwiseAbs().sum() * weightNorm;
+					const float relForwardPDFDiff  = (samp_out.PDF_S - eval_out.PDF_S).cwiseAbs().sum() * pdfNorm;
+					const float relBackwardPDFDiff = (samp_out.PDF_S - pdf_out.PDF_S).cwiseAbs().sum() * pdfNorm;
 
 					const auto r = SpectralUpsampler::compute(mParametric.Red, spt.Ray.WavelengthNM);
 					const auto g = SpectralUpsampler::compute(mParametric.Green, spt.Ray.WavelengthNM);

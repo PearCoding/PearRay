@@ -23,12 +23,15 @@ public:
 			for (auto light : session.tile()->context()->scene()->nonDeltaInfiniteLights()) {
 				for (size_t i = 0; i < sg.size(); ++i) {
 					InfiniteLightEvalInput in;
-					sg.extractRay(i, in.Ray);
-					in.Point = nullptr;
+					Ray ray;
+					sg.extractRay(i, ray);
+					in.WavelengthNM	  = ray.WavelengthNM;
+					in.Direction	  = ray.Direction;
+					in.IterationDepth = ray.IterationDepth;
 					InfiniteLightEvalOutput out;
 					light->eval(in, out, session);
 
-					session.pushSpectralFragment(SpectralBlob::Ones(), SpectralBlob::Ones(), out.Radiance, in.Ray, cb);
+					session.pushSpectralFragment(SpectralBlob::Ones(), SpectralBlob::Ones(), out.Radiance, ray, cb);
 				}
 			}
 		} else { // If no inf. lights are available make sure at least zero is splatted
@@ -40,18 +43,19 @@ public:
 		}
 	}
 
-	template<typename Func>
+	template <typename Func>
 	static inline void handleBackground(RenderTileSession& session, const Ray& ray, const Func& func)
 	{
 		session.tile()->statistics().addBackgroundHitCount();
 		for (auto light : session.tile()->context()->scene()->nonDeltaInfiniteLights()) {
 			InfiniteLightEvalInput lin;
-			lin.Point = nullptr; // TODO
-			lin.Ray	  = ray;
+			lin.WavelengthNM   = ray.WavelengthNM;
+			lin.Direction	   = ray.Direction;
+			lin.IterationDepth = ray.IterationDepth;
 			InfiniteLightEvalOutput lout;
 			light->eval(lin, lout, session);
 
-			if (PR_UNLIKELY(lout.PDF_S <= PR_EPSILON))
+			if (PR_UNLIKELY(lout.Direction_PDF_S <= PR_EPSILON))
 				continue;
 
 			func(lout);

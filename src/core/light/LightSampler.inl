@@ -20,7 +20,7 @@ inline const Light* LightSampler::sample(const LightSampleInput& in, LightSample
 		in2.RND[0]			 = rem;
 		l->sample(in2, out, session);
 
-		out.PDF.Value *= pdf;
+		out.Direction_PDF_S *= pdf;
 		return l;
 	} else {
 		return nullptr;

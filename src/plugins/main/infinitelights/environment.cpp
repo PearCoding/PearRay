@@ -50,11 +50,11 @@ public:
 			  const RenderTileSession&) const override
 	{
 		ShadingContext ctx;
-		ctx.UV			 = Spherical::uv_from_normal(invNormalMatrix() * in.Ray.Direction);
-		ctx.WavelengthNM = in.Ray.WavelengthNM;
+		ctx.UV			 = Spherical::uv_from_normal(invNormalMatrix() * in.Direction);
+		ctx.WavelengthNM = in.WavelengthNM;
 
 		if constexpr (UseSplit) {
-			if (in.Ray.IterationDepth == 0)
+			if (in.IterationDepth == 0)
 				out.Radiance = mBackground->eval(ctx);
 			else
 				out.Radiance = mRadiance->eval(ctx);
@@ -63,30 +63,30 @@ public:
 		}
 
 		if constexpr (UseDistribution) {
-			out.PDF_S			 = mDistribution->continuousPdf(ctx.UV);
+			out.Direction_PDF_S	 = mDistribution->continuousPdf(ctx.UV);
 			const float sinTheta = std::sin(ctx.UV(1) * PR_PI);
 			const float denom	 = 2 * PR_PI * PR_PI * sinTheta;
-			out.PDF_S *= (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
+			out.Direction_PDF_S *= (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
 		} else {
-			out.PDF_S = in.Point ? Sampling::cos_hemi_pdf(std::abs(in.Point->Surface.N.dot(in.Ray.Direction))) : 1.0f;
+			out.Direction_PDF_S = Sampling::cos_hemi_pdf(std::abs((invNormalMatrix() * in.Direction)(2)));
 		}
 	}
 
-	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,
-				const RenderTileSession&) const override
+	void sampleDir(const InfiniteLightSampleDirInput& in, InfiniteLightSampleDirOutput& out,
+				   const RenderTileSession&) const override
 	{
 		Vector2f uv;
 		if constexpr (UseDistribution) {
-			uv			 = mDistribution->sampleContinuous(Vector2f(in.RND(0), in.RND(1)), out.PDF_S);
+			uv			 = mDistribution->sampleContinuous(in.DirectionRND, out.Direction_PDF_S);
 			out.Outgoing = Spherical::cartesian_from_uv(uv(0), uv(1));
 
 			const float sinTheta = std::sin(uv(1) * PR_PI);
 			const float denom	 = 2 * PR_PI * PR_PI * sinTheta;
-			out.PDF_S *= (denom <= PR_EPSILON) ? 0.0f : 1 / denom;
+			out.Direction_PDF_S *= (denom <= PR_EPSILON) ? 0.0f : 1 / denom;
 		} else {
-			uv			 = Vector2f(in.RND(0), in.RND(1));
-			out.Outgoing = Sampling::cos_hemi(uv(0), uv(1));
-			out.PDF_S	 = Sampling::cos_hemi_pdf(out.Outgoing(2));
+			uv					= in.DirectionRND;
+			out.Outgoing		= Sampling::cos_hemi(uv(0), uv(1));
+			out.Direction_PDF_S = Sampling::cos_hemi_pdf(out.Outgoing(2));
 		}
 		out.Outgoing = normalMatrix() * out.Outgoing;
 
@@ -94,16 +94,23 @@ public:
 		coord.UV		   = uv;
 		coord.WavelengthNM = in.WavelengthNM;
 		out.Radiance	   = mRadiance->eval(coord);
+	}
 
+	void samplePosDir(const InfiniteLightSamplePosDirInput& in, InfiniteLightSamplePosDirOutput& out,
+					  const RenderTileSession& session) const override
+	{
+		sampleDir(in, out, session);
+
+		out.Position_PDF_A = 1;
 		if (in.Point) // If we call it outside an intersection point, make light position such that lP - iP = direction
 			out.LightPosition = in.Point->P + mSceneRadius * out.Outgoing;
-		else if (in.SamplePosition) {
+		else {
 			out.LightPosition = 2 * mSceneRadius * out.Outgoing;
 			// Instead of sampling position, sample direction again
 			constexpr float CosAtan05 = 0.894427190999915f; // cos(atan(0.5)) = 2/sqrt(5)
-			const Vector3f local	  = Sampling::uniform_cone(in.RND(2), in.RND(3), CosAtan05);
+			const Vector3f local	  = Sampling::uniform_cone(in.PositionRND(0), in.PositionRND(1), CosAtan05);
 			out.Outgoing			  = Tangent::align(out.Outgoing, local);
-			out.PDF_S *= Sampling::uniform_cone_pdf(CosAtan05) / mSceneRadius;
+			out.Direction_PDF_S *= Sampling::uniform_cone_pdf(CosAtan05) / mSceneRadius;
 		}
 	}
 
@@ -150,7 +157,7 @@ public:
 		const auto radP				 = params.getParameter("radiance");
 		const auto backgroundP		 = params.getParameter("background");
 		const bool allowDistribution = params.getBool("distribution", true);
-		const bool allowCompensation = params.getBool("compensation", false);// Disabled per default, due to some bugs
+		const bool allowCompensation = params.getBool("compensation", false); // Disabled per default, due to some bugs
 
 		std::shared_ptr<FloatSpectralNode> radiance;
 		std::shared_ptr<FloatSpectralNode> background;

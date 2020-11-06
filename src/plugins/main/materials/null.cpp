@@ -25,10 +25,18 @@ public:
 
 		PR_ASSERT(false, "Delta distribution materials should not be evaluated");
 
-		out.Weight		  = 1;
-		out.ForwardPDF_S  = 1;
-		out.BackwardPDF_S = 1;
-		out.Type		  = MST_SpecularTransmission;
+		out.PDF_S  = 0.0f;
+		out.Type   = MST_SpecularTransmission;
+		out.Weight = SpectralBlob::Zero();
+	}
+
+	void pdf(const MaterialEvalInput&, MaterialPDFOutput& out,
+			 const RenderTileSession&) const override
+	{
+		PR_PROFILE_THIS;
+
+		PR_ASSERT(false, "Delta distribution materials should not be evaluated");
+		out.PDF_S = 0.0f;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -36,11 +44,10 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		out.Weight		  = 1;
-		out.ForwardPDF_S  = 1;
-		out.BackwardPDF_S = 1;
-		out.Type		  = MST_SpecularTransmission;
-		out.L			  = -in.Context.V;
+		out.Weight = 1;
+		out.PDF_S  = 1;
+		out.Type   = MST_SpecularTransmission;
+		out.L	   = -in.Context.V;
 	}
 
 	std::string dumpInformation() const override

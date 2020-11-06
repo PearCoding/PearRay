@@ -17,18 +17,17 @@ public:
 
 	inline uint32 id() const;
 
-	virtual void startGroup(size_t size, const RenderTileSession& session)
-	{
-		PR_UNUSED(size);
-		PR_UNUSED(session);
-	}
-	virtual void endGroup() {}
-
 	/*
 		Evaluate the BxDF based on incident and outgoing direction and point information.
 		The calculation is in shading space.
 	*/
 	virtual void eval(const MaterialEvalInput& in, MaterialEvalOutput& out, const RenderTileSession& session) const = 0;
+
+	/*
+		Compute the pdf of the BxDF based on incident and outgoing direction and point information.
+		The calculation is in shading space.
+	*/
+	virtual void pdf(const MaterialEvalInput& in, MaterialPDFOutput& out, const RenderTileSession& session) const = 0;
 
 	/*
 		Sample a direction and evaluate.

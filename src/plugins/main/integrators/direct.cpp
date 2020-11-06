@@ -92,8 +92,8 @@ public:
 		const float sqrD = L.squaredNorm();
 		L.normalize();
 		const float cosO = std::max(0.0f, lsout.CosLight); // Only frontside
-		float pdfS		 = lsout.PDF.Value;
-		if (lsout.PDF.IsArea)
+		float pdfS		 = lsout.Position_PDF.Value;
+		if (lsout.Position_PDF.IsArea)
 			pdfS = IS::toSolidAngle(pdfS, sqrD, cosO); // The whole integration is in solid angle domain -> Map into it
 
 		if (PR_UNLIKELY(pdfS <= PR_EPSILON))
@@ -122,7 +122,7 @@ public:
 
 		float mis = 1;
 		if (handleMSI) {
-			const float matPDF = (spt.Ray.Flags & RF_Monochrome) ? out.ForwardPDF_S[0] : (out.ForwardPDF_S.sum() / PR_SPECTRAL_BLOB_SIZE);
+			const float matPDF = (spt.Ray.Flags & RF_Monochrome) ? out.PDF_S[0] : (out.PDF_S.sum() / PR_SPECTRAL_BLOB_SIZE);
 			mis				   = MIS(mParameters.MaxLightSamples, pdfS, 1, matPDF);
 		}
 
@@ -155,7 +155,7 @@ public:
 		MaterialSampleOutput out;
 		material->sample(in, out, session);
 
-		if (PR_UNLIKELY(out.ForwardPDF_S[0] <= PR_EPSILON))
+		if (PR_UNLIKELY(out.PDF_S[0] <= PR_EPSILON))
 			return false;
 
 		SpectralBlob next_importance = importance;
@@ -165,7 +165,7 @@ public:
 		if (material->hasDeltaDistribution())
 			next_importance /= scatProb;
 		else
-			next_importance /= (scatProb * out.ForwardPDF_S[0]); // The sampling is only done by the hero wavelength
+			next_importance /= (scatProb * out.PDF_S[0]); // The sampling is only done by the hero wavelength
 
 		if (material->isSpectralVarying())
 			next.Flags |= RF_Monochrome;
@@ -211,7 +211,7 @@ public:
 					const EntitySamplingInfo sampleInfo = { spt.P, spt.Surface.N };
 					const auto pdfL						= mLightSampler->pdf(nentity, &sampleInfo);
 					next_mis							= allowMIS ? MIS(
-									  1, out.ForwardPDF_S[0],
+									  1, out.PDF_S[0],
 									  mParameters.MaxLightSamples, pdfL.IsArea ? IS::toSolidAngle(pdfL.Value, spt2.Depth2, aNdotV) : pdfL.Value)
 										: 1.0f;
 
@@ -227,8 +227,8 @@ public:
 			path.addToken(LightPathToken::Background());
 			IntegratorUtils::handleBackground(session, next, [&](const InfiniteLightEvalOutput& ileout) {
 				hasScattered	   = true;
-				const float matPDF = (spt.Ray.Flags & RF_Monochrome) ? out.ForwardPDF_S[0] : (out.ForwardPDF_S.sum() / PR_SPECTRAL_BLOB_SIZE);
-				const float msiL   = allowMIS ? MIS(1, matPDF, mParameters.MaxLightSamples, ileout.PDF_S) : 1.0f;
+				const float matPDF = (spt.Ray.Flags & RF_Monochrome) ? out.PDF_S[0] : (out.PDF_S.sum() / PR_SPECTRAL_BLOB_SIZE);
+				const float msiL   = allowMIS ? MIS(1, matPDF, mParameters.MaxLightSamples, ileout.Direction_PDF_S) : 1.0f;
 				session.pushSpectralFragment(SpectralBlob(msiL * mis), weighted_importance, ileout.Radiance, next, path);
 			});
 			if (!hasScattered) // Make sure atleast the weights are updated

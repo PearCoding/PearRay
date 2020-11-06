@@ -49,34 +49,34 @@ public:
 	void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out,
 			  const RenderTileSession&) const override
 	{
-		auto ea = ElevationAzimuth::fromDirection(invNormalMatrix() * in.Ray.Direction);
+		auto ea = ElevationAzimuth::fromDirection(invNormalMatrix() * in.Direction);
 
 		if constexpr (ExtendToGround) {
-			out.Radiance = radiance(in.Ray.WavelengthNM, ea);
-			out.PDF_S	 = mDistribution->continuousPdf(
-				   Vector2f(ea.Azimuth / AZIMUTH_RANGE, ea.Elevation / (2 * ELEVATION_RANGE) + 0.5f));
+			out.Radiance		= radiance(in.WavelengthNM, ea);
+			out.Direction_PDF_S = mDistribution->continuousPdf(
+				Vector2f(ea.Azimuth / AZIMUTH_RANGE, ea.Elevation / (2 * ELEVATION_RANGE) + 0.5f));
 			const float f	  = std::cos(ea.Elevation);
 			const float denom = 2 * PR_PI * PR_PI * f;
-			out.PDF_S *= (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
+			out.Direction_PDF_S *= (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
 		} else {
 			if (ea.Elevation < 0) {
-				out.Radiance = SpectralBlob::Zero();
-				out.PDF_S	 = 0;
+				out.Radiance		= SpectralBlob::Zero();
+				out.Direction_PDF_S = 0;
 			} else {
-				out.Radiance = radiance(in.Ray.WavelengthNM, ea);
-				out.PDF_S	 = mDistribution->continuousPdf(
-					   Vector2f(ea.Azimuth / AZIMUTH_RANGE, ea.Elevation / ELEVATION_RANGE));
+				out.Radiance		= radiance(in.WavelengthNM, ea);
+				out.Direction_PDF_S = mDistribution->continuousPdf(
+					Vector2f(ea.Azimuth / AZIMUTH_RANGE, ea.Elevation / ELEVATION_RANGE));
 				const float f	  = std::cos(ea.Elevation);
 				const float denom = 2 * PR_PI * PR_PI * f;
-				out.PDF_S *= (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
+				out.Direction_PDF_S *= (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
 			}
 		}
 	}
 
-	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,
-				const RenderTileSession&) const override
+	void sampleDir(const InfiniteLightSampleDirInput& in, InfiniteLightSampleDirOutput& out,
+				   const RenderTileSession&) const override
 	{
-		Vector2f uv = mDistribution->sampleContinuous(Vector2f(in.RND(0), in.RND(1)), out.PDF_S);
+		Vector2f uv = mDistribution->sampleContinuous(Vector2f(in.DirectionRND(0), in.DirectionRND(1)), out.Direction_PDF_S);
 		ElevationAzimuth ea;
 
 		if constexpr (ExtendToGround)
@@ -87,18 +87,26 @@ public:
 		out.Outgoing	  = normalMatrix() * ea.toDirection();
 		const float f	  = std::cos(ea.Elevation);
 		const float denom = 2 * PR_PI * PR_PI * f;
-		out.PDF_S *= (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
+		out.Direction_PDF_S *= (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
 
 		out.Radiance = radiance(in.WavelengthNM, ea);
+	}
+
+	void samplePosDir(const InfiniteLightSamplePosDirInput& in, InfiniteLightSamplePosDirOutput& out,
+					  const RenderTileSession& session) const override
+	{
+		sampleDir(in, out, session);
+
+		out.Position_PDF_A = 1;
 		if (in.Point) // If we call it outside an intersection point, make light position such that lP - iP = direction
 			out.LightPosition = in.Point->P + mSceneRadius * out.Outgoing;
-		else if (in.SamplePosition) {
+		else {
 			out.LightPosition = 2 * mSceneRadius * out.Outgoing;
 			// Instead of sampling position, sample direction again
 			constexpr float CosAtan05 = 0.894427190999915f; // cos(atan(0.5)) = 2/sqrt(5)
-			const Vector3f local	  = Sampling::uniform_cone(in.RND(2), in.RND(3), CosAtan05);
+			const Vector3f local	  = Sampling::uniform_cone(in.PositionRND(0), in.PositionRND(1), CosAtan05);
 			out.Outgoing			  = Tangent::align(out.Outgoing, local);
-			out.PDF_S *= Sampling::uniform_cone_pdf(CosAtan05) / mSceneRadius;
+			out.Direction_PDF_S *= Sampling::uniform_cone_pdf(CosAtan05) / mSceneRadius;
 		}
 	}
 

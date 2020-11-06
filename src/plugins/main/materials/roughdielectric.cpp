@@ -149,7 +149,7 @@ public:
 
 			const float jacobian = 1 / (4 * HdotV * HdotV);
 			out.Weight			 = mSpecularity->eval(in.ShadingContext) * F * (gd * jacobian);
-			out.ForwardPDF_S	 = F * pdf * jacobian;
+			out.PDF_S			 = F * pdf * jacobian;
 		} else {
 			const SpectralBlob weight = mTransmission->eval(in.ShadingContext);
 
@@ -168,8 +168,8 @@ public:
 				const float HdotL = H.dot((Vector3f)in.Context.L);
 
 				if (HdotV * HdotL >= 0) { // Same side
-					out.Weight[i]		= 0;
-					out.ForwardPDF_S[i] = 0;
+					out.Weight[i] = 0;
+					out.PDF_S[i]  = 0;
 				}
 
 				float pdf;
@@ -181,11 +181,83 @@ public:
 				// TODO: Deaccount for solid angle compression (see mitsuba & pbrt) when non-radiance mode is evaluated
 				const float factor = n2[i] / n1[i];
 
-				out.Weight[i]		= (1 - F) * weight[i] * gd * jacobian * factor * factor;
-				out.ForwardPDF_S[i] = (1 - F) * pdf * jacobian;
+				out.Weight[i] = (1 - F) * weight[i] * gd * jacobian * factor * factor;
+				out.PDF_S[i]  = (1 - F) * pdf * jacobian;
 			}
 		}
-		out.BackwardPDF_S = out.ForwardPDF_S;
+	}
+
+	inline float pdfGD(const ShadingVector& H, const ShadingVector& V, const ShadingContext& sctx) const
+	{
+		const float absNdotH = H.absCosTheta();
+		const float absNdotV = V.absCosTheta();
+
+		//PR_ASSERT(absNdotV >= 0, "By definition N.V has to be positive");
+		if (absNdotH <= PR_EPSILON
+			|| absNdotV <= PR_EPSILON)
+			return 0.0f;
+
+		const float m1 = adaptR(mRoughnessX->eval(sctx));
+		if (m1 < PR_EPSILON)
+			return 1;
+
+		float D;
+		if constexpr (!HasAnisoRoughness) {
+			D = Microfacet::ndf_ggx(absNdotH, m1);
+		} else {
+			const float m2 = adaptR(mRoughnessY->eval(sctx));
+			if (m2 < PR_EPSILON)
+				return 1;
+			D = Microfacet::ndf_ggx(H, m1, m2);
+		}
+
+		return std::abs(D * absNdotH);
+	}
+
+	void pdf(const MaterialEvalInput& in, MaterialPDFOutput& out,
+			 const RenderTileSession&) const override
+	{
+		// TODO: Better?
+		PR_PROFILE_THIS;
+
+		if (in.Context.V.sameHemisphere(in.Context.L)) { // Scattering
+			const ShadingVector H = Scattering::halfway_reflection(in.Context.V, in.Context.L);
+			const float HdotV	  = H.dot(in.Context.V);
+			PR_ASSERT(HdotV >= 0.0f, "HdotV must be positive");
+
+			const float pdf		 = pdfGD(H, in.Context.V, in.ShadingContext);
+			const SpectralBlob F = fresnelTerm(HdotV, in.ShadingContext);
+
+			const float jacobian = 1 / (4 * HdotV * HdotV);
+			out.PDF_S			 = F * pdf * jacobian;
+		} else {
+			SpectralBlob n1 = SpectralBlob::Ones();
+			SpectralBlob n2 = mIOR->eval(in.ShadingContext);
+
+			if (in.Context.V.cosTheta() < 0)
+				std::swap(n1, n2);
+
+			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
+				Vector3f H = Scattering::halfway_transmission(n1[i], in.Context.V, n2[i], in.Context.L);
+				if (H(2) < 0)
+					H = -H;
+
+				const float HdotV = H.dot((Vector3f)in.Context.V);
+				const float HdotL = H.dot((Vector3f)in.Context.L);
+
+				if (HdotV * HdotL >= 0) { // Same side
+					out.PDF_S[i] = 0;
+					continue;
+				}
+
+				const float pdf		 = pdfGD(H, in.Context.V, in.ShadingContext);
+				const float F		 = Fresnel::dielectric(HdotV, -HdotL, n1[i], n2[i]); // Zero in case of total reflection
+				const float denom	 = n2[i] * HdotL + n1[i] * HdotV;					 // Unsigned length of (unnormalized) H
+				const float jacobian = n2[i] * n2[i] / (denom * denom);
+
+				out.PDF_S[i] = (1 - F) * pdf * jacobian;
+			}
+		}
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -215,9 +287,8 @@ public:
 
 		const float HdotV = std::abs(H.dot((Vector3f)in.Context.V));
 		if (HdotV <= PR_EPSILON) { // Giveup if V in respect to H is too close to the negative hemisphere
-			out.Weight		  = SpectralBlob::Zero();
-			out.ForwardPDF_S  = 0;
-			out.BackwardPDF_S = 0;
+			out.Weight = SpectralBlob::Zero();
+			out.PDF_S  = 0;
 			return;
 		}
 
@@ -233,9 +304,8 @@ public:
 			out.L	 = Scattering::reflect(in.Context.V, H);
 
 			if (out.L(2) <= PR_EPSILON) { // Side check
-				out.Weight		  = SpectralBlob::Zero();
-				out.ForwardPDF_S  = 0;
-				out.BackwardPDF_S = 0;
+				out.Weight = SpectralBlob::Zero();
+				out.PDF_S  = 0;
 				return;
 			}
 
@@ -246,15 +316,14 @@ public:
 			float _pdf;
 			const float gd = evalGD(H, in.Context.V, out.L, in.ShadingContext, _pdf);
 
-			out.Weight		 = mSpecularity->eval(in.ShadingContext) * prob * gd * jacobian;
-			out.ForwardPDF_S = prob * pdf * jacobian;
+			out.Weight = mSpecularity->eval(in.ShadingContext) * prob * gd * jacobian;
+			out.PDF_S  = prob * pdf * jacobian;
 		} else {
 			out.Type = MST_SpecularTransmission;
 			out.L	 = Scattering::refract(eta, HdotT, HdotV, in.Context.V, H);
 			if (out.L(2) >= PR_EPSILON) { // Side check
-				out.Weight		  = SpectralBlob::Zero();
-				out.ForwardPDF_S  = 0;
-				out.BackwardPDF_S = 0;
+				out.Weight = SpectralBlob::Zero();
+				out.PDF_S  = 0;
 				return;
 			}
 
@@ -268,10 +337,9 @@ public:
 			float _pdf;
 			const float gd = evalGD(H, in.Context.V, out.L, in.ShadingContext, _pdf);
 
-			out.Weight		 = mTransmission->eval(in.ShadingContext) * (1 - F) * gd * jacobian * factor * factor;
-			out.ForwardPDF_S = (1 - F) * pdf * jacobian;
+			out.Weight = mTransmission->eval(in.ShadingContext) * (1 - F) * gd * jacobian * factor * factor;
+			out.PDF_S  = (1 - F) * pdf * jacobian;
 		}
-		out.BackwardPDF_S = out.ForwardPDF_S;
 	}
 
 	std::string dumpInformation() const override

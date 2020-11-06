@@ -636,12 +636,27 @@ public:
 
 		const bool refraction = !in.Context.V.sameHemisphere(in.Context.L);
 		out.Weight			  = mMeasurement.eval(oV, iV) /* std::abs(in.Context.NdotL())*/;
-		out.ForwardPDF_S	  = mMeasurement.pdf(oV, iV);
-		out.BackwardPDF_S	  = mMeasurement.pdf(iV, oV);
+		out.PDF_S			  = mMeasurement.pdf(oV, iV);
 		out.Type			  = refraction ? MST_DiffuseTransmission : MST_DiffuseReflection;
 
 		if constexpr (HasTint)
 			out.Weight *= mTint->eval(in.ShadingContext);
+	}
+
+	void pdf(const MaterialEvalInput& in, MaterialPDFOutput& out,
+			 const RenderTileSession&) const override
+	{
+		PR_PROFILE_THIS;
+
+		Vector3f oV = in.Context.V;
+		Vector3f iV = in.Context.L;
+
+		if constexpr (SwapSide) {
+			oV = -oV;
+			iV = -iV;
+		}
+
+		out.PDF_S = mMeasurement.pdf(oV, iV);
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -659,8 +674,7 @@ public:
 
 		const bool refraction = !in.Context.V.sameHemisphere(out.L);
 		out.Weight			  = weight /* std::abs(ectx.NdotL())*/;
-		out.ForwardPDF_S	  = pdf;
-		out.BackwardPDF_S	  = mMeasurement.pdf(out.L, in.Context.V);
+		out.PDF_S			  = pdf;
 		out.Type			  = refraction ? MST_DiffuseTransmission : MST_DiffuseReflection;
 
 		if constexpr (HasTint)

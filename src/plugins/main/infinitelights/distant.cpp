@@ -19,7 +19,7 @@ inline float calculatePosDiskRadius(float scene_radius, float cosTheta)
 }
 class DistantLight : public IInfiniteLight {
 public:
-	DistantLight(const std::shared_ptr<ServiceObserver>& so, 
+	DistantLight(const std::shared_ptr<ServiceObserver>& so,
 				 uint32 id, const std::string& name, const Transformf& transform,
 				 const Vector3f& direction,
 				 const std::shared_ptr<FloatSpectralNode>& spec)
@@ -33,15 +33,16 @@ public:
 	{
 		Tangent::frame(mOutgoing_Cache, mDx, mDy);
 
-		if(mServiceObserver)
-			mCBID = mServiceObserver->registerAfterSceneBuild([this](Scene* scene){
+		if (mServiceObserver)
+			mCBID = mServiceObserver->registerAfterSceneBuild([this](Scene* scene) {
 				mSceneRadius   = scene->boundingSphere().radius();
 				mPosDiskRadius = calculatePosDiskRadius(mSceneRadius, std::abs(mOutgoing_Cache(2)));
 			});
 	}
 
-	virtual ~DistantLight() {
-		if(mServiceObserver)
+	virtual ~DistantLight()
+	{
+		if (mServiceObserver)
 			mServiceObserver->unregister(mCBID);
 	}
 
@@ -53,29 +54,35 @@ public:
 		PR_ASSERT(false, "eval() for delta lights should never be called!");
 
 		ShadingContext ctx;
-		ctx.WavelengthNM = in.Ray.WavelengthNM;
-
-		out.Radiance = mIrradiance->eval(ctx);
-		out.PDF_S	 = PR_INF;
-	}
-
-	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,
-				const RenderTileSession&) const override
-	{
-		ShadingContext ctx;
 		ctx.WavelengthNM = in.WavelengthNM;
 
-		if (in.Point) {
-			out.LightPosition = in.Point->P + mSceneRadius * mOutgoing_Cache;
-		} else if (in.SamplePosition) {
-			const Vector2f uv = mPosDiskRadius * Concentric::square2disc(Vector2f(in.RND(0), in.RND(1)));
-			out.LightPosition = mSceneRadius * mOutgoing_Cache + uv(0) * mDx + uv(1) * mDy;
-			// TODO: PDF?
-		}
+		out.Radiance		= mIrradiance->eval(ctx);
+		out.Direction_PDF_S = PR_INF;
+	}
 
-		out.Radiance = mIrradiance->eval(ctx); // As there is only one direction (delta), irradiance is equal to radiance
-		out.Outgoing = mOutgoing_Cache;
-		out.PDF_S	 = PR_INF;
+	void sampleDir(const InfiniteLightSampleDirInput& in, InfiniteLightSampleDirOutput& out,
+				   const RenderTileSession&) const override
+	{
+		ShadingContext ctx;
+		ctx.WavelengthNM	= in.WavelengthNM;
+		out.Radiance		= mIrradiance->eval(ctx); // As there is only one direction (delta), irradiance is equal to radiance
+		out.Outgoing		= mOutgoing_Cache;
+		out.Direction_PDF_S = PR_INF;
+	}
+
+	void samplePosDir(const InfiniteLightSamplePosDirInput& in, InfiniteLightSamplePosDirOutput& out,
+					  const RenderTileSession& session) const override
+	{
+		sampleDir(in, out, session);
+
+		if (in.Point) {
+			out.LightPosition  = in.Point->P + mSceneRadius * mOutgoing_Cache;
+			out.Position_PDF_A = 1;
+		} else {
+			const Vector2f uv  = mPosDiskRadius * Concentric::square2disc(in.PositionRND);
+			out.LightPosition  = mSceneRadius * mOutgoing_Cache + uv(0) * mDx + uv(1) * mDy;
+			out.Position_PDF_A = 1 / (2 * PR_PI * mSceneRadius);
+		}
 	}
 
 	SpectralBlob power(const SpectralBlob& wvl) const override { return NodeUtils::average(wvl, mIrradiance.get()); }

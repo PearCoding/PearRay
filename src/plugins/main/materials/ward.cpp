@@ -43,9 +43,8 @@ public:
 
 		// Ward is only defined in the positive hemisphere
 		if (in.Context.NdotV() <= PR_EPSILON || in.Context.NdotL() <= PR_EPSILON) {
-			out.Weight		  = 0.0f;
-			out.ForwardPDF_S  = 0.0f;
-			out.BackwardPDF_S = 0.0f;
+			out.Weight = 0.0f;
+			out.PDF_S  = 0.0f;
 			return;
 		}
 
@@ -68,17 +67,45 @@ public:
 		out.Weight		 = mAlbedo->eval(sctx) * (1 - refl) + spec * mSpecularity->eval(sctx) * refl;
 		out.Weight *= std::max(0.0f, in.Context.NdotL());
 
-		out.ForwardPDF_S  = std::min(std::max(Sampling::cos_hemi_pdf(in.Context.NdotL()) * (1 - refl) + spec * refl, 0.0f), 1.0f);
-		out.BackwardPDF_S = std::min(std::max(Sampling::cos_hemi_pdf(in.Context.NdotV()) * (1 - refl) + spec * refl, 0.0f), 1.0f);
+		out.PDF_S = std::min(std::max(Sampling::cos_hemi_pdf(in.Context.NdotL()) * (1 - refl) + spec * refl, 0.0f), 1.0f);
+	}
+
+	void pdf(const MaterialEvalInput& in, MaterialPDFOutput& out,
+			 const RenderTileSession&) const override
+	{
+		PR_PROFILE_THIS;
+
+		// Ward is only defined in the positive hemisphere
+		if (in.Context.NdotV() <= PR_EPSILON || in.Context.NdotL() <= PR_EPSILON) {
+			out.PDF_S = 0.0f;
+			return;
+		}
+
+		ShadingVector H = Scattering::faceforward(Scattering::halfway_reflection(in.Context.V, in.Context.L));
+
+		float spec;
+		if (mRoughnessX == mRoughnessY) {
+			spec = std::min(1.0f,
+							Microfacet::ward(mRoughnessX->eval(in.ShadingContext),
+											 in.Context.NdotV(), in.Context.NdotL(), H.cosTheta()));
+		} else {
+			spec = std::min(1.0f,
+							Microfacet::ward(mRoughnessX->eval(in.ShadingContext),
+											 mRoughnessY->eval(in.ShadingContext),
+											 in.Context.NdotV(), in.Context.NdotL(),
+											 H.cosTheta(), H.sinPhi(), H.cosPhi()));
+		}
+
+		const float refl = mReflectivity->eval(in.ShadingContext);
+		out.PDF_S		 = std::min(std::max(Sampling::cos_hemi_pdf(in.Context.NdotL()) * (1 - refl) + spec * refl, 0.0f), 1.0f);
 	}
 
 	void sampleDiffusePath(const MaterialSampleInput& in, const ShadingContext& sctx, MaterialSampleOutput& out) const
 	{
-		out.L			  = Sampling::cos_hemi(in.RND[0], in.RND[1]);
-		out.ForwardPDF_S  = Sampling::cos_hemi_pdf(out.L(2));
-		out.BackwardPDF_S = Sampling::cos_hemi_pdf(in.Context.NdotV());
-		out.Weight		  = mAlbedo->eval(sctx) * out.L[2];
-		out.Type		  = MST_DiffuseReflection;
+		out.L	   = Sampling::cos_hemi(in.RND[0], in.RND[1]);
+		out.PDF_S  = Sampling::cos_hemi_pdf(out.L(2));
+		out.Weight = mAlbedo->eval(sctx) * out.L[2];
+		out.Type   = MST_DiffuseReflection;
 	}
 
 	void sampleSpecularPath(const MaterialSampleInput& in, const ShadingContext& sctx, MaterialSampleOutput& out) const
@@ -99,9 +126,9 @@ public:
 
 			const float t = 4 * PR_PI * m1 * m1 * cosTheta * cosTheta * cosTheta * in.RND[1];
 			if (t <= PR_EPSILON)
-				out.ForwardPDF_S = 1;
+				out.PDF_S = 1;
 			else
-				out.ForwardPDF_S = 1 / t;
+				out.PDF_S = 1 / t;
 		} else {
 			const float pm1 = m1 * m1;
 			const float pm2 = m2 * m2;
@@ -119,14 +146,13 @@ public:
 			const float cosTheta2 = cosTheta * cosTheta;
 			const float tu		  = pm1 * sinPhi * sinPhi + pm2 * cosPhi2;
 			const float tb		  = 4 * PR_PI * m1 * m2 * (pm1 * (1 - cosPhi2) / cosPhi + pm2 * cosPhi) * cosTheta2;
-			out.ForwardPDF_S	  = tu / tb * std::exp(-tz * (1 - cosTheta2) / (cosTheta2));
+			out.PDF_S			  = tu / tb * std::exp(-tz * (1 - cosTheta2) / (cosTheta2));
 		}
 
-		Vector3f H		  = Spherical::cartesian(sinTheta, cosTheta, sinPhi, cosPhi);
-		out.L			  = Scattering::reflect(in.Context.V, H);
-		out.Type		  = MST_SpecularReflection;
-		out.Weight		  = mSpecularity->eval(sctx) * out.ForwardPDF_S * std::max(0.0f, out.L[2]);
-		out.BackwardPDF_S = out.ForwardPDF_S;
+		Vector3f H = Spherical::cartesian(sinTheta, cosTheta, sinPhi, cosPhi);
+		out.L	   = Scattering::reflect(in.Context.V, H);
+		out.Type   = MST_SpecularReflection;
+		out.Weight = mSpecularity->eval(sctx) * out.PDF_S * std::max(0.0f, out.L[2]);
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -139,12 +165,10 @@ public:
 
 		if (in.RND[0] <= refl) {
 			sampleSpecularPath(in, sctx, out);
-			out.ForwardPDF_S /= refl;
-			out.BackwardPDF_S /= refl;
+			out.PDF_S /= refl;
 		} else {
 			sampleDiffusePath(in, sctx, out);
-			out.ForwardPDF_S /= 1.0f - refl;
-			out.BackwardPDF_S /= 1.0f - refl;
+			out.PDF_S /= 1.0f - refl;
 		}
 	}
 

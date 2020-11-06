@@ -28,10 +28,11 @@ struct PR_LIB_CORE LightSampleInput {
 
 struct PR_LIB_CORE LightSampleOutput {
 	SpectralBlob Radiance;
-	LightPDF PDF;
 	Vector3f LightPosition; // If requested, position of light (abstract) surface
-	float CosLight;			// Cosinus between light normal and direction
-	Vector3f Outgoing;		// Direction towards the light
+	LightPDF Position_PDF;
+	float CosLight; // Cosinus between light normal and direction
+	float Direction_PDF_S;
+	Vector3f Outgoing; // Direction towards the light
 };
 
 class IInfiniteLight;

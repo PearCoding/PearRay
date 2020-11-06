@@ -61,13 +61,14 @@ void Light::eval(const LightEvalInput& in, LightEvalOutput& out, const RenderTil
 		IInfiniteLight* infL = reinterpret_cast<IInfiniteLight*>(mEntity);
 
 		InfiniteLightEvalInput ilein;
-		ilein.Point = in.Point;
-		ilein.Ray	= in.Ray;
+		ilein.WavelengthNM	 = in.Ray.WavelengthNM;
+		ilein.Direction		 = in.Ray.Direction;
+		ilein.IterationDepth = in.Ray.IterationDepth;
 		InfiniteLightEvalOutput ileout;
 		infL->eval(ilein, ileout, session);
 
 		out.Radiance   = ileout.Radiance;
-		out.PDF.Value  = ileout.PDF_S;
+		out.PDF.Value  = ileout.Direction_PDF_S;
 		out.PDF.IsArea = false;
 	} else if (in.Point
 			   && in.Point->Surface.Geometry.EntityID == reinterpret_cast<IEntity*>(mEntity)->id()) {
@@ -96,21 +97,38 @@ void Light::sample(const LightSampleInput& in, LightSampleOutput& out, const Ren
 	if (isInfinite()) {
 		IInfiniteLight* infL = reinterpret_cast<IInfiniteLight*>(mEntity);
 
-		InfiniteLightSampleInput ilsin;
-		ilsin.RND			 = in.RND;
-		ilsin.WavelengthNM	 = in.WavelengthNM;
-		ilsin.Point			 = in.Point;
-		ilsin.SamplePosition = in.SamplePosition;
+		if (in.SamplePosition) {
+			InfiniteLightSamplePosDirInput ilsin;
+			ilsin.DirectionRND = Vector2f(in.RND(0), in.RND(1));
+			ilsin.PositionRND  = Vector2f(in.RND(2), in.RND(3));
+			ilsin.WavelengthNM = in.WavelengthNM;
+			ilsin.Point		   = in.Point;
 
-		InfiniteLightSampleOutput ilsout;
-		infL->sample(ilsin, ilsout, session);
+			InfiniteLightSamplePosDirOutput ilsout;
+			infL->samplePosDir(ilsin, ilsout, session);
 
-		out.Radiance	  = ilsout.Radiance;
-		out.PDF.Value	  = ilsout.PDF_S;
-		out.PDF.IsArea	  = false;
-		out.Outgoing	  = ilsout.Outgoing;
-		out.LightPosition = ilsout.LightPosition;
-		out.CosLight	  = 1;
+			out.Radiance			= ilsout.Radiance;
+			out.Position_PDF.Value	= ilsout.Position_PDF_A;
+			out.Position_PDF.IsArea = true;
+			out.Direction_PDF_S		= ilsout.Direction_PDF_S;
+			out.Outgoing			= ilsout.Outgoing;
+			out.LightPosition		= ilsout.LightPosition;
+		} else {
+			InfiniteLightSampleDirInput ilsin;
+			ilsin.DirectionRND = Vector2f(in.RND(0), in.RND(1));
+			ilsin.WavelengthNM = in.WavelengthNM;
+
+			InfiniteLightSampleDirOutput ilsout;
+			infL->sampleDir(ilsin, ilsout, session);
+
+			out.Radiance			= ilsout.Radiance;
+			out.Position_PDF.Value	= 0;
+			out.Position_PDF.IsArea = false;
+			out.Direction_PDF_S		= ilsout.Direction_PDF_S;
+			out.Outgoing			= ilsout.Outgoing;
+			out.LightPosition		= Vector3f::Zero();
+		}
+		out.CosLight = 1;
 	} else {
 		IEntity* ent			   = reinterpret_cast<IEntity*>(mEntity);
 		const EntitySamplePoint pp = in.SamplingInfo ? ent->sampleParameterPoint(*in.SamplingInfo, Vector2f(in.RND[0], in.RND[1]))
@@ -136,20 +154,21 @@ void Light::sample(const LightSampleInput& in, LightSampleOutput& out, const Ren
 		EmissionEvalOutput eeout;
 		mEmission->eval(eein, eeout, session);
 
-		out.Radiance	  = eeout.Radiance;
-		out.PDF.Value	  = pp.PDF.Value;
-		out.PDF.IsArea	  = pp.PDF.IsArea;
-		out.LightPosition = pp.Position;
+		out.Radiance			= eeout.Radiance;
+		out.Position_PDF.Value	= pp.PDF.Value;
+		out.Position_PDF.IsArea = pp.PDF.IsArea;
+		out.LightPosition		= pp.Position;
 
 		if (!in.Point) {
 			// Randomly sample direction from emissive material (TODO: Should be abstracted -> Use Emission)
 			const Vector3f local_dir = Sampling::cos_hemi(in.RND[2], in.RND[3]);
 			const Vector3f dir		 = -Tangent::fromTangentSpace(gp.N, gp.Nx, gp.Ny, local_dir);
 
-			out.PDF.Value *= Sampling::cos_hemi_pdf(local_dir(2));
-			out.Outgoing = dir;
+			out.Direction_PDF_S = Sampling::cos_hemi_pdf(local_dir(2));
+			out.Outgoing		= dir;
 		} else { // Connect to given surface
-			out.Outgoing = (pp.Position - in.Point->P).normalized();
+			out.Outgoing		= (pp.Position - in.Point->P).normalized();
+			out.Direction_PDF_S = 1;
 		}
 
 		out.CosLight = -out.Outgoing.dot(gp.N);

@@ -137,11 +137,17 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		const Vector3f H  = Scattering::halfway_reflection(in.Context.V, in.Context.L);
-		out.Weight		  = mTint->eval(in.ShadingContext) * mMeasurement.eval(H, in.Context.L, in.Context.WavelengthNM);
-		out.ForwardPDF_S  = Sampling::cos_hemi_pdf(std::max(0.0f, in.Context.NdotL()));
-		out.BackwardPDF_S = Sampling::cos_hemi_pdf(std::max(0.0f, in.Context.NdotV()));
-		out.Type		  = MST_DiffuseReflection;
+		const Vector3f H = Scattering::halfway_reflection(in.Context.V, in.Context.L);
+		out.Weight		 = mTint->eval(in.ShadingContext) * mMeasurement.eval(H, in.Context.L, in.Context.WavelengthNM);
+		out.PDF_S		 = Sampling::cos_hemi_pdf(std::max(0.0f, in.Context.NdotL()));
+		out.Type		 = MST_DiffuseReflection;
+	}
+
+	void pdf(const MaterialEvalInput& in, MaterialPDFOutput& out,
+			 const RenderTileSession&) const override
+	{
+		PR_PROFILE_THIS;
+		out.PDF_S = Sampling::cos_hemi_pdf(std::max(0.0f, in.Context.NdotL()));
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -152,10 +158,9 @@ public:
 		out.L			 = Sampling::cos_hemi(in.RND[0], in.RND[1]);
 		const Vector3f H = Scattering::halfway_reflection(in.Context.V, out.L);
 
-		out.Weight		  = mTint->eval(in.ShadingContext) * mMeasurement.eval(H, out.L, in.Context.WavelengthNM);
-		out.Type		  = MST_DiffuseReflection;
-		out.ForwardPDF_S  = Sampling::cos_hemi_pdf(out.L(2));
-		out.BackwardPDF_S = Sampling::cos_hemi_pdf(std::max(0.0f, in.Context.NdotV()));
+		out.Weight = mTint->eval(in.ShadingContext) * mMeasurement.eval(H, out.L, in.Context.WavelengthNM);
+		out.Type   = MST_DiffuseReflection;
+		out.PDF_S  = Sampling::cos_hemi_pdf(out.L(2));
 	}
 
 	std::string dumpInformation() const override

@@ -44,8 +44,8 @@ public:
 	void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out,
 			  const RenderTileSession&) const override
 	{
-		out.Radiance = radiance(in.Ray.WavelengthNM, in.Ray.Direction);
-		out.PDF_S	 = in.Point ? Sampling::cos_hemi_pdf(std::abs(in.Point->Surface.N.dot(in.Ray.Direction))) : 1.0f;
+		out.Radiance		= radiance(in.WavelengthNM, in.Direction);
+		out.Direction_PDF_S = Sampling::cos_hemi_pdf(std::abs((invNormalMatrix() * in.Direction)(2)));
 	}
 
 	inline static Vector3f sampleDir(float u0, float u1, float& pdf)
@@ -55,12 +55,20 @@ public:
 		return out;
 	}
 
-	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,
-				const RenderTileSession&) const override
+	void sampleDir(const InfiniteLightSampleDirInput& in, InfiniteLightSampleDirOutput& out,
+				   const RenderTileSession&) const override
 	{
-		out.Outgoing	  = normalMatrix() * sampleDir(in.RND[0], in.RND[1], out.PDF_S);
-		out.LightPosition = mSceneRadius * out.Outgoing;
-		out.Radiance	  = radiance(in.WavelengthNM, out.Outgoing);
+		out.Outgoing = normalMatrix() * sampleDir(in.DirectionRND[0], in.DirectionRND[1], out.Direction_PDF_S);
+		out.Radiance = radiance(in.WavelengthNM, out.Outgoing);
+	}
+
+	void samplePosDir(const InfiniteLightSamplePosDirInput& in, InfiniteLightSamplePosDirOutput& out,
+					  const RenderTileSession& session) const override
+	{
+		sampleDir(in, out, session);
+
+		out.LightPosition  = mSceneRadius * out.Outgoing; // TODO
+		out.Position_PDF_A = 1;
 	}
 
 	SpectralBlob power(const SpectralBlob& wvl) const override { return radiance(wvl, Vector3f(0, 0, 1)); }

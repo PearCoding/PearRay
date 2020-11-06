@@ -50,17 +50,25 @@ public:
 		PR_PROFILE_THIS;
 
 		// Delta distributions do not allow evaluation
-		out.ForwardPDF_S  = 0.0f;
-		out.BackwardPDF_S = 0.0f;
-		out.Weight		  = SpectralBlob::Zero();
+		out.PDF_S  = 0.0f;
+		out.Type   = MST_SpecularTransmission;
+		out.Weight = SpectralBlob::Zero();
+	}
+
+	void pdf(const MaterialEvalInput&, MaterialPDFOutput& out,
+			 const RenderTileSession&) const override
+	{
+		PR_PROFILE_THIS;
+
+		// Delta distributions do not allow evaluation
+		out.PDF_S = 0.0f;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
 				const RenderTileSession&) const override
 	{
 		PR_PROFILE_THIS;
-		out.ForwardPDF_S  = 1;
-		out.BackwardPDF_S = 1;
+		out.PDF_S = 1;
 
 		float eta;
 		float F = fresnelTermHero(in.Context.NdotV(), in.ShadingContext, eta);
