@@ -304,8 +304,8 @@ public:
 		else
 			path.addToken(LightPathToken::Emissive());
 
-		// Intiial camera vertex
-		mCameraVertices.emplace_back(BiDiPathVertex{ IntersectionPoint(), nullptr, nullptr, SpectralBlob::Ones(), 1 });
+		// Intiial light vertex
+		mLightVertices.emplace_back(BiDiPathVertex{ IntersectionPoint(), nullptr, nullptr, SpectralBlob::Ones(), 1 });
 
 		float nextPDF = 1.0f;
 		mLightPathWalker.traverse(
@@ -325,10 +325,14 @@ public:
 						  size_t t, const LightPath& cameraPath,
 						  size_t s, const LightPath& lightPath, const Light* light)
 	{
+		PR_ASSERT(t > 1 && s > 0, "Expected valid connection numbers");
+
 		constexpr float DISTANCE_EPS = 0.000001f;
 
-		const auto& cv = mCameraVertices[t - 1]; // Notice: We do not save the zero vertices
-		const auto& lv = mLightVertices[s - 1];
+		const auto& cv	= mCameraVertices[t];
+		const auto& lv	= mLightVertices[s];
+		const auto& pcv = mCameraVertices[t - 1];
+		const auto& plv = mLightVertices[s - 1];
 
 		PR_UNUSED(light);
 		/*if (s == 1) { // NEE
@@ -336,6 +340,7 @@ public:
 			PR_UNUSED(light);
 		} else {*/
 		// Check visibility
+
 		Vector3f cD		  = (lv.IP.P - cv.IP.P); // Camera Vertex -> Light Vertex
 		const float dist2 = cD.squaredNorm();
 		if (dist2 <= DISTANCE_EPS)
@@ -379,14 +384,14 @@ public:
 		}
 
 		// Extract terms
-		const SpectralBlob alphaC  = t > 1 ? mCameraVertices[t - 2].Alpha : SpectralBlob::Ones();
-		const SpectralBlob alphaL  = s > 1 ? mLightVertices[s - 2].Alpha : SpectralBlob::Ones();
+		const SpectralBlob alphaC  = pcv.Alpha;
+		const SpectralBlob alphaL  = plv.Alpha;
 		const SpectralBlob weight  = alphaC * alphaL;
 		const SpectralBlob contrib = lightW * Geometry * cameraW;
 
 		// Compute MIS
-		const float pdfT  = mCameraVertices[t - 1].PDF_A;
-		const float pdfS  = mLightVertices[s - 1].PDF_A;
+		const float pdfT  = pcv.PDF_A;
+		const float pdfS  = plv.PDF_A;
 		const float pdfST = pdfS * pdfT; // Probability for generating this path
 		float misDenom	  = 0.0f;
 
@@ -424,14 +429,14 @@ public:
 			const Light* light = handleLightPath(session, lightPath, spt);
 			if (!light)
 				return; // Giveup as no light is present
-			PR_ASSERT(lightPath.currentSize() == mLightVertices.size() + 1, "Light vertices and path do not match");
+			PR_ASSERT(lightPath.currentSize() == mLightVertices.size(), "Light vertices and path do not match");
 
 			handleCameraPath(session, cameraPath, spt, sg.entity(), session.getMaterial(spt.Surface.Geometry.MaterialID));
 			PR_ASSERT(cameraPath.currentSize() == mCameraVertices.size(), "Camera vertices and path do not match");
 
-			// Handle connections (we skip 0 as it is handled inside path creation)
-			for (size_t t = 1; t <= mCameraVertices.size(); ++t) {
-				for (size_t s = 1; s <= mLightVertices.size(); ++s) {
+			// Handle connections (we skip 0 and camera t==1 as it is handled inside path creation)
+			for (size_t t = 2; t < mCameraVertices.size(); ++t) {
+				for (size_t s = 1; s < mLightVertices.size(); ++s) {
 					handleConnection(session, fullPath, t, cameraPath, s, lightPath, light);
 				}
 			}
