@@ -239,7 +239,7 @@ public:
 			session.pipeline()->runPipeline();
 			while (session.pipeline()->hasShadingGroup()) {
 				auto sg = session.pipeline()->popShadingGroup(session);
-				session.tile()->statistics().addDepthCount(sg.size());
+				session.tile()->statistics().addCameraDepthCount(sg.size());
 				if (sg.isBackground())
 					session.tile()->statistics().addBackgroundHitCount(sg.size());
 				else

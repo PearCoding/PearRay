@@ -253,7 +253,7 @@ public:
 		PR_PROFILE_THIS;
 
 		session.tile()->statistics().addEntityHitCount();
-		session.tile()->statistics().addDepthCount();
+		session.tile()->statistics().addCameraDepthCount();
 #ifdef PR_ALL_RAYS_CONTRIBUTE_SP
 		session.pushSPFragment(spt, path);
 #endif
@@ -326,7 +326,7 @@ public:
 		LightPath path(maxPathSize);
 		path.addToken(LightPathToken::Camera());
 
-		session.tile()->statistics().addDepthCount(sg.size());
+		session.tile()->statistics().addCameraDepthCount(sg.size());
 		session.tile()->statistics().addEntityHitCount(sg.size());
 
 		for (size_t i = 0; i < sg.size(); ++i) {

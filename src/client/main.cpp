@@ -38,15 +38,17 @@ void printStatistics(const RenderStatus& status)
 	const auto raycount	  = status.getField("global.ray_count").getUInt();
 	const auto pixelcount = status.getField("global.pixel_sample_count").getUInt();
 
-	out << "  Ray Count:       " << std::setw(OUTPUT_FIELD_SIZE) << raycount << std::endl;
-	out << "    Camera Share:  " << std::setw(OUTPUT_FIELD_SIZE) << 100 * status.getField("global.camera_ray_count").getUInt() / (double)raycount << " %" << std::endl;
-	out << "    Light Share:   " << std::setw(OUTPUT_FIELD_SIZE) << 100 * status.getField("global.light_ray_count").getUInt() / (double)raycount << " %" << std::endl;
-	out << "    Bounce Share:  " << std::setw(OUTPUT_FIELD_SIZE) << 100 * status.getField("global.bounce_ray_count").getUInt() / (double)raycount << " %" << std::endl;
-	out << "    Shadow Share:  " << std::setw(OUTPUT_FIELD_SIZE) << 100 * status.getField("global.shadow_ray_count").getUInt() / (double)raycount << " %" << std::endl;
-	out << "  Pixel Count:     " << std::setw(OUTPUT_FIELD_SIZE) << pixelcount << std::endl;
-	out << "  Entity Hits:     " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.entity_hit_count").getUInt() << std::endl;
-	out << "  Background Hits: " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.background_hit_count").getUInt() << std::endl;
-	out << "  Mean Ray Depth:  " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.depth_count").getUInt() / (double)pixelcount << std::endl;
+	out << "  Ray Count:       " << std::setw(OUTPUT_FIELD_SIZE) << raycount << std::endl
+		<< "    Camera Share:  " << std::setw(OUTPUT_FIELD_SIZE) << 100 * status.getField("global.camera_ray_count").getUInt() / (double)raycount << " %" << std::endl
+		<< "    Light Share:   " << std::setw(OUTPUT_FIELD_SIZE) << 100 * status.getField("global.light_ray_count").getUInt() / (double)raycount << " %" << std::endl
+		<< "    Bounce Share:  " << std::setw(OUTPUT_FIELD_SIZE) << 100 * status.getField("global.bounce_ray_count").getUInt() / (double)raycount << " %" << std::endl
+		<< "    Shadow Share:  " << std::setw(OUTPUT_FIELD_SIZE) << 100 * status.getField("global.shadow_ray_count").getUInt() / (double)raycount << " %" << std::endl
+		<< "  Pixel Count:     " << std::setw(OUTPUT_FIELD_SIZE) << pixelcount << std::endl
+		<< "  Entity Hits:     " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.entity_hit_count").getUInt() << std::endl
+		<< "  Background Hits: " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.background_hit_count").getUInt() << std::endl
+		<< "  Mean Ray Depth:  " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.depth_count").getUInt() / (double)pixelcount << std::endl
+		<< "    Camera:        " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.camera_depth_count").getUInt() / (double)pixelcount << std::endl
+		<< "    Light:         " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.light_depth_count").getUInt() / (double)pixelcount << std::endl;
 }
 
 constexpr uint32 PROFILE_SAMPLE_RATE = 10;

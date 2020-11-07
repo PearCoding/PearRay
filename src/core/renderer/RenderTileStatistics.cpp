@@ -9,7 +9,8 @@ RenderTileStatistics::RenderTileStatistics()
 	, mPixelSampleCount(0)
 	, mEntityHitCount(0)
 	, mBackgroundHitCount(0)
-	, mDepthCount(0)
+	, mCameraDepthCount(0)
+	, mLightDepthCount(0)
 {
 }
 
@@ -21,7 +22,8 @@ RenderTileStatistics::RenderTileStatistics(const RenderTileStatistics& other)
 	, mPixelSampleCount(other.mPixelSampleCount.load())
 	, mEntityHitCount(other.mEntityHitCount.load())
 	, mBackgroundHitCount(other.mBackgroundHitCount.load())
-	, mDepthCount(other.mDepthCount.load())
+	, mCameraDepthCount(other.mCameraDepthCount.load())
+	, mLightDepthCount(other.mLightDepthCount.load())
 {
 }
 
@@ -34,7 +36,8 @@ RenderTileStatistics& RenderTileStatistics::operator=(const RenderTileStatistics
 	mPixelSampleCount	= other.mPixelSampleCount.load();
 	mEntityHitCount		= other.mEntityHitCount.load();
 	mBackgroundHitCount = other.mBackgroundHitCount.load();
-	mDepthCount			= other.mDepthCount.load();
+	mCameraDepthCount	= other.mCameraDepthCount.load();
+	mLightDepthCount	= other.mLightDepthCount.load();
 	return *this;
 }
 
@@ -47,7 +50,8 @@ RenderTileStatistics& RenderTileStatistics::operator+=(const RenderTileStatistic
 	mPixelSampleCount += other.mPixelSampleCount;
 	mEntityHitCount += other.mEntityHitCount;
 	mBackgroundHitCount += other.mBackgroundHitCount;
-	mDepthCount += other.mDepthCount;
+	mCameraDepthCount += other.mCameraDepthCount;
+	mLightDepthCount += other.mLightDepthCount;
 
 	return *this;
 }
@@ -62,7 +66,8 @@ RenderTileStatistics RenderTileStatistics::half() const
 	other.mPixelSampleCount	   = other.mPixelSampleCount.load() / 2;
 	other.mEntityHitCount	   = other.mEntityHitCount.load() / 2;
 	other.mBackgroundHitCount  = other.mBackgroundHitCount.load() / 2;
-	other.mDepthCount		   = other.mDepthCount.load() / 2;
+	other.mCameraDepthCount	   = other.mCameraDepthCount.load() / 2;
+	other.mCameraDepthCount	   = other.mLightDepthCount.load() / 2;
 
 	return other;
 }

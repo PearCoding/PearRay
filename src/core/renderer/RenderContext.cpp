@@ -288,6 +288,8 @@ RenderStatus RenderContext::status() const
 	status.setField("global.entity_hit_count", s.entityHitCount());
 	status.setField("global.background_hit_count", s.backgroundHitCount());
 	status.setField("global.depth_count", s.depthCount());
+	status.setField("global.camera_depth_count", s.cameraDepthCount());
+	status.setField("global.light_depth_count", s.lightDepthCount());
 	status.setField("global.iteration_count", (uint64)mIncrementalCurrentIteration.load());
 
 	return status;

@@ -36,8 +36,13 @@ public:
 	inline void addBackgroundHitCount(uint64 i = 1) { mBackgroundHitCount += i; }
 	inline uint64 backgroundHitCount() const { return mBackgroundHitCount; }
 
-	inline void addDepthCount(uint64 i = 1) { mDepthCount += i; }
-	inline uint64 depthCount() const { return mDepthCount; }
+	inline uint64 depthCount() const { return mCameraDepthCount + mLightDepthCount; }
+
+	inline void addCameraDepthCount(uint64 i = 1) { mCameraDepthCount += i; }
+	inline uint64 cameraDepthCount() const { return mCameraDepthCount; }
+
+	inline void addLightDepthCount(uint64 i = 1) { mLightDepthCount += i; }
+	inline uint64 lightDepthCount() const { return mLightDepthCount; }
 
 	RenderTileStatistics half() const;
 
@@ -49,6 +54,7 @@ private:
 	std::atomic<uint64> mPixelSampleCount;
 	std::atomic<uint64> mEntityHitCount;
 	std::atomic<uint64> mBackgroundHitCount;
-	std::atomic<uint64> mDepthCount;
+	std::atomic<uint64> mCameraDepthCount;
+	std::atomic<uint64> mLightDepthCount;
 };
 } // namespace PR

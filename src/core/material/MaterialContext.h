@@ -27,12 +27,17 @@ public:
 
 		MaterialSampleContext ctx;
 		ctx.P			 = sp.Surface.P;
-		ctx.V			 = Tangent::toTangentSpace(sp.Surface.N, sp.Surface.Nx, sp.Surface.Ny, -sp.Ray.Direction);
 		ctx.UV			 = sp.Surface.Geometry.UV;
 		ctx.PrimitiveID	 = sp.Surface.Geometry.PrimitiveID;
 		ctx.WavelengthNM = sp.Ray.WavelengthNM;
+		ctx.setVFromGlobal(sp, -sp.Ray.Direction);
 
 		return ctx;
+	}
+
+	inline void setVFromGlobal(const IntersectionPoint& sp, const Vector3f& gV)
+	{
+		V = Tangent::toTangentSpace(sp.Surface.N, sp.Surface.Nx, sp.Surface.Ny, gV);
 	}
 
 	inline MaterialEvalContext expand(const Vector3f& L) const;
@@ -51,6 +56,11 @@ public:
 
 	inline static MaterialEvalContext fromIP(const IntersectionPoint& sp, const Vector3f& gL)
 	{
+		return fromIP(sp, -sp.Ray.Direction, gL);
+	}
+
+	inline static MaterialEvalContext fromIP(const IntersectionPoint& sp, const Vector3f& gV, const Vector3f& gL)
+	{
 		PR_ASSERT(sp.isAtSurface(), "Expected IntersectionPoint to be a surface point");
 
 		MaterialEvalContext ctx;
@@ -58,7 +68,7 @@ public:
 		ctx.UV			 = sp.Surface.Geometry.UV;
 		ctx.PrimitiveID	 = sp.Surface.Geometry.PrimitiveID;
 		ctx.WavelengthNM = sp.Ray.WavelengthNM;
-		ctx.V			 = Tangent::toTangentSpace(sp.Surface.N, sp.Surface.Nx, sp.Surface.Ny, -sp.Ray.Direction);
+		ctx.setVFromGlobal(sp, gV);
 		ctx.setLFromGlobal(sp, gL);
 
 		return ctx;
@@ -67,6 +77,11 @@ public:
 	inline void setLFromGlobal(const IntersectionPoint& sp, const Vector3f& gL)
 	{
 		L = Tangent::toTangentSpace(sp.Surface.N, sp.Surface.Nx, sp.Surface.Ny, gL);
+	}
+
+	inline void swapVL()
+	{
+		std::swap(V, L);
 	}
 };
 

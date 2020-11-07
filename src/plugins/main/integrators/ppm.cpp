@@ -204,7 +204,7 @@ public:
 			session, SpectralBlob::Ones(), spt, entity, material,
 			[&](const SpectralBlob& weight, const IntersectionPoint& ip, IEntity*, IMaterial* material_hit) {
 				session.tile()->statistics().addEntityHitCount();
-				session.tile()->statistics().addDepthCount();
+				session.tile()->statistics().addCameraDepthCount();
 
 				if (!material_hit->hasDeltaDistribution()) {
 					const auto gather_contrib = gather(session, ip, material_hit);
@@ -290,7 +290,7 @@ public:
 				session, radiance, ray,
 				[&](const SpectralBlob& weight, const IntersectionPoint& ip, IEntity* entity, IMaterial* material) {
 					session.tile()->statistics().addEntityHitCount();
-					session.tile()->statistics().addDepthCount();
+					session.tile()->statistics().addLightDepthCount();
 
 					PR_UNUSED(entity);
 					if (!material->hasDeltaDistribution()) { // Always store when diffuse

@@ -43,6 +43,7 @@ struct BiDiPathVertex {
 	SpectralBlob Alpha; // Alpha term for next vertex
 	float ForwardPDF_A;
 	float BackwardPDF_A;
+	bool IsDelta;
 };
 
 enum BiDiMISMode {
@@ -84,9 +85,14 @@ public:
 			return a;
 	}
 
-	/////////////////// Camera Path
-	std::optional<Ray> handleCameraVertex(RenderTileSession& session, LightPath& path, const IntersectionPoint& ip,
-										  IEntity* entity, IMaterial* material, float& nextPDF)
+	struct WalkContext {
+		float ForwardPDF_S;
+		float BackwardPDF_S;
+	};
+
+	template <bool IsCamera>
+	std::optional<Ray> handleVertex(RenderTileSession& session, LightPath& path, const IntersectionPoint& ip,
+									IEntity* entity, IMaterial* material, WalkContext& current)
 	{
 		if (!entity || !material) // Nothing found, abort
 			return {};
@@ -94,40 +100,63 @@ public:
 		auto& rnd = session.tile()->random();
 
 		session.tile()->statistics().addEntityHitCount();
-		session.tile()->statistics().addDepthCount();
+		if constexpr (IsCamera)
+			session.tile()->statistics().addCameraDepthCount();
+		else
+			session.tile()->statistics().addLightDepthCount();
 
 		const auto sc = ShadingContext::fromIP(session.threadID(), ip);
 
-		const SpectralBlob prevAlpha = (ip.Ray.IterationDepth == 0) ? SpectralBlob::Ones() : mCameraVertices[ip.Ray.IterationDepth - 1].Alpha;
-		const float prevPDF_A		 = (ip.Ray.IterationDepth == 0) ? 1 : mCameraVertices[ip.Ray.IterationDepth - 1].ForwardPDF_A;
+		std::vector<BiDiPathVertex>& vertices = IsCamera ? mCameraVertices : mLightVertices;
+		const SpectralBlob prevAlpha		  = vertices[ip.Ray.IterationDepth].Alpha;
 
 		// Add pdf which generated this vertex
-		float pdf_A = prevPDF_A;
-		if (ip.Ray.IterationDepth > 0
-			&& mCameraVertices[ip.Ray.IterationDepth - 1].Material
-			&& !mCameraVertices[ip.Ray.IterationDepth - 1].Material->hasDeltaDistribution()) {
-			pdf_A *= IS::toArea(nextPDF, ip.Depth2, std::abs(ip.Surface.NdotV));
+		float forwardPDF_A	= current.ForwardPDF_S;
+		float backwardPDF_A = current.BackwardPDF_S;
+		if (!vertices[ip.Ray.IterationDepth].IsDelta) {
+			forwardPDF_A *= IS::toArea(forwardPDF_A, ip.Depth2, std::abs(ip.Surface.NdotV));
+			backwardPDF_A *= IS::toArea(backwardPDF_A, ip.Depth2, std::abs(ip.Surface.NdotV) /* Not ndotl? */);
 		}
 
-		// Handle C_0t (s==0)
-		if (entity->hasEmission()) {
-			IEmission* ems = session.getEmission(ip.Surface.Geometry.EmissionID);
-			if (PR_LIKELY(ems)) {
-				// Evaluate light
-				EmissionEvalInput inL;
-				inL.Entity		   = entity;
-				inL.ShadingContext = sc;
-				EmissionEvalOutput outL;
-				ems->eval(inL, outL, session);
+		if constexpr (IsCamera) {
+			// Handle C_0t (s==0)
+			if (entity->hasEmission()) {
+				IEmission* ems = session.getEmission(ip.Surface.Geometry.EmissionID);
+				if (PR_LIKELY(ems)) {
+					// Evaluate light
+					EmissionEvalInput inL;
+					inL.Entity		   = entity;
+					inL.ShadingContext = sc;
+					EmissionEvalOutput outL;
+					ems->eval(inL, outL, session);
 
-				if (PR_LIKELY(!outL.Radiance.isZero())) {
-					path.addToken(LightPathToken(ST_EMISSIVE, SE_NONE)); // TODO MIS
-					session.pushSpectralFragment(SpectralBlob::Ones(), prevAlpha, outL.Radiance, ip.Ray, path);
-					path.popToken();
+					if (PR_LIKELY(!outL.Radiance.isZero())) {
+						path.addToken(LightPathToken(ST_EMISSIVE, SE_NONE));
+						session.pushSpectralFragment(SpectralBlob::Ones(), prevAlpha, outL.Radiance, ip.Ray, path);
+						path.popToken();
+					}
 				}
 			}
 		}
+		// Our implementation does not support direct camera hits (no C_s0)
 
+		// Russian roulette
+		float scatProb				 = 1.0f;
+		const size_t maxRayDepthSoft = IsCamera ? mParameters.MaxCameraRayDepthSoft : mParameters.MaxLightRayDepthSoft;
+		if (ip.Ray.IterationDepth >= maxRayDepthSoft) {
+			constexpr float SCATTER_EPS = 1e-4f;
+
+			const float russian_prob = rnd.getFloat();
+			scatProb				 = std::min<float>(1.0f, std::pow(0.8f, ip.Ray.IterationDepth - maxRayDepthSoft));
+			if (russian_prob > scatProb || scatProb <= SCATTER_EPS) {
+				// Stop traversal with dark vertex
+				path.addToken(MST_DiffuseReflection);
+				vertices.emplace_back(BiDiPathVertex{ ip, entity, material, SpectralBlob::Zero(), forwardPDF_A, backwardPDF_A, material->hasDeltaDistribution() });
+				return {};
+			}
+		}
+
+		// Sample Material
 		MaterialSampleInput sin;
 		sin.Context		   = MaterialSampleContext::fromIP(ip);
 		sin.ShadingContext = sc;
@@ -136,44 +165,52 @@ public:
 		MaterialSampleOutput sout;
 		material->sample(sin, sout, session);
 
+		const Vector3f L = sout.globalL(ip);
+
 		if (!material->hasDeltaDistribution()) {
-			sout.Weight /= sout.PDF_S[0];
-			nextPDF = sout.PDF_S[0];
+			sout.Weight /= scatProb * sout.PDF_S[0];
+			current.ForwardPDF_S = scatProb * sout.PDF_S[0];
+
+			// Calculate backward/reverse pdf
+			MaterialEvalInput ein;
+			ein.Context		   = MaterialEvalContext::fromIP(ip, L, -ip.Ray.Direction); // Reverse
+			ein.ShadingContext = sc;
+			MaterialPDFOutput pout;
+			material->pdf(ein, pout, session);
+			current.BackwardPDF_S = scatProb * pout.PDF_S[0];
 		} else {
-			nextPDF = 1;
+			current.ForwardPDF_S  = 1;
+			current.BackwardPDF_S = 1;
 		}
 
 		SpectralBlob alphaM = sout.Weight * prevAlpha;
-
-		// Russian roulette
-		if (ip.Ray.IterationDepth >= mParameters.MaxCameraRayDepthSoft) {
-			constexpr float SCATTER_EPS = 1e-4f;
-
-			const float russian_prob = rnd.getFloat();
-			const float scatProb	 = std::min<float>(1.0f, std::pow(0.8f, ip.Ray.IterationDepth - mParameters.MaxCameraRayDepthSoft));
-			if (russian_prob > scatProb || scatProb <= SCATTER_EPS)
-				return {};
-
-			alphaM /= scatProb;
-		}
+		if constexpr (!IsCamera)
+			alphaM *= IntegratorUtils::correctShadingNormalForLight(-ip.Ray.Direction, L, ip.Surface.N, ip.Surface.Geometry.N);
 
 		if (material->isSpectralVarying())
 			alphaM *= SpectralBlobUtils::HeroOnly();
 
-		if (alphaM.isZero(PR_EPSILON) || PR_UNLIKELY(sout.PDF_S[0] <= PR_EPSILON))
+		if (alphaM.isZero(PR_EPSILON) || PR_UNLIKELY(sout.PDF_S[0] <= PR_EPSILON)) {
+			// Stop traversal with dark vertex
+			path.addToken(sout.Type);
+			vertices.emplace_back(BiDiPathVertex{ ip, entity, material, SpectralBlob::Zero(), forwardPDF_A, backwardPDF_A, material->hasDeltaDistribution() });
 			return {};
+		}
 
+		// Add to path
 		path.addToken(sout.Type);
-		mCameraVertices.emplace_back(BiDiPathVertex{ ip, entity, material, alphaM, pdf_A, pdf_A }); // TODO
+		vertices.emplace_back(BiDiPathVertex{ ip, entity, material, alphaM, forwardPDF_A, backwardPDF_A, material->hasDeltaDistribution() });
 
+		// Setup ray flags
 		int rflags = RF_Bounce;
 		if (material->isSpectralVarying())
 			rflags |= RF_Monochrome;
 
-		return std::make_optional(ip.Ray.next(ip.P, sout.globalL(ip), ip.Surface.N,
+		return std::make_optional(ip.Ray.next(ip.P, L, ip.Surface.N,
 											  rflags, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX));
 	}
 
+	/////////////////// Camera Path
 	// First camera vertex
 	void handleCameraPath(RenderTileSession& session, LightPath& path,
 						  const IntersectionPoint& spt,
@@ -188,98 +225,29 @@ public:
 		session.pushSPFragment(spt, path);
 
 		// Intiial camera vertex
-		mCameraVertices.emplace_back(BiDiPathVertex{ IntersectionPoint(), nullptr, nullptr, SpectralBlob::Ones(), 1, 1 });
+		mCameraVertices.emplace_back(BiDiPathVertex{ IntersectionPoint(), nullptr, nullptr, SpectralBlob::Ones(), 1, 1, true });
+		WalkContext current = WalkContext{ 1.0f, 1.0f };
 
-		float nextPDF = 1.0f;
 		mCameraPathWalker.traverse(
 			session, spt, entity, material,
 			[&](const IntersectionPoint& ip, IEntity* entity2, IMaterial* material2) -> std::optional<Ray> {
-				return handleCameraVertex(session, path, ip, entity2, material2, nextPDF);
+				return handleVertex<true>(session, path, ip,
+										  entity2, material2, current);
 			},
-			[&](const Ray&) {
-				// TODO: Do (s==0) if infinite lights are present
+			[&](const Ray& ray) {
+				const SpectralBlob prevAlpha = (ray.IterationDepth == 0) ? SpectralBlob::Ones() : mCameraVertices[ray.IterationDepth - 1].Alpha;
+				IntegratorUtils::handleBackground(
+					session, ray,
+					[&](const InfiniteLightEvalOutput& ileout) {
+						path.addToken(LightPathToken::Background());
+						session.pushSpectralFragment(SpectralBlob::Ones(), prevAlpha, ileout.Radiance, ray, path);
+						path.popToken();
+					});
 			});
 	}
 
 	/////////////////// Light Path
-	std::optional<Ray> handleLightVertex(RenderTileSession& session, LightPath& path, const IntersectionPoint& ip,
-										 IEntity* entity, IMaterial* material,
-										 const SpectralBlob& lightRadiance, const LightPDF& lightPDF, float& nextPDF)
-	{
-		if (!entity || !material) // Nothing found, abort
-			return {};
-
-		auto& rnd = session.tile()->random();
-
-		session.tile()->statistics().addEntityHitCount();
-		session.tile()->statistics().addDepthCount();
-
-		const auto sc = ShadingContext::fromIP(session.threadID(), ip);
-
-		const SpectralBlob prevWeight = (ip.Ray.IterationDepth == 0) ? lightRadiance : mLightVertices[ip.Ray.IterationDepth - 1].Alpha;
-		const float prevPDF_A		  = (ip.Ray.IterationDepth == 0) ? 1 : mLightVertices[ip.Ray.IterationDepth - 1].ForwardPDF_A;
-
-		// Add pdf which generated this vertex
-		float pdf_A = prevPDF_A;
-		if (ip.Ray.IterationDepth == 0) {
-			if (!lightPDF.IsArea) // Convert to area
-				pdf_A *= IS::toArea(lightPDF.Value, ip.Depth2, std::abs(ip.Surface.NdotV));
-			else
-				pdf_A *= lightPDF.Value;
-		} else if (mLightVertices[ip.Ray.IterationDepth - 1].Material
-				   && !mLightVertices[ip.Ray.IterationDepth - 1].Material->hasDeltaDistribution()) {
-			pdf_A *= IS::toArea(nextPDF, ip.Depth2, std::abs(ip.Surface.NdotV));
-		}
-
-		// Our implementation does not support direct camera hits (no C_s0)
-		MaterialSampleInput sin;
-		sin.Context		   = MaterialSampleContext::fromIP(ip);
-		sin.ShadingContext = sc;
-		sin.RND			   = rnd.get2D();
-
-		MaterialSampleOutput sout;
-		material->sample(sin, sout, session);
-
-		if (!material->hasDeltaDistribution()) {
-			sout.Weight /= sout.PDF_S[0];
-			nextPDF = sout.PDF_S[0];
-		} else {
-			nextPDF = 1;
-		}
-
-		const float sn		= IntegratorUtils::correctShadingNormalForLight(-ip.Ray.Direction, sout.L, ip.Surface.N, ip.Surface.Geometry.N);
-		SpectralBlob alphaM = sn * sout.Weight * prevWeight;
-
-		// Russian roulette
-		if (ip.Ray.IterationDepth >= mParameters.MaxLightRayDepthSoft) {
-			constexpr float SCATTER_EPS = 1e-4f;
-
-			const float russian_prob = rnd.getFloat();
-			const float scatProb	 = std::min<float>(1.0f, std::pow(0.8f, ip.Ray.IterationDepth - mParameters.MaxLightRayDepthSoft));
-			if (russian_prob > scatProb || scatProb <= SCATTER_EPS)
-				return {};
-
-			alphaM /= scatProb;
-		}
-
-		if (material->isSpectralVarying())
-			alphaM *= SpectralBlobUtils::HeroOnly();
-
-		if (alphaM.isZero(PR_EPSILON) || PR_UNLIKELY(sout.PDF_S[0] <= PR_EPSILON))
-			return {};
-
-		path.addToken(sout.Type);
-		mLightVertices.emplace_back(BiDiPathVertex{ ip, entity, material, alphaM, pdf_A, pdf_A }); // TODO
-
-		int rflags = RF_Bounce;
-		if (material->isSpectralVarying())
-			rflags |= RF_Monochrome;
-
-		return std::make_optional(ip.Ray.next(ip.P, sout.globalL(ip), ip.Surface.N,
-											  rflags, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX));
-	}
-
-	// First camera vertex
+	// First light vertex
 	const Light* handleLightPath(RenderTileSession& session, LightPath& path,
 								 const IntersectionPoint& spt)
 	{
@@ -309,13 +277,15 @@ public:
 			path.addToken(LightPathToken::Emissive());
 
 		// Intiial light vertex
-		mLightVertices.emplace_back(BiDiPathVertex{ IntersectionPoint(), nullptr, nullptr, SpectralBlob::Ones(), 1, 1 });
+		mLightVertices.emplace_back(BiDiPathVertex{ IntersectionPoint(), nullptr, nullptr, radiance,
+													lsout.Position_PDF.Value, lsout.Position_PDF.Value, !lsout.Position_PDF.IsArea });
+		WalkContext current = WalkContext{ lsout.Direction_PDF_S, lsout.Direction_PDF_S };
 
-		float nextPDF = 1.0f;
 		mLightPathWalker.traverse(
 			session, ray,
 			[&](const IntersectionPoint& ip, IEntity* entity2, IMaterial* material2) -> std::optional<Ray> {
-				return handleLightVertex(session, path, ip, entity2, material2, radiance, pdf, nextPDF);
+				return handleVertex<false>(session, path, ip,
+										   entity2, material2, current);
 			},
 			[&](const Ray&) {
 				// Do nothing! (as we do not support C_s0 connections)
@@ -394,14 +364,25 @@ public:
 		const SpectralBlob contrib = lightW * Geometry * cameraW;
 
 		// Compute MIS
-		const float pdfT  = pcv.ForwardPDF_A;
-		const float pdfS  = plv.ForwardPDF_A;
-		const float pdfST = pdfS * pdfT; // Probability for generating this path
-		float misDenom	  = 0.0f;
+		float misDenom = 0.0f;
 
-		//for(size_t i = 0; i < )
+		// Along camera paths
+		float pdfMul = 1.0f;
+		for (int i = t - 1; i > 0; --i) {
+			pdfMul *= mis_term(mCameraVertices[i].BackwardPDF_A) / mis_term(mCameraVertices[i].ForwardPDF_A);
+			if (!mCameraVertices[i].IsDelta && !mCameraVertices[i - 1].IsDelta)
+				misDenom += pdfMul;
+		}
 
-		const float mis = misDenom <= PR_EPSILON ? 1.0f : mis_term(pdfST) / misDenom;
+		// Along light paths
+		pdfMul = 1.0f;
+		for (int i = s - 1; i >= 0; --i) {
+			pdfMul *= mis_term(mLightVertices[i].BackwardPDF_A) / mis_term(mLightVertices[i].ForwardPDF_A);
+			if (!mLightVertices[i].IsDelta && (i > 0 ? !mLightVertices[i - 1].IsDelta : true))
+				misDenom += pdfMul;
+		}
+
+		const float mis = 1 / (1 + misDenom);
 
 		// Construct LPE path
 		fullPath.reset();

@@ -23,7 +23,7 @@ public:
 	{
 		PR_PROFILE_THIS;
 		LightPath cb = LightPath::createCB();
-		session.tile()->statistics().addDepthCount(sg.size());
+		session.tile()->statistics().addCameraDepthCount(sg.size());
 		session.tile()->statistics().addBackgroundHitCount(sg.size());
 
 		if (!session.tile()->context()->scene()->nonDeltaInfiniteLights().empty()) {

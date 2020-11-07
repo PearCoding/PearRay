@@ -38,11 +38,11 @@
 		:transform [1.0,0.0,0.0,0.0,0.0,0.0,-1.0,-3.93462872505188,0.0,1.0,0.0,1.0,0.0,0.0,0.0,1.0]
 	)
 	; Lights
-	(light
-		:name 'sky'
-		:type 'sky'
-		:turbidity 3
-	)
+	;(light
+	;	:name 'sky'
+	;	:type 'sky'
+	;	:turbidity 3
+	;)
 
 	(emission
 		:name 'light_em'
