@@ -24,6 +24,7 @@ private:
 	RenderContext* mRenderContext;
 	uint64 mUpdateCycleSeconds;
 	bool mDisplayVariance;
+	bool mDisplayWeight;
 
 	time_point_t mLastUpdate;
 };

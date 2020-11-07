@@ -29,6 +29,9 @@
 /* Implementation of a bidirectional path tracer */
 
 namespace PR {
+constexpr float DISTANCE_EPS = 0.00001f;
+constexpr float GEOMETRY_EPS = 0.00001f;
+
 struct BiDiParameters {
 	size_t MaxCameraRayDepthHard = 16;
 	size_t MaxCameraRayDepthSoft = 2;
@@ -140,6 +143,8 @@ public:
 		}
 		// Our implementation does not support direct camera hits (no C_s0)
 
+		const bool hasDelta = material->hasDeltaDistribution();
+
 		// Russian roulette
 		float scatProb				 = 1.0f;
 		const size_t maxRayDepthSoft = IsCamera ? mParameters.MaxCameraRayDepthSoft : mParameters.MaxLightRayDepthSoft;
@@ -150,11 +155,13 @@ public:
 			scatProb				 = std::min<float>(1.0f, std::pow(0.8f, ip.Ray.IterationDepth - maxRayDepthSoft));
 			if (russian_prob > scatProb || scatProb <= SCATTER_EPS) {
 				// Stop traversal with dark vertex
-				path.addToken(MST_DiffuseReflection);
-				vertices.emplace_back(BiDiPathVertex{ ip, entity, material, SpectralBlob::Zero(), forwardPDF_A, backwardPDF_A, material->hasDeltaDistribution() });
+				path.addToken(hasDelta ? MST_SpecularReflection : MST_DiffuseReflection);
+				vertices.emplace_back(BiDiPathVertex{ ip, entity, material, SpectralBlob::Zero(), forwardPDF_A, backwardPDF_A, hasDelta });
 				return {};
 			}
 		}
+
+		// TODO: Add volume support
 
 		// Sample Material
 		MaterialSampleInput sin;
@@ -167,7 +174,7 @@ public:
 
 		const Vector3f L = sout.globalL(ip);
 
-		if (!material->hasDeltaDistribution()) {
+		if (!hasDelta) {
 			sout.Weight /= scatProb * sout.PDF_S[0];
 			current.ForwardPDF_S = scatProb * sout.PDF_S[0];
 
@@ -179,8 +186,8 @@ public:
 			material->pdf(ein, pout, session);
 			current.BackwardPDF_S = scatProb * pout.PDF_S[0];
 		} else {
-			current.ForwardPDF_S  = 1;
-			current.BackwardPDF_S = 1;
+			current.ForwardPDF_S  = scatProb;
+			current.BackwardPDF_S = scatProb;
 		}
 
 		SpectralBlob alphaM = sout.Weight * prevAlpha;
@@ -193,13 +200,13 @@ public:
 		if (alphaM.isZero(PR_EPSILON) || PR_UNLIKELY(sout.PDF_S[0] <= PR_EPSILON)) {
 			// Stop traversal with dark vertex
 			path.addToken(sout.Type);
-			vertices.emplace_back(BiDiPathVertex{ ip, entity, material, SpectralBlob::Zero(), forwardPDF_A, backwardPDF_A, material->hasDeltaDistribution() });
+			vertices.emplace_back(BiDiPathVertex{ ip, entity, material, SpectralBlob::Zero(), forwardPDF_A, backwardPDF_A, hasDelta });
 			return {};
 		}
 
 		// Add to path
 		path.addToken(sout.Type);
-		vertices.emplace_back(BiDiPathVertex{ ip, entity, material, alphaM, forwardPDF_A, backwardPDF_A, material->hasDeltaDistribution() });
+		vertices.emplace_back(BiDiPathVertex{ ip, entity, material, alphaM, forwardPDF_A, backwardPDF_A, hasDelta });
 
 		// Setup ray flags
 		int rflags = RF_Bounce;
@@ -277,8 +284,9 @@ public:
 			path.addToken(LightPathToken::Emissive());
 
 		// Intiial light vertex
+		const float posPDF = std::isinf(lsout.Position_PDF.Value) ? 1 : lsout.Position_PDF.Value;
 		mLightVertices.emplace_back(BiDiPathVertex{ IntersectionPoint(), nullptr, nullptr, radiance,
-													lsout.Position_PDF.Value, lsout.Position_PDF.Value, !lsout.Position_PDF.IsArea });
+													posPDF, posPDF, !lsout.Position_PDF.IsArea });
 		WalkContext current = WalkContext{ lsout.Direction_PDF_S, lsout.Direction_PDF_S };
 
 		mLightPathWalker.traverse(
@@ -295,73 +303,60 @@ public:
 	}
 
 	///////////////////////////////////////
-	void handleConnection(RenderTileSession& session, LightPath& fullPath,
-						  size_t t, const LightPath& cameraPath,
-						  size_t s, const LightPath& lightPath, const Light* light)
+	void handleNEE(RenderTileSession& session, LightPath& fullPath,
+				   size_t t, const LightPath& cameraPath,
+				   const Light* light)
 	{
-		PR_ASSERT(t > 1 && s > 0, "Expected valid connection numbers");
+		const auto& cv						= mCameraVertices[t - 1];
+		const auto& pcv						= mCameraVertices[t - 2];
+		const EntitySamplingInfo sampleInfo = { cv.IP.P, cv.IP.Surface.N };
 
-		constexpr float DISTANCE_EPS = 0.000001f;
+		LightSampleInput lsin;
+		lsin.RND			= session.tile()->random().get4D();
+		lsin.WavelengthNM	= cv.IP.Ray.WavelengthNM;
+		lsin.Point			= &cv.IP;
+		lsin.SamplingInfo	= &sampleInfo;
+		lsin.SamplePosition = true;
+		LightSampleOutput lsout;
+		light->sample(lsin, lsout, session);
 
-		const auto& cv	= mCameraVertices[t];
-		const auto& lv	= mLightVertices[s];
-		const auto& pcv = mCameraVertices[t - 1];
-		const auto& plv = mLightVertices[s - 1];
+		// Sample light
+		Vector3f L		 = (lsout.LightPosition - cv.IP.P);
+		const float sqrD = L.squaredNorm();
+		L.normalize();
+		const float cosC	  = L.dot(cv.IP.Surface.N);
+		const float cosL	  = std::max(0.0f, lsout.CosLight); // Only frontside
+		const float Geometry  = std::abs(cosC * cosL) / sqrD;
+		const bool isFeasible = Geometry > GEOMETRY_EPS;
 
-		PR_UNUSED(light);
-		/*if (s == 1) { // NEE
-			// TODO
-			PR_UNUSED(light);
-		} else {*/
-		// Check visibility
+		float pdfA = lsout.Position_PDF.Value;
+		if (!lsout.Position_PDF.IsArea)
+			pdfA = IS::toArea(pdfA, sqrD, cosL);
 
-		Vector3f cD		  = (lv.IP.P - cv.IP.P); // Camera Vertex -> Light Vertex
-		const float dist2 = cD.squaredNorm();
-		if (dist2 <= DISTANCE_EPS)
-			return; // Giveup as it is too close
+		L = lsout.Outgoing;
+		LightPathToken light_token;
+		if (light->isInfinite())
+			light_token = LightPathToken::Background();
+		else
+			light_token = LightPathToken::Emissive();
 
-		const float dist = std::sqrt(dist2);
-		cD.normalize();
-
-		const float cosC	 = cD.dot(cv.IP.Surface.N);
-		const float cosL	 = -cD.dot(lv.IP.Surface.N);
+		// Trace shadow ray
+		const float distance = light->isInfinite() ? PR_INF : std::sqrt(sqrD);
 		const Vector3f oN	 = cosC < 0 ? -cv.IP.Surface.N : cv.IP.Surface.N; // Offset normal used for safe positioning
-		const Ray shadow	 = cv.IP.Ray.next(cv.IP.P, cD, oN, RF_Shadow, SHADOW_RAY_MIN, dist);
-		const bool shadowHit = cosL > PR_EPSILON && session.traceShadowRay(shadow, dist, lv.Entity->id());
+		const Ray shadow	 = cv.IP.Ray.next(cv.IP.P, L, oN, RF_Shadow, SHADOW_RAY_MIN, distance);
 
-		// Extract visible and geometry term
-		const bool isVisible = !shadowHit;
-		const float Geometry = std::abs(cosC * cosL) / dist2;
+		const bool isVisible	  = isFeasible && !session.traceShadowRay(shadow, distance, light->entityID());
+		const SpectralBlob lightW = isVisible ? lsout.Radiance : SpectralBlob::Zero();
 
-		SpectralBlob lightW;
-		SpectralBlob cameraW;
-		if (isVisible) {
-			// Evaluate light material
-			MaterialEvalInput lin;
-			lin.Context		   = MaterialEvalContext::fromIP(lv.IP, -cD);
-			lin.ShadingContext = ShadingContext::fromIP(session.threadID(), lv.IP);
-			MaterialEvalOutput lout;
-			lv.Material->eval(lin, lout, session);
-			lightW = lout.Weight;
-
-			// Evaluate camera material
-			MaterialEvalInput cin;
-			cin.Context		   = MaterialEvalContext::fromIP(cv.IP, cD);
-			cin.ShadingContext = ShadingContext::fromIP(session.threadID(), cv.IP);
-			MaterialEvalOutput cout;
-			cv.Material->eval(cin, cout, session);
-			cameraW = cout.Weight;
-		} else {
-			// Do not evaluate if it is not visible
-			lightW	= SpectralBlob::Zero();
-			cameraW = SpectralBlob::Zero();
-		}
+		// Evaluate surface
+		MaterialEvalInput in{ MaterialEvalContext::fromIP(cv.IP, L), ShadingContext::fromIP(session.threadID(), cv.IP) };
+		MaterialEvalOutput out;
+		cv.Material->eval(in, out, session);
 
 		// Extract terms
 		const SpectralBlob alphaC  = pcv.Alpha;
-		const SpectralBlob alphaL  = plv.Alpha;
-		const SpectralBlob weight  = alphaC * alphaL;
-		const SpectralBlob contrib = lightW * Geometry * cameraW;
+		const SpectralBlob weight  = alphaC;
+		const SpectralBlob contrib = lightW * Geometry * out.Weight;
 
 		// Compute MIS
 		float misDenom = 0.0f;
@@ -375,12 +370,7 @@ public:
 		}
 
 		// Along light paths
-		pdfMul = 1.0f;
-		for (int i = s - 1; i >= 0; --i) {
-			pdfMul *= mis_term(mLightVertices[i].BackwardPDF_A) / mis_term(mLightVertices[i].ForwardPDF_A);
-			if (!mLightVertices[i].IsDelta && (i > 0 ? !mLightVertices[i - 1].IsDelta : true))
-				misDenom += pdfMul;
-		}
+		misDenom += mis_term(pdfA) / mis_term(pdfA);
 
 		const float mis = 1 / (1 + misDenom);
 
@@ -388,12 +378,106 @@ public:
 		fullPath.reset();
 		for (size_t t2 = 0; t2 < t; ++t2)
 			fullPath.addToken(cameraPath.token(t2));
-		for (size_t s2 = 0; s2 < s; ++s2)
-			fullPath.addToken(lightPath.token(s - 1 - s2));
+		fullPath.addToken(light_token);
 
 		// Splat
 		session.pushSpectralFragment(SpectralBlob(mis), weight, contrib, cv.IP.Ray, fullPath);
-		//}
+	}
+
+	void handleConnection(RenderTileSession& session, LightPath& fullPath,
+						  size_t t, const LightPath& cameraPath,
+						  size_t s, const LightPath& lightPath, const Light* light)
+	{
+		PR_ASSERT(t > 1 && s > 0, "Expected valid connection numbers");
+
+		if (s == 1) { // NEE
+			handleNEE(session, fullPath, t, cameraPath, light);
+		} else {
+			const auto& cv	= mCameraVertices[t - 1];
+			const auto& lv	= mLightVertices[s - 1];
+			const auto& pcv = mCameraVertices[t - 2];
+			const auto& plv = mLightVertices[s - 2];
+
+			Vector3f cD		  = (lv.IP.P - cv.IP.P); // Camera Vertex -> Light Vertex
+			const float dist2 = cD.squaredNorm();
+			if (dist2 <= DISTANCE_EPS)
+				return; // Giveup as it is too close
+
+			const float dist = std::sqrt(dist2);
+			cD.normalize();
+
+			const float cosC	  = cD.dot(cv.IP.Surface.N);
+			const float cosL	  = std::abs(cD.dot(lv.IP.Surface.N));
+			const float Geometry  = std::abs(cosC * cosL) / dist2;
+			const bool isFeasible = Geometry > GEOMETRY_EPS;
+
+			const Vector3f oN = cosC < 0 ? -cv.IP.Surface.N : cv.IP.Surface.N; // Offset normal used for safe positioning
+			const Ray shadow  = cv.IP.Ray.next(cv.IP.P, cD, oN, RF_Shadow, SHADOW_RAY_MIN, dist);
+
+			// Extract visible and geometry term
+			const bool isVisible = isFeasible && !session.traceShadowRay(shadow, dist, lv.Entity->id());
+
+			SpectralBlob lightW;
+			SpectralBlob cameraW;
+			if (isVisible) {
+				// Evaluate light material
+				MaterialEvalInput lin;
+				lin.Context		   = MaterialEvalContext::fromIP(lv.IP, -cD);
+				lin.ShadingContext = ShadingContext::fromIP(session.threadID(), lv.IP);
+				MaterialEvalOutput lout;
+				lv.Material->eval(lin, lout, session);
+				lightW = lout.Weight;
+
+				// Evaluate camera material
+				MaterialEvalInput cin;
+				cin.Context		   = MaterialEvalContext::fromIP(cv.IP, cD);
+				cin.ShadingContext = ShadingContext::fromIP(session.threadID(), cv.IP);
+				MaterialEvalOutput cout;
+				cv.Material->eval(cin, cout, session);
+				cameraW = cout.Weight;
+			} else {
+				// Do not evaluate if it is not visible
+				lightW	= SpectralBlob::Zero();
+				cameraW = SpectralBlob::Zero();
+			}
+
+			// Extract terms
+			const SpectralBlob alphaC  = pcv.Alpha;
+			const SpectralBlob alphaL  = plv.Alpha;
+			const SpectralBlob weight  = alphaC * alphaL;
+			const SpectralBlob contrib = lightW * Geometry * cameraW;
+
+			// Compute MIS
+			float misDenom = 0.0f;
+
+			// Along camera paths
+			float pdfMul = 1.0f;
+			for (int i = t - 1; i > 0; --i) {
+				pdfMul *= mis_term(mCameraVertices[i].BackwardPDF_A) / mis_term(mCameraVertices[i].ForwardPDF_A);
+				if (!mCameraVertices[i].IsDelta && !mCameraVertices[i - 1].IsDelta)
+					misDenom += pdfMul;
+			}
+
+			// Along light paths
+			pdfMul = 1.0f;
+			for (int i = s - 1; i >= 0; --i) {
+				pdfMul *= mis_term(mLightVertices[i].BackwardPDF_A) / mis_term(mLightVertices[i].ForwardPDF_A);
+				if (!mLightVertices[i].IsDelta && (i > 0 ? !mLightVertices[i - 1].IsDelta : true))
+					misDenom += pdfMul;
+			}
+
+			const float mis = 1 / (1 + misDenom);
+
+			// Construct LPE path
+			fullPath.reset();
+			for (size_t t2 = 0; t2 < t; ++t2)
+				fullPath.addToken(cameraPath.token(t2));
+			for (size_t s2 = 0; s2 < s; ++s2)
+				fullPath.addToken(lightPath.token(s - 1 - s2));
+
+			// Splat
+			session.pushSpectralFragment(SpectralBlob(mis), weight, contrib, cv.IP.Ray, fullPath);
+		}
 	}
 
 	void handleShadingGroup(RenderTileSession& session, const ShadingGroup& sg)

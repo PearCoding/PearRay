@@ -33,6 +33,7 @@ public:
 	uint16 TevPort;
 	std::string TevIp;
 	bool TevVariance;
+	bool TevWeight;
 
 	// Network
 	int16 ListenNetwork; // Port to listen, -1 no networking
