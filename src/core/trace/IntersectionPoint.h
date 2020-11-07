@@ -8,7 +8,8 @@
 namespace PR {
 enum IntersectionPointFlags {
 	//IPF_Inside	 = 0x1,
-	IPF_IsMedium = 0x2
+	IPF_IsSurface = 0x2,
+	IPF_IsMedium  = 0x4
 };
 
 class PR_LIB_CORE SurfaceIntersectionPoint {
@@ -48,6 +49,13 @@ public:
 	uint32 Flags;
 	float Depth2;
 
+	inline void setForPoint(const Vector3f& p)
+	{
+		P	   = p;
+		Depth2 = 0;
+		Flags  = 0;
+	}
+
 	// Set shading for surfaces terms without transformation
 	inline void setForSurface(const PR::Ray& ray, const Vector3f& p, const GeometryPoint& pt)
 	{
@@ -55,7 +63,7 @@ public:
 		Ray				 = ray;
 		Surface.Geometry = pt;
 		Depth2			 = (ray.Origin - P).squaredNorm();
-		Flags			 = 0;
+		Flags			 = IPF_IsSurface;
 
 		// TODO: Displacement?
 		Surface.P	  = p;
@@ -68,6 +76,8 @@ public:
 	// Set shading for medium
 	inline void setForMedium(const PR::Ray& ray, const Vector3f& p, uint32 mediumID)
 	{
+		PR_ASSERT(mediumID != PR_INVALID_ID, "Expected valid medium id");
+
 		P				= p;
 		Ray				= ray;
 		Depth2			= (ray.Origin - P).squaredNorm();
@@ -76,7 +86,14 @@ public:
 	}
 
 	inline bool isAtMedium() const { return Flags & IPF_IsMedium; }
-	inline bool isAtSurface() const { return !isAtMedium(); }
+	inline bool isAtSurface() const { return Flags & IPF_IsSurface; }
+
+	static inline IntersectionPoint forPoint(const Vector3f& p)
+	{
+		IntersectionPoint ip;
+		ip.setForPoint(p);
+		return ip;
+	}
 
 	static inline IntersectionPoint forSurface(const PR::Ray& ray, const Vector3f& p, const GeometryPoint& pt)
 	{

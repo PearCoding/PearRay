@@ -73,8 +73,6 @@ LightSampler::LightSampler(Scene* scene)
 	mSelector					= std::make_unique<Distribution1D>(intensities.size());
 	mSelector->generate([&](size_t i) { return intensities[i]; }, &full_approx_intensity);
 
-	PR_LOG(L_INFO) << "Approximative full light intensity within scene = " << full_approx_intensity << std::endl;
-
 	// Normalize intensities
 	if (full_approx_intensity <= PR_EPSILON) {
 		PR_LOG(L_WARNING) << "Lights are available but have no power" << std::endl;

@@ -6,15 +6,14 @@
 	:camera 'Camera'
 	; Settings
 	(integrator
-		:type 'direct'
-		:max_ray_depth 8
+		:type 'bidi'
+		:max_ray_depth 1
 		:light_sampe_count 1
-		:msi false
 	)
 	(sampler
 		:slot 'aa'
 		:type 'HALTON'
-		:sample_count 512
+		:sample_count 128
 	)
 	(filter
 		:slot 'pixel'

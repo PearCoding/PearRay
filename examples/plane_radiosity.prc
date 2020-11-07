@@ -8,7 +8,6 @@
 	  :type 'direct'
 	  :max_ray_depth 1
 	  :light_sample_count 1
-	  :msi true
 	)
 	(sampler 
 	  :slot 'aa'
@@ -33,41 +32,39 @@
 
 		:sensor_width 1
 		:sensor_height 1
-		:localDirection [0,0,-1]
-		:localUp [0,1,0]
-		:localRight [1,0,0]
-		:transform [1.0,0.0,0.0,0.0, 0.0,1.0,0.0,0.0, 0.0,0.0,1.0,1.0, 0.0,0.0,0.0,1.0]
+        :localDirection [0, 0,-1]
+        :localUp [0, 1, 0]
+        :localRight [1, 0, 0]
+        :position [0, 0, 1]
 	)
 
-	; Light Area
-	(emission
-		:name 'Area_em'
-		:type 'standard'
-		:radiance (illuminant "E")
-	)
-	(entity
-		:name 'Area'
-		:type 'plane'
-		:centering true
-		:width 1.000000
-		:height -1.000000
-		:emission 'Area_em'
-		:transform [1.0,0.0,0.0,0.0, 0.0,1.0,0.0,0.0, 0.0,0.0,1.0,2.0, 0.0,0.0,0.0,1.0]
-	)
-	; Pure diffuse object
-	(material
-		:name 'Diffuse'
-		:type 'diffuse'
-		:albedo 1.0
-	)
-	(entity
-		:name 'Plane'
-		:type 'plane'
-		:centering true
-		:width 1.000000
-		:height 1.000000
-		:material 'Diffuse'
-		:transform [1.0,0.0,0.0,0.0, 0.0,1.0,0.0,0.0, 0.0,0.0,1.0,0.0, 0.0,0.0,0.0,1.0]
-	)
+    ; Light Area
+    (emission
+        :name 'Area_em'
+        :type 'diffuse'
+        :radiance (illuminant "E")
+    )
+    (entity
+        :name 'Area'
+        :type 'plane'
+        :centering true
+        :width 1
+        :height -1
+        :emission 'Area_em'
+        :position [0, 0, 2]
+    )
+
+    ; Pure diffuse object
+    (material
+        :name 'Diffuse'
+        :type 'diffuse'
+        :albedo 1
+    )
+    (entity
+        :name 'Plane'
+        :type 'plane'
+        :centering true
+        :material 'Diffuse'
+    )
 )
 
