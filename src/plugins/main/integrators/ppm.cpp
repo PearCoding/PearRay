@@ -28,6 +28,16 @@
 /* Implementation of Propabilistic Progressive Photon Mapping */
 
 namespace PR {
+
+static inline float culling(float cos)
+{
+#ifdef PR_NO_CULLING
+	return std::abs(cos);
+#else
+	return std::max(0.0f, cos);
+#endif
+}
+
 struct PPMParameters {
 	size_t MaxCameraRayDepthHard = 16;
 	size_t MaxCameraRayDepthSoft = 2;
@@ -182,7 +192,9 @@ public:
 		session.pushSPFragment(spt, path);
 
 		// Only consider camera rays, as everything else is handled eventually by MIS
-		if (entity->hasEmission()) {
+		if (entity->hasEmission()
+			&& culling(-spt.Surface.NdotV) > PR_EPSILON) // Check if frontside
+		{
 			IEmission* ems = session.getEmission(spt.Surface.Geometry.EmissionID);
 			if (PR_LIKELY(ems)) {
 				// Evaluate light
@@ -278,7 +290,8 @@ public:
 			LightSampleOutput lsout;
 			light.Light->sample(lsin, lsout, session);
 
-			Ray ray = Ray(lsout.LightPosition, -lsout.Outgoing);
+			Ray ray	   = Ray(lsout.LightPosition, -lsout.Outgoing);
+			ray.Origin = Transform::safePosition(ray.Origin, ray.Direction); // Make sure no self intersection happens
 			ray.Flags |= RF_Light;
 			ray.WavelengthNM = lsin.WavelengthNM;
 

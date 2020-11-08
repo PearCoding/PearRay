@@ -6,7 +6,7 @@
 	:camera 'Camera'
 	; Settings
 	(integrator
-		:type 'bidi'
+		:type 'ppm'
 		:max_ray_depth 1
 		:light_sampe_count 1
 	)
