@@ -42,6 +42,11 @@ static inline float culling(float cos)
 #endif
 }
 
+static inline float checkPDF(float a)
+{
+	return std::isinf(a) ? 1 : a;
+}
+
 struct BiDiParameters {
 	size_t MaxCameraRayDepthHard = 16;
 	size_t MaxCameraRayDepthSoft = 2;
@@ -542,9 +547,8 @@ public:
 		light->sample(lsin, lsout, session);
 
 		// Sample light
-		Vector3f L		 = (lsout.LightPosition - cv.IP.P);
-		const float sqrD = L.squaredNorm();
-		L.normalize();
+		const float sqrD	  = (lsout.LightPosition - cv.IP.P).squaredNorm();
+		const Vector3f L	  = lsout.Outgoing;
 		const float cosC	  = L.dot(cv.IP.Surface.N);
 		const float cosL	  = culling(lsout.CosLight);
 		const float Geometry  = std::abs(/*cosC */ cosL) / sqrD; // cosC already included in material
@@ -553,8 +557,6 @@ public:
 		float pdfA = lsout.Position_PDF.Value;
 		if (!lsout.Position_PDF.IsArea)
 			pdfA = IS::toArea(pdfA, sqrD, cosL);
-
-		L = lsout.Outgoing;
 
 		const SpectralBlob lightRad	 = lsout.Radiance / pdfA;
 		const BiDiPathVertex sampled = { IntersectionPoint::forPoint(lsout.LightPosition), nullptr, nullptr, lightRad, lsout.Direction_PDF_S, 0.0f, false };
@@ -621,7 +623,7 @@ public:
 
 		const float cosC	  = cD.dot(cv.IP.Surface.N);
 		const float cosL	  = culling(-cD.dot(lv.IP.Surface.N));
-		const float Geometry  = std::abs(/*cosC */ cosL) / dist2;  // cosC already included in material
+		const float Geometry  = std::abs(/*cosC */ cosL) / dist2; // cosC already included in material
 		const bool isFeasible = lv.Material && cv.Material
 								&& Geometry > GEOMETRY_EPS && dist2 > DISTANCE_EPS;
 

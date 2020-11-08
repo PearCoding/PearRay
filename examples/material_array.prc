@@ -14,7 +14,7 @@
 	  :radius 1
 	)
 	(integrator 
-	  :type 'direct'
+	  :type 'bidi'
 	  ;:max_ray_depth 64
 	)
 	; Outputs
