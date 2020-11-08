@@ -8,7 +8,8 @@
 namespace PR {
 
 LightSampler::LightSampler(Scene* scene)
-	: mEmissiveSurfaceArea(0)
+	: mInfLightSelectionProbability(0)
+	, mEmissiveSurfaceArea(0)
 	, mEmissiveSurfacePower(0)
 	, mEmissivePower(0)
 {
@@ -107,8 +108,11 @@ LightSampler::LightSampler(Scene* scene)
 	// Add infinite lights (approx)
 	for (const auto& infL : inflights) {
 		mLights.emplace_back(std::make_unique<Light>(Light::makeInfLight(infL.get(), intensities[k])));
+		mInfLights.emplace_back(mLights.back().get());
 		++k;
 	}
+
+	mInfLightSelectionProbability = (mEmissivePower - mEmissiveSurfacePower) / mEmissivePower;
 }
 
 } // namespace PR

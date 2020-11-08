@@ -8,7 +8,7 @@ inline const Light* LightSampler::sample(float rnd, float& pdf) const
 	return id < mLights.size() ? mLights[id].get() : nullptr;
 }
 
-inline const Light* LightSampler::sample(const LightSampleInput& in, LightSampleOutput& out, const RenderTileSession& session) const
+inline std::pair<const Light*, float> LightSampler::sample(const LightSampleInput& in, LightSampleOutput& out, const RenderTileSession& session) const
 {
 	PR_ASSERT(mSelector, "Expected initialized light sampler");
 	float pdf, rem;
@@ -19,23 +19,40 @@ inline const Light* LightSampler::sample(const LightSampleInput& in, LightSample
 		LightSampleInput in2 = in;
 		in2.RND[0]			 = rem;
 		l->sample(in2, out, session);
-
-		out.Direction_PDF_S *= pdf;
-		return l;
+		return { l, pdf };
 	} else {
-		return nullptr;
+		return { nullptr, 0.0f };
 	}
 }
 
-LightPDF LightSampler::pdf(const IEntity* entity, const EntitySamplingInfo* info) const
+float LightSampler::pdfSelection(const IEntity* entity) const
 {
+	if (!entity)
+		return mInfLightSelectionProbability;
+
 	if (!entity->hasEmission() || mLightEntityMap.count(entity) == 0)
+		return 0.0f;
+
+	const uint32 lightID = mLightEntityMap.at(entity);
+	return mSelector->discretePdf(lightID);
+}
+
+LightPDF LightSampler::pdfPosition(const IEntity* entity, const EntitySamplingInfo* info) const
+{
+	if (!entity || !entity->hasEmission() || mLightEntityMap.count(entity) == 0)
 		return LightPDF{ 0.0f, false };
 
 	const uint32 lightID = mLightEntityMap.at(entity);
 	const Light* light	 = mLights[lightID].get();
-	const auto pdf		 = light->pdf(info);
-	return LightPDF{ pdf.Value * mSelector->discretePdf(lightID), pdf.IsArea };
+	return light->pdf(info);
+}
+
+inline const Light* LightSampler::light(const IEntity* entity) const
+{
+	if (!entity || mLightEntityMap.count(entity) == 0)
+		return nullptr;
+
+	return mLights[mLightEntityMap.at(entity)].get();
 }
 
 } // namespace PR

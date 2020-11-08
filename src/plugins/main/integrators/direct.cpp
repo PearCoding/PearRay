@@ -83,8 +83,8 @@ public:
 		lsin.SamplingInfo	= &sampleInfo;
 		lsin.SamplePosition = true;
 		LightSampleOutput lsout;
-		const Light* light = mLightSampler->sample(lsin, lsout, session);
-		if (PR_UNLIKELY(!light))
+		const auto lsample = mLightSampler->sample(lsin, lsout, session);
+		if (PR_UNLIKELY(!lsample.first))
 			return ZERO_CONTRIB;
 
 		// Sample light
@@ -92,7 +92,7 @@ public:
 		const float sqrD = L.squaredNorm();
 		L.normalize();
 		const float cosO = std::max(0.0f, lsout.CosLight); // Only frontside
-		float pdfS		 = lsout.Position_PDF.Value;
+		float pdfS		 = lsout.Position_PDF.Value * lsample.second;
 		if (lsout.Position_PDF.IsArea)
 			pdfS = IS::toSolidAngle(pdfS, sqrD, cosO); // The whole integration is in solid angle domain -> Map into it
 
@@ -100,17 +100,17 @@ public:
 			return ZERO_CONTRIB;
 
 		L = lsout.Outgoing;
-		if (light->isInfinite())
+		if (lsample.first->isInfinite())
 			light_token = LightPathToken::Background();
 		else
 			light_token = LightPathToken::Emissive();
 
 		// Trace shadow ray
 		const float NdotL	 = L.dot(spt.Surface.N);
-		const float distance = light->isInfinite() ? PR_INF : std::sqrt(sqrD);
+		const float distance = lsample.first->isInfinite() ? PR_INF : std::sqrt(sqrD);
 		const Vector3f oN	 = NdotL < 0 ? -spt.Surface.N : spt.Surface.N; // Offset normal used for safe positioning
 		const Ray shadow	 = spt.Ray.next(spt.P, L, oN, RF_Shadow, SHADOW_RAY_MIN, distance);
-		const bool shadowHit = cosO > PR_EPSILON && session.traceShadowRay(shadow, distance, light->entityID());
+		const bool shadowHit = cosO > PR_EPSILON && session.traceShadowRay(shadow, distance, lsample.first->entityID());
 
 		const SpectralBlob lightW = shadowHit ? SpectralBlob::Zero() : lsout.Radiance;
 
@@ -209,11 +209,11 @@ public:
 					ems->eval(inL, outL, session);
 
 					const EntitySamplingInfo sampleInfo = { spt.P, spt.Surface.N };
-					const auto pdfL						= mLightSampler->pdf(nentity, &sampleInfo);
-					next_mis							= allowMIS ? MIS(
-									  1, out.PDF_S[0],
-									  mParameters.MaxLightSamples, pdfL.IsArea ? IS::toSolidAngle(pdfL.Value, spt2.Depth2, aNdotV) : pdfL.Value)
-										: 1.0f;
+
+					const float pdfSel	  = mLightSampler->pdfSelection(nentity);
+					const auto pdfL		  = mLightSampler->pdfPosition(nentity, &sampleInfo);
+					const float lightPdfA = pdfSel * (pdfL.IsArea ? IS::toSolidAngle(pdfL.Value, spt2.Depth2, aNdotV) : pdfL.Value);
+					next_mis			  = allowMIS ? MIS(1, out.PDF_S[0], mParameters.MaxLightSamples, lightPdfA) : 1.0f;
 
 					path.addToken(LightPathToken(ST_EMISSIVE, SE_NONE));
 					session.pushSpectralFragment(SpectralBlob(next_mis * mis), weighted_importance, outL.Radiance, next, path);

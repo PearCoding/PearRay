@@ -7,7 +7,7 @@ namespace PR {
 namespace Transform {
 
 constexpr float RayOffsetEpsilon = 0.000001f;
-/* Translates original position a little bit
+/** Translates original position a little bit
  * in direction of the view to ensure no self intersection.
  */
 inline Vector3f safePosition(const Vector3f& pos,
@@ -29,6 +29,13 @@ inline Vector3f safePosition(const Vector3f& pos,
 			posOff[i] = nextFloatDown(posOff[i]);
 	}
 	return posOff;
+}
+
+/// Translates original position a little bit without knowledge of normal
+inline Vector3f safePosition(const Vector3f& pos,
+							 const Vector3f& dir)
+{
+	return pos + RayOffsetEpsilon * dir;
 }
 
 inline Vector3f applyVector(const Eigen::Ref<const Eigen::Matrix3f>& m, const Vector3f& p)

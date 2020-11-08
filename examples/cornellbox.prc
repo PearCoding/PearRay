@@ -8,6 +8,9 @@
 	(integrator
 		:type 'bidi'
 		:max_ray_depth 16
+		:max_camera_ray_depth 4
+		:max_light_ray_depth 1
+		:mis 'power'
 		:contract_ratio 0.2
 		:max_light_ray_depth 16
 		:soft_max_light_ray_depth 6
@@ -38,11 +41,11 @@
 		:transform [1.0,0.0,0.0,0.0,0.0,0.0,-1.0,-3.93462872505188,0.0,1.0,0.0,1.0,0.0,0.0,0.0,1.0]
 	)
 	; Lights
-	;(light
-	;	:name 'sky'
-	;	:type 'sky'
-	;	:turbidity 3
-	;)
+	(light
+		:name 'sky'
+		:type 'sky'
+		:turbidity 3
+	)
 
 	(emission
 		:name 'light_em'

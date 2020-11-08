@@ -17,8 +17,11 @@ public:
 	virtual ~LightSampler() {}
 
 	inline const Light* sample(float rnd, float& pdf) const;
-	inline const Light* sample(const LightSampleInput& in, LightSampleOutput& out, const RenderTileSession& session) const;
-	inline LightPDF pdf(const IEntity* entity, const EntitySamplingInfo* info = nullptr) const;
+	inline std::pair<const Light*, float> sample(const LightSampleInput& in, LightSampleOutput& out, const RenderTileSession& session) const;
+
+	inline float pdfSelection(const IEntity* entity) const;
+	inline LightPDF pdfPosition(const IEntity* entity, const EntitySamplingInfo* info = nullptr) const;
+	inline const Light* light(const IEntity* entity) const;
 
 	inline const LightList& lights() const { return mLights; }
 
@@ -34,7 +37,9 @@ private:
 
 	LightList mLights;
 	LightEntityMap mLightEntityMap;
+	std::vector<Light*> mInfLights; // Special purpose cache, as we expect inf lights be way less then area lights
 	std::unique_ptr<Distribution1D> mSelector;
+	float mInfLightSelectionProbability;
 	float mEmissiveSurfaceArea;
 	float mEmissiveSurfacePower;
 	float mEmissivePower; // Including inf lights
