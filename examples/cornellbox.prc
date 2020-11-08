@@ -113,7 +113,7 @@
 		:name 'CornellBox-Original'
 		:type 'mesh'
 		:materials 'light'
-		:emission 'light_em'
+		;:emission 'light_em'
 		:mesh 'CornellBox-Original'
 		:transform [1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0]
 	)

@@ -166,28 +166,39 @@ void Light::sample(const LightSampleInput& in, LightSampleOutput& out, const Ren
 
 			out.Direction_PDF_S = Sampling::cos_hemi_pdf(local_dir(2));
 			out.Outgoing		= dir;
+			out.CosLight		= local_dir(2);
 		} else { // Connect to given surface
 			out.Outgoing		= (pp.Position - in.Point->P).normalized();
 			out.Direction_PDF_S = 1;
+			out.CosLight		= -out.Outgoing.dot(gp.N);
 		}
-
-		out.CosLight = -out.Outgoing.dot(gp.N);
 	}
 }
 
-LightPDF Light::pdf(const EntitySamplingInfo* info) const
-{ // TODO: This is very incomplete
+LightPDF Light::pdfPosition(const EntitySamplingInfo* info) const
+{ // TODO Make this emission and inf light specific
 	if (isInfinite()) {
-		IInfiniteLight* infL = reinterpret_cast<IInfiniteLight*>(mEntity);
-		if (infL->hasDeltaDistribution())
-			return LightPDF{ PR_INF, false };
-		else
-			return LightPDF{ PR_INV_2_PI, false }; // TODO
+		return LightPDF{ PR_INV_2_PI, false }; // TODO
 	} else {
 		IEntity* ent   = reinterpret_cast<IEntity*>(mEntity);
 		const auto pdf = info ? ent->sampleParameterPointPDF(*info) : ent->sampleParameterPointPDF();
-		// TODO: What if no point was given? This is incomplete
 		return LightPDF{ pdf.Value, pdf.IsArea };
+	}
+}
+
+float Light::pdfDirection(const Vector3f& dir, const EntitySamplingInfo* info) const
+{ // TODO Make this emission and inf light specific
+	if (isInfinite()) {
+		IInfiniteLight* infL = reinterpret_cast<IInfiniteLight*>(mEntity);
+		if (infL->hasDeltaDistribution())
+			return 1;
+		else
+			return Sampling::cos_hemi_pdf(dir[2]);
+	} else {
+		if (!info)
+			return 0.0f;
+		else
+			return Sampling::cos_hemi_pdf(std::abs(info->Normal.dot(dir)));
 	}
 }
 } // namespace PR

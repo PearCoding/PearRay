@@ -39,12 +39,32 @@ float LightSampler::pdfSelection(const IEntity* entity) const
 
 LightPDF LightSampler::pdfPosition(const IEntity* entity, const EntitySamplingInfo* info) const
 {
-	if (!entity || !entity->hasEmission() || mLightEntityMap.count(entity) == 0)
+	if (!entity)
+		return LightPDF{ PR_INV_2_PI, false }; // TODO
+
+	if (!entity->hasEmission() || mLightEntityMap.count(entity) == 0)
 		return LightPDF{ 0.0f, false };
 
 	const uint32 lightID = mLightEntityMap.at(entity);
 	const Light* light	 = mLights[lightID].get();
-	return light->pdf(info);
+	return light->pdfPosition(info);
+}
+
+inline float LightSampler::pdfDirection(const Vector3f& dir, const IEntity* entity, const EntitySamplingInfo* info) const
+{
+	if (!entity) {
+		float s = 0;
+		for (const auto& light : mInfLights)
+			s += light->pdfDirection(dir, info);
+		return s;
+	}
+
+	if (!entity->hasEmission() || mLightEntityMap.count(entity) == 0)
+		return 0.0f;
+
+	const uint32 lightID = mLightEntityMap.at(entity);
+	const Light* light	 = mLights[lightID].get();
+	return light->pdfDirection(dir, info);
 }
 
 inline const Light* LightSampler::light(const IEntity* entity) const

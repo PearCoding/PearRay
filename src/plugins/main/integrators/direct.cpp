@@ -40,6 +40,16 @@
  * p_(xi) is the pdf with respect to the solid angle (not projected solid angle!)
  */
 namespace PR {
+
+static inline float culling(float cos)
+{
+#ifdef PR_NO_CULLING
+	return std::abs(cos);
+#else
+	return std::max(0.0f, cos);
+#endif
+}
+
 struct DiParameters {
 	size_t MaxCameraRayDepthHard = 64;
 	size_t MaxCameraRayDepthSoft = 4;
@@ -91,7 +101,7 @@ public:
 		Vector3f L		 = (lsout.LightPosition - spt.P);
 		const float sqrD = L.squaredNorm();
 		L.normalize();
-		const float cosO = std::max(0.0f, lsout.CosLight); // Only frontside
+		const float cosO = culling(lsout.CosLight);
 		float pdfS		 = lsout.Position_PDF.Value * lsample.second;
 		if (lsout.Position_PDF.IsArea)
 			pdfS = IS::toSolidAngle(pdfS, sqrD, cosO); // The whole integration is in solid angle domain -> Map into it
@@ -122,7 +132,7 @@ public:
 
 		float mis = 1;
 		if (handleMSI) {
-			const float matPDF = (spt.Ray.Flags & RF_Monochrome) ? out.PDF_S[0] : (out.PDF_S.sum() / PR_SPECTRAL_BLOB_SIZE);
+			const float matPDF = /*(spt.Ray.Flags & RF_Monochrome) ?*/ out.PDF_S[0] /*: (out.PDF_S.sum() / PR_SPECTRAL_BLOB_SIZE)*/;
 			mis				   = MIS(mParameters.MaxLightSamples, pdfS, 1, matPDF);
 		}
 
@@ -196,9 +206,8 @@ public:
 
 			// If we hit a light from the frontside, apply the lighting to current path (Emissive Term)
 			if (nentity->hasEmission()
-				&& next.Direction.dot(spt2.Surface.Geometry.N) < -PR_EPSILON // Check if frontside
-				&& nentity->id() != spt.Surface.Geometry.EntityID			 // Check if not self
-				&& PR_LIKELY(spt2.Depth2 > PR_EPSILON)) {					 // Check if not too close
+				&& culling(-next.Direction.dot(spt2.Surface.Geometry.N)) > PR_EPSILON // Check if frontside
+				&& PR_LIKELY(spt2.Depth2 > PR_EPSILON)) {							  // Check if not too close
 				IEmission* ems = session.getEmission(spt2.Surface.Geometry.EmissionID);
 				if (PR_LIKELY(ems)) {
 					// Evaluate light
@@ -227,7 +236,7 @@ public:
 			path.addToken(LightPathToken::Background());
 			IntegratorUtils::handleBackground(session, next, [&](const InfiniteLightEvalOutput& ileout) {
 				hasScattered	   = true;
-				const float matPDF = (spt.Ray.Flags & RF_Monochrome) ? out.PDF_S[0] : (out.PDF_S.sum() / PR_SPECTRAL_BLOB_SIZE);
+				const float matPDF = /*(spt.Ray.Flags & RF_Monochrome) ?*/ out.PDF_S[0] /*: (out.PDF_S.sum() / PR_SPECTRAL_BLOB_SIZE)*/;
 				const float msiL   = allowMIS ? MIS(1, matPDF, mParameters.MaxLightSamples, ileout.Direction_PDF_S) : 1.0f;
 				session.pushSpectralFragment(SpectralBlob(msiL * mis), weighted_importance, ileout.Radiance, next, path);
 			});
@@ -297,7 +306,9 @@ public:
 #endif
 
 		// Only consider camera rays, as everything else is handled eventually by MIS
-		if (entity->hasEmission()) {
+		if (entity->hasEmission()
+			&& culling(-spt.Surface.NdotV) > PR_EPSILON) // Check if frontside)
+		{
 			IEmission* ems = session.getEmission(spt.Surface.Geometry.EmissionID);
 			if (PR_LIKELY(ems)) {
 				// Evaluate light

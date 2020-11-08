@@ -27,6 +27,7 @@
 #include "Logger.h"
 
 /* Implementation of a bidirectional path tracer */
+// TODO: Add russian roulette pdf to MIS
 
 namespace PR {
 constexpr float DISTANCE_EPS = 0.00001f;
@@ -282,11 +283,11 @@ public:
 	{
 		PR_PROFILE_THIS;
 
+		session.pushSPFragment(spt, path);
+
 		// Early drop out for invalid splashes
 		if (!entity->hasEmission() && PR_UNLIKELY(!material))
 			return;
-
-		session.pushSPFragment(spt, path);
 
 		// Initial camera vertex
 		mCameraVertices.emplace_back(BiDiPathVertex{ IntersectionPoint::forPoint(spt.Ray.Origin), nullptr, nullptr, SpectralBlob::Ones(), 1, 1, true });
@@ -302,7 +303,7 @@ public:
 				IntegratorUtils::handleBackground(
 					session, ray,
 					[&](const InfiniteLightEvalOutput& ileout) {
-						const float mis = 1 / (1 + cameraMISDenomInfHit(session, mCameraVertices.size()));
+						const float mis = 1 / (1 + cameraMISDenomInfHit(session, mCameraVertices.size(), ray));
 						path.addToken(LightPathToken::Background());
 						session.pushSpectralFragment(SpectralBlob(mis), current.Alpha, ileout.Radiance, ray, path);
 						path.popToken();
@@ -441,13 +442,8 @@ public:
 		const BiDiPathVertex& cv  = mCameraVertices[t - 1];
 		const BiDiPathVertex& pcv = mCameraVertices[t - 2];
 
-		float misDenom = 0.0f;
-
 		const float backwardP0 = cv.pdfA(session, pcv, sampled);
-		float pdfMul		   = mis_term(backwardP0) / mis_term(sampled.ForwardPDF_A);
-		misDenom += pdfMul;
-
-		return misDenom;
+		return mis_term(backwardP0) / mis_term(sampled.ForwardPDF_A);
 	}
 
 	// s == 0 -> Surface Emitter Hit
@@ -466,12 +462,14 @@ public:
 		if (cv.IP.Depth2 <= DISTANCE_EPS)
 			return 0.0f;
 
-		const EntitySamplingInfo samplingInfo = { cv.IP.P, cv.IP.Surface.N };
+		PR_ASSERT(cv.Entity, "Expected entity when something was hit!");
+
+		const EntitySamplingInfo samplingInfo = { pcv.IP.P, pcv.IP.Surface.N };
 
 		const float selectionProb = mLightSampler->pdfSelection(cv.Entity);
 		auto pdf				  = mLightSampler->pdfPosition(cv.Entity, &samplingInfo);
 		if (!pdf.IsArea)
-			pdf.Value *= IS::toArea(pdf.Value, cv.IP.Depth2, std::abs(cv.IP.Surface.NdotV));
+			pdf.Value = IS::toArea(pdf.Value, cv.IP.Depth2, std::abs(cv.IP.Ray.Direction.dot(cv.IP.Surface.N)));
 
 		const float backwardP0 = selectionProb * pdf.Value;
 		pdfMul *= mis_term(backwardP0) / mis_term(cv.ForwardPDF_A);
@@ -479,7 +477,8 @@ public:
 			misDenom += pdfMul;
 
 		if (t >= 3) {
-			const float backwardP1 = 1 / (2 * PR_PI * pcv.IP.Depth2); // Really??
+			const float pdfS	   = mLightSampler->pdfDirection(-cv.IP.Ray.Direction, cv.Entity, &samplingInfo);
+			const float backwardP1 = pcv.IP.isAtSurface() ? IS::toArea(pdfS, cv.IP.Depth2, std::abs(cv.IP.Ray.Direction.dot(pcv.IP.Surface.N))) : 0.0f;
 			pdfMul *= mis_term(backwardP1) / mis_term(pcv.ForwardPDF_A);
 			if (!pcv.IsDelta && !mCameraVertices[t - 3].IsDelta)
 				misDenom += pdfMul;
@@ -496,7 +495,7 @@ public:
 	}
 
 	// s == 0 -> Infinite Light
-	inline float cameraMISDenomInfHit(const RenderTileSession& session, size_t t) const
+	inline float cameraMISDenomInfHit(const RenderTileSession& session, size_t t, const Ray& ray) const
 	{
 		PR_UNUSED(session);
 		if (t < 2)
@@ -508,7 +507,7 @@ public:
 		float pdfMul   = 1.0f;
 
 		const float selectionProb = mLightSampler->pdfSelection(nullptr);
-		const float backwardP0	  = selectionProb * 1.0f; // TODO Direction is missing
+		const float backwardP0	  = selectionProb * mLightSampler->pdfDirection(ray.Direction, nullptr); // TODO: Solid Angle to Area?
 		pdfMul *= mis_term(backwardP0) / mis_term(pcv.ForwardPDF_A);
 		misDenom += pdfMul;
 
@@ -547,7 +546,7 @@ public:
 		L.normalize();
 		const float cosC	  = L.dot(cv.IP.Surface.N);
 		const float cosL	  = culling(lsout.CosLight);
-		const float Geometry  = std::abs(cosC * cosL) / sqrD;
+		const float Geometry  = std::abs(/*cosC */ cosL) / sqrD; // cosC already included in material
 		const bool isFeasible = cv.Material && Geometry > GEOMETRY_EPS && sqrD > DISTANCE_EPS;
 
 		float pdfA = lsout.Position_PDF.Value;
@@ -621,7 +620,7 @@ public:
 
 		const float cosC	  = cD.dot(cv.IP.Surface.N);
 		const float cosL	  = culling(-cD.dot(lv.IP.Surface.N));
-		const float Geometry  = std::abs(cosC * cosL) / dist2;
+		const float Geometry  = std::abs(/*cosC */ cosL) / dist2;  // cosC already included in material
 		const bool isFeasible = lv.Material && cv.Material
 								&& Geometry > GEOMETRY_EPS && dist2 > DISTANCE_EPS;
 

@@ -37,17 +37,17 @@ inline float hemi_pdf()
 // Orientation +Z (shading space)
 inline Vector3f cos_hemi(float u1, float u2)
 {
-	const float cosPhi = std::sqrt(u1);
-	const float sinPhi = std::sqrt(1 - u1); // Faster?
-	const float theta  = 2 * PR_PI * u2;
+	const float cosTheta = std::sqrt(u1);
+	const float sinTheta = std::sqrt(1 - u1); // Faster?
+	const float phi		 = 2 * PR_PI * u2;
 
-	const float thSin = std::sin(theta);
-	const float thCos = std::cos(theta);
+	const float sinPhi = std::sin(phi);
+	const float cosPhi = std::cos(phi);
 
-	const float x = sinPhi * thCos;
-	const float y = sinPhi * thSin;
+	const float x = sinTheta * cosPhi;
+	const float y = sinTheta * sinPhi;
 
-	return Vector3f(x, y, cosPhi);
+	return Vector3f(x, y, cosTheta);
 }
 
 inline float cos_hemi_pdf(float NdotL)
@@ -59,18 +59,18 @@ inline float cos_hemi_pdf(float NdotL)
 // Orientation +Z (shading space)
 inline Vector3f cos_hemi(float u1, float u2, float m)
 {
-	const float cosPhi = std::pow(u1, 1 / (m + 1.0f));
-	const float sinPhi = std::sqrt(1 - cosPhi * cosPhi);
-	const float theta  = 2 * PR_PI * u2;
-	const float norm   = 1.0f / std::sqrt(1 - u1 + cosPhi * cosPhi);
+	const float cosTheta = std::pow(u1, 1 / (m + 1.0f));
+	const float sinTheta = std::sqrt(1 - cosTheta * cosTheta);
+	const float phi		 = 2 * PR_PI * u2;
+	const float norm	 = 1.0f / std::sqrt(1 - u1 + cosTheta * cosTheta);
 
-	const float thSin = std::sin(theta);
-	const float thCos = std::cos(theta);
+	const float sinPhi = std::sin(phi);
+	const float cosPhi = std::cos(phi);
 
-	const float x = sinPhi * thCos * norm;
-	const float y = sinPhi * thSin * norm;
+	const float x = sinTheta * cosPhi * norm;
+	const float y = sinTheta * sinPhi * norm;
 
-	return Vector3f(x, y, cosPhi * norm);
+	return Vector3f(x, y, cosTheta * norm);
 }
 
 inline float cos_hemi_pdf(float NdotL, float m)
