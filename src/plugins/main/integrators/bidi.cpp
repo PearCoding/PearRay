@@ -250,8 +250,8 @@ public:
 			current.BackwardPDF_S = 1;
 		}
 
-		current.ForwardPDF_S *= scatProb;
-		current.BackwardPDF_S *= scatProb; // Really?
+		/*current.ForwardPDF_S *= scatProb;
+		current.BackwardPDF_S *= scatProb; // Really?*/
 		current.Alpha *= sout.Weight / scatProb;
 
 		// Update previous backward pdf
@@ -290,7 +290,7 @@ public:
 			return;
 
 		// Initial camera vertex
-		mCameraVertices.emplace_back(BiDiPathVertex{ IntersectionPoint::forPoint(spt.Ray.Origin), nullptr, nullptr, SpectralBlob::Ones(), 1, 1, true });
+		mCameraVertices.emplace_back(BiDiPathVertex{ IntersectionPoint::forPoint(spt.Ray.Origin), nullptr, nullptr, SpectralBlob::Ones(), 1, 0, true });
 		WalkContext current = WalkContext{ SpectralBlob::Ones(), 1.0f, 0.0f };
 
 		mCameraPathWalker.traverse(
@@ -335,7 +335,7 @@ public:
 		ray.WavelengthNM = lsin.WavelengthNM;
 
 		LightPDF pdf = lsout.Position_PDF;
-		//pdf.Value *= lsout.Direction_PDF_S;
+		pdf.Value *= lsout.Direction_PDF_S;
 		pdf.Value = std::isinf(pdf.Value) ? 1 : pdf.Value;
 
 		const SpectralBlob radiance = lsout.Radiance / (pdf.Value * lsample.second);
@@ -345,7 +345,7 @@ public:
 		else
 			path.addToken(LightPathToken::Emissive());
 
-		// Intiial light vertex
+		// Initial light vertex
 		const float posPDF = std::isinf(lsout.Position_PDF.Value) ? 1 : lsout.Position_PDF.Value;
 		mLightVertices.emplace_back(BiDiPathVertex{ IntersectionPoint::forPoint(lsout.LightPosition), nullptr, nullptr, radiance,
 													posPDF * lsample.second, 0, !lsout.Position_PDF.IsArea });
@@ -365,6 +365,7 @@ public:
 	}
 
 	///////////////////////////////////////
+	//////// MIS
 	inline float cameraMISDenom(const RenderTileSession& session, size_t t, size_t s) const
 	{
 		PR_ASSERT(t > 1 && s > 0, "Expected valid connection numbers"); /* This is called from NEE (s==1) aswell */
@@ -477,7 +478,7 @@ public:
 			misDenom += pdfMul;
 
 		if (t >= 3) {
-			const float pdfS	   = mLightSampler->pdfDirection(-cv.IP.Ray.Direction, cv.Entity, &samplingInfo);
+			const float pdfS	   = mLightSampler->pdfDirection(cv.IP.Ray.Direction, cv.Entity, &samplingInfo);
 			const float backwardP1 = pcv.IP.isAtSurface() ? IS::toArea(pdfS, cv.IP.Depth2, std::abs(cv.IP.Ray.Direction.dot(pcv.IP.Surface.N))) : 0.0f;
 			pdfMul *= mis_term(backwardP1) / mis_term(pcv.ForwardPDF_A);
 			if (!pcv.IsDelta && !mCameraVertices[t - 3].IsDelta)
