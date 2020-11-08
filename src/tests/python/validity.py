@@ -42,13 +42,13 @@ TESTDIR = ""
 IMGSIZE = 200
 SCENESTR = """
 (scene
-    :name 'direct_test'
+    :name 'validity_test'
     :render_width {size}
     :render_height {size}
     :spectral_domain 520
 
     (integrator
-      :type 'direct'
+      :type '{integrator}'
       :max_ray_depth 1
       :light_sample_count 1
     )
@@ -136,9 +136,18 @@ class TestDirect(unittest.TestCase):
             expected = analytical(points[i])
             self.assertAlmostEqual(res, expected, places=3)
 
-    def test_direct(self):
-        img = self.render(SCENESTR.format(size=IMGSIZE))
+    def checkIntegrator(self, integrator):
+        img = self.render(SCENESTR.format(integrator=integrator, size=IMGSIZE))
         self.checkAt(img, POINTS)
+
+    def test_direct(self):
+        self.checkIntegrator("direct")
+
+    def test_bidirect(self):
+        self.checkIntegrator("bidi")
+
+    def test_ppm(self):
+        self.checkIntegrator("ppm")
 
 
 def runTest(pr):
