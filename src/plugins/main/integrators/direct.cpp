@@ -106,8 +106,7 @@ public:
 		if (lsout.Position_PDF.IsArea)
 			pdfS = IS::toSolidAngle(pdfS, sqrD, cosO); // The whole integration is in solid angle domain -> Map into it
 
-		if (PR_UNLIKELY(pdfS <= PR_EPSILON))
-			return ZERO_CONTRIB;
+		const bool isFeasible = pdfS > PR_EPSILON && cosO > PR_EPSILON;
 
 		L = lsout.Outgoing;
 		if (lsample.first->isInfinite())
@@ -120,9 +119,9 @@ public:
 		const float distance = lsample.first->isInfinite() ? PR_INF : std::sqrt(sqrD);
 		const Vector3f oN	 = NdotL < 0 ? -spt.Surface.N : spt.Surface.N; // Offset normal used for safe positioning
 		const Ray shadow	 = spt.Ray.next(spt.P, L, oN, RF_Shadow, SHADOW_RAY_MIN, distance);
-		const bool shadowHit = cosO > PR_EPSILON && session.traceShadowRay(shadow, distance, lsample.first->entityID());
+		const bool isVisible = isFeasible && !session.traceShadowRay(shadow, distance, lsample.first->entityID());
 
-		const SpectralBlob lightW = shadowHit ? SpectralBlob::Zero() : lsout.Radiance;
+		const SpectralBlob lightW = isVisible ? lsout.Radiance : SpectralBlob::Zero();
 
 		// Evaluate surface
 		MaterialEvalInput in{ MaterialEvalContext::fromIP(spt, L), ShadingContext::fromIP(session.threadID(), spt) };
@@ -206,8 +205,8 @@ public:
 
 			// If we hit a light from the frontside, apply the lighting to current path (Emissive Term)
 			if (nentity->hasEmission()
-				&& culling(-next.Direction.dot(spt2.Surface.Geometry.N)) > PR_EPSILON // Check if frontside
-				&& PR_LIKELY(spt2.Depth2 > PR_EPSILON)) {							  // Check if not too close
+				&& culling(-spt2.Surface.NdotV) > PR_EPSILON // Check if frontside
+				&& PR_LIKELY(spt2.Depth2 > PR_EPSILON)) {	 // Check if not too close
 				IEmission* ems = session.getEmission(spt2.Surface.Geometry.EmissionID);
 				if (PR_LIKELY(ems)) {
 					// Evaluate light

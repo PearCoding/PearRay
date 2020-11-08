@@ -14,10 +14,9 @@
 	  :radius 1
 	)
 	(integrator 
-	  :type 'bidi'
+	  :type 'direct'
 	  :max_ray_depth 8
 	  :light_sample_count 1
-	  :msi true
 	)
 	; Outputs
 	(output
