@@ -95,10 +95,11 @@ inline static SpectralBlob sampleWavelength(Random& rnd)
 	return wvls;
 }
 
+// TODO
 inline static float wavelengthFilter(float a, float b)
 {
-	constexpr float PDF = 1 - 0.25f * WAVEBAND / (WAVELENGTH_END - WAVELENGTH_START); // Area of box[-w/2,w/2] x box[0,1] convolution
-	const bool check = std::abs(a - b) <= (WAVEBAND / 2);
+	constexpr float PDF = 1 - 0.5f * WAVEBAND / (WAVELENGTH_END - WAVELENGTH_START); // Area of box[-w/2,w/2] x box[0,1] convolution
+	const bool check	= std::abs(a - b) <= (WAVEBAND / 2);
 	return check ? 1.0f / PDF : 0.0f;
 }
 
@@ -108,13 +109,6 @@ inline static float kernelarea(float R2) { return PR_PI * R2 / 3.0f; }*/
 
 inline static float kernel(float nr2) { return 1 - nr2; }
 inline static float kernelarea(float R2) { return PR_PI * R2 / 2.0f; }
-
-struct PPMContribution {
-	SpectralBlob Importance;
-	SpectralBlob Radiance;
-};
-using Contribution					   = PPMContribution;
-const static Contribution ZERO_CONTRIB = Contribution{ SpectralBlob::Zero(), SpectralBlob::Zero() };
 
 using LightPathWalker  = Walker<true>;	// Enable russian roulette
 using CameraPathWalker = Walker<false>; // No russian roulette needed, as only delta materials scatter
@@ -135,7 +129,7 @@ public:
 
 	virtual ~IntPPMInstance() = default;
 
-	Contribution gather(const RenderTileSession& session, const IntersectionPoint& spt, IMaterial* material)
+	SpectralBlob gather(const RenderTileSession& session, const IntersectionPoint& spt, IMaterial* material)
 	{
 		PR_UNUSED(material);
 		PR_UNUSED(session);
@@ -153,19 +147,22 @@ public:
 		const auto accumFunc = [&](SpectralBlob& accum, const Photon::Photon& photon, const Photon::PhotonSphere& sp, float d2) {
 			PR_UNUSED(sp);
 
-			min.Context.setLFromGlobal(spt, photon.Direction);
-			MaterialEvalOutput mout;
-			material->eval(min, mout, session);
 			const float f = kernel(d2 / query.Distance2);
 
-			const SpectralBlob power = photon.Power * mout.Weight * f;
-			if(power.isZero(ACCUM_EPS))
-				return;
-
+			const SpectralBlob power = photon.Power * f;
+			SpectralBlob weight		 = SpectralBlob::Zero();
 			PR_OPT_LOOP
 			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
 				for (size_t j = 0; j < PR_SPECTRAL_BLOB_SIZE; ++j)
-					accum[i] += wavelengthFilter(spt.Ray.WavelengthNM[i], photon.WavelengthNM[j]) * power[i];
+					weight[i] += wavelengthFilter(spt.Ray.WavelengthNM[i], photon.WavelengthNM[j]) * power[j];
+
+			if (weight.isZero(ACCUM_EPS))
+				return;
+
+			min.Context.setLFromGlobal(spt, photon.Direction);
+			MaterialEvalOutput mout;
+			material->eval(min, mout, session);
+			accum += mout.Weight * weight;
 		};
 
 		size_t found = 0;
@@ -175,13 +172,9 @@ public:
 		else
 			accum = mContext->Map.estimateSphere(query, accumFunc, found);
 
-		//if (found >= 1) {
 		accum *= mContext->CurrentKernelInvNorm;
-		// TODO: Add PPM and other parts together!
-		return Contribution{ SpectralBlob::Ones(), accum /*SpectralBlob(found/float(mParameters.MaxPhotonsPerPass))*/ };
-		/*} else {
-			return ZERO_CONTRIB;
-		}*/
+
+		return accum;
 	}
 
 	// First camera vertex
@@ -228,7 +221,7 @@ public:
 					const auto gather_contrib = gather(session, ip, material_hit);
 					path.addToken(LightPathToken::Emissive());
 					session.pushSpectralFragment(SpectralBlob::Ones(),
-												 weight * gather_contrib.Importance, gather_contrib.Radiance,
+												 weight, gather_contrib,
 												 ip.Ray, path);
 					path.popToken(1);
 					return false;

@@ -38,7 +38,7 @@ public:
 
 		if (mServiceObserver)
 			mCBID = mServiceObserver->registerAfterSceneBuild([this](Scene* scene) {
-				mSceneRadius = scene->boundingSphere().radius() * 1.05f /*Scale a little bit*/;
+				mSceneRadius = scene->boundingSphere().radius();
 			});
 	}
 
