@@ -177,7 +177,7 @@ public:
 		PR_OPT_LOOP
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
 			out.Radiance[i] = mSpectrum.lookup(in.WavelengthNM[i]);
-		out.Direction_PDF_S = PR_INF;
+		out.Direction_PDF_S = 1;
 	}
 
 	void sampleDir(const InfiniteLightSampleDirInput& in, InfiniteLightSampleDirOutput& out,
@@ -188,7 +188,7 @@ public:
 			out.Radiance[i] = mSpectrum.lookup(in.WavelengthNM[i]);
 
 		out.Outgoing		= mDirection;
-		out.Direction_PDF_S = PR_INF;
+		out.Direction_PDF_S = 1;
 	}
 
 	void samplePosDir(const InfiniteLightSamplePosDirInput& in, InfiniteLightSamplePosDirOutput& out,

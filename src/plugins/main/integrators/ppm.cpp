@@ -28,6 +28,7 @@
 /* Implementation of Propabilistic Progressive Photon Mapping */
 
 namespace PR {
+constexpr float ACCUM_EPS = 0.00001f;
 
 static inline float culling(float cos)
 {
@@ -77,7 +78,7 @@ enum GatherMode {
 };
 
 // TODO
-constexpr float WAVELENGTH_START = 400;
+constexpr float WAVELENGTH_START = 360;
 constexpr float WAVELENGTH_END	 = 760;
 constexpr float WAVEBAND		 = 5;
 inline static SpectralBlob sampleWavelength(Random& rnd)
@@ -94,13 +95,11 @@ inline static SpectralBlob sampleWavelength(Random& rnd)
 	return wvls;
 }
 
-inline static SpectralBlob wavelengthFilter(const SpectralBlob& a, const SpectralBlob& b)
+inline static float wavelengthFilter(float a, float b)
 {
 	constexpr float PDF = 1 - 0.25f * WAVEBAND / (WAVELENGTH_END - WAVELENGTH_START); // Area of box[-w/2,w/2] x box[0,1] convolution
-
-	return ((a - b).cwiseAbs() <= (WAVEBAND / 2))
-		.select(SpectralBlob(1 / PDF),
-				SpectralBlob::Zero());
+	const bool check = std::abs(a - b) <= (WAVEBAND / 2);
+	return check ? 1.0f / PDF : 0.0f;
 }
 
 // Integral over area of circle with radius r
@@ -159,7 +158,14 @@ public:
 			material->eval(min, mout, session);
 			const float f = kernel(d2 / query.Distance2);
 
-			accum += wavelengthFilter(spt.Ray.WavelengthNM, photon.WavelengthNM) * photon.Power * mout.Weight * f;
+			const SpectralBlob power = photon.Power * mout.Weight * f;
+			if(power.isZero(ACCUM_EPS))
+				return;
+
+			PR_OPT_LOOP
+			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
+				for (size_t j = 0; j < PR_SPECTRAL_BLOB_SIZE; ++j)
+					accum[i] += wavelengthFilter(spt.Ray.WavelengthNM[i], photon.WavelengthNM[j]) * power[i];
 		};
 
 		size_t found = 0;
@@ -185,11 +191,11 @@ public:
 	{
 		PR_PROFILE_THIS;
 
+		session.pushSPFragment(spt, path);
+
 		// Early drop out for invalid splashes
 		if (!entity->hasEmission() && PR_UNLIKELY(!material))
 			return;
-
-		session.pushSPFragment(spt, path);
 
 		// Only consider camera rays, as everything else is handled eventually by MIS
 		if (entity->hasEmission()
@@ -295,8 +301,7 @@ public:
 			ray.Flags |= RF_Light;
 			ray.WavelengthNM = lsin.WavelengthNM;
 
-			float pdf					= lsout.Direction_PDF_S * lsout.Position_PDF.Value;
-			pdf							= std::isinf(pdf) ? 1 : pdf;
+			const float pdf				= lsout.Direction_PDF_S * lsout.Position_PDF.Value;
 			const SpectralBlob radiance = lsout.Radiance * (sampleInv / pdf);
 
 			mLightPathWalker.traverseBSDFSimple(

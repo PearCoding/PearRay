@@ -1,6 +1,7 @@
 #include "TevObserver.h"
 #include "Logger.h"
 #include "ProgramSettings.h"
+#include "buffer/Feedback.h"
 #include "buffer/FrameBufferSystem.h"
 #include "network/Socket.h"
 #include "renderer/RenderContext.h"
@@ -17,6 +18,7 @@ constexpr size_t MAX_CHANNEL_COUNT_F						= 1;
 static const char* CHANNEL_NAMES_RGB[MAX_CHANNEL_COUNT_RGB] = { "R", "G", "B" };
 static const char* CHANNEL_NAMES_VAR[MAX_CHANNEL_COUNT_RGB] = { "Variance.R", "Variance.G", "Variance.B" };
 static const char* CHANNEL_NAMES_WEI[MAX_CHANNEL_COUNT_F]	= { "Weight" };
+static const char* CHANNEL_NAMES_FDB[MAX_CHANNEL_COUNT_RGB] = { "Feedback.R", "Feedback.G", "Feedback.B" };
 static const uint32 CREATE_MESSAGE_HEADER_SIZE				= 4 + 1 + IMAGE_NAME_SIZE + 1 + 4 + 4 + 4;
 static const uint32 CLOSE_MESSAGE_SIZE						= 4 + 1 + IMAGE_NAME_SIZE;
 static const uint32 UPDATE_MESSAGE_HEADER_SIZE				= 4 + 1 + IMAGE_NAME_SIZE + 1 + 4 + 4 + 4 + 4;
@@ -50,6 +52,7 @@ TevObserver::TevObserver()
 	, mUpdateCycleSeconds(0)
 	, mDisplayVariance(false)
 	, mDisplayWeight(false)
+	, mDisplayFeedback(false)
 {
 }
 
@@ -66,6 +69,7 @@ void TevObserver::begin(RenderContext* renderContext, const ProgramSettings& set
 	mUpdateCycleSeconds = settings.TevUpdate;
 	mDisplayVariance	= settings.TevVariance;
 	mDisplayWeight		= settings.TevWeight;
+	mDisplayFeedback	= settings.TevFeedback;
 	mLastUpdate			= std::chrono::high_resolution_clock::now();
 
 	if (mConnection->Con.isOpen()) {
@@ -126,11 +130,21 @@ void TevObserver::calculateProtocolCache()
 			mConnection->MaxUpdateMessageSize = std::max(mConnection->MaxUpdateMessageSize, UPDATE_MESSAGE_HEADER_SIZE + channel_name_size);
 		}
 	}
+
 	if (mDisplayWeight) {
 		for (size_t i = 0; i < MAX_CHANNEL_COUNT_F; i++) {
 			size_t channel_name_size = strlen(CHANNEL_NAMES_WEI[i]) + 1;
 			full_channel_name_size += channel_name_size;
 			mConnection->ChannelInfo.push_back(TevChannelInfo{ CHANNEL_NAMES_WEI[i], UPDATE_MESSAGE_HEADER_SIZE + channel_name_size });
+			mConnection->MaxUpdateMessageSize = std::max(mConnection->MaxUpdateMessageSize, UPDATE_MESSAGE_HEADER_SIZE + channel_name_size);
+		}
+	}
+
+	if (mDisplayFeedback) {
+		for (size_t i = 0; i < MAX_CHANNEL_COUNT_RGB; i++) {
+			size_t channel_name_size = strlen(CHANNEL_NAMES_FDB[i]) + 1;
+			full_channel_name_size += channel_name_size;
+			mConnection->ChannelInfo.push_back(TevChannelInfo{ CHANNEL_NAMES_FDB[i], UPDATE_MESSAGE_HEADER_SIZE + channel_name_size });
 			mConnection->MaxUpdateMessageSize = std::max(mConnection->MaxUpdateMessageSize, UPDATE_MESSAGE_HEADER_SIZE + channel_name_size);
 		}
 	}
@@ -199,6 +213,8 @@ void TevObserver::updateImageProtocol()
 	const auto channel		 = mRenderContext->output()->data().getInternalChannel_Spectral(AOV_Output);
 	const auto blend_channel = mRenderContext->output()->data().getInternalChannel_1D(AOV_PixelWeight);
 	const auto var_channel	 = mRenderContext->output()->data().getInternalChannel_Spectral(AOV_OnlineVariance);
+	const auto fdb_channel	 = mRenderContext->output()->data().getInternalChannel_Counter(AOV_Feedback);
+
 	PR_ASSERT(channel->channels() == 3, "Expect spectral channel to have 3 channels");
 
 	const size_t tx = channel->width() / UPDATE_TILE_SIZE + 1;
@@ -283,6 +299,37 @@ void TevObserver::updateImageProtocol()
 					}
 				}
 				delta += 1;
+			}
+
+			if (mDisplayFeedback) {
+				PR_OPT_LOOP
+				for (size_t iy = 0; iy < h; ++iy) {
+					for (size_t ix = 0; ix < w; ++ix) {
+						const auto p   = Point2i(sx + ix, sy + iy);
+						const auto fdb = fdb_channel->getFragment(p, 0);
+
+						float r = 0;
+						if (fdb & OF_NaN)
+							r = 1.0f;
+						else if (fdb & OF_Infinite)
+							r = 0.5f;
+						else if (fdb & OF_Negative)
+							r = 0.25f;
+
+						float g = 0;
+						if (fdb & OF_MissingMaterial)
+							g = 1.0f;
+
+						float b = 0;
+						if (fdb & OF_MissingEmission)
+							b = 1.0f;
+
+						mConnection->Data[UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * (0 + delta) + iy * w + ix] = r;
+						mConnection->Data[UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * (1 + delta) + iy * w + ix] = g;
+						mConnection->Data[UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * (2 + delta) + iy * w + ix] = b;
+					}
+				}
+				delta += 3;
 			}
 
 			for (size_t c = 0; c < mConnection->ChannelInfo.size(); ++c) {

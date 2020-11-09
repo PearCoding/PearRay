@@ -49,6 +49,7 @@ bool ProgramSettings::parse(int argc, char** argv)
 			("tev-ip", "Set ip to connect to Tev", cxxopts::value<std::string>()->default_value("localhost"))
 			("tev-var", "Enable tev connection and show variance aswell")
 			("tev-weight", "Enable tev connection and show pixel weights aswell")
+			("tev-feedback", "Enable tev connection and show color coded render feedback")
 
 			("t,threads", "Amount of threads used for processing. Set 0 for automatic detection.", cxxopts::value<uint32>())
 			("rtx", "Amount of horizontal tiles used in threading", cxxopts::value<uint32>())
@@ -149,8 +150,9 @@ bool ProgramSettings::parse(int argc, char** argv)
 		// Tev Image
 		TevVariance = vm.count("tev-var") != 0;
 		TevWeight	= vm.count("tev-weight") != 0;
+		TevFeedback	= vm.count("tev-feedback") != 0;
 
-		if (vm.count("tev") || TevVariance || TevWeight) {
+		if (vm.count("tev") || TevVariance || TevWeight || TevFeedback) {
 			TevUpdate = vm["tev-update"].as<uint32>();
 			TevPort	  = vm["tev-port"].as<uint16>();
 			TevIp	  = vm["tev-ip"].as<std::string>();

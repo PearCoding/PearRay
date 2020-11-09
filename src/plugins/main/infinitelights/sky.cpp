@@ -13,6 +13,8 @@
 #include "scene/Scene.h"
 #include "shader/ShadingContext.h"
 
+#include "SampleUtils.h"
+
 #include "skysun/SkyModel.h"
 #include "skysun/SunLocation.h"
 
@@ -97,16 +99,11 @@ public:
 	{
 		sampleDir(in, out, session);
 
-		out.Position_PDF_A = 1;
-		if (in.Point) // If we call it outside an intersection point, make light position such that lP - iP = direction
-			out.LightPosition = in.Point->P + mSceneRadius * out.Outgoing;
-		else {
-			out.LightPosition = 2 * mSceneRadius * out.Outgoing;
-			// Instead of sampling position, sample direction again
-			constexpr float CosAtan05 = 0.894427190999915f; // cos(atan(0.5)) = 2/sqrt(5)
-			const Vector3f local	  = Sampling::uniform_cone(in.PositionRND(0), in.PositionRND(1), CosAtan05);
-			out.Outgoing			  = Tangent::align(out.Outgoing, local);
-			out.Direction_PDF_S *= Sampling::uniform_cone_pdf(CosAtan05) / mSceneRadius;
+		if (in.Point) { // If we call it outside an intersection point, make light position such that lP - iP = direction
+			out.LightPosition  = in.Point->P + mSceneRadius * out.Outgoing;
+			out.Position_PDF_A = 1;
+		} else {
+			out.LightPosition = sampleVisibleHemispherePos(in.PositionRND, out.Outgoing, mSceneRadius, out.Position_PDF_A);
 		}
 	}
 

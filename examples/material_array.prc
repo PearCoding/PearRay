@@ -14,8 +14,9 @@
 	  :radius 1
 	)
 	(integrator 
-	  :type 'bidi'
+	  :type 'ppm'
 	  ;:max_ray_depth 64
+	  :gather_mode 'sphere'
 	)
 	; Outputs
 	(output
@@ -32,16 +33,27 @@
 	;	:type 'sky'
 	;	:turbidity 3
 	;)
+	;(light
+	;	:name 'sun'
+	;	:type 'sun'
+	;	:turbidity 3
+	;	:radius 4
+	;)
 	(light
-		:name 'sun'
-		:type 'sun'
-		:turbidity 3
-		:radius 4
+		:name 'env'
+		:type 'env'
+		:radiance (illuminant "D65")
 	)
+	;(light
+	;	:name 'dist'
+	;	:type 'distant'
+	;	:radiance 1
+	;)
 	; Materials
 	(material
 		:name 'Material1'
-		:type 'roughglass'
+		;:type 'roughglass'
+		:type 'glass'
 		:roughness 0.0
 		:specularity 1
 		:transmission 1

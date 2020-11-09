@@ -10,6 +10,8 @@
 #include "scene/Scene.h"
 #include "shader/ShadingContext.h"
 
+#include "SampleUtils.h"
+
 #include "skysun/SkyModel.h"
 #include "skysun/SunLocation.h"
 
@@ -67,8 +69,12 @@ public:
 	{
 		sampleDir(in, out, session);
 
-		out.LightPosition  = mSceneRadius * out.Outgoing; // TODO
-		out.Position_PDF_A = 1;
+		if (in.Point) { // If we call it outside an intersection point, make light position such that lP - iP = direction
+			out.LightPosition  = in.Point->P + mSceneRadius * out.Outgoing;
+			out.Position_PDF_A = 1;
+		} else {
+			out.LightPosition = sampleVisibleHemispherePos(in.PositionRND, out.Outgoing, mSceneRadius, out.Position_PDF_A);
+		}
 	}
 
 	SpectralBlob power(const SpectralBlob& wvl) const override { return radiance(wvl, Vector3f(0, 0, 1)); }

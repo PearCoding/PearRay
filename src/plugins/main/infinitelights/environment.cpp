@@ -7,10 +7,13 @@
 #include "math/Sampling.h"
 #include "math/Spherical.h"
 #include "math/Tangent.h"
+#include "renderer/RenderTileSession.h"
 #include "sampler/Distribution2D.h"
 #include "scene/Scene.h"
 #include "shader/NodeUtils.h"
 #include "shader/ShadingContext.h"
+
+#include "SampleUtils.h"
 
 namespace PR {
 // Four variants available
@@ -73,7 +76,7 @@ public:
 	}
 
 	void sampleDir(const InfiniteLightSampleDirInput& in, InfiniteLightSampleDirOutput& out,
-				   const RenderTileSession&) const override
+				   const RenderTileSession& session) const override
 	{
 		Vector2f uv;
 		if constexpr (UseDistribution) {
@@ -93,6 +96,7 @@ public:
 		ShadingContext coord;
 		coord.UV		   = uv;
 		coord.WavelengthNM = in.WavelengthNM;
+		coord.ThreadIndex  = session.threadID();
 		out.Radiance	   = mRadiance->eval(coord);
 	}
 
@@ -101,16 +105,11 @@ public:
 	{
 		sampleDir(in, out, session);
 
-		out.Position_PDF_A = 1;
-		if (in.Point) // If we call it outside an intersection point, make light position such that lP - iP = direction
-			out.LightPosition = in.Point->P + mSceneRadius * out.Outgoing;
-		else {
-			out.LightPosition = 2 * mSceneRadius * out.Outgoing;
-			// Instead of sampling position, sample direction again
-			constexpr float CosAtan05 = 0.894427190999915f; // cos(atan(0.5)) = 2/sqrt(5)
-			const Vector3f local	  = Sampling::uniform_cone(in.PositionRND(0), in.PositionRND(1), CosAtan05);
-			out.Outgoing			  = Tangent::align(out.Outgoing, local);
-			out.Direction_PDF_S *= Sampling::uniform_cone_pdf(CosAtan05) / mSceneRadius;
+		if (in.Point) { // If we call it outside an intersection point, make light position such that lP - iP = direction
+			out.LightPosition  = in.Point->P + mSceneRadius * out.Outgoing;
+			out.Position_PDF_A = 1;
+		} else {
+			out.LightPosition = sampleVisibleHemispherePos(in.PositionRND, out.Outgoing, mSceneRadius, out.Position_PDF_A);
 		}
 	}
 

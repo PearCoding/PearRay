@@ -13,10 +13,6 @@
 #include "shader/ShadingContext.h"
 
 namespace PR {
-inline float calculatePosDiskRadius(float scene_radius, float cosTheta)
-{
-	return scene_radius * std::sqrt((1 - cosTheta) * (1 + cosTheta));
-}
 class DistantLight : public IInfiniteLight {
 public:
 	DistantLight(const std::shared_ptr<ServiceObserver>& so,
@@ -28,15 +24,13 @@ public:
 		, mIrradiance(spec)
 		, mOutgoing_Cache((normalMatrix() * mDirection).normalized())
 		, mSceneRadius(0)
-		, mPosDiskRadius(0)
 		, mServiceObserver(so)
 	{
 		Tangent::frame(mOutgoing_Cache, mDx, mDy);
 
 		if (mServiceObserver)
 			mCBID = mServiceObserver->registerAfterSceneBuild([this](Scene* scene) {
-				mSceneRadius   = scene->boundingSphere().radius();
-				mPosDiskRadius = calculatePosDiskRadius(mSceneRadius, std::abs(mOutgoing_Cache(2)));
+				mSceneRadius = scene->boundingSphere().radius();
 			});
 	}
 
@@ -57,17 +51,18 @@ public:
 		ctx.WavelengthNM = in.WavelengthNM;
 
 		out.Radiance		= mIrradiance->eval(ctx);
-		out.Direction_PDF_S = PR_INF;
+		out.Direction_PDF_S = 1;
 	}
 
 	void sampleDir(const InfiniteLightSampleDirInput& in, InfiniteLightSampleDirOutput& out,
-				   const RenderTileSession&) const override
+				   const RenderTileSession& session) const override
 	{
 		ShadingContext ctx;
 		ctx.WavelengthNM	= in.WavelengthNM;
+		ctx.ThreadIndex		= session.threadID();
 		out.Radiance		= mIrradiance->eval(ctx); // As there is only one direction (delta), irradiance is equal to radiance
 		out.Outgoing		= mOutgoing_Cache;
-		out.Direction_PDF_S = PR_INF;
+		out.Direction_PDF_S = 1;
 	}
 
 	void samplePosDir(const InfiniteLightSamplePosDirInput& in, InfiniteLightSamplePosDirOutput& out,
@@ -79,7 +74,7 @@ public:
 			out.LightPosition  = in.Point->P + mSceneRadius * mOutgoing_Cache;
 			out.Position_PDF_A = 1;
 		} else {
-			const Vector2f uv  = mPosDiskRadius * Concentric::square2disc(in.PositionRND);
+			const Vector2f uv  = mSceneRadius * Concentric::square2disc(in.PositionRND);
 			out.LightPosition  = mSceneRadius * mOutgoing_Cache + uv(0) * mDx + uv(1) * mDy;
 			out.Position_PDF_A = 1 / (2 * PR_PI * mSceneRadius);
 		}
@@ -108,7 +103,6 @@ private:
 	Vector3f mDy;
 
 	float mSceneRadius;
-	float mPosDiskRadius;
 
 	const std::shared_ptr<ServiceObserver> mServiceObserver;
 	ServiceObserver::CallbackID mCBID;
