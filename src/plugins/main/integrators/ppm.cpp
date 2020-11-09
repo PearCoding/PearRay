@@ -235,9 +235,14 @@ public:
 			},
 			[&](const SpectralBlob& weight, const Ray& ray) {
 				path.addToken(LightPathToken::Background());
-				IntegratorUtils::handleBackground(session, ray, [&](const InfiniteLightEvalOutput& ileout) {
-					session.pushSpectralFragment(SpectralBlob::Ones(), weight, ileout.Radiance, ray, path);
-				});
+				if (!session.tile()->context()->scene()->nonDeltaInfiniteLights().empty()) {
+					IntegratorUtils::handleBackground(session, ray, [&](const InfiniteLightEvalOutput& ileout) {
+						session.pushSpectralFragment(SpectralBlob::Ones(), weight, ileout.Radiance, ray, path);
+					});
+				} else {
+					session.tile()->statistics().addBackgroundHitCount();
+					session.pushSpectralFragment(SpectralBlob::Ones(), weight, SpectralBlob::Zero(), ray, path);
+				}
 				path.popToken();
 			});
 		path.popTokenUntil(1);
@@ -491,12 +496,18 @@ class IntPPMFactory : public IIntegratorFactory {
 public:
 	explicit IntPPMFactory(const ParameterGroup& params)
 	{
-		mParameters.MaxPhotonsPerPass	  = std::max<size_t>(100, params.getUInt("photons", mParameters.MaxPhotonsPerPass));
-		mParameters.MaxCameraRayDepthHard = (size_t)params.getUInt("max_ray_depth", mParameters.MaxCameraRayDepthHard);
-		mParameters.MaxCameraRayDepthSoft = std::min(mParameters.MaxCameraRayDepthHard, (size_t)params.getUInt("soft_max_ray_depth", mParameters.MaxCameraRayDepthSoft));
-		mParameters.MaxLightRayDepthHard  = (size_t)params.getUInt("max_light_ray_depth", mParameters.MaxLightRayDepthHard);
+		mParameters.MaxPhotonsPerPass = std::max<size_t>(100, params.getUInt("photons", mParameters.MaxPhotonsPerPass));
+
+		size_t maximumDepth = std::numeric_limits<size_t>::max();
+		if (params.hasParameter("max_ray_depth"))
+			maximumDepth = params.getUInt("max_ray_depth", mParameters.MaxCameraRayDepthHard);
+
+		mParameters.MaxCameraRayDepthHard = std::min<size_t>(maximumDepth, params.getUInt("max_camera_ray_depth", mParameters.MaxCameraRayDepthHard));
+		mParameters.MaxCameraRayDepthSoft = std::min(mParameters.MaxCameraRayDepthHard, (size_t)params.getUInt("soft_max_camera_ray_depth", mParameters.MaxCameraRayDepthSoft));
+		mParameters.MaxLightRayDepthHard  = std::min<size_t>(maximumDepth, params.getUInt("max_light_ray_depth", mParameters.MaxLightRayDepthHard));
 		mParameters.MaxLightRayDepthSoft  = std::min(mParameters.MaxLightRayDepthHard, (size_t)params.getUInt("soft_max_light_ray_depth", mParameters.MaxLightRayDepthSoft));
-		mParameters.MaxGatherRadius		  = std::max(0.00001f, params.getNumber("max_gather_radius", mParameters.MaxGatherRadius));
+
+		mParameters.MaxGatherRadius = std::max(0.00001f, params.getNumber("max_gather_radius", mParameters.MaxGatherRadius));
 
 		mParameters.SqueezeWeight2 = std::max(0.0f, std::min(1.0f, params.getNumber("squeeze_weight", mParameters.SqueezeWeight2)));
 		mParameters.SqueezeWeight2 *= mParameters.SqueezeWeight2;

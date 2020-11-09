@@ -28,22 +28,22 @@
 		:name 'Camera'
 		:type 'standard'
 	)
-	;(light
-	;	:name 'sky'
-	;	:type 'sky'
-	;	:turbidity 3
-	;)
-	;(light
-	;	:name 'sun'
-	;	:type 'sun'
-	;	:turbidity 3
-	;	:radius 4
-	;)
 	(light
-		:name 'env'
-		:type 'env'
-		:radiance (illuminant "D65")
+		:name 'sky'
+		:type 'sky'
+		:turbidity 3
 	)
+	(light
+		:name 'sun'
+		:type 'sun'
+		:turbidity 3
+		:radius 4
+	)
+	;(light
+	;	:name 'env'
+	;	:type 'env'
+	;	:radiance (illuminant "D65")
+	;)
 	;(light
 	;	:name 'dist'
 	;	:type 'distant'

@@ -6,7 +6,7 @@
 	:camera 'Camera'
 	; Settings
 	(integrator
-		:type 'bidi'
+		:type 'ppm'
 	)
 	(sampler
 		:slot 'aa'
