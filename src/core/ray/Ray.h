@@ -11,9 +11,7 @@ enum RayFlags : uint32 {
 	RF_Light	  = 0x02,
 	RF_Bounce	  = 0x04,
 	RF_Shadow	  = 0x08,
-	RF_Monochrome = 0x10,
-
-	RF_VisibilityMask = RF_Camera | RF_Light | RF_Bounce | RF_Shadow
+	RF_Monochrome = 0x10
 };
 
 struct PR_LIB_CORE Ray {
@@ -106,9 +104,9 @@ public:
 		other.Origin	= Transform::safePosition(o, d, N);
 		other.Direction = d;
 		other.IterationDepth += 1;
-		other.MinT	= minT;
-		other.MaxT	= maxT;
-		other.Flags = vis_flags | (other.Flags & (~RF_VisibilityMask));
+		other.MinT = minT;
+		other.MaxT = maxT;
+		other.Flags |= vis_flags;
 
 		return other;
 	}

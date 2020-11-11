@@ -16,6 +16,7 @@ public:
 	Vector2f UV;
 	uint32 PrimitiveID; // Useful for PTex
 	SpectralBlob WavelengthNM;
+	uint32 RayFlags = 0;
 
 	inline float NdotV() const { return V(2); }
 	inline float XdotV() const { return V(0); }
@@ -30,6 +31,7 @@ public:
 		ctx.UV			 = sp.Surface.Geometry.UV;
 		ctx.PrimitiveID	 = sp.Surface.Geometry.PrimitiveID;
 		ctx.WavelengthNM = sp.Ray.WavelengthNM;
+		ctx.RayFlags	 = sp.Ray.Flags;
 		ctx.setVFromGlobal(sp, -sp.Ray.Direction);
 
 		return ctx;
@@ -68,6 +70,7 @@ public:
 		ctx.UV			 = sp.Surface.Geometry.UV;
 		ctx.PrimitiveID	 = sp.Surface.Geometry.PrimitiveID;
 		ctx.WavelengthNM = sp.Ray.WavelengthNM;
+		ctx.RayFlags	 = sp.Ray.Flags;
 		ctx.setVFromGlobal(sp, gV);
 		ctx.setLFromGlobal(sp, gL);
 

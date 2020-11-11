@@ -110,6 +110,12 @@ public:
 		} else {
 			out.Weight = mSpecularity->eval(in.ShadingContext);
 		}
+
+		// Only rays from the camera are weighted by this factor
+		// as radiance flows in the opposite direction
+		// Note that some implementations use 1/eta as eta
+		if ((in.Context.RayFlags & RF_Camera) && out.Type == MST_SpecularTransmission)
+			out.Weight /= eta * eta;
 	}
 
 	std::string dumpInformation() const override
