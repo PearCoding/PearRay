@@ -6,7 +6,7 @@
 	(sampler 
 	  :slot 'aa'
 	  :type 'sobol'
-	  :sample_count 1024
+	  :sample_count 128
 	)
 	(filter 
 	  :slot 'pixel'
@@ -14,7 +14,7 @@
 	  :radius 1
 	)
 	(integrator 
-	  :type 'bidi'
+	  :type 'ppm'
 	  :max_ray_depth 8
 	  :light_sample_count 1
 	)

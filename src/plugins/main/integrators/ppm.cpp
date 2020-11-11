@@ -186,36 +186,31 @@ public:
 
 		session.pushSPFragment(spt, path);
 
-		// Early drop out for invalid splashes
-		if (!entity->hasEmission() && PR_UNLIKELY(!material))
-			return;
-
-		// Only consider camera rays, as everything else is handled eventually by MIS
-		if (entity->hasEmission()
-			&& culling(-spt.Surface.NdotV) > PR_EPSILON) // Check if frontside
-		{
-			IEmission* ems = session.getEmission(spt.Surface.Geometry.EmissionID);
-			if (PR_LIKELY(ems)) {
-				// Evaluate light
-				EmissionEvalInput inL;
-				inL.Entity		   = entity;
-				inL.ShadingContext = ShadingContext::fromIP(session.threadID(), spt);
-				EmissionEvalOutput outL;
-				ems->eval(inL, outL, session);
-
-				if (PR_LIKELY(!outL.Radiance.isZero())) {
-					path.addToken(LightPathToken(ST_EMISSIVE, SE_NONE));
-					session.pushSpectralFragment(SpectralBlob::Ones(), SpectralBlob::Ones(), outL.Radiance, spt.Ray, path);
-					path.popToken();
-				}
-			}
-		}
-
 		mCameraPathWalker.traverseBSDF(
 			session, SpectralBlob::Ones(), spt, entity, material,
-			[&](const SpectralBlob& weight, const IntersectionPoint& ip, IEntity*, IMaterial* material_hit) {
+			[&](const SpectralBlob& weight, const IntersectionPoint& ip, IEntity* entity_hit, IMaterial* material_hit) {
 				session.tile()->statistics().addEntityHitCount();
 				session.tile()->statistics().addCameraDepthCount();
+
+				// If we hit a light evaluate it and stop
+				if (entity_hit->hasEmission()
+					&& culling(-ip.Surface.NdotV) > PR_EPSILON) // Check if frontside
+				{
+					const IEmission* ems = session.getEmission(ip.Surface.Geometry.EmissionID);
+					if (PR_LIKELY(ems)) {
+						// Evaluate light
+						EmissionEvalInput inL;
+						inL.Entity		   = entity_hit;
+						inL.ShadingContext = ShadingContext::fromIP(session.threadID(), ip);
+						EmissionEvalOutput outL;
+						ems->eval(inL, outL, session);
+
+						path.addToken(LightPathToken::Emissive());
+						session.pushSpectralFragment(SpectralBlob::Ones(), weight, outL.Radiance, ip.Ray, path);
+						path.popToken();
+					}
+					return false;
+				}
 
 				if (!material_hit->hasDeltaDistribution()) {
 					const auto gather_contrib = gather(session, ip, material_hit);
@@ -308,7 +303,9 @@ public:
 					session.tile()->statistics().addEntityHitCount();
 					session.tile()->statistics().addLightDepthCount();
 
-					PR_UNUSED(entity);
+					if (entity->hasEmission()) // Stop at lights and do not save photons
+						return false;
+
 					if (!material->hasDeltaDistribution()) { // Always store when diffuse
 						Photon::Photon photon;
 						photon.Position		= ip.P;

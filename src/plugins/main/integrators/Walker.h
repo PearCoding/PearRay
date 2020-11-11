@@ -98,52 +98,53 @@ private:
 		SpectralBlob weight = initial_weight;
 		traverseFunc(
 			[&](const IntersectionPoint& ip, IEntity* entity, IMaterial* material) -> std::optional<Ray> {
-				if (entity && material) {
-					if (!onHit(weight, ip, entity, material))
-						return {};
-
-					// Russian roulette
-					if constexpr (ApplyRussianRoulette) {
-						if (ip.Ray.IterationDepth >= MaxRayDepthSoft) {
-							constexpr float SCATTER_EPS = 1e-4f;
-
-							const float russian_prob = rnd.getFloat();
-							/*const float weight_f	 = weight.maxCoeff();*/
-							const float scatProb = std::min<float>(1.0f, /*weight_f */ std::pow(RussianRouletteRate, ip.Ray.IterationDepth - MaxRayDepthSoft));
-							if (russian_prob > scatProb || scatProb <= SCATTER_EPS)
-								return {};
-
-							weight /= scatProb;
-						}
-					}
-
-					// Continue
-					MaterialSampleInput sin;
-					sin.Context		   = MaterialSampleContext::fromIP(ip);
-					sin.ShadingContext = ShadingContext::fromIP(session.threadID(), ip);
-					sin.RND			   = rnd.get2D();
-
-					MaterialSampleOutput sout;
-					material->sample(sin, sout, session);
-
-					onSample(weight, sin, sout, entity, material);
-
-					if (weight.isZero(PR_EPSILON) || PR_UNLIKELY(sout.PDF_S[0] <= PR_EPSILON))
-						return {};
-
-					int rflags = RF_Bounce;
-					if (material->isSpectralVarying())
-						rflags |= RF_Monochrome;
-
-					if (!material->hasDeltaDistribution())
-						weight /= sout.PDF_S[0];
-
-					return std::make_optional(ip.Ray.next(ip.P, sout.globalL(ip), ip.Surface.N,
-														  rflags, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX));
-
-				} else { // Nothing found, abort
+				if (PR_UNLIKELY(!entity))
 					return {};
+
+				if (!onHit(weight, ip, entity, material))
+					return {};
+
+				if (PR_UNLIKELY(!material))
+					return {};
+
+				// Russian roulette
+				if constexpr (ApplyRussianRoulette) {
+					if (ip.Ray.IterationDepth >= MaxRayDepthSoft) {
+						constexpr float SCATTER_EPS = 1e-4f;
+
+						const float russian_prob = rnd.getFloat();
+						/*const float weight_f	 = weight.maxCoeff();*/
+						const float scatProb = std::min<float>(1.0f, /*weight_f */ std::pow(RussianRouletteRate, ip.Ray.IterationDepth - MaxRayDepthSoft));
+						if (russian_prob > scatProb || scatProb <= SCATTER_EPS)
+							return {};
+
+						weight /= scatProb;
+					}
 				}
+
+				// Continue
+				MaterialSampleInput sin;
+				sin.Context		   = MaterialSampleContext::fromIP(ip);
+				sin.ShadingContext = ShadingContext::fromIP(session.threadID(), ip);
+				sin.RND			   = rnd.get2D();
+
+				MaterialSampleOutput sout;
+				material->sample(sin, sout, session);
+
+				onSample(weight, sin, sout, entity, material);
+
+				if (weight.isZero(PR_EPSILON) || PR_UNLIKELY(sout.PDF_S[0] <= PR_EPSILON))
+					return {};
+
+				int rflags = RF_Bounce;
+				if (material->isSpectralVarying())
+					rflags |= RF_Monochrome;
+
+				if (!material->hasDeltaDistribution())
+					weight /= sout.PDF_S[0];
+
+				return std::make_optional(ip.Ray.next(ip.P, sout.globalL(ip), ip.Surface.N,
+													  rflags, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX));
 			},
 			[&](const Ray& ray) { onNonHit(weight, ray); });
 		return weight;

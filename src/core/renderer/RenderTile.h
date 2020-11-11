@@ -57,11 +57,10 @@ public:
 	inline const Size2i& viewSize() const { return mViewSize; }
 	inline const Size2i& imageSize() const { return mImageSize; }
 
-	inline bool isFinished() const { return mContext.IterationCount >= mMaxIterationCount; }
+	inline bool isFinished() const { return pixelSamplesRendered() >= maxPixelSamples(); }
 	inline uint64 maxPixelSamples() const { return mMaxPixelSamples; }
 	inline uint64 pixelSamplesRendered() const { return mContext.PixelSamplesRendered; }
 	inline uint32 iterationCount() const { return mContext.IterationCount; }
-	inline uint32 maxIterationCount() const { return mMaxIterationCount; }
 
 	std::pair<RenderTile*, RenderTile*> split(int dim) const;
 
