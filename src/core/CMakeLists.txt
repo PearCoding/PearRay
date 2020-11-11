@@ -27,6 +27,8 @@ set(PR_Src
   container/kdTreeBuilder.h
   container/kdTreeBuilderNaive.cpp
   container/kdTreeBuilderNaive.h
+  container/HashGrid.h
+  container/HashGrid.inl
   entity/GeometryRepr.h
   entity/IEntity.cpp
   entity/IEntity.h

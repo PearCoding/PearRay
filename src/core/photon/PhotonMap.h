@@ -1,17 +1,16 @@
 #pragma once
 
-#include "geometry/BoundingBox.h"
-#include "math/Generator.h"
-
-#include "math/Hash.h"
+#include "container/HashGrid.h"
 #include "photon/Photon.h"
 
-#include <atomic>
-#include <tbb/concurrent_vector.h>
-#include <vector>
-
 namespace PR {
+template <>
+struct position_getter<Photon::Photon> {
+	inline Vector3f operator()(const Photon::Photon& pht) const { return pht.Position; }
+};
+
 namespace Photon {
+
 struct PhotonSphere // Setup for the estimation query
 {
 	Vector3f Normal		= Vector3f::UnitZ();
@@ -21,19 +20,14 @@ struct PhotonSphere // Setup for the estimation query
 };
 
 // Spatial Hashmap
-class PhotonMap {
+class PhotonMap : public HashGrid<Photon> {
 	PR_CLASS_NON_COPYABLE(PhotonMap);
 
 public:
 	using CheckFunction = bool (*)(const Photon&, const PhotonSphere&, float&);
 
-	inline explicit PhotonMap(const BoundingBox& bbox, float gridDelta);
-	inline ~PhotonMap();
-
-	inline void reset();
-
-	inline bool isEmpty() const { return mStoredPhotons == 0; }
-	inline uint64 storedPhotons() const { return mStoredPhotons; }
+	inline PhotonMap(const BoundingBox& bbox, float gridDelta);
+	inline virtual ~PhotonMap();
 
 	template <typename AccumFunction>
 	inline SpectralBlob estimateSphere(const PhotonSphere& sphere, const AccumFunction& accumFunc, size_t& found) const;
@@ -43,30 +37,6 @@ public:
 
 	template <typename AccumFunction>
 	inline SpectralBlob estimate(const PhotonSphere& sphere, const CheckFunction& checkFunc, const AccumFunction& accumFunc, size_t& found) const;
-
-	inline void store(const Photon& point);
-	inline void storeUnsafe(const Photon& point); // Do not check for the boundary
-
-private:
-	struct KeyCoord {
-		uint32 X, Y, Z;
-
-		inline bool operator==(const KeyCoord& other) const;
-	};
-
-	inline KeyCoord toCoords(float x, float y, float z) const;
-	inline size_t toIndex(const KeyCoord& coords) const;
-
-	using Map = std::vector<tbb::concurrent_vector<Photon>>;
-	Map mPhotons;
-
-	std::atomic<uint64> mStoredPhotons;
-	const float mGridDelta;
-	const float mInvGridDelta;
-	const BoundingBox mBoundingBox;
-	const uint32 mGridX;
-	const uint32 mGridY;
-	const uint32 mGridZ;
 };
 } // namespace Photon
 } // namespace PR

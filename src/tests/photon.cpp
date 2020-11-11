@@ -10,7 +10,7 @@ PR_TEST("Initialization")
 	Photon::PhotonMap map(BoundingBox(1, 1, 1), 1.0f);
 
 	PR_CHECK_TRUE(map.isEmpty());
-	PR_CHECK_EQ(map.storedPhotons(), 0ULL);
+	PR_CHECK_EQ(map.storedElements(), 0ULL);
 }
 PR_TEST("Store")
 {
@@ -24,11 +24,11 @@ PR_TEST("Store")
 		map.store(pht);
 
 	PR_CHECK_FALSE(map.isEmpty());
-	PR_CHECK_EQ(map.storedPhotons(), PHOTONS);
+	PR_CHECK_EQ(map.storedElements(), PHOTONS);
 
 	map.reset();
 	PR_CHECK_TRUE(map.isEmpty());
-	PR_CHECK_EQ(map.storedPhotons(), 0ULL);
+	PR_CHECK_EQ(map.storedElements(), 0ULL);
 }
 PR_TEST("Search")
 {
