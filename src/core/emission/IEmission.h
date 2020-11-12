@@ -9,7 +9,7 @@ class RenderTileSession;
 // Evaluation
 struct PR_LIB_CORE EmissionEvalInput {
 	PR::ShadingContext ShadingContext;
-	class IEntity* Entity;
+	const class IEntity* Entity;
 };
 
 struct PR_LIB_CORE EmissionEvalOutput {

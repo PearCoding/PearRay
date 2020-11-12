@@ -9,7 +9,7 @@
 		:type 'bidi'
 		:max_ray_depth 16
 		:max_camera_ray_depth 4
-		:max_light_ray_depth 1
+		:max_light_ray_depth 4
 		:mis 'power'
 		:contract_ratio 0.2
 		:max_light_ray_depth 16
@@ -113,7 +113,7 @@
 		:name 'CornellBox-Original'
 		:type 'mesh'
 		:materials 'light'
-		;:emission 'light_em'
+		:emission 'light_em'
 		:mesh 'CornellBox-Original'
 		:transform [1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0]
 	)

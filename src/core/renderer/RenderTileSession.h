@@ -35,6 +35,8 @@ public:
 	inline uint32 threadID() const { return mThread; }
 
 	inline RenderTile* tile() const { return mTile; }
+	inline const RenderContext* context() const { return mTile->context(); }
+	inline Random& random() { return mTile->random(); }
 	inline StreamPipeline* pipeline() const { return mPipeline; }
 
 	IEntity* getEntity(uint32 id) const;

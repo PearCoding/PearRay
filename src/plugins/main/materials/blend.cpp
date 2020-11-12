@@ -139,7 +139,7 @@ public:
 
 	const std::vector<std::string>& getNames() const
 	{
-		const static std::vector<std::string> names({ "blend", "mix", "add" });
+		const static std::vector<std::string> names({ "blend", "mix" });
 		return names;
 	}
 
