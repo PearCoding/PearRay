@@ -9,9 +9,11 @@ namespace PR {
 class Environment;
 class FloatScalarNode;
 class FloatSpectralNode;
+class IEmission;
 class IFilterFactory;
 class IIntegratorFactory;
 class INode;
+class IMaterial;
 class ISamplerFactory;
 class ISpectralMapperFactory;
 class ParameterGroup;
@@ -62,6 +64,9 @@ public:
 	std::shared_ptr<FloatScalarNode> lookupScalarNode(
 		const std::string& parameter, float def = 1) const;
 
+	std::shared_ptr<IMaterial> lookupMaterial(const Parameter& parameter) const;
+	std::shared_ptr<IEmission> lookupEmission(const Parameter& parameter) const;
+
 	inline const ParameterGroup& parameters() const { return mParameters; }
 	inline ParameterGroup& parameters() { return mParameters; }
 
@@ -76,6 +81,11 @@ public:
 	std::shared_ptr<ISamplerFactory> loadSamplerFactory(const std::string& type, const ParameterGroup& params) const;
 	std::shared_ptr<IFilterFactory> loadFilterFactory(const std::string& type, const ParameterGroup& params) const;
 	std::shared_ptr<ISpectralMapperFactory> loadSpectralMapperFactory(const std::string& type, const ParameterGroup& params) const;
+
+	std::shared_ptr<IMaterial> registerMaterial(const std::string& name, const std::string& type, const ParameterGroup& params) const;
+	std::shared_ptr<IMaterial> loadMaterial(const std::string& type, const ParameterGroup& params) const;
+	std::shared_ptr<IEmission> registerEmission(const std::string& name, const std::string& type, const ParameterGroup& params) const;
+	std::shared_ptr<IEmission> loadEmission(const std::string& type, const ParameterGroup& params) const;
 
 private:
 	ParameterGroup mParameters;

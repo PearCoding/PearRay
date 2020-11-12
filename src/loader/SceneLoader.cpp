@@ -593,9 +593,6 @@ void SceneLoader::addLight(const DL::DataGroup& group, SceneLoadContext& ctx)
 
 void SceneLoader::addEmission(const DL::DataGroup& group, SceneLoadContext& ctx)
 {
-	auto manag		= ctx.environment()->emissionManager();
-	const uint32 id = manag->nextID();
-
 	DL::Data nameD = group.getFromKey("name");
 	DL::Data typeD = group.getFromKey("type");
 
@@ -625,35 +622,13 @@ void SceneLoader::addEmission(const DL::DataGroup& group, SceneLoadContext& ctx)
 		}
 	}
 
-	auto fac = manag->getFactory(type);
-	if (!fac) {
-		PR_LOG(L_ERROR) << "[Loader] Unknown emission type " << type << std::endl;
-		return;
-	}
-
-	ctx.parameters() = populateObjectParameters(group, ctx);
-	auto emission	 = fac->create(id, type, ctx);
-	if (!emission) {
-		PR_LOG(L_ERROR) << "[Loader] Could not create emission of type " << type << std::endl;
-		return;
-	}
-
-	ctx.environment()->addEmission(name, emission);
-	manag->addObject(emission);
+	ctx.registerEmission(name, type, populateObjectParameters(group, ctx));
 }
 
 void SceneLoader::addMaterial(const DL::DataGroup& group, SceneLoadContext& ctx)
 {
-	auto manag		= ctx.environment()->materialManager();
-	const uint32 id = manag->nextID();
-
 	DL::Data nameD = group.getFromKey("name");
 	DL::Data typeD = group.getFromKey("type");
-
-	DL::Data shadowD		= group.getFromKey("shadow");
-	DL::Data selfShadowD	= group.getFromKey("self_shadow");
-	DL::Data cameraVisibleD = group.getFromKey("camera_visible");
-	DL::Data shadeableD		= group.getFromKey("shadeable");
 
 	std::string name;
 	std::string type;
@@ -678,33 +653,7 @@ void SceneLoader::addMaterial(const DL::DataGroup& group, SceneLoadContext& ctx)
 		return;
 	}
 
-	auto fac = manag->getFactory(type);
-	if (!fac) {
-		PR_LOG(L_ERROR) << "[Loader] Unknown material type " << type << std::endl;
-		return;
-	}
-
-	ctx.parameters() = populateObjectParameters(group, ctx);
-	auto mat		 = fac->create(id, type, ctx);
-	if (!mat) {
-		PR_LOG(L_ERROR) << "[Loader] Could not create material of type " << type << std::endl;
-		return;
-	}
-
-	if (shadeableD.type() == DL::DT_Bool)
-		mat->enableShading(shadeableD.getBool());
-
-	if (shadowD.type() == DL::DT_Bool)
-		mat->enableShadow(shadowD.getBool());
-
-	if (selfShadowD.type() == DL::DT_Bool)
-		mat->enableSelfShadow(selfShadowD.getBool());
-
-	if (cameraVisibleD.type() == DL::DT_Bool)
-		mat->enableCameraVisibility(cameraVisibleD.getBool());
-
-	ctx.environment()->addMaterial(name, mat);
-	manag->addObject(mat);
+	ctx.registerMaterial(name, type, populateObjectParameters(group, ctx));
 }
 
 void SceneLoader::addTexture(const DL::DataGroup& group, SceneLoadContext& ctx)

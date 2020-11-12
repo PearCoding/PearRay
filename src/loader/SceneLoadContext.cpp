@@ -1,8 +1,11 @@
 #include "SceneLoadContext.h"
 #include "Environment.h"
 #include "ResourceManager.h"
+#include "emission/EmissionManager.h"
 #include "filter/FilterManager.h"
 #include "integrator/IntegratorManager.h"
+#include "material/IMaterial.h"
+#include "material/MaterialManager.h"
 #include "parser/TextureParser.h"
 #include "sampler/SamplerManager.h"
 #include "shader/ConstNode.h"
@@ -251,5 +254,109 @@ std::shared_ptr<ISpectralMapperFactory> SceneLoadContext::loadSpectralMapperFact
 	SceneLoadContext copy = *this;
 	copy.mParameters	  = params;
 	return fac->create(id, type, copy);
+}
+
+std::shared_ptr<IMaterial> SceneLoadContext::lookupMaterial(const Parameter& parameter) const
+{
+	switch (parameter.type()) {
+	default:
+		return nullptr;
+	case PT_Reference: // TODO
+		return nullptr;
+	case PT_String:
+		if (hasEnvironment())
+			return mEnvironment->getMaterial(parameter.getString(""));
+		return nullptr;
+	}
+}
+
+std::shared_ptr<IEmission> SceneLoadContext::lookupEmission(const Parameter& parameter) const
+{
+	switch (parameter.type()) {
+	default:
+		return nullptr;
+	case PT_Reference: // TODO
+		return nullptr;
+	case PT_String:
+		if (hasEnvironment())
+			return mEnvironment->getEmission(parameter.getString(""));
+		return nullptr;
+	}
+}
+
+std::shared_ptr<IMaterial> SceneLoadContext::registerMaterial(const std::string& name, const std::string& type, const ParameterGroup& params) const
+{
+	auto mat = loadMaterial(type, params);
+	if (!mat)
+		return nullptr;
+
+	if (hasEnvironment())
+		environment()->addMaterial(name, mat);
+
+	return mat;
+}
+
+std::shared_ptr<IMaterial> SceneLoadContext::loadMaterial(const std::string& type, const ParameterGroup& params) const
+{
+	auto manag		= mEnvironment->materialManager();
+	const uint32 id = manag->nextID();
+
+	auto fac = manag->getFactory(type);
+	if (!fac) {
+		PR_LOG(L_ERROR) << "Unknown material type " << type << std::endl;
+		return nullptr;
+	}
+
+	SceneLoadContext copy = *this;
+	copy.mParameters	  = params;
+	auto mat			  = fac->create(id, type, copy);
+	if (!mat) {
+		PR_LOG(L_ERROR) << "Could not create material of type " << type << std::endl;
+		return nullptr;
+	}
+
+	// None of the following is really working... but maybe in the future
+	mat->enableShading(params.getBool("shadeable", mat->canBeShaded()));
+	mat->enableShadow(params.getBool("shadow", mat->allowsShadow()));
+	mat->enableSelfShadow(params.getBool("self_shadow", mat->allowsSelfShadow()));
+	mat->enableCameraVisibility(params.getBool("camera_visible", mat->isCameraVisible()));
+
+	manag->addObject(mat);
+	return mat;
+}
+
+std::shared_ptr<IEmission> SceneLoadContext::registerEmission(const std::string& name, const std::string& type, const ParameterGroup& params) const
+{
+	auto ems = loadEmission(type, params);
+	if (!ems)
+		return nullptr;
+
+	if (hasEnvironment())
+		environment()->addEmission(name, ems);
+
+	return ems;
+}
+
+std::shared_ptr<IEmission> SceneLoadContext::loadEmission(const std::string& type, const ParameterGroup& params) const
+{
+	auto manag		= mEnvironment->emissionManager();
+	const uint32 id = manag->nextID();
+
+	auto fac = manag->getFactory(type);
+	if (!fac) {
+		PR_LOG(L_ERROR) << "Unknown emission type " << type << std::endl;
+		return nullptr;
+	}
+
+	SceneLoadContext copy = *this;
+	copy.mParameters	  = params;
+	auto obj			  = fac->create(id, type, copy);
+	if (!obj) {
+		PR_LOG(L_ERROR) << "Could not create emission of type " << type << std::endl;
+		return nullptr;
+	}
+
+	manag->addObject(obj);
+	return obj;
 }
 } // namespace PR
