@@ -3,6 +3,7 @@
 #include "trace/IntersectionPoint.h"
 
 namespace PR {
+namespace VCM {
 class PathVertex {
 public:
 	IntersectionPoint IP;	 // IP used to construct this vertex
@@ -16,4 +17,5 @@ public:
 	inline const Vector3f& position() const { return IP.P; }
 	inline bool fromLight() const { return IP.Ray.Flags & RF_Light; }
 };
+} // namespace VCM
 } // namespace PR

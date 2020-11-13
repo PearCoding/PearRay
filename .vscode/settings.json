@@ -117,7 +117,13 @@
       "vec4s": "cpp",
       "vec4ub": "cpp",
       "vec4ui": "cpp",
-      "vec4us": "cpp"
+      "vec4us": "cpp",
+      "callback": "c",
+      "group": "c",
+      "copyop": "c",
+      "pathvertex.h": "c",
+      "tracercontext.h": "c",
+      "mixinvector": "c"
     },
     "files.exclude": {
         "**/.git": true,

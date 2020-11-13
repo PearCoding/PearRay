@@ -1,5 +1,5 @@
 PR_ADD_PLUGIN(int_ambientocclusion CPP ambientocclusion.cpp)
-PR_ADD_PLUGIN(int_direct CPP direct.cpp)
+PR_ADD_PLUGIN(int_bidi CPP bidi.cpp LIBRARIES pr_lib_vcm)
+PR_ADD_PLUGIN(int_direct CPP direct.cpp LIBRARIES pr_lib_vcm)
+PR_ADD_PLUGIN(int_ppm CPP ppm.cpp LIBRARIES pr_lib_vcm)
 PR_ADD_PLUGIN(int_visualfeedback CPP visualfeedback.cpp)
-PR_ADD_PLUGIN(int_ppm CPP ppm.cpp)
-PR_ADD_PLUGIN(int_bidi CPP bidi.cpp)

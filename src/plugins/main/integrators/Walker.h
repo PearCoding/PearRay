@@ -4,7 +4,7 @@
 #include "SceneLoadContext.h"
 #include "material/IMaterial.h"
 
-#include "IntegratorDefaults.h"
+#include "vcm/Defaults.h"
 
 #include <optional>
 
