@@ -108,5 +108,15 @@ public:
 		ip.setForMedium(ray, p, mediumID);
 		return ip;
 	}
+
+	inline PR::Ray nextRay(const Vector3f& d, int ray_flags, float minT, float maxT) const
+	{
+		if (isAtSurface()) {
+			const Vector3f oN = d.dot(Surface.N) < 0 ? -Surface.N : Surface.N; // Offset normal used for safe positioning
+			return Ray.next(P, d, oN, ray_flags, minT, maxT);
+		} else {
+			return Ray.next(P, d, ray_flags, minT, maxT);
+		}
+	}
 };
 } // namespace PR

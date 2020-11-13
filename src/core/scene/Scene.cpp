@@ -17,10 +17,6 @@
 #include <filesystem>
 #include <fstream>
 
-// Seems slower than the default offset variant
-// FIXME: This has a bug, where direct lighting does not detect shadows
-//#define PR_USE_FILTER_SHADOW
-
 namespace PR {
 Scene::Scene(const std::shared_ptr<ServiceObserver>& serviceObserver,
 			 const std::shared_ptr<ICamera>& activeCamera,
@@ -97,11 +93,6 @@ struct SceneInternal {
 		if (!rtcGetDeviceProperty(Device, RTC_DEVICE_PROPERTY_USER_GEOMETRY_SUPPORTED))
 			PR_LOG(L_ERROR) << "[Embree3] Embree without user geometry support is not suitable for PearRay" << std::endl;
 
-#ifdef PR_USE_FILTER_SHADOW
-		if (!rtcGetDeviceProperty(Device, RTC_DEVICE_PROPERTY_FILTER_FUNCTION_SUPPORTED))
-			PR_LOG(L_ERROR) << "[Embree3] Embree without filter function support is not suitable for PearRay" << std::endl;
-#endif
-
 		Scene = rtcNewScene(Device);
 	}
 
@@ -122,12 +113,7 @@ void Scene::setupScene()
 		rtcReleaseGeometry(repr); // No longer needed
 	}
 
-	RTCSceneFlags flags = RTC_SCENE_FLAG_COMPACT | RTC_SCENE_FLAG_ROBUST;
-#ifdef PR_USE_FILTER_SHADOW
-	flags = flags | RTC_SCENE_FLAG_CONTEXT_FILTER_FUNCTION;
-#endif
-
-	rtcSetSceneFlags(mInternal->Scene, flags);
+	rtcSetSceneFlags(mInternal->Scene, RTC_SCENE_FLAG_COMPACT | RTC_SCENE_FLAG_ROBUST);
 	rtcSetSceneBuildQuality(mInternal->Scene, RTC_BUILD_QUALITY_HIGH);
 	rtcCommitScene(mInternal->Scene);
 
@@ -272,70 +258,7 @@ bool Scene::traceSingleRay(const Ray& ray, HitEntry& entry) const
 	}
 }
 
-struct IntersectContextShadow {
-	RTCIntersectContext Original;
-	// Original
-	uint32 IgnoreID;
-};
-static_assert(std::is_pod<IntersectContextShadow>::value, "Expect IntersectContextShadow structure to be a POD");
-
-#ifdef PR_USE_FILTER_SHADOW
-static void embree_intersectionFilter(const RTCFilterFunctionNArguments* args)
-{
-	/* avoid crashing when debug visualizations are used */
-	if (args->context == nullptr)
-		return;
-
-	PR_ASSERT(args->N == 1, "Expect shadow intersection filter to be called by one ray only");
-
-	int* valid							  = args->valid;
-	const IntersectContextShadow* context = reinterpret_cast<const IntersectContextShadow*>(args->context);
-	RTCHitN* hits						  = args->hit;
-	const auto N						  = args->N;
-
-	const uint32 id_ignore = context->IgnoreID;
-	for (uint32 i = 0; i < N; ++i) {
-		/* ignore inactive rays */
-		if (valid[i] != VALID_ALL)
-			continue;
-
-		auto inst = RTCHitN_instID(hits, N, i, 0);
-		if (inst == id_ignore) {
-			valid[i] = 0;
-			continue;
-		}
-
-		auto geom = RTCHitN_geomID(hits, N, i);
-		if (geom == id_ignore)
-			valid[i] = 0;
-	}
-}
-#endif
-
-bool Scene::traceShadowRay(const Ray& ray, float distance, uint32 entity_id) const
-{
-	RTCRay rray;
-	assignRay(ray, rray);
-
-	IntersectContextShadow ctx;
-	rtcInitIntersectContext(&ctx.Original);
-	ctx.Original.flags = RTC_INTERSECT_CONTEXT_FLAG_INCOHERENT;
-
-#ifdef PR_USE_FILTER_SHADOW
-	ctx.Original.filter = embree_intersectionFilter;
-	ctx.IgnoreID		= entity_id;
-	PR_UNUSED(distance);
-#else
-	rray.tfar = distance - 0.0001f;
-	PR_UNUSED(entity_id);
-#endif
-
-	rtcOccluded1(mInternal->Scene, (RTCIntersectContext*)&ctx, &rray);
-
-	return rray.tfar == -PR_INF;
-}
-
-bool Scene::traceOcclusionRay(const Ray& ray) const
+bool Scene::traceShadowRay(const Ray& ray, float distance) const
 {
 	RTCIntersectContext ctx;
 	rtcInitIntersectContext(&ctx);
@@ -343,6 +266,8 @@ bool Scene::traceOcclusionRay(const Ray& ray) const
 
 	RTCRay rray;
 	assignRay(ray, rray);
+
+	rray.tfar = distance - 0.0001f;
 
 	rtcOccluded1(mInternal->Scene, &ctx, &rray);
 

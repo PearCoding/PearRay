@@ -94,20 +94,12 @@ bool RenderTileSession::traceSingleRay(const Ray& ray, Vector3f& pos, GeometryPo
 	return true;
 }
 
-bool RenderTileSession::traceShadowRay(const Ray& ray, float distance, uint32 entity_id) const
+bool RenderTileSession::traceShadowRay(const Ray& ray, float distance) const
 {
 	PR_PROFILE_THIS;
 
 	mTile->statistics().addShadowRayCount();
-	return mTile->context()->scene()->traceShadowRay(ray, distance, entity_id);
-}
-
-bool RenderTileSession::traceOcclusionRay(const Ray& ray) const
-{
-	PR_PROFILE_THIS;
-
-	mTile->statistics().addShadowRayCount(); //Maybe his own category?
-	return mTile->context()->scene()->traceOcclusionRay(ray);
+	return mTile->context()->scene()->traceShadowRay(ray, distance);
 }
 
 Point2i RenderTileSession::localCoordinates(Point1i pixelIndex) const

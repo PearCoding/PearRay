@@ -46,7 +46,7 @@ public:
 
 				const Ray n = spt.Ray.next(spt.P, ndir, spt.Surface.N, UsedRayType, PR_EPSILON, spt.Ray.MaxT);
 
-				if (session.traceOcclusionRay(n))
+				if (session.traceShadowRay(n))
 					++occlusions;
 			}
 

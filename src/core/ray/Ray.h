@@ -95,13 +95,13 @@ public:
 		return dt2.norm();
 	}
 
-	inline Ray next(const Vector3f& o, const Vector3f& d, const Vector3f& N,
+	inline Ray next(const Vector3f& o, const Vector3f& d,
 					uint32 vis_flags, float minT, float maxT) const
 	{
 		Ray other;
 		other = *this;
 
-		other.Origin	= Transform::safePosition(o, d, N);
+		other.Origin	= o;
 		other.Direction = d;
 		other.IterationDepth += 1;
 		other.MinT = minT;
@@ -109,6 +109,12 @@ public:
 		other.Flags |= vis_flags;
 
 		return other;
+	}
+
+	inline Ray next(const Vector3f& o, const Vector3f& d, const Vector3f& N,
+					uint32 vis_flags, float minT, float maxT) const
+	{
+		return next(Transform::safePosition(o, d, N), d, vis_flags, minT, maxT);
 	}
 
 	inline bool isInsideRange(float t) const

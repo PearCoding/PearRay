@@ -119,7 +119,7 @@ public:
 		const float distance = lsample.first->isInfinite() ? PR_INF : std::sqrt(sqrD);
 		const Vector3f oN	 = NdotL < 0 ? -spt.Surface.N : spt.Surface.N; // Offset normal used for safe positioning
 		const Ray shadow	 = spt.Ray.next(spt.P, L, oN, RF_Shadow, SHADOW_RAY_MIN, distance);
-		const bool isVisible = isFeasible && !session.traceShadowRay(shadow, distance, lsample.first->entityID());
+		const bool isVisible = isFeasible && !session.traceShadowRay(shadow, distance);
 
 		const SpectralBlob lightW = isVisible ? lsout.Radiance : SpectralBlob::Zero();
 

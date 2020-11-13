@@ -4,14 +4,17 @@
 
 namespace PR {
 namespace VCM {
-struct CameraTraversalContext {
+struct BaseTraversalContext {
 	SpectralBlob Throughput;
 	float MIS_VCM;
 	float MIS_VC;
 	float MIS_VM;
 };
 
-struct LightTraversalContext : public CameraTraversalContext {
+struct CameraTraversalContext : public BaseTraversalContext {
+};
+
+struct LightTraversalContext : public BaseTraversalContext {
 	bool IsFiniteLight;
 };
 } // namespace VCM
