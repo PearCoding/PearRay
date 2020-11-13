@@ -283,8 +283,8 @@ public:
 		size_t photonsShoot = 0;
 		for (; photonsShoot < light.Photons; ++photonsShoot) {
 			LightSampleInput lsin;
-			lsin.WavelengthNM	= sampleWavelength(session.tile()->random());
-			lsin.RND			= session.tile()->random().get4D();
+			lsin.WavelengthNM	= sampleWavelength(session.random());
+			lsin.RND			= session.random().get4D();
 			lsin.SamplePosition = true;
 			LightSampleOutput lsout;
 			light.Light->sample(lsin, lsout, session);

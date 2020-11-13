@@ -192,6 +192,7 @@ endif()
 # Libraries
 add_subdirectory(src/base)
 add_subdirectory(src/core)
+add_subdirectory(src/skysun)
 
 # If embedded, plugins have to be imported first, as they are added TO pr_lib_utils
 if(PR_EMBED_PLUGINS)

@@ -14,7 +14,7 @@ inline Vector3f sphere(float u1, float u2)
 	return Vector3f(sinTheta * std::cos(phi), sinTheta * std::sin(phi), cosTheta);
 }
 
-inline float sphere_pdf()
+inline constexpr float sphere_pdf()
 {
 	return PR_INV_PI * 0.25f;
 }
@@ -28,7 +28,7 @@ inline Vector3f hemi(float u1, float u2)
 	return Vector3f(sinTheta * std::cos(phi), sinTheta * std::sin(phi), u1);
 }
 
-inline float hemi_pdf()
+inline constexpr float hemi_pdf()
 {
 	return PR_INV_PI * 0.5f;
 }
@@ -52,6 +52,7 @@ inline Vector3f cos_hemi(float u1, float u2)
 
 inline float cos_hemi_pdf(float NdotL)
 {
+	PR_ASSERT(NdotL >= 0, "NdotL must be positive!");
 	return NdotL * PR_INV_PI;
 }
 
@@ -75,6 +76,7 @@ inline Vector3f cos_hemi(float u1, float u2, float m)
 
 inline float cos_hemi_pdf(float NdotL, float m)
 {
+	PR_ASSERT(NdotL >= 0, "NdotL must be positive!");
 	return (m + 1.0f) * std::pow(NdotL, m) * PR_INV_2_PI;
 }
 
@@ -88,7 +90,7 @@ inline Vector2f triangle(float u1, float u2)
 }
 
 // Return the pdf based on area sampling of the unit triangle (A=1/2)
-inline float triangle_pdf()
+inline constexpr float triangle_pdf()
 {
 	constexpr float A = 0.5f;
 	return 1 / A;
@@ -107,6 +109,7 @@ inline Vector3f uniform_cone(float u1, float u2, float cos_theta_max)
 // In solid angle
 inline float uniform_cone_pdf(float cos_theta_max)
 {
+	PR_ASSERT(cos_theta_max >= 0, "cos_theta_max must be positive!");
 	return PR_INV_2_PI / (1 - cos_theta_max);
 }
 

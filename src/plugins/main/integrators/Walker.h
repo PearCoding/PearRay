@@ -94,7 +94,7 @@ private:
 	inline SpectralBlob traverseBSDF_Base(RenderTileSession& session, const SpectralBlob& initial_weight, const TraverseF& traverseFunc,
 										  const OnHitF& onHit, const OnSampleF& onSample, const OnNonHitF& onNonHit) const
 	{
-		auto& rnd			= session.tile()->random();
+		auto& rnd			= session.random();
 		SpectralBlob weight = initial_weight;
 		traverseFunc(
 			[&](const IntersectionPoint& ip, IEntity* entity, IMaterial* material) -> std::optional<Ray> {

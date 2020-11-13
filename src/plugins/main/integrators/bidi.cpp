@@ -130,7 +130,7 @@ public:
 		if (scatProb == 0.0f) {
 			return {};
 		} else if (scatProb < 1.0f) {
-			const float russian_prob = session.tile()->random().getFloat();
+			const float russian_prob = session.random().getFloat();
 			if (russian_prob > scatProb)
 				return {};
 		}
@@ -144,7 +144,7 @@ public:
 	{
 		PR_ASSERT(entity, "Expected valid entity");
 
-		auto& rnd		= session.tile()->random();
+		auto& rnd		= session.random();
 		LightPath& path = IsCamera ? mCameraPath : mLightPath;
 
 		// Russian roulette
@@ -330,14 +330,14 @@ public:
 
 	/////////////////// Light Path
 	// First light vertex
-	const Light* handleLightPath(RenderTileSession& session, const IntersectionPoint& spt)
+	const Light* handleLightPath(RenderTileSession& session, const SpectralBlob& wvl)
 	{
 		PR_PROFILE_THIS;
 
 		// Sample light
 		LightSampleInput lsin;
-		lsin.WavelengthNM	= spt.Ray.WavelengthNM;
-		lsin.RND			= session.tile()->random().get4D();
+		lsin.WavelengthNM	= wvl;
+		lsin.RND			= session.random().get4D();
 		lsin.SamplePosition = true;
 		LightSampleOutput lsout;
 		const auto lsample = mLightSampler->sample(lsin, lsout, session);
@@ -347,14 +347,19 @@ public:
 		PR_ASSERT(lsout.CosLight >= 0.0f, "Expected light emission only from the front side!");
 		const Light* light = lsample.first;
 
+		// Calculate PDF
+		const float directionPdf_S = lsout.Direction_PDF_S * lsample.second;
+		const float positionPdf_A  = lsout.Position_PDF.Value * lsample.second; // TODO: What if not area?
+
 		// Setup light path context
-		LightWalkContext current = LightWalkContext{ lsout.Radiance, lsout.Direction_PDF_S, 0, !light->isInfinite() };
-		current.Throughput /= lsout.Direction_PDF_S;
-		current.MIS_VCM = mis_term(lsout.Position_PDF.Value / lsout.Direction_PDF_S);
+		LightWalkContext current = LightWalkContext{ lsout.Radiance, 0, 0, !light->isInfinite() };
+
+		current.Throughput /= directionPdf_S;
+		current.MIS_VCM = mis_term(positionPdf_A / directionPdf_S);
 		if (light->hasDeltaDistribution())
 			current.MIS_VC = 0;
 		else
-			current.MIS_VC = mis_term(lsout.CosLight / lsout.Direction_PDF_S);
+			current.MIS_VC = mis_term(lsout.CosLight / directionPdf_S);
 
 		if (light->isInfinite())
 			mLightPath.addToken(LightPathToken::Background());
@@ -402,14 +407,14 @@ public:
 		return out.Weight;
 	}
 
-	void handleNEE(const RenderTileSession& session,
+	void handleNEE(RenderTileSession& session,
 				   const IntersectionPoint& cameraIP, const IMaterial* cameraMaterial, const CameraWalkContext& current)
 	{
 		const EntitySamplingInfo sampleInfo = { cameraIP.P, cameraIP.Surface.N };
 
 		// Sample light
 		LightSampleInput lsin;
-		lsin.RND			= session.tile()->random().get4D();
+		lsin.RND			= session.random().get4D();
 		lsin.WavelengthNM	= cameraIP.Ray.WavelengthNM;
 		lsin.Point			= &cameraIP;
 		lsin.SamplingInfo	= &sampleInfo;
@@ -662,7 +667,7 @@ public:
 			sg.computeShadingPoint(i, spt);
 
 			// Trace necessary paths
-			const Light* light = handleLightPath(session, spt);
+			const Light* light = handleLightPath(session, spt.Ray.WavelengthNM);
 			if (PR_UNLIKELY(!light))
 				return; // Giveup as no light is present
 			PR_ASSERT(mLightPath.currentSize() > mLightVertices.size(), "Light vertices and path do not match");

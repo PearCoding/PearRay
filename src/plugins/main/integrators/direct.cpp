@@ -342,7 +342,7 @@ public:
 		for (size_t i = 0; i < sg.size(); ++i) {
 			IntersectionPoint spt;
 			sg.computeShadingPoint(i, spt);
-			mSampler.reset(session.tile()->random());
+			mSampler.reset(session.random());
 
 			eval0(session, path, spt, sg.entity(), session.getMaterial(spt.Surface.Geometry.MaterialID));
 			PR_ASSERT(path.currentSize() == 1, "Add/Pop count does not match!");

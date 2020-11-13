@@ -28,7 +28,7 @@ public:
 
 	void handleShadingGroup(RenderTileSession& session, const ShadingGroup& grp)
 	{
-		Random& random			= session.tile()->random();
+		Random& random			= session.random();
 		const LightPath stdPath = LightPath::createCDL(1);
 
 		session.tile()->statistics().addEntityHitCount(grp.size());
