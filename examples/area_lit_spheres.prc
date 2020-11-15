@@ -6,8 +6,8 @@
 	:camera 'Camera'
 	; Settings
 	(integrator
-		:type 'ppm'
-		:max_ray_depth 1
+		:type 'direct'
+		:max_ray_depth 8
 		:light_sampe_count 1
 	)
 	(sampler

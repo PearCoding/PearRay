@@ -113,21 +113,18 @@ public:
 			n = -n;
 
 		return EntitySamplePoint(transform() * (mSphere.radius() * n),
-								 Spherical::uv_from_normal(n), 0, EntitySamplePDF{ 2 * mPDF_Cache, true });
+								 Spherical::uv_from_normal(n), 0, 2 * mPDF_Cache);
 	}
 
-	EntitySamplePDF sampleParameterPointPDF(const EntitySamplingInfo&) const override { return EntitySamplePDF{ 2 * mPDF_Cache, true }; }
+	float sampleParameterPointPDF(const Vector3f&, const EntitySamplingInfo&) const override { return 2 * mPDF_Cache; }
 
 	EntitySamplePoint sampleParameterPoint(const Vector2f& rnd) const override
 	{
 		return EntitySamplePoint(transform() * mSphere.surfacePoint(rnd(0), rnd(1)),
-								 rnd, 0, EntitySamplePDF{ mPDF_Cache, true });
+								 rnd, 0, mPDF_Cache);
 	}
 
-	EntitySamplePDF sampleParameterPointPDF() const override
-	{
-		return EntitySamplePDF{ mPDF_Cache, true };
-	}
+	float sampleParameterPointPDF() const override { return mPDF_Cache; }
 
 	void provideGeometryPoint(const EntityGeometryQueryPoint& query,
 							  GeometryPoint& pt) const override

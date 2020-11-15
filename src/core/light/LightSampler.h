@@ -20,7 +20,7 @@ public:
 	inline std::pair<const Light*, float> sample(const LightSampleInput& in, LightSampleOutput& out, const RenderTileSession& session) const;
 
 	inline float pdfSelection(const IEntity* entity) const;
-	inline LightPDF pdfPosition(const IEntity* entity, const EntitySamplingInfo* info = nullptr) const;
+	inline LightPDF pdfPosition(const IEntity* entity, const Vector3f& posOnLight, const EntitySamplingInfo* info = nullptr) const;
 	inline float pdfDirection(const Vector3f& dir, const IEntity* entity, const EntitySamplingInfo* info = nullptr) const;
 	inline const Light* light(const IEntity* entity) const;
 

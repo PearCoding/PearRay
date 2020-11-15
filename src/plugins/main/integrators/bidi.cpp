@@ -32,7 +32,7 @@ namespace PR {
 template <bool HasInfLights, VCM::MISMode MISMode>
 class IntBiDiInstance : public IIntegratorInstance {
 public:
-	using Tracer = VCM::Tracer<true, false, HasInfLights, MISMode>;
+	using Tracer = VCM::Tracer<false, HasInfLights, MISMode>;
 
 	explicit IntBiDiInstance(const VCM::Options& options, const std::shared_ptr<LightSampler>& lightSampler)
 		: mTracer(options, lightSampler)

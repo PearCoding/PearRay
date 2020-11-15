@@ -81,10 +81,10 @@ void Light::eval(const LightEvalInput& in, LightEvalOutput& out, const RenderTil
 		EmissionEvalOutput eeout;
 		mEmission->eval(eein, eeout, session);
 
-		const auto entPDF = ent->sampleParameterPointPDF();
-		out.Radiance	  = eeout.Radiance;
-		out.PDF.Value	  = entPDF.Value * Sampling::cos_hemi_pdf(in.Point->Surface.NdotV);
-		out.PDF.IsArea	  = entPDF.IsArea;
+		const float entPDF_A = ent->sampleParameterPointPDF();
+		out.Radiance		 = eeout.Radiance;
+		out.PDF.Value		 = entPDF_A * Sampling::cos_hemi_pdf(in.Point->Surface.NdotV);
+		out.PDF.IsArea		 = true;
 	} else { // No point information, giveup
 		out.Radiance   = SpectralBlob::Zero();
 		out.PDF.Value  = 0;
@@ -155,8 +155,8 @@ void Light::sample(const LightSampleInput& in, LightSampleOutput& out, const Ren
 		mEmission->eval(eein, eeout, session);
 
 		out.Radiance			= eeout.Radiance;
-		out.Position_PDF.Value	= pp.PDF.Value;
-		out.Position_PDF.IsArea = pp.PDF.IsArea;
+		out.Position_PDF.Value	= pp.PDF_A;
+		out.Position_PDF.IsArea = true;
 		out.LightPosition		= pp.Position;
 
 		if (!in.Point) {
@@ -175,14 +175,14 @@ void Light::sample(const LightSampleInput& in, LightSampleOutput& out, const Ren
 	}
 }
 
-LightPDF Light::pdfPosition(const EntitySamplingInfo* info) const
+LightPDF Light::pdfPosition(const Vector3f& posOnLight, const EntitySamplingInfo* info) const
 { // TODO Make this emission and inf light specific
 	if (isInfinite()) {
 		return LightPDF{ PR_INV_2_PI, false }; // TODO
 	} else {
 		IEntity* ent   = reinterpret_cast<IEntity*>(mEntity);
-		const auto pdf = info ? ent->sampleParameterPointPDF(*info) : ent->sampleParameterPointPDF();
-		return LightPDF{ pdf.Value, pdf.IsArea };
+		const auto pdf = info ? ent->sampleParameterPointPDF(posOnLight, *info) : ent->sampleParameterPointPDF();
+		return LightPDF{ pdf, true };
 	}
 }
 

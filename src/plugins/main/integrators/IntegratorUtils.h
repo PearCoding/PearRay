@@ -4,6 +4,8 @@
 #include "SceneLoadContext.h"
 #include "infinitelight/IInfiniteLight.h"
 #include "path/LightPath.h"
+#include "renderer/RenderTileSession.h"
+#include "shader/ShadingGroup.h"
 
 #include <optional>
 

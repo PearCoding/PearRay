@@ -16,11 +16,6 @@ struct GeometryPoint;
 struct GeometryRepr;
 struct GeometryDev;
 
-struct EntitySamplePDF {
-	float Value;
-	bool IsArea;
-};
-
 struct PR_LIB_CORE EntityGeometryQueryPoint {
 	Vector3f View;
 	Vector3f Position;
@@ -33,13 +28,13 @@ struct PR_LIB_CORE EntitySamplePoint {
 	Vector3f Position;
 	Vector2f UV;
 	uint32 PrimitiveID;
-	EntitySamplePDF PDF;
+	float PDF_A;
 
-	inline EntitySamplePoint(const Vector3f& p, const Vector2f& uv, uint32 primid, const EntitySamplePDF& pdf)
+	inline EntitySamplePoint(const Vector3f& p, const Vector2f& uv, uint32 primid, float pdf_a)
 		: Position(p)
 		, UV(uv)
 		, PrimitiveID(primid)
-		, PDF(pdf)
+		, PDF_A(pdf_a)
 	{
 	}
 };
@@ -82,17 +77,18 @@ public:
 		PR_UNUSED(info);
 		return sampleParameterPoint(rnd);
 	}
-	virtual EntitySamplePDF sampleParameterPointPDF(const EntitySamplingInfo& info) const
+	virtual float sampleParameterPointPDF(const Vector3f& p, const EntitySamplingInfo& info) const
 	{
+		PR_UNUSED(p);
 		PR_UNUSED(info);
-		return this->sampleParameterPointPDF();
+		return sampleParameterPointPDF();
 	}
 
 	// Sampling a point on the entity without any additional information
 	virtual EntitySamplePoint sampleParameterPoint(const Vector2f& rnd) const = 0;
-	virtual EntitySamplePDF sampleParameterPointPDF() const
+	virtual float sampleParameterPointPDF() const
 	{
-		return EntitySamplePDF{ 1.0f / this->localSurfaceArea(), true };
+		return 1.0f / localSurfaceArea();
 	}
 
 	virtual void provideGeometryPoint(const EntityGeometryQueryPoint& query, GeometryPoint& pt) const = 0;

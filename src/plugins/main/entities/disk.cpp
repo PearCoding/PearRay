@@ -81,10 +81,10 @@ public:
 	EntitySamplePoint sampleParameterPoint(const Vector2f& rnd) const override
 	{
 		return EntitySamplePoint(transform() * mDisk.surfacePoint(rnd(0), rnd(1)),
-								 rnd, 0, EntitySamplePDF{ mPDF_Cache, true });
+								 rnd, 0, mPDF_Cache);
 	}
 
-	EntitySamplePDF sampleParameterPointPDF() const override { return EntitySamplePDF{ mPDF_Cache, true }; }
+	float sampleParameterPointPDF() const override { return mPDF_Cache; }
 
 	void provideGeometryPoint(const EntityGeometryQueryPoint& query,
 							  GeometryPoint& pt) const override

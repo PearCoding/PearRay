@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MIS.h"
 #include "Options.h"
 #include "PathVertex.h"
 #include "RussianRoulette.h"
@@ -12,18 +13,8 @@
 namespace PR {
 namespace VCM {
 
-template <bool UseConnection, bool UseMerging, bool HasInfLights, MISMode Mode = MM_Balance>
+template <bool UseMerging, bool HasInfLights, MISMode Mode = MM_Balance>
 class Tracer {
-private:
-	/// Apply the MIS function to the given term
-	inline static float mis_term(float a)
-	{
-		if constexpr (Mode == MM_Power)
-			return a * a;
-		else
-			return a;
-	}
-
 public:
 	inline Tracer(const Options& options, const std::shared_ptr<LightSampler>& lightSampler)
 		: mOptions(options)
@@ -67,9 +58,6 @@ public:
 	// First light vertex
 	const Light* traceLightPath(TracerContext& tctx, const SpectralBlob& wvl) const
 	{
-		if constexpr (!UseConnection && !UseMerging)
-			return nullptr;
-
 		PR_PROFILE_THIS;
 
 		// Sample light
@@ -101,11 +89,11 @@ public:
 		LightTraversalContext current = LightTraversalContext{ lsout.Radiance, 0, 0, 0, !light->isInfinite() };
 
 		current.Throughput /= directionPdf_S;
-		current.MIS_VCM = mis_term(positionPdf_A / directionPdf_S);
+		current.MIS_VCM = mis_term<Mode>(positionPdf_A / directionPdf_S);
 		if (light->hasDeltaDistribution())
 			current.MIS_VC = 0;
 		else
-			current.MIS_VC = mis_term(lsout.CosLight / directionPdf_S);
+			current.MIS_VC = mis_term<Mode>(lsout.CosLight / directionPdf_S);
 
 		// Construct direction
 		Ray ray	   = Ray(lsout.LightPosition, -lsout.Outgoing);
@@ -195,15 +183,15 @@ private:
 		// Second time update MIS terms
 		const float NdotL = std::abs(sout.L[2]);
 		if (isDelta) {
-			current.MIS_VC *= mis_term(NdotL);
+			current.MIS_VC *= mis_term<Mode>(NdotL);
 			if constexpr (UseMerging)
 				current.MIS_VM = 0;
 			current.MIS_VCM = 0;
 		} else {
-			current.MIS_VC = mis_term(NdotL / backwardPDF_S) * (current.MIS_VC * mis_term(backwardPDF_S) + current.MIS_VCM);
+			current.MIS_VC = mis_term<Mode>(NdotL / backwardPDF_S) * (current.MIS_VC * mis_term<Mode>(backwardPDF_S) + current.MIS_VCM);
 			if constexpr (UseMerging)
 				current.MIS_VM = 0; // TODO
-			current.MIS_VCM = mis_term(1 / backwardPDF_S);
+			current.MIS_VCM = mis_term<Mode>(1 / backwardPDF_S);
 		}
 
 		if (NdotL <= PR_EPSILON) // Do not bother if laying flat on the sampling plane
@@ -243,14 +231,14 @@ private:
 
 		// Update the MIS quantities before storing them at the vertex.
 		if (pathLength > 1 || current.IsFiniteLight)
-			current.MIS_VCM *= mis_term(ip.Depth2);
+			current.MIS_VCM *= mis_term<Mode>(ip.Depth2);
 
 		if (ip.isAtSurface()) {
 			const float ndotv = std::abs(ip.Surface.NdotV);
 			if (ndotv <= PR_EPSILON)
 				return {};
 
-			const float f = 1 / mis_term(std::abs(ndotv));
+			const float f = 1 / mis_term<Mode>(std::abs(ndotv));
 			current.MIS_VCM *= f;
 			current.MIS_VC *= f;
 			if constexpr (UseMerging)
@@ -285,13 +273,13 @@ private:
 		tctx.Session.tile()->statistics().addCameraDepthCount();
 
 		// Update the MIS quantities before computing the vertex.
-		current.MIS_VCM *= mis_term(ip.Depth2);
+		current.MIS_VCM *= mis_term<Mode>(ip.Depth2);
 		if (ip.isAtSurface()) {
 			const float ndotv = std::abs(ip.Surface.NdotV);
 			if (ndotv <= PR_EPSILON)
 				return {};
 
-			const float f = 1 / mis_term(ndotv);
+			const float f = 1 / mis_term<Mode>(ndotv);
 			current.MIS_VCM *= f;
 			current.MIS_VC *= f;
 			if constexpr (UseMerging)
@@ -314,11 +302,9 @@ private:
 		if (!material->hasDeltaDistribution()) {
 			// c1t
 			handleNEE(tctx, ip, material, current, sumMIS);
-			if constexpr (UseConnection) {
-				// cst
-				for (const auto& vertex : tctx.LightVertices)
-					handleConnection(tctx, vertex, ip, material, current, sumMIS);
-			}
+			// cst
+			for (const auto& vertex : tctx.LightVertices)
+				handleConnection(tctx, vertex, ip, material, current, sumMIS);
 		}
 
 		// Some terms are ignored due to wrong pdf, cosine etc. Compensate for them here
@@ -350,8 +336,8 @@ private:
 		material->pdf(in, pout, tctx.Session);
 
 		//if (ip.Ray.Flags & RF_Monochrome) {
-			forwardPDF_S  = out.PDF_S[0];
-			backwardPDF_S = pout.PDF_S[0];
+		forwardPDF_S  = out.PDF_S[0];
+		backwardPDF_S = pout.PDF_S[0];
 		/*} else {
 			forwardPDF_S  = out.PDF_S.sum();
 			backwardPDF_S = pout.PDF_S.sum();
@@ -410,9 +396,9 @@ private:
 			positionPDF_S = IS::toSolidAngle(positionPDF_S, sqrD, cosL);
 
 		// Calculate MIS
-		const float lightMIS  = mis_term(cameraForwardPDF_S / (lsample.second * positionPDF_S));
-		const float cameraMIS = mis_term(lsout.Direction_PDF_S * cosC / (positionPDF_S * cosL))
-								* (current.MIS_VCM + current.MIS_VC * mis_term(cameraBackwardPDF_S));
+		const float lightMIS  = mis_term<Mode>(cameraForwardPDF_S / (lsample.second * positionPDF_S));
+		const float cameraMIS = mis_term<Mode>(lsout.Direction_PDF_S * cosC / (positionPDF_S * cosL))
+								* (current.MIS_VCM + current.MIS_VC * mis_term<Mode>(cameraBackwardPDF_S));
 		const float mis = 1 / (1 + lightMIS + cameraMIS);
 
 		if (mis <= PR_EPSILON)
@@ -501,8 +487,8 @@ private:
 		const float lightForwardPDF_A  = IS::toArea(lightForwardPDF_S, dist2, cosC);
 
 		// Calculate MIS
-		const float cameraMIS = mis_term(cameraForwardPDF_A) * (lightVertex.MIS_VCM + lightVertex.MIS_VC * mis_term(lightBackwardPDF_S));
-		const float lightMIS  = mis_term(lightForwardPDF_A) * (current.MIS_VCM + current.MIS_VC * mis_term(cameraBackwardPDF_S));
+		const float cameraMIS = mis_term<Mode>(cameraForwardPDF_A) * (lightVertex.MIS_VCM + lightVertex.MIS_VC * mis_term<Mode>(lightBackwardPDF_S));
+		const float lightMIS  = mis_term<Mode>(lightForwardPDF_A) * (current.MIS_VCM + current.MIS_VC * mis_term<Mode>(cameraBackwardPDF_S));
 		const float mis		  = 1 / (1 + lightMIS + cameraMIS);
 
 		if (mis <= PR_EPSILON)
@@ -564,14 +550,14 @@ private:
 
 		// Evaluate PDF
 		const float selProb = mLightSampler->pdfSelection(cameraEntity);
-		auto posPDF			= mLightSampler->pdfPosition(cameraEntity);
+		auto posPDF			= mLightSampler->pdfPosition(cameraEntity, cameraIP.P);
 		PR_ASSERT(posPDF.IsArea, "Area lights should return pdfs respective to area!");
 
 		const float dirPDF_S = mLightSampler->pdfDirection(cameraIP.Ray.Direction, cameraEntity) * selProb;
 		const float posPDF_A = posPDF.Value * selProb;
 
 		// Calculate MIS
-		const float cameraMIS = mis_term(posPDF_A) * current.MIS_VCM + mis_term(dirPDF_S) * current.MIS_VC;
+		const float cameraMIS = mis_term<Mode>(posPDF_A) * current.MIS_VCM + mis_term<Mode>(dirPDF_S) * current.MIS_VC;
 		const float mis		  = 1 / (1 + cameraMIS);
 
 		if (mis <= PR_EPSILON)
@@ -612,7 +598,7 @@ private:
 
 		// Evaluate PDF (for now independent of concrete inf light)
 		const float selProb = mLightSampler->pdfSelection(nullptr);
-		auto posPDF			= mLightSampler->pdfPosition(nullptr);
+		auto posPDF			= mLightSampler->pdfPosition(nullptr, Vector3f::Zero());
 
 		float posPDF_A = posPDF.Value;
 		if (!posPDF.IsArea) {
@@ -624,7 +610,7 @@ private:
 		dirPDF_S *= selProb;
 
 		// Calculate MIS
-		const float cameraMIS = mis_term(posPDF_A) * current.MIS_VCM + mis_term(dirPDF_S) * current.MIS_VC;
+		const float cameraMIS = mis_term<Mode>(posPDF_A) * current.MIS_VCM + mis_term<Mode>(dirPDF_S) * current.MIS_VC;
 		const float mis		  = 1 / (1 + cameraMIS);
 
 		if (mis <= PR_EPSILON)

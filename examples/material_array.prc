@@ -14,7 +14,7 @@
 	  :radius 1
 	)
 	(integrator 
-	  :type 'bidi'
+	  :type 'direct'
 	  ;:max_ray_depth 64
 	  :gather_mode 'sphere'
 	)

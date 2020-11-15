@@ -29,7 +29,7 @@ public:
 	{
 		cache();
 	}
-	
+
 	virtual ~PlaneEntity() {}
 
 	std::string type() const override
@@ -170,22 +170,38 @@ public:
 		// 4. transform (xu,yv,z0) to entity local coords
 		const Vector3f p = sq.o + xu * mEx + yv * mEy + sq.z0 * sq.n;
 
-		return EntitySamplePoint(p, mPlane.project(invTransform() * p), 0, EntitySamplePDF{ 1 / sq.S, false });
+		// 5. Transform pdf_s to pdf_a
+		const float pdf_s = sq.S > PR_EPSILON ? 1 / sq.S : 0.0f;
+		const Vector3f L  = (p - info.Origin);
+		const float dist2 = L.squaredNorm();
+		const float ndotv = L.normalized().dot(normalMatrix() * mPlane.normal());
+		const float pdf_a = IS::toArea(pdf_s, dist2, std::abs(ndotv));
+
+		PR_ASSERT(pdf_a >= 0.0, "PDF has to be positive");
+		return EntitySamplePoint(p, mPlane.project(invTransform() * p), 0, pdf_a);
 	}
 
-	EntitySamplePDF sampleParameterPointPDF(const EntitySamplingInfo& info) const override
+	float sampleParameterPointPDF(const Vector3f& p, const EntitySamplingInfo& info) const override
 	{
-		return EntitySamplePDF{ 1.0f / computeSQ(info.Origin).S, false };
+		const float s	  = computeSQ(info.Origin).S;
+		const float pdf_s = s > PR_EPSILON ? 1 / s : 0.0f;
+		const Vector3f L  = (p - info.Origin);
+		const float dist2 = L.squaredNorm();
+		const float ndotv = L.normalized().dot(normalMatrix() * mPlane.normal());
+		const float pdf_a = IS::toArea(pdf_s, dist2, std::abs(ndotv));
+
+		PR_ASSERT(pdf_a >= 0.0, "PDF has to be positive");
+		return pdf_a;
 	}
 #endif //PR_USE_SPHERICAL_RECTANGLE_SAMPLING
 
 	EntitySamplePoint sampleParameterPoint(const Vector2f& rnd) const override
 	{
 		return EntitySamplePoint(transform() * mPlane.surfacePoint(rnd(0), rnd(1)),
-								 rnd, 0, EntitySamplePDF{ mPDF_Cache, true });
+								 rnd, 0, mPDF_Cache);
 	}
 
-	EntitySamplePDF sampleParameterPointPDF() const override { return EntitySamplePDF{ mPDF_Cache, true }; }
+	float sampleParameterPointPDF() const override { return mPDF_Cache; }
 
 	void provideGeometryPoint(const EntityGeometryQueryPoint& query,
 							  GeometryPoint& pt) const override

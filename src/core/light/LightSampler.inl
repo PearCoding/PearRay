@@ -37,7 +37,7 @@ float LightSampler::pdfSelection(const IEntity* entity) const
 	return mSelector->discretePdf(lightID);
 }
 
-LightPDF LightSampler::pdfPosition(const IEntity* entity, const EntitySamplingInfo* info) const
+LightPDF LightSampler::pdfPosition(const IEntity* entity, const Vector3f& posOnLight, const EntitySamplingInfo* info) const
 {
 	if (!entity)
 		return LightPDF{ PR_INV_2_PI, false }; // TODO
@@ -47,7 +47,7 @@ LightPDF LightSampler::pdfPosition(const IEntity* entity, const EntitySamplingIn
 
 	const uint32 lightID = mLightEntityMap.at(entity);
 	const Light* light	 = mLights[lightID].get();
-	return light->pdfPosition(info);
+	return light->pdfPosition(posOnLight, info);
 }
 
 inline float LightSampler::pdfDirection(const Vector3f& dir, const IEntity* entity, const EntitySamplingInfo* info) const

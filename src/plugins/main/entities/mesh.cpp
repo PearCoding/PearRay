@@ -129,15 +129,15 @@ public:
 	EntitySamplePoint sampleParameterPoint(const Vector2f& rnd) const override
 	{
 		PR_PROFILE_THIS;
-		SplitSample2D split(rnd, 0, mMesh->base()->faceCount());
-		uint32 faceID = split.integral1();
+		const SplitSample2D split(rnd, 0, mMesh->base()->faceCount());
+		const uint32 faceID = split.integral1();
 
-		Face face = mMesh->base()->getFace(faceID);
-		float pdf = 1.0f / (mMesh->base()->faceCount() * face.surfaceArea() * volumeScalefactor());
+		const Face face	  = mMesh->base()->getFace(faceID);
+		const float pdf_a = 1.0f / (mMesh->base()->faceCount() * face.surfaceArea() * volumeScalefactor());
 
-		Vector2f uv = Triangle::sample(Vector2f(split.uniform1(), split.uniform2()));
+		const Vector2f uv = Triangle::sample(Vector2f(split.uniform1(), split.uniform2()));
 
-		return EntitySamplePoint(transform() * face.interpolateVertices(uv), uv, faceID, EntitySamplePDF{ pdf, true });
+		return EntitySamplePoint(transform() * face.interpolateVertices(uv), uv, faceID, pdf_a);
 	}
 
 	// UV variant
