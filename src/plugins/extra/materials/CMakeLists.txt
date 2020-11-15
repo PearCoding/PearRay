@@ -18,6 +18,7 @@ if(PR_EXTRA_RGL_BRDF)
 endif()
 
 if(PR_EXTRA_DAYLIGHT)
+    set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
     FetchContent_Declare(pugixml
         GIT_REPOSITORY  git@github.com:zeux/pugixml.git
     )

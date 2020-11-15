@@ -4,6 +4,5 @@ if(DOXYGEN_FOUND)
     add_custom_target(pr_documentation
         ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        COMMENT "Generating API documentation with Doxygen" VERBATIM
-        EXCLUDE_FROM_ALL )
+        COMMENT "Generating API documentation with Doxygen" VERBATIM)
 endif()
