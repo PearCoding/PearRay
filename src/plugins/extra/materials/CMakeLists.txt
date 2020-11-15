@@ -12,6 +12,7 @@ if(PR_EXTRA_RGL_BRDF)
         BUILD_COMMAND ""
         INSTALL_COMMAND ""
         LOG_DOWNLOAD ON
+        UPDATE_DISCONNECTED ON
     )
     ExternalProject_Get_Property(rgl_brdf_download source_dir)
     PR_ADD_PLUGIN(mat_rgl_measured CPP rgl_measured.cpp INCLUDES ${source_dir})

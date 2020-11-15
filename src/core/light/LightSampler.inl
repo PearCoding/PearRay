@@ -25,7 +25,14 @@ inline std::pair<const Light*, float> LightSampler::sample(const LightSampleInpu
 	}
 }
 
-float LightSampler::pdfSelection(const IEntity* entity) const
+inline float LightSampler::pdfLightSelection(const Light* light) const
+{
+	PR_ASSERT(light, "Invalid light given");
+	PR_ASSERT(light->lightID() < mLights.size(), "Light not member of sampler");
+	return mSelector->discretePdf(light->lightID());
+}
+
+float LightSampler::pdfEntitySelection(const IEntity* entity) const
 {
 	if (!entity)
 		return mInfLightSelectionProbability;

@@ -169,15 +169,13 @@ public:
 	}
 
 	bool hasDeltaDistribution() const override { return true; }
-	void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out,
+	void eval(const InfiniteLightEvalInput&, InfiniteLightEvalOutput& out,
 			  const RenderTileSession&) const override
 	{
 		PR_ASSERT(false, "eval() for delta lights should never be called!");
 
-		PR_OPT_LOOP
-		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-			out.Radiance[i] = mSpectrum.lookup(in.WavelengthNM[i]);
-		out.Direction_PDF_S = 1;
+		out.Radiance		= SpectralBlob::Zero();
+		out.Direction_PDF_S = 0;
 	}
 
 	void sampleDir(const InfiniteLightSampleDirInput& in, InfiniteLightSampleDirOutput& out,

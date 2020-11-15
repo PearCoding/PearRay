@@ -19,12 +19,14 @@ public:
 	inline const Light* sample(float rnd, float& pdf) const;
 	inline std::pair<const Light*, float> sample(const LightSampleInput& in, LightSampleOutput& out, const RenderTileSession& session) const;
 
-	inline float pdfSelection(const IEntity* entity) const;
+	inline float pdfLightSelection(const Light* light) const;
+	inline float pdfEntitySelection(const IEntity* entity) const;
 	inline LightPDF pdfPosition(const IEntity* entity, const Vector3f& posOnLight, const EntitySamplingInfo* info = nullptr) const;
 	inline float pdfDirection(const Vector3f& dir, const IEntity* entity, const EntitySamplingInfo* info = nullptr) const;
 	inline const Light* light(const IEntity* entity) const;
 
 	inline const LightList& lights() const { return mLights; }
+	inline const std::vector<Light*>& infiniteLights() const { return mInfLights; }
 
 	inline size_t emissiveEntityCount() const { return mLightEntityMap.size(); }
 	inline size_t lightCount() const { return mLights.size(); }

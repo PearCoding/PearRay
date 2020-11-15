@@ -328,9 +328,10 @@ private:
 		}
 
 		// TODO: Something wrong here!
+		//return;
 
 		// Evaluate PDF
-		const float selProb = mLightSampler->pdfSelection(cameraEntity);
+		const float selProb = mLightSampler->pdfEntitySelection(cameraEntity);
 		auto posPDF			= mLightSampler->pdfPosition(cameraEntity, cameraIP.P, &sampleInfo);
 		if (posPDF.IsArea)
 			posPDF.Value = IS::toSolidAngle(posPDF.Value, cameraIP.Depth2, std::abs(cosC));
@@ -356,19 +357,27 @@ private:
 	{
 		const uint32 cameraPathLength = ray.IterationDepth + 1;
 
+		// Evaluate PDF (for now independent of concrete inf light)
+
 		// Evaluate radiance
-		float dirPDF_S		  = 0;
+		float denom_mis		  = 0;
 		SpectralBlob radiance = SpectralBlob::Zero();
-		for (auto light : session.tile()->context()->scene()->nonDeltaInfiniteLights()) {
+		for (auto light : mLightSampler->infiniteLights()) {
+			if (light->hasDeltaDistribution())
+				continue;
+
 			InfiniteLightEvalInput lin;
 			lin.WavelengthNM   = ray.WavelengthNM;
 			lin.Direction	   = ray.Direction;
 			lin.IterationDepth = ray.IterationDepth;
 			InfiniteLightEvalOutput lout;
-			light->eval(lin, lout, session);
+			light->asInfiniteLight()->eval(lin, lout, session);
 
-			radiance += lout.Radiance;
-			dirPDF_S += lout.Direction_PDF_S;
+			if (lout.Direction_PDF_S > PR_EPSILON) {
+				const float selProb = mLightSampler->pdfLightSelection(light);
+				radiance += lout.Radiance;
+				denom_mis += VCM::mis_term<MISMode>(current.LastPDF_S / (lout.Direction_PDF_S * selProb));
+			}
 		}
 
 		// If directly visible from camera or last one was a delta distribution, do not calculate mis weights
@@ -377,17 +386,8 @@ private:
 			return;
 		}
 
-		// TODO: Something wrong here!
-
-		if (dirPDF_S <= PR_EPSILON)
-			return;
-
-		// Evaluate PDF (for now independent of concrete inf light)
-		const float selProb = mLightSampler->pdfSelection(nullptr);
-		dirPDF_S *= selProb;
-
 		// Calculate MIS
-		const float mis = 1 / (1 + VCM::mis_term<MISMode>(current.LastPDF_S / dirPDF_S));
+		const float mis = 1 / (1 + denom_mis);
 
 		if (mis <= PR_EPSILON)
 			return;

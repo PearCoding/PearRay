@@ -7,15 +7,17 @@
 #include "renderer/RenderTileSession.h"
 
 namespace PR {
-Light::Light(IInfiniteLight* infLight, float relContribution)
-	: mEntity(infLight)
+Light::Light(uint32 light_id, IInfiniteLight* infLight, float relContribution)
+	: mID(light_id)
+	, mEntity(infLight)
 	, mEmission(nullptr)
 	, mRelativeContribution(relContribution)
 {
 }
 
-Light::Light(IEntity* entity, IEmission* emission, float relContribution)
-	: mEntity(entity)
+Light::Light(uint32 light_id, IEntity* entity, IEmission* emission, float relContribution)
+	: mID(light_id)
+	, mEntity(entity)
 	, mEmission(emission)
 	, mRelativeContribution(relContribution)
 {

@@ -549,7 +549,7 @@ private:
 		}
 
 		// Evaluate PDF
-		const float selProb = mLightSampler->pdfSelection(cameraEntity);
+		const float selProb = mLightSampler->pdfEntitySelection(cameraEntity);
 		auto posPDF			= mLightSampler->pdfPosition(cameraEntity, cameraIP.P);
 		PR_ASSERT(posPDF.IsArea, "Area lights should return pdfs respective to area!");
 
@@ -576,18 +576,40 @@ private:
 		const uint32 cameraPathLength = ray.IterationDepth + 1;
 
 		// Evaluate radiance
-		float dirPDF_S		  = 0;
+		float misDenom		  = 0;
 		SpectralBlob radiance = SpectralBlob::Zero();
-		for (auto light : tctx.Session.tile()->context()->scene()->nonDeltaInfiniteLights()) {
+		for (auto light : mLightSampler->infiniteLights()) {
+			if (light->hasDeltaDistribution())
+				continue;
+
 			InfiniteLightEvalInput lin;
 			lin.WavelengthNM   = ray.WavelengthNM;
 			lin.Direction	   = ray.Direction;
 			lin.IterationDepth = ray.IterationDepth;
 			InfiniteLightEvalOutput lout;
-			light->eval(lin, lout, tctx.Session);
+			light->asInfiniteLight()->eval(lin, lout, tctx.Session);
+
+			if (lout.Direction_PDF_S <= PR_EPSILON)
+				continue;
 
 			radiance += lout.Radiance;
-			dirPDF_S += lout.Direction_PDF_S;
+
+			// Evaluate PDF
+			const float selProb = mLightSampler->pdfLightSelection(light);
+			auto posPDF			= mLightSampler->pdfPosition(nullptr, Vector3f::Zero()); // TODO: Implement pdf evaluation for infinite lights
+
+			float posPDF_A = posPDF.Value;
+			if (!posPDF.IsArea) {
+				const float r = tctx.Session.context()->scene()->boundingSphere().radius();
+				posPDF_A	  = IS::toArea(posPDF_A, r * r, 1);
+			}
+
+			posPDF_A *= selProb;
+			const float dirPDF_S = lout.Direction_PDF_S * selProb;
+
+			// Calculate MIS
+			const float cameraMIS = mis_term<Mode>(posPDF_A) * current.MIS_VCM + mis_term<Mode>(dirPDF_S) * current.MIS_VC;
+			misDenom += cameraMIS;
 		}
 
 		// If directly visible from camera, do not calculate mis weights
@@ -596,22 +618,7 @@ private:
 			return;
 		}
 
-		// Evaluate PDF (for now independent of concrete inf light)
-		const float selProb = mLightSampler->pdfSelection(nullptr);
-		auto posPDF			= mLightSampler->pdfPosition(nullptr, Vector3f::Zero());
-
-		float posPDF_A = posPDF.Value;
-		if (!posPDF.IsArea) {
-			const float r = tctx.Session.context()->scene()->boundingSphere().radius();
-			posPDF_A	  = IS::toArea(posPDF_A, r * r, 1);
-		}
-
-		posPDF_A *= selProb;
-		dirPDF_S *= selProb;
-
-		// Calculate MIS
-		const float cameraMIS = mis_term<Mode>(posPDF_A) * current.MIS_VCM + mis_term<Mode>(dirPDF_S) * current.MIS_VC;
-		const float mis		  = 1 / (1 + cameraMIS);
+		const float mis = 1 / (1 + misDenom);
 
 		if (mis <= PR_EPSILON)
 			return;

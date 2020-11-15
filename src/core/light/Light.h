@@ -44,8 +44,10 @@ class PR_LIB_CORE Light {
 public:
 	virtual ~Light() {}
 
+	inline uint32 lightID() const { return mID; }
+
 	std::string name() const;
-	uint32 id() const;
+	uint32 id() const; // TODO: Different name?
 	uint32 entityID() const;
 	uint32 infiniteLightID() const;
 
@@ -59,23 +61,24 @@ public:
 	// Returns pdf for direction respect to solid angle
 	float pdfDirection(const Vector3f& dir, const EntitySamplingInfo* info = nullptr) const;
 
-	inline static Light makeInfLight(IInfiniteLight* infLight, float relContribution)
+	inline static Light makeInfLight(uint32 light_id, IInfiniteLight* infLight, float relContribution)
 	{
-		return Light(infLight, relContribution);
+		return Light(light_id, infLight, relContribution);
 	}
 
-	inline static Light makeAreaLight(IEntity* entity, IEmission* emission, float relContribution)
+	inline static Light makeAreaLight(uint32 light_id, IEntity* entity, IEmission* emission, float relContribution)
 	{
-		return Light(entity, emission, relContribution);
+		return Light(light_id, entity, emission, relContribution);
 	}
 
 	inline IEntity* asEntity() const { return reinterpret_cast<IEntity*>(mEntity); }
 	inline IInfiniteLight* asInfiniteLight() const { return reinterpret_cast<IInfiniteLight*>(mEntity); }
 
 private:
-	Light(IInfiniteLight* infLight, float relContribution);
-	Light(IEntity* entity, IEmission* emission, float relContribution);
+	Light(uint32 id, IInfiniteLight* infLight, float relContribution);
+	Light(uint32 id, IEntity* entity, IEmission* emission, float relContribution);
 
+	const uint32 mID;
 	void* const mEntity;
 	IEmission* const mEmission;
 	const float mRelativeContribution;
