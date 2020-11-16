@@ -51,13 +51,13 @@
 		:albedo 0.40 ; Sandy environment
 		:hour 16
 	)
-	(light
-		:name 'sun'
-		:type 'sun'
-		:turbidity 3
-		:radius 4
-		:hour 16
-	)
+	;(light
+	;	:name 'sun'
+	;	:type 'sun'
+	;	:turbidity 3
+	;	:radius 4
+	;	:hour 16
+	;)
 	; Curves
 	; Particle Systems
 	; Materials
@@ -89,6 +89,7 @@
 		:sheen_tint 0.0
 		:clearcoat 0.0
 		:clearcoat_gloss 0.0
+		:vndf false
 	)
 	(material
 		:name 'Material.004'
@@ -104,6 +105,7 @@
 		:sheen_tint 0.0
 		:clearcoat 0.0
 		:clearcoat_gloss 0.0
+		:vndf false
 	)
 	(material
 		:name 'Liquid'

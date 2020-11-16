@@ -227,7 +227,7 @@ inline Vector3f sample_ndf_ggx(float u0, float u1, float roughnessX, float rough
 
 inline float pdf_ggx(const ShadingVector& H, float roughnessX, float roughnessY)
 {
-	return ndf_ggx(H, roughnessX, roughnessY) * H.cosTheta();
+	return ndf_ggx(H, roughnessX, roughnessY) * H.absCosTheta();
 }
 
 // Based on:
@@ -238,7 +238,7 @@ inline float pdf_ggx_vndf(const ShadingVector& V, const ShadingVector& H,
 						  float roughnessX, float roughnessY)
 {
 	const float Dv = g_1_smith(V, roughnessX, roughnessY) * V.dot(H) * ndf_ggx(H, roughnessX, roughnessY);
-	return Dv / V.cosTheta();
+	return Dv / V.absCosTheta();
 }
 
 // nV is in sample space!

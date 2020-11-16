@@ -21,6 +21,9 @@ namespace PR {
 	https://github.com/wdas/brdf/blob/master/src/brdfs/disney.brdf
 */
 
+// If UseVNDF is true, Visible Normals sampling will be used
+
+template <bool UseVNDF>
 class PrincipledMaterial : public IMaterial {
 public:
 	PrincipledMaterial(uint32 id,
@@ -161,6 +164,12 @@ public:
 			  const RenderTileSession&) const override
 	{
 		PR_PROFILE_THIS;
+		if (!in.Context.V.sameHemisphere(in.Context.L)) {
+			out.Weight = SpectralBlob::Zero();
+			out.PDF_S  = 0;
+			out.Type   = MST_SpecularReflection;
+			return;
+		}
 
 		const auto& sctx	 = in.ShadingContext;
 		SpectralBlob base	 = mBaseColor->eval(sctx);
@@ -176,15 +185,20 @@ public:
 		float clearcoat		 = mClearcoat->eval(sctx);
 		float clearcoatGloss = mClearcoatGloss->eval(sctx);
 
-		out.Weight = evalBRDF(in.Context, Scattering::halfway_reflection(in.Context.V, in.Context.L),
-							  base, lum, subsurface, anisotropic, roughness, metallic, spec, specTint,
-							  sheen, sheenTint, clearcoat, clearcoatGloss)
+		const Vector3f H = Scattering::halfway_reflection(in.Context.V, in.Context.L);
+		out.Weight		 = evalBRDF(in.Context, H,
+								base, lum, subsurface, anisotropic, roughness, metallic, spec, specTint,
+								sheen, sheenTint, clearcoat, clearcoatGloss)
 					 * std::abs(in.Context.NdotL());
 
 		float aspect = std::sqrt(1 - anisotropic * 0.9f);
 		float ax	 = std::max(0.001f, roughness * roughness / aspect);
 		float ay	 = std::max(0.001f, roughness * roughness * aspect);
-		out.PDF_S	 = Microfacet::pdf_ggx(in.Context.L, ax, ay); // FIXME: Use NdotH instead of NdotL!
+		if constexpr (UseVNDF)
+			out.PDF_S = Microfacet::pdf_ggx_vndf(in.Context.V, H, ax, ay);
+		else
+			out.PDF_S = Microfacet::pdf_ggx(H, ax, ay);
+		PR_ASSERT(out.PDF_S[0] >= 0.0f, "PDF has to be positive");
 
 		if (roughness < 0.5f)
 			out.Type = MST_DiffuseReflection;
@@ -193,18 +207,28 @@ public:
 	}
 
 	void pdf(const MaterialEvalInput& in, MaterialPDFOutput& out,
-			  const RenderTileSession&) const override
+			 const RenderTileSession&) const override
 	{
 		PR_PROFILE_THIS;
+		if (!in.Context.V.sameHemisphere(in.Context.L)) {
+			out.PDF_S = 0;
+			return;
+		}
 
 		const auto& sctx  = in.ShadingContext;
 		float anisotropic = mAnisotropic->eval(sctx);
 		float roughness	  = std::max(0.01f, mRoughness->eval(sctx));
 
+		const Vector3f H = Scattering::halfway_reflection(in.Context.V, in.Context.L);
+
 		float aspect = std::sqrt(1 - anisotropic * 0.9f);
 		float ax	 = std::max(0.001f, roughness * roughness / aspect);
 		float ay	 = std::max(0.001f, roughness * roughness * aspect);
-		out.PDF_S	 = Microfacet::pdf_ggx(in.Context.L, ax, ay); // FIXME: Use NdotH instead of NdotL!
+		if constexpr (UseVNDF)
+			out.PDF_S = Microfacet::pdf_ggx_vndf(in.Context.V, H, ax, ay);
+		else
+			out.PDF_S = Microfacet::pdf_ggx(H, ax, ay);
+		PR_ASSERT(out.PDF_S[0] >= 0.0f, "PDF has to be positive");
 	}
 
 	void sampleSpecularPath(const MaterialSampleInput& in, float u, float v, MaterialSampleOutput& out, float roughness, float aniso) const
@@ -214,7 +238,10 @@ public:
 		float ay	 = std::max(0.001f, roughness * roughness * aspect);
 
 		float pdf_s;
-		out.L = Microfacet::sample_ggx_vndf(u, v, in.Context.V, ax, ay, pdf_s);
+		if constexpr (UseVNDF)
+			out.L = Microfacet::sample_ggx_vndf(u, v, in.Context.V, ax, ay, pdf_s);
+		else
+			out.L = Microfacet::sample_ndf_ggx(u, v, ax, ay, pdf_s);
 		//out.Outgoing = Microfacet::sample_ndf_ggx(u, v, ax, ay, pdf_s);
 		out.PDF_S = pdf_s;
 
@@ -262,6 +289,8 @@ public:
 							  base, lum, subsurface, anisotropic, roughness, metallic, spec, specTint,
 							  sheen, sheenTint, clearcoat, clearcoatGloss)
 					 * std::abs(out.L[2]);
+
+		PR_ASSERT(out.PDF_S[0] >= 0.0f, "PDF has to be positive");
 	}
 
 	std::string dumpInformation() const override
@@ -270,17 +299,18 @@ public:
 
 		stream << std::boolalpha << IMaterial::dumpInformation()
 			   << "  <PrincipledMaterial>:" << std::endl
-			   << "    BaseColor:      " << (mBaseColor ? mBaseColor->dumpInformation() : "NONE") << std::endl
-			   << "    Specular:       " << (mSpecular ? mSpecular->dumpInformation() : "NONE") << std::endl
-			   << "    SpecularTint:   " << (mSpecularTint ? mSpecularTint->dumpInformation() : "NONE") << std::endl
-			   << "    Roughness:      " << (mRoughness ? mRoughness->dumpInformation() : "NONE") << std::endl
-			   << "    Anisotropic:    " << (mAnisotropic ? mAnisotropic->dumpInformation() : "NONE") << std::endl
-			   << "    Subsurface:     " << (mSubsurface ? mSubsurface->dumpInformation() : "NONE") << std::endl
-			   << "    Metallic:       " << (mMetallic ? mMetallic->dumpInformation() : "NONE") << std::endl
-			   << "    Sheen:          " << (mSheen ? mSheen->dumpInformation() : "NONE") << std::endl
-			   << "    SheenTint:      " << (mSheenTint ? mSheenTint->dumpInformation() : "NONE") << std::endl
-			   << "    Clearcoat:      " << (mClearcoat ? mClearcoat->dumpInformation() : "NONE") << std::endl
-			   << "    ClearcoatGloss: " << (mClearcoatGloss ? mClearcoatGloss->dumpInformation() : "NONE") << std::endl;
+			   << "    BaseColor:      " << mBaseColor->dumpInformation() << std::endl
+			   << "    Specular:       " << mSpecular->dumpInformation() << std::endl
+			   << "    SpecularTint:   " << mSpecularTint->dumpInformation() << std::endl
+			   << "    Roughness:      " << mRoughness->dumpInformation() << std::endl
+			   << "    Anisotropic:    " << mAnisotropic->dumpInformation() << std::endl
+			   << "    Subsurface:     " << mSubsurface->dumpInformation() << std::endl
+			   << "    Metallic:       " << mMetallic->dumpInformation() << std::endl
+			   << "    Sheen:          " << mSheen->dumpInformation() << std::endl
+			   << "    SheenTint:      " << mSheenTint->dumpInformation() << std::endl
+			   << "    Clearcoat:      " << mClearcoat->dumpInformation() << std::endl
+			   << "    ClearcoatGloss: " << mClearcoatGloss->dumpInformation() << std::endl
+			   << "    VNDF:           " << (UseVNDF ? "true" : "false") << std::endl;
 
 		return stream.str();
 	}
@@ -299,22 +329,39 @@ private:
 	std::shared_ptr<FloatScalarNode> mClearcoatGloss;
 }; // namespace PR
 
+template <bool UseVNDF>
+inline static std::shared_ptr<IMaterial> createPrincipled(uint32 id, const SceneLoadContext& ctx)
+{
+	const auto base_color	   = ctx.lookupSpectralNode("base_color", 0.8f);
+	const auto specular		   = ctx.lookupScalarNode("specular", 0.5f);
+	const auto specular_tint   = ctx.lookupScalarNode("specular_tint", 0.0f);
+	const auto roughness	   = ctx.lookupScalarNode("roughness", 0.5f);
+	const auto anisotropic	   = ctx.lookupScalarNode("anisotropic", 0.0f);
+	const auto subsurface	   = ctx.lookupScalarNode("subsurface", 0.0f);
+	const auto metallic		   = ctx.lookupScalarNode("metallic", 0.0f);
+	const auto sheen		   = ctx.lookupScalarNode("sheen", 0.0f);
+	const auto sheen_tint	   = ctx.lookupScalarNode("sheen_tint", 0.0f);
+	const auto clearcoat	   = ctx.lookupScalarNode("clearcoat", 0.0f);
+	const auto clearcoat_gloss = ctx.lookupScalarNode("clearcoat_gloss", 0.0f);
+
+	return std::make_shared<PrincipledMaterial<UseVNDF>>(
+		id,
+		base_color, specular, specular_tint, roughness,
+		anisotropic, subsurface, metallic, sheen,
+		sheen_tint, clearcoat, clearcoat_gloss);
+}
+
 class PrincipledMaterialPlugin : public IMaterialPlugin {
 public:
 	std::shared_ptr<IMaterial> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
 	{
-		return std::make_shared<PrincipledMaterial>(id,
-													ctx.lookupSpectralNode("base_color", 0.8f),
-													ctx.lookupScalarNode("specular", 0.5f),
-													ctx.lookupScalarNode("specular_tint", 0.0f),
-													ctx.lookupScalarNode("roughness", 0.5f),
-													ctx.lookupScalarNode("anisotropic", 0.0f),
-													ctx.lookupScalarNode("subsurface", 0.0f),
-													ctx.lookupScalarNode("metallic", 0.0f),
-													ctx.lookupScalarNode("sheen", 0.0f),
-													ctx.lookupScalarNode("sheen_tint", 0.0f),
-													ctx.lookupScalarNode("clearcoat", 0.0f),
-													ctx.lookupScalarNode("clearcoat_gloss", 0.0f));
+		// TODO: Fix VNDF and make it default again
+		const bool use_vndf = ctx.parameters().getBool("vndf", false);
+
+		if (use_vndf)
+			return createPrincipled<true>(id, ctx);
+		else
+			return createPrincipled<false>(id, ctx);
 	}
 
 	const std::vector<std::string>& getNames() const
