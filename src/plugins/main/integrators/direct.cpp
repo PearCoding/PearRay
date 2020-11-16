@@ -183,9 +183,6 @@ private:
 		const bool isDelta	 = material->hasDeltaDistribution();
 		current.LastWasDelta = isDelta;
 
-		if (sout.Weight.isZero())
-			return {};
-
 		const float pdf_s = sout.PDF_S[0] * scatProb;
 		current.LastPDF_S = pdf_s;
 
@@ -337,11 +334,8 @@ private:
 			posPDF.Value = IS::toSolidAngle(posPDF.Value, cameraIP.Depth2, std::abs(cosC));
 		const float posPDF_S = posPDF.Value * selProb;
 
-		if (posPDF_S <= PR_EPSILON)
-			return;
-
 		// Calculate MIS
-		const float mis = 1 / (1 + VCM::mis_term<MISMode>(current.LastPDF_S / posPDF_S));
+		const float mis = 1 / (1 + VCM::mis_term<MISMode>(posPDF_S / current.LastPDF_S));
 
 		if (mis <= PR_EPSILON)
 			return;
@@ -357,8 +351,6 @@ private:
 	{
 		const uint32 cameraPathLength = ray.IterationDepth + 1;
 
-		// Evaluate PDF (for now independent of concrete inf light)
-
 		// Evaluate radiance
 		float denom_mis		  = 0;
 		SpectralBlob radiance = SpectralBlob::Zero();
@@ -373,11 +365,10 @@ private:
 			InfiniteLightEvalOutput lout;
 			light->asInfiniteLight()->eval(lin, lout, session);
 
-			if (lout.Direction_PDF_S > PR_EPSILON) {
-				const float selProb = mLightSampler->pdfLightSelection(light);
-				radiance += lout.Radiance;
-				denom_mis += VCM::mis_term<MISMode>(current.LastPDF_S / (lout.Direction_PDF_S * selProb));
-			}
+			const float selProb = mLightSampler->pdfLightSelection(light);
+			const float pdf_S	= lout.Direction_PDF_S * selProb;
+			radiance += lout.Radiance;
+			denom_mis += VCM::mis_term<MISMode>(pdf_S / current.LastPDF_S);
 		}
 
 		// If directly visible from camera or last one was a delta distribution, do not calculate mis weights
