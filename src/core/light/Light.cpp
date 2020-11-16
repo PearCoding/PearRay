@@ -188,7 +188,7 @@ LightPDF Light::pdfPosition(const Vector3f& posOnLight, const EntitySamplingInfo
 	}
 }
 
-float Light::pdfDirection(const Vector3f& dir, const EntitySamplingInfo* info) const
+float Light::pdfDirection(const Vector3f& dir, float cosLight) const
 { // TODO Make this emission and inf light specific
 	if (isInfinite()) {
 		IInfiniteLight* infL = reinterpret_cast<IInfiniteLight*>(mEntity);
@@ -197,10 +197,7 @@ float Light::pdfDirection(const Vector3f& dir, const EntitySamplingInfo* info) c
 		else
 			return Sampling::cos_hemi_pdf(dir[2]);
 	} else {
-		if (!info)
-			return 0.0f;
-		else
-			return Sampling::cos_hemi_pdf(std::abs(info->Normal.dot(dir)));
+		return Sampling::cos_hemi_pdf(std::abs(cosLight));
 	}
 }
 } // namespace PR

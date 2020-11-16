@@ -6,7 +6,7 @@
 	:camera 'Camera'
 	; Settings
 	(integrator
-		:type 'direct'
+		:type 'bidirect'
 		:max_ray_depth 8
 		:light_sampe_count 1
 	)

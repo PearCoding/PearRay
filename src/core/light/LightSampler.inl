@@ -57,12 +57,12 @@ LightPDF LightSampler::pdfPosition(const IEntity* entity, const Vector3f& posOnL
 	return light->pdfPosition(posOnLight, info);
 }
 
-inline float LightSampler::pdfDirection(const Vector3f& dir, const IEntity* entity, const EntitySamplingInfo* info) const
+inline float LightSampler::pdfDirection(const Vector3f& dir, const IEntity* entity, float cosLight) const
 {
 	if (!entity) {
 		float s = 0;
 		for (const auto& light : mInfLights)
-			s += light->pdfDirection(dir, info);
+			s += light->pdfDirection(dir, cosLight);
 		return s;
 	}
 
@@ -71,7 +71,7 @@ inline float LightSampler::pdfDirection(const Vector3f& dir, const IEntity* enti
 
 	const uint32 lightID = mLightEntityMap.at(entity);
 	const Light* light	 = mLights[lightID].get();
-	return light->pdfDirection(dir, info);
+	return light->pdfDirection(dir, cosLight);
 }
 
 inline const Light* LightSampler::light(const IEntity* entity) const

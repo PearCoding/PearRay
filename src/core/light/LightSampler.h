@@ -22,7 +22,7 @@ public:
 	inline float pdfLightSelection(const Light* light) const;
 	inline float pdfEntitySelection(const IEntity* entity) const;
 	inline LightPDF pdfPosition(const IEntity* entity, const Vector3f& posOnLight, const EntitySamplingInfo* info = nullptr) const;
-	inline float pdfDirection(const Vector3f& dir, const IEntity* entity, const EntitySamplingInfo* info = nullptr) const;
+	inline float pdfDirection(const Vector3f& dir, const IEntity* entity, float cosLight=1.0f) const;
 	inline const Light* light(const IEntity* entity) const;
 
 	inline const LightList& lights() const { return mLights; }

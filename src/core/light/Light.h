@@ -59,7 +59,7 @@ public:
 	void sample(const LightSampleInput& in, LightSampleOutput& out, const RenderTileSession& session) const;
 	LightPDF pdfPosition(const Vector3f& posOnLight, const EntitySamplingInfo* info = nullptr) const;
 	// Returns pdf for direction respect to solid angle
-	float pdfDirection(const Vector3f& dir, const EntitySamplingInfo* info = nullptr) const;
+	float pdfDirection(const Vector3f& dir, float cosLight = 1.0f) const;
 
 	inline static Light makeInfLight(uint32 light_id, IInfiniteLight* infLight, float relContribution)
 	{
