@@ -14,7 +14,7 @@
 	  :radius 1
 	)
 	(integrator 
-	  :type 'direct2'
+	  :type 'bidirect'
 	  :max_ray_depth 8
 	  :light_sample_count 1
 	)

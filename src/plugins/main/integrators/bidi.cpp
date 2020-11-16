@@ -55,7 +55,7 @@ public:
 			const Light* light = mTracer.traceLightPath(tctx, spt.Ray.WavelengthNM);
 			if (PR_UNLIKELY(!light))
 				return; // Giveup as no light is present
-			PR_ASSERT(tctx.LightPath.currentSize() > tctx.LightVertices.size(), "Light vertices and path do not match");
+			PR_ASSERT(tctx.LightPath.currentSize() >= tctx.LightVertices.size(), "Light vertices and path do not match");
 
 			mTracer.traceCameraPath(tctx, spt, sg.entity(), session.getMaterial(spt.Surface.Geometry.MaterialID));
 

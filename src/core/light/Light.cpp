@@ -195,7 +195,7 @@ float Light::pdfDirection(const Vector3f& dir, float cosLight) const
 		if (infL->hasDeltaDistribution())
 			return 1;
 		else
-			return Sampling::cos_hemi_pdf(dir[2]);
+			return Sampling::cos_hemi_pdf(std::abs(dir[2]));
 	} else {
 		return Sampling::cos_hemi_pdf(std::abs(cosLight));
 	}

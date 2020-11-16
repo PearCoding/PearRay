@@ -6,7 +6,7 @@
 	:camera 'Camera'
 	; Settings
 	(integrator
-		:type 'direct2'
+		:type 'direct'
 	)
 	(sampler
 		:slot 'aa'

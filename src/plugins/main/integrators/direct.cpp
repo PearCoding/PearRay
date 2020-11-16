@@ -224,12 +224,14 @@ private:
 			return;
 
 		// Calculate geometry stuff
-		const float sqrD	  = (lsout.LightPosition - cameraIP.P).squaredNorm();
-		const Vector3f L	  = lsout.Outgoing;
-		const float cosC	  = std::abs(L.dot(cameraIP.Surface.N));
-		const float cosL	  = culling(lsout.CosLight);
-		const float Geometry  = cosC * cosL / sqrD;
-		const bool isFeasible = Geometry > GEOMETRY_EPS && sqrD > DISTANCE_EPS;
+		const float sqrD	   = (lsout.LightPosition - cameraIP.P).squaredNorm();
+		const Vector3f L	   = lsout.Outgoing;
+		const float cosCS	   = L.dot(cameraIP.Surface.N);
+		const float cosC	   = std::abs(cosCS);
+		const float cosL	   = std::abs(lsout.CosLight);
+		const bool front2front = cosCS >= 0.0f && lsout.CosLight >= 0.0f;
+		const float Geometry   = cosC * cosL / sqrD;
+		const bool isFeasible  = Geometry > GEOMETRY_EPS && sqrD > DISTANCE_EPS;
 
 		if (!isFeasible) // MIS is zero
 			return;
@@ -269,7 +271,7 @@ private:
 		const float distance = light->isInfinite() ? PR_INF : std::sqrt(sqrD);
 		const Ray shadow	 = cameraIP.nextRay(L, RF_Shadow, SHADOW_RAY_MIN, distance);
 
-		const bool isVisible	  = !session.traceShadowRay(shadow, distance);
+		const bool isVisible	  = front2front && !session.traceShadowRay(shadow, distance);
 		const SpectralBlob lightW = lsout.Radiance;
 
 		// Calculate contribution (cosinus term already applied inside material)

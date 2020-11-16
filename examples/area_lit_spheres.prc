@@ -8,7 +8,6 @@
 	(integrator
 		:type 'bidirect'
 		:max_ray_depth 8
-		:light_sampe_count 1
 	)
 	(sampler
 		:slot 'aa'

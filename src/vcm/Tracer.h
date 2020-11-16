@@ -99,6 +99,9 @@ public:
 		LightTraversalContext current = LightTraversalContext{ lsout.Radiance, 0, 0, 0, !light->isInfinite() };
 
 		current.Throughput /= emissionPdfS;
+		if (current.Throughput.isZero(PR_EPSILON)) // Don't even try
+			return light;
+
 		current.MIS_VCM = mis_term<Mode>(directPdfA / emissionPdfS);
 		if (light->hasDeltaDistribution())
 			current.MIS_VC = 0;
@@ -145,17 +148,14 @@ private:
 
 		// Russian roulette
 		const auto roulette = checkRoulette<IsCamera>(tctx.Session.random(), ip.Ray.IterationDepth + 1);
-		if (!roulette.has_value()) {
-			path.addToken(MST_DiffuseReflection);
+		if (!roulette.has_value())
 			return {};
-		}
+
 		const float scatProb = roulette.value();
 
 		// TODO: Add volume support
-		if (!material) {
-			path.addToken(MST_DiffuseReflection);
+		if (!material)
 			return {};
-		}
 
 		// Sample Material
 		MaterialSampleInput sin;
@@ -198,10 +198,10 @@ private:
 				current.MIS_VM = 0;
 			current.MIS_VCM = 0;
 		} else {
-			current.MIS_VC = mis_term<Mode>(NdotL / backwardPDF_S) * (current.MIS_VC * mis_term<Mode>(backwardPDF_S) + current.MIS_VCM);
+			current.MIS_VC = mis_term<Mode>(NdotL / forwardPDF_S) * (current.MIS_VC * mis_term<Mode>(backwardPDF_S) + current.MIS_VCM);
 			if constexpr (UseMerging)
 				current.MIS_VM = 0; // TODO
-			current.MIS_VCM = mis_term<Mode>(1 / backwardPDF_S);
+			current.MIS_VCM = mis_term<Mode>(1 / forwardPDF_S);
 		}
 
 		if (NdotL <= PR_EPSILON) // Do not bother if laying flat on the sampling plane
@@ -211,8 +211,8 @@ private:
 			return {};
 
 		// Update throughput
-		current.Throughput *= sout.Weight / backwardPDF_S;
-		if constexpr (IsCamera)
+		current.Throughput *= sout.Weight / forwardPDF_S;
+		if constexpr (!IsCamera)
 			current.Throughput *= correctShadingNormalForLight(-ip.Ray.Direction, L, ip.Surface.N, ip.Surface.Geometry.N);
 
 		if (material->isSpectralVarying())
@@ -296,12 +296,10 @@ private:
 				current.MIS_VM *= f;
 		}
 
-		float sumMIS = 0.0f;
-
 		// Handle light emission (c0t)
 		if (entity->hasEmission()) {
 			tctx.CameraPath.addToken(LightPathToken::Emissive());
-			handleDirectHit(tctx, ip, entity, current, sumMIS);
+			handleDirectHit(tctx, ip, entity, current);
 			tctx.CameraPath.popToken();
 		}
 
@@ -311,20 +309,11 @@ private:
 
 		if (!material->hasDeltaDistribution()) {
 			// c1t
-			handleNEE(tctx, ip, material, current, sumMIS);
+			handleNEE(tctx, ip, material, current);
 			// cst
 			for (const auto& vertex : tctx.LightVertices)
-				handleConnection(tctx, vertex, ip, material, current, sumMIS);
+				handleConnection(tctx, vertex, ip, material, current);
 		}
-
-		// Some terms are ignored due to wrong pdf, cosine etc. Compensate for them here
-		/*PR_ASSERT(sumMIS <= 1.0f, "Expected full MIS term being between 0 and 1!");
-		if (sumMIS < 1.0f) {
-			tctx.CameraPath.addToken(LightPathToken::Background());
-			tctx.Session.pushSpectralFragment(SpectralBlob(1 - sumMIS), current.Throughput, SpectralBlob::Zero(),
-											  ip.Ray, tctx.CameraPath);
-			tctx.CameraPath.popToken();
-		}*/
 
 		return handleScattering<true>(tctx, ip, entity, material, current);
 	}
@@ -357,7 +346,7 @@ private:
 	}
 
 	void handleNEE(TracerContext& tctx,
-				   const IntersectionPoint& cameraIP, const IMaterial* cameraMaterial, CameraTraversalContext& current, float& sumMIS) const
+				   const IntersectionPoint& cameraIP, const IMaterial* cameraMaterial, CameraTraversalContext& current) const
 	{
 		const EntitySamplingInfo sampleInfo = { cameraIP.P, cameraIP.Surface.N };
 
@@ -378,12 +367,14 @@ private:
 		const float cameraRoulette	  = mCameraRR.probability(cameraPathLength);
 
 		// Calculate geometry stuff
-		const float sqrD	  = (lsout.LightPosition - cameraIP.P).squaredNorm();
-		const Vector3f L	  = lsout.Outgoing;
-		const float cosC	  = std::abs(L.dot(cameraIP.Surface.N));
-		const float cosL	  = std::abs(lsout.CosLight);
-		const float Geometry  = cosC * cosL / sqrD;
-		const bool isFeasible = Geometry > GEOMETRY_EPS && sqrD > DISTANCE_EPS;
+		const float sqrD	   = (lsout.LightPosition - cameraIP.P).squaredNorm();
+		const Vector3f L	   = lsout.Outgoing;
+		const float cosCS	   = L.dot(cameraIP.Surface.N);
+		const float cosC	   = std::abs(cosCS);
+		const float cosL	   = std::abs(lsout.CosLight);
+		const bool front2front = cosCS >= 0.0f && lsout.CosLight >= 0.0f;
+		const float Geometry   = cosC * cosL / sqrD;
+		const bool isFeasible  = Geometry > GEOMETRY_EPS && sqrD > DISTANCE_EPS;
 
 		if (!isFeasible) // MIS is zero
 			return;
@@ -400,22 +391,27 @@ private:
 			cameraForwardPDF_S = 0;
 		cameraBackwardPDF_S *= cameraRoulette;
 
-		// Convert position pdf to solid angle if necessary
-		float posPdfS = lsout.Position_PDF.Value;
-		if (lsout.Position_PDF.IsArea)
-			posPdfS = IS::toSolidAngle(posPdfS, sqrD, cosL);
-
+		// Calculate direct and emission pdf (TODO: We really need a better abstraction)
 		float directPdfS   = 0; // PDF for NEE
 		float emissionPdfS = 0; // PDF for Light emission
 		if (light->isInfinite()) {
+			float posPdfA = lsout.Position_PDF.Value;
+			if (!lsout.Position_PDF.IsArea)
+				posPdfA = IS::toArea(posPdfA, sqrD, cosL);
 			directPdfS	 = lsout.Direction_PDF_S;
-			emissionPdfS = directPdfS * posPdfS;
+			emissionPdfS = directPdfS * posPdfA; // We lie here
 		} else {
+			float posPdfS = lsout.Position_PDF.Value;
+			float posPdfA = lsout.Position_PDF.Value;
+			if (lsout.Position_PDF.IsArea)
+				posPdfS = IS::toSolidAngle(posPdfA, sqrD, cosL);
+			else
+				posPdfA = IS::toArea(posPdfS, sqrD, cosL);
 			directPdfS	 = posPdfS;
-			emissionPdfS = directPdfS * light->pdfDirection(L, lsout.CosLight);
+			emissionPdfS = posPdfA * light->pdfDirection(L, lsout.CosLight);
 		}
 
-		if (directPdfS <= PR_EPSILON)
+		if (directPdfS <= PR_EPSILON || emissionPdfS <= PR_EPSILON)
 			return;
 
 		// Calculate MIS
@@ -433,7 +429,7 @@ private:
 		const float distance = light->isInfinite() ? PR_INF : std::sqrt(sqrD);
 		const Ray shadow	 = cameraIP.nextRay(L, RF_Shadow, SHADOW_RAY_MIN, distance);
 
-		const bool isVisible	  = lsout.CosLight > 0.0f && !tctx.Session.traceShadowRay(shadow, distance);
+		const bool isVisible	  = front2front && !tctx.Session.traceShadowRay(shadow, distance);
 		const SpectralBlob lightW = lsout.Radiance;
 
 		// Calculate contribution
@@ -452,15 +448,13 @@ private:
 			tctx.TmpPath.addToken(LightPathToken::Emissive());
 
 		// Splat
-		sumMIS += mis;
-		//PR_ASSERT(sumMIS <= 1.0f, "Expected full MIS term being between 0 and 1! 4353452352");
 		tctx.Session.pushSpectralFragment(SpectralBlob(mis), current.Throughput, contrib,
 										  cameraIP.Ray, tctx.TmpPath);
 	}
 
 	void handleConnection(TracerContext& tctx,
 						  const PathVertex& lightVertex,
-						  const IntersectionPoint& cameraIP, const IMaterial* cameraMaterial, CameraTraversalContext& current, float& sumMIS) const
+						  const IntersectionPoint& cameraIP, const IMaterial* cameraMaterial, CameraTraversalContext& current) const
 	{
 		Vector3f cD		  = (lightVertex.IP.P - cameraIP.P); // Camera Vertex -> Light Vertex
 		const float dist2 = cD.squaredNorm();
@@ -498,10 +492,13 @@ private:
 		lightBackwardPDF_S *= lightRoulette;
 
 		// Calculate geometry term
-		const float cosC	  = std::abs(cD.dot(cameraIP.Surface.N));
-		const float cosL	  = std::abs(cD.dot(lightVertex.IP.Surface.N));
-		const float Geometry  = cosL / dist2; // cosC already included in material
-		const bool isFeasible = cosC * Geometry > GEOMETRY_EPS;
+		const float cosCS	   = cD.dot(cameraIP.Surface.N);
+		const float cosC	   = std::abs(cosCS);
+		const float cosLS	   = -cD.dot(lightVertex.IP.Surface.N);
+		const float cosL	   = std::abs(cosLS);
+		const bool front2front = cosCS >= 0.0f && cosLS >= 0.0f;
+		const float Geometry   = cosL / dist2; // cosC already included in material
+		const bool isFeasible  = cosC * Geometry > GEOMETRY_EPS;
 		if (!isFeasible)
 			return;
 
@@ -523,7 +520,7 @@ private:
 		const Ray shadow = cameraIP.nextRay(cD, RF_Shadow, SHADOW_RAY_MIN, dist);
 
 		// Extract visible and geometry term
-		const bool isVisible = !tctx.Session.traceShadowRay(shadow, dist);
+		const bool isVisible = front2front && !tctx.Session.traceShadowRay(shadow, dist);
 
 		// Extract terms
 		const SpectralBlob contrib = isVisible ? (lightW * Geometry * cameraW).eval() : SpectralBlob::Zero();
@@ -539,14 +536,12 @@ private:
 			tctx.TmpPath.addToken(tctx.LightPath.token(lightPathLength - 1 - s2));
 
 		// Splat
-		sumMIS += mis;
-		//PR_ASSERT(sumMIS <= 1.0f, "Expected full MIS term being between 0 and 1! fdasdsdasd");
 		tctx.Session.pushSpectralFragment(SpectralBlob(mis), current.Throughput, contrib, cameraIP.Ray, tctx.TmpPath);
 	}
 
 	// Handle case where camera ray directly hits emissive object
 	void handleDirectHit(TracerContext& tctx, const IntersectionPoint& cameraIP,
-						 const IEntity* cameraEntity, CameraTraversalContext& current, float& sumMIS) const
+						 const IEntity* cameraEntity, CameraTraversalContext& current) const
 	{
 		const uint32 cameraPathLength = cameraIP.Ray.IterationDepth + 1;
 
@@ -583,11 +578,11 @@ private:
 		auto posPDF			= mLightSampler->pdfPosition(cameraEntity, cameraIP.P);
 		PR_ASSERT(posPDF.IsArea, "Area lights should return pdfs respective to area!");
 
-		const float dirPDF_S = mLightSampler->pdfDirection(cameraIP.Ray.Direction, cameraEntity) * selProb;
-		const float posPDF_A = posPDF.Value * selProb;
+		const float directPdfA	 = posPDF.Value * selProb;
+		const float emissivePdfS = mLightSampler->pdfDirection(cameraIP.Ray.Direction, cameraEntity, cosL) * directPdfA;
 
 		// Calculate MIS
-		const float cameraMIS = mis_term<Mode>(posPDF_A) * current.MIS_VCM + mis_term<Mode>(dirPDF_S) * current.MIS_VC;
+		const float cameraMIS = mis_term<Mode>(directPdfA) * current.MIS_VCM + mis_term<Mode>(emissivePdfS) * current.MIS_VC;
 		const float mis		  = 1 / (1 + cameraMIS);
 
 		if (mis <= PR_EPSILON)
@@ -596,7 +591,6 @@ private:
 		PR_ASSERT(mis <= 1.0f, "MIS must be between 0 and 1");
 
 		// Splat
-		sumMIS += mis;
 		tctx.Session.pushSpectralFragment(SpectralBlob(mis), current.Throughput, radiance, cameraIP.Ray, tctx.CameraPath);
 	}
 
@@ -625,8 +619,9 @@ private:
 			radiance += lout.Radiance;
 
 			// Evaluate PDF
-			const float selProb = mLightSampler->pdfLightSelection(light);
-			auto posPDF			= mLightSampler->pdfPosition(nullptr, Vector3f::Zero()); // TODO: Implement pdf evaluation for infinite lights
+			const float selProb	 = mLightSampler->pdfLightSelection(light);
+			const auto posPDF	 = light->pdfPosition(Vector3f::Zero());
+			const float dirPDF_S = light->pdfDirection(ray.Direction);
 
 			float posPDF_A = posPDF.Value;
 			if (!posPDF.IsArea) {
@@ -634,11 +629,11 @@ private:
 				posPDF_A	  = IS::toArea(posPDF_A, r * r, 1);
 			}
 
-			posPDF_A *= selProb;
-			const float dirPDF_S = lout.Direction_PDF_S * selProb;
+			const float directPdfA	 = dirPDF_S * selProb; // We lie here
+			const float emissivePdfS = posPDF_A * directPdfA;
 
 			// Calculate MIS
-			const float cameraMIS = mis_term<Mode>(posPDF_A) * current.MIS_VCM + mis_term<Mode>(dirPDF_S) * current.MIS_VC;
+			const float cameraMIS = mis_term<Mode>(directPdfA) * current.MIS_VCM + mis_term<Mode>(emissivePdfS) * current.MIS_VC;
 			misDenom += cameraMIS;
 		}
 
