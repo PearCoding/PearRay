@@ -1,7 +1,7 @@
 // IWYU pragma: private, include "container/HashGrid.h"
 namespace PR {
-template <typename T>
-HashGrid<T>::HashGrid(const BoundingBox& bbox, float gridDelta, const position_getter<T>& getter)
+template <typename T, template <typename> typename PositionGetter>
+HashGrid<T, PositionGetter>::HashGrid(const BoundingBox& bbox, float gridDelta, const PositionGetter<T>& getter)
 	: mElements()
 	, mStoredElements(0)
 	, mGridDelta(gridDelta)
@@ -18,22 +18,22 @@ HashGrid<T>::HashGrid(const BoundingBox& bbox, float gridDelta, const position_g
 	mElements.resize(mGridX * mGridY * mGridZ);
 }
 
-template <typename T>
-HashGrid<T>::~HashGrid()
+template <typename T, template <typename> typename PositionGetter>
+HashGrid<T, PositionGetter>::~HashGrid()
 {
 }
 
-template <typename T>
-void HashGrid<T>::reset()
+template <typename T, template <typename> typename PositionGetter>
+void HashGrid<T, PositionGetter>::reset()
 {
 	mStoredElements = 0;
 	for (auto& m : mElements)
 		m.clear();
 }
 
-template <typename T>
+template <typename T, template <typename> typename PositionGetter>
 template <typename Function>
-inline void HashGrid<T>::search(const Vector3f& center, float radius, const Function& func) const
+inline void HashGrid<T, PositionGetter>::search(const Vector3f& center, float radius, const Function& func) const
 {
 	KeyCoord centerCoord = toCoords(center);
 	const int32 rad		 = std::max<int32>(0, (int32)std::ceil(radius * mInvGridDelta)) + 1;
@@ -62,8 +62,8 @@ inline void HashGrid<T>::search(const Vector3f& center, float radius, const Func
 	}
 }
 
-template <typename T>
-void HashGrid<T>::store(const T& el)
+template <typename T, template <typename> typename PositionGetter>
+void HashGrid<T, PositionGetter>::store(const T& el)
 {
 	const Vector3f pos = mPositionGetter(el);
 	if (!mBoundingBox.contains(pos))
@@ -72,8 +72,8 @@ void HashGrid<T>::store(const T& el)
 	storeUnsafe(el);
 }
 
-template <typename T>
-void HashGrid<T>::storeUnsafe(const T& el)
+template <typename T, template <typename> typename PositionGetter>
+void HashGrid<T, PositionGetter>::storeUnsafe(const T& el)
 {
 	mStoredElements++;
 	const Vector3f pos = mPositionGetter(el);
@@ -82,8 +82,8 @@ void HashGrid<T>::storeUnsafe(const T& el)
 	mElements[toIndex(key)].push_back(el);
 }
 
-template <typename T>
-typename HashGrid<T>::KeyCoord HashGrid<T>::toCoords(const Vector3f& p) const
+template <typename T, template <typename> typename PositionGetter>
+typename HashGrid<T, PositionGetter>::KeyCoord HashGrid<T, PositionGetter>::toCoords(const Vector3f& p) const
 {
 	const Vector3f dp = (p - mBoundingBox.lowerBound()) * mInvGridDelta;
 	return {
@@ -93,14 +93,14 @@ typename HashGrid<T>::KeyCoord HashGrid<T>::toCoords(const Vector3f& p) const
 	};
 }
 
-template <typename T>
-bool HashGrid<T>::KeyCoord::operator==(const KeyCoord& other) const
+template <typename T, template <typename> typename PositionGetter>
+bool HashGrid<T, PositionGetter>::KeyCoord::operator==(const KeyCoord& other) const
 {
 	return X == other.X && Y == other.Y && Z == other.Z;
 }
 
-template <typename T>
-inline size_t HashGrid<T>::toIndex(const KeyCoord& coords) const
+template <typename T, template <typename> typename PositionGetter>
+inline size_t HashGrid<T, PositionGetter>::toIndex(const KeyCoord& coords) const
 {
 	return coords.X + coords.Y * mGridX + coords.Z * mGridX * mGridY;
 }

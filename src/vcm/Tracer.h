@@ -4,18 +4,22 @@
 #include "Options.h"
 #include "PathVertex.h"
 #include "RussianRoulette.h"
-#include "TracerContext.h"
+#include "TracerIterationContext.h"
+#include "TracerThreadContext.h"
 #include "TraversalContext.h"
 #include "Utils.h"
 #include "Walker.h"
 #include "renderer/RenderTileSession.h"
+#include "Wavelength.h"
 
 namespace PR {
 namespace VCM {
-
-template <bool UseMerging, bool HasInfLights, MISMode Mode = MM_Balance>
+template <bool UseMerging, MISMode Mode = MM_Balance>
 class Tracer {
 public:
+	using IterationContext = TracerIterationContext<UseMerging, Mode>;
+	using ThreadContext	   = TracerThreadContext;
+
 	inline Tracer(const Options& options, const std::shared_ptr<LightSampler>& lightSampler)
 		: mOptions(options)
 		, mCameraWalker(options.MaxCameraRayDepthHard)
@@ -28,16 +32,37 @@ public:
 
 	inline const Options& options() const { return mOptions; }
 
-	inline void traceCameraPath(TracerContext& tctx, const IntersectionPoint& initial_hit,
+	inline void traceCameraPath(IterationContext& tctx, const IntersectionPoint& initial_hit,
 								IEntity* entity, IMaterial* material) const
 	{
 		PR_PROFILE_THIS;
 
-		tctx.Session.pushSPFragment(initial_hit, tctx.CameraPath);
+		tctx.Session.pushSPFragment(initial_hit, tctx.ThreadContext.CameraPath);
+
+		if (tctx.ThreadContext.LightPathEnds.empty())
+			return;
 
 		// Initial camera vertex
-		CameraTraversalContext current = CameraTraversalContext{ SpectralBlob::Ones(), 0, 0, 0 };
+		CameraTraversalContext current = CameraTraversalContext{ SpectralBlob::Ones(), 0, 0, 0, true, 0 };
 
+		if constexpr (UseMerging) {
+			// Select light path to work with
+			// TODO: Construct reasonable structure!
+			const size_t lightPathCount = tctx.ThreadContext.LightPathEnds.size();
+			SpectralPermutation permutation;
+			for (size_t i = 0; i < 100; ++i) { // Try to find a eligible light path
+				current.LightPath		 = tctx.Session.random().get64(0, lightPathCount);
+				const PathVertex* vertex = tctx.ThreadContext.lightVertex(current.LightPath, 0);
+				PR_ASSERT(vertex, "Expected valid light vertex");
+
+				if (checkWavelengthSupport(initial_hit.Ray.WavelengthNM, initial_hit.Ray.Flags & RF_Monochrome,
+										   vertex->IP.Ray.WavelengthNM, vertex->IP.Ray.Flags & RF_Monochrome,
+										   permutation))
+					break;
+			}
+		}
+
+		// Initial camera vertex
 		mCameraWalker.traverse(
 			tctx.Session, initial_hit, entity, material,
 			[&](const IntersectionPoint& ip, IEntity* entity2, IMaterial* material2) -> std::optional<Ray> {
@@ -45,18 +70,14 @@ public:
 										  entity2, material2, current);
 			},
 			[&](const Ray& ray) {
-				if constexpr (HasInfLights) {
-					tctx.CameraPath.addToken(LightPathToken::Background());
-					handleInfLights(tctx, current, ray);
-					tctx.CameraPath.popToken();
-				} else {
-					PR_UNUSED(ray);
-				}
+				tctx.ThreadContext.CameraPath.addToken(LightPathToken::Background());
+				handleInfLights(tctx, current, ray);
+				tctx.ThreadContext.CameraPath.popToken();
 			});
 	}
 
 	// First light vertex
-	const Light* traceLightPath(TracerContext& tctx, const SpectralBlob& wvl) const
+	const Light* traceLightPath(IterationContext& tctx, const SpectralBlob& wvl) const
 	{
 		PR_PROFILE_THIS;
 
@@ -74,9 +95,9 @@ public:
 		const Light* light = lsample.first;
 
 		if (light->isInfinite())
-			tctx.LightPath.addToken(LightPathToken::Background());
+			tctx.ThreadContext.LightPath.addToken(LightPathToken::Background());
 		else
-			tctx.LightPath.addToken(LightPathToken::Emissive());
+			tctx.ThreadContext.LightPath.addToken(LightPathToken::Emissive());
 
 		// Calculate PDF (TODO: Do not mix area & solid angle measure)
 		float directPdfA   = 0; // PDF for NEE
@@ -96,7 +117,7 @@ public:
 			return light;
 
 		// Setup light path context
-		LightTraversalContext current = LightTraversalContext{ lsout.Radiance, 0, 0, 0, !light->isInfinite() };
+		LightTraversalContext current = LightTraversalContext{ lsout.Radiance, 0, 0, 0, true, !light->isInfinite() };
 
 		current.Throughput /= emissionPdfS;
 		if (current.Throughput.isZero(PR_EPSILON)) // Don't even try
@@ -107,6 +128,8 @@ public:
 			current.MIS_VC = 0;
 		else
 			current.MIS_VC = mis_term<Mode>(lsout.CosLight / emissionPdfS);
+
+		current.MIS_VM = current.MIS_VC * tctx.MISVCWeightFactor();
 
 		// Construct direction
 		Ray ray	   = Ray(lsout.LightPosition, -lsout.Outgoing);
@@ -124,8 +147,45 @@ public:
 				// Do nothing! (as we do not support C_s0 connections)
 			});
 
+		// Make sure the end of the path is given
+		// but do not add it to the cache if no vertex was generated to begin with
+		const size_t end = tctx.ThreadContext.LightVertices.size();
+		if (tctx.ThreadContext.LightPathEnds.empty() || tctx.ThreadContext.LightPathEnds.back() != end)
+			tctx.ThreadContext.LightPathEnds.emplace_back(end);
+
 		return light;
 	}
+
+	/// Construct search grid for this particular thread context
+	inline void setupSearchGrid(ThreadContext& threadContext) const
+	{
+		PR_ASSERT(threadContext.LightMap, "Expected initialized lightmap");
+		auto* lightMap = threadContext.LightMap.get();
+
+		lightMap->reset(); // Clear previous content
+
+		const size_t vertices = threadContext.LightVertices.size();
+		for (size_t i = 0; i < vertices; ++i)
+			lightMap->storeUnsafe(i);
+	}
+
+	// We assume only registration is done within multiple threads
+	// You may ignore registration of thread contexts if UseMerging is false
+	inline void registerThreadContext()
+	{
+		std::lock_guard<std::mutex> guard(mRegistrationMutex);
+		mThreadContexts.emplace_back(std::make_unique<ThreadContext>(mOptions));
+	}
+
+	inline void registerThreadContext(const BoundingBox& bbox, float sceneGridDelta)
+	{
+		std::lock_guard<std::mutex> guard(mRegistrationMutex);
+		mThreadContexts.emplace_back(std::make_unique<ThreadContext>(bbox, sceneGridDelta, mOptions));
+	}
+
+	// While accessing thread contexts, no new registration should occur!
+	inline ThreadContext& threadContext(size_t id) { return *mThreadContexts[id].get(); }
+	inline size_t threadContextCount() { return mThreadContexts.size(); }
 
 private:
 	template <bool IsCamera>
@@ -138,13 +198,13 @@ private:
 	}
 
 	template <bool IsCamera>
-	std::optional<Ray> handleScattering(TracerContext& tctx, const IntersectionPoint& ip,
+	std::optional<Ray> handleScattering(IterationContext& tctx, const IntersectionPoint& ip,
 										IEntity* entity, IMaterial* material, BaseTraversalContext& current) const
 	{
 		PR_ASSERT(entity, "Expected valid entity");
 
 		auto& rnd		= tctx.Session.random();
-		LightPath& path = IsCamera ? tctx.CameraPath : tctx.LightPath;
+		LightPath& path = IsCamera ? tctx.ThreadContext.CameraPath : tctx.ThreadContext.LightPath;
 
 		// Russian roulette
 		const auto roulette = checkRoulette<IsCamera>(tctx.Session.random(), ip.Ray.IterationDepth + 1);
@@ -168,8 +228,9 @@ private:
 
 		path.addToken(sout.Type);
 
-		const Vector3f L   = sout.globalL(ip);
-		const bool isDelta = material->hasDeltaDistribution();
+		const Vector3f L		  = sout.globalL(ip);
+		const bool isDelta		  = material->hasDeltaDistribution();
+		current.OnlySpecularSoFar = current.OnlySpecularSoFar && isDelta;
 
 		if (sout.Weight.isZero())
 			return {};
@@ -193,14 +254,16 @@ private:
 		// Second time update MIS terms
 		const float NdotL = std::abs(sout.L[2]);
 		if (isDelta) {
-			current.MIS_VC *= mis_term<Mode>(NdotL);
+			const float misNdotL = mis_term<Mode>(NdotL);
+			current.MIS_VC *= misNdotL;
 			if constexpr (UseMerging)
-				current.MIS_VM = 0;
+				current.MIS_VM *= misNdotL;
 			current.MIS_VCM = 0;
 		} else {
-			current.MIS_VC = mis_term<Mode>(NdotL / forwardPDF_S) * (current.MIS_VC * mis_term<Mode>(backwardPDF_S) + current.MIS_VCM);
+			const float misNdotL = mis_term<Mode>(NdotL / forwardPDF_S);
+			current.MIS_VC		 = misNdotL * (current.MIS_VC * mis_term<Mode>(backwardPDF_S) + current.MIS_VCM + tctx.MISVMWeightFactor());
 			if constexpr (UseMerging)
-				current.MIS_VM = 0; // TODO
+				current.MIS_VM = misNdotL * (current.MIS_VM * mis_term<Mode>(backwardPDF_S) + current.MIS_VCM * tctx.MISVCWeightFactor() + 1.0f);
 			current.MIS_VCM = mis_term<Mode>(1 / forwardPDF_S);
 		}
 
@@ -229,7 +292,7 @@ private:
 		return std::make_optional(ip.nextRay(L, rflags, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX));
 	}
 
-	std::optional<Ray> handleLightVertex(TracerContext& tctx, const IntersectionPoint& ip,
+	std::optional<Ray> handleLightVertex(IterationContext& tctx, const IntersectionPoint& ip,
 										 IEntity* entity, IMaterial* material, LightTraversalContext& current) const
 	{
 		PR_ASSERT(entity, "Expected valid entity");
@@ -267,14 +330,15 @@ private:
 			vertex.MIS_VCM	  = current.MIS_VCM;
 			vertex.MIS_VC	  = current.MIS_VC;
 			vertex.MIS_VM	  = current.MIS_VM;
-			tctx.LightVertices.emplace_back(vertex);
+
+			tctx.ThreadContext.LightVertices.emplace_back(vertex);
 		}
 		// Our implementation does not support direct camera hits (no C_s0)
 
 		return handleScattering<false>(tctx, ip, entity, material, current);
 	}
 
-	std::optional<Ray> handleCameraVertex(TracerContext& tctx, const IntersectionPoint& ip,
+	std::optional<Ray> handleCameraVertex(IterationContext& tctx, const IntersectionPoint& ip,
 										  IEntity* entity, IMaterial* material, CameraTraversalContext& current) const
 	{
 		PR_ASSERT(entity, "Expected valid entity");
@@ -298,9 +362,9 @@ private:
 
 		// Handle light emission (c0t)
 		if (entity->hasEmission()) {
-			tctx.CameraPath.addToken(LightPathToken::Emissive());
+			tctx.ThreadContext.CameraPath.addToken(LightPathToken::Emissive());
 			handleDirectHit(tctx, ip, entity, current);
-			tctx.CameraPath.popToken();
+			tctx.ThreadContext.CameraPath.popToken();
 		}
 
 		// If there is no material to scatter from, give up
@@ -311,14 +375,19 @@ private:
 			// c1t
 			handleNEE(tctx, ip, material, current);
 			// cst
-			for (const auto& vertex : tctx.LightVertices)
-				handleConnection(tctx, vertex, ip, material, current);
+			const auto range = tctx.ThreadContext.lightPath(current.LightPath);
+			for (auto it = range.first; it != range.second; ++it)
+				handleConnection(tctx, *it, ip, material, current);
+
+			// VM
+			if constexpr (UseMerging)
+				handleMerging(tctx, ip, material, current);
 		}
 
 		return handleScattering<true>(tctx, ip, entity, material, current);
 	}
 
-	inline SpectralBlob extractMaterial(const TracerContext& tctx,
+	inline SpectralBlob extractMaterial(const IterationContext& tctx,
 										const IntersectionPoint& ip, const IMaterial* material, const Vector3f& d,
 										float& forwardPDF_S, float& backwardPDF_S, MaterialScatteringType& type) const
 	{
@@ -345,7 +414,7 @@ private:
 		return out.Weight;
 	}
 
-	void handleNEE(TracerContext& tctx,
+	void handleNEE(IterationContext& tctx,
 				   const IntersectionPoint& cameraIP, const IMaterial* cameraMaterial, CameraTraversalContext& current) const
 	{
 		const EntitySamplingInfo sampleInfo = { cameraIP.P, cameraIP.Surface.N };
@@ -417,7 +486,7 @@ private:
 		// Calculate MIS
 		const float lightMIS  = mis_term<Mode>(cameraForwardPDF_S / (lsample.second * directPdfS));
 		const float cameraMIS = mis_term<Mode>(emissionPdfS * cosC / (directPdfS * cosL))
-								* (current.MIS_VCM + current.MIS_VC * mis_term<Mode>(cameraBackwardPDF_S));
+								* (tctx.MISVMWeightFactor() + current.MIS_VCM + current.MIS_VC * mis_term<Mode>(cameraBackwardPDF_S));
 		const float mis = 1 / (1 + lightMIS + cameraMIS);
 
 		if (mis <= PR_EPSILON)
@@ -436,23 +505,23 @@ private:
 		const SpectralBlob contrib = isVisible ? (lightW * cameraW / (lsample.second * directPdfS)).eval() : SpectralBlob::Zero();
 
 		// Construct LPE path
-		tctx.TmpPath.reset();
+		tctx.ThreadContext.TmpPath.reset();
 		for (size_t t2 = 0; t2 < cameraPathLength; ++t2)
-			tctx.TmpPath.addToken(tctx.CameraPath.token(t2));
+			tctx.ThreadContext.TmpPath.addToken(tctx.ThreadContext.CameraPath.token(t2));
 
-		tctx.TmpPath.addToken(cameraScatteringType);
+		tctx.ThreadContext.TmpPath.addToken(cameraScatteringType);
 
 		if (light->isInfinite())
-			tctx.TmpPath.addToken(LightPathToken::Background());
+			tctx.ThreadContext.TmpPath.addToken(LightPathToken::Background());
 		else
-			tctx.TmpPath.addToken(LightPathToken::Emissive());
+			tctx.ThreadContext.TmpPath.addToken(LightPathToken::Emissive());
 
 		// Splat
 		tctx.Session.pushSpectralFragment(SpectralBlob(mis), current.Throughput, contrib,
-										  cameraIP.Ray, tctx.TmpPath);
+										  cameraIP.Ray, tctx.ThreadContext.TmpPath);
 	}
 
-	void handleConnection(TracerContext& tctx,
+	void handleConnection(IterationContext& tctx,
 						  const PathVertex& lightVertex,
 						  const IntersectionPoint& cameraIP, const IMaterial* cameraMaterial, CameraTraversalContext& current) const
 	{
@@ -507,8 +576,8 @@ private:
 		const float lightForwardPDF_A  = IS::toArea(lightForwardPDF_S, dist2, cosC);
 
 		// Calculate MIS
-		const float cameraMIS = mis_term<Mode>(cameraForwardPDF_A) * (lightVertex.MIS_VCM + lightVertex.MIS_VC * mis_term<Mode>(lightBackwardPDF_S));
-		const float lightMIS  = mis_term<Mode>(lightForwardPDF_A) * (current.MIS_VCM + current.MIS_VC * mis_term<Mode>(cameraBackwardPDF_S));
+		const float cameraMIS = mis_term<Mode>(cameraForwardPDF_A) * (tctx.MISVMWeightFactor() + lightVertex.MIS_VCM + lightVertex.MIS_VC * mis_term<Mode>(lightBackwardPDF_S));
+		const float lightMIS  = mis_term<Mode>(lightForwardPDF_A) * (tctx.MISVCWeightFactor() + current.MIS_VCM + current.MIS_VC * mis_term<Mode>(cameraBackwardPDF_S));
 		const float mis		  = 1 / (1 + lightMIS + cameraMIS);
 
 		if (mis <= PR_EPSILON)
@@ -526,21 +595,90 @@ private:
 		const SpectralBlob contrib = isVisible ? (lightW * Geometry * cameraW).eval() : SpectralBlob::Zero();
 
 		// Construct LPE path
-		tctx.TmpPath.reset();
+		tctx.ThreadContext.TmpPath.reset();
 		for (size_t t2 = 0; t2 < cameraPathLength; ++t2)
-			tctx.TmpPath.addToken(tctx.CameraPath.token(t2));
+			tctx.ThreadContext.TmpPath.addToken(tctx.ThreadContext.CameraPath.token(t2));
 
-		tctx.TmpPath.addToken(cameraScatteringType);
+		tctx.ThreadContext.TmpPath.addToken(cameraScatteringType);
 
-		for (size_t s2 = 0; s2 < lightPathLength; ++s2)
-			tctx.TmpPath.addToken(tctx.LightPath.token(lightPathLength - 1 - s2));
+		if constexpr (!UseMerging) {
+			for (size_t s2 = 0; s2 < lightPathLength; ++s2)
+				tctx.ThreadContext.TmpPath.addToken(tctx.ThreadContext.LightPath.token(lightPathLength - 1 - s2));
+		} else {
+			// FIXME!!!!
+		}
 
 		// Splat
-		tctx.Session.pushSpectralFragment(SpectralBlob(mis), current.Throughput, contrib, cameraIP.Ray, tctx.TmpPath);
+		tctx.Session.pushSpectralFragment(SpectralBlob(mis), current.Throughput, contrib, cameraIP.Ray, tctx.ThreadContext.TmpPath);
 	}
 
-	// Handle case where camera ray directly hits emissive object
-	void handleDirectHit(TracerContext& tctx, const IntersectionPoint& cameraIP,
+	void handleMerging(IterationContext& tctx, const IntersectionPoint& cameraIP, const IMaterial* cameraMaterial, CameraTraversalContext& current) const
+	{
+		const uint32 cameraPathLength = cameraIP.Ray.IterationDepth + 1;
+		const float cameraRoulette	  = mCameraRR.probability(cameraPathLength);
+
+		// Construct query
+		QuerySphere query;
+		query.Center		= cameraIP.P;
+		query.Normal		= cameraIP.Surface.N;
+		query.Distance2		= tctx.Radius2;
+		query.SqueezeWeight = mOptions.SqueezeWeight2;
+
+		// Accumulation Function
+		const auto accumFunc = [&](SpectralBlob& accum, const PathVertex& vertex, float d2) {
+			const float f = kernel(d2 / query.Distance2);
+
+			const SpectralBlob power = vertex.Throughput * f;
+			SpectralBlob lightW		 = SpectralBlob::Zero();
+			PR_OPT_LOOP
+			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
+				for (size_t j = 0; j < PR_SPECTRAL_BLOB_SIZE; ++j)
+					lightW[i] += wavelengthFilter(cameraIP.Ray.WavelengthNM[i], vertex.IP.Ray.WavelengthNM[j]) * power[j];
+
+			if (lightW.isZero(GATHER_EPS))
+				return;
+
+			const Vector3f L		  = -vertex.IP.Ray.Direction;
+			const float lightRoulette = mLightRR.probability(vertex.IP.Ray.IterationDepth + 1);
+
+			// Apply shading
+			float cameraForwardPDF_S;
+			float cameraBackwardPDF_S;
+			MaterialScatteringType cameraScatteringType; // Ignore
+			const SpectralBlob cameraW = extractMaterial(tctx, cameraIP, cameraMaterial, L, cameraForwardPDF_S, cameraBackwardPDF_S, cameraScatteringType);
+
+			// Apply russian roulette
+			cameraForwardPDF_S *= cameraRoulette;
+			cameraBackwardPDF_S *= lightRoulette;
+
+			// Calculate MIS
+			const float misLight  = vertex.MIS_VCM * tctx.MISVCWeightFactor() + vertex.MIS_VM * mis_term<Mode>(cameraForwardPDF_S);
+			const float misCamera = current.MIS_VCM * tctx.MISVCWeightFactor() + current.MIS_VM * mis_term<Mode>(cameraBackwardPDF_S);
+
+			const float mis = 1 / (1 + misLight + misCamera);
+
+			accum += mis * lightW * cameraW;
+		};
+
+		// Start gathering
+		size_t found		 = 0;
+		SpectralBlob contrib = SpectralBlob::Zero();
+		const size_t threads = mThreadContexts.size();
+		for (size_t i = 0; i < threads; ++i) {
+			size_t partial_found = 0;
+			contrib += mThreadContexts[i]->LightMap->estimateDome(query, accumFunc, partial_found);
+			found += partial_found;
+		}
+
+		// Splat
+		// TODO: One way to define mis directly here?
+		tctx.ThreadContext.CameraPath.addToken(LightPathToken::Emissive());
+		tctx.Session.pushSpectralFragment(SpectralBlob::Ones(), current.Throughput, contrib, cameraIP.Ray, tctx.ThreadContext.CameraPath);
+		tctx.ThreadContext.CameraPath.popToken();
+	}
+
+	/// Handle case where camera ray directly hits emissive object
+	void handleDirectHit(IterationContext& tctx, const IntersectionPoint& cameraIP,
 						 const IEntity* cameraEntity, CameraTraversalContext& current) const
 	{
 		const uint32 cameraPathLength = cameraIP.Ray.IterationDepth + 1;
@@ -569,7 +707,13 @@ private:
 
 		// If directly visible from camera, do not calculate mis weights
 		if (cameraPathLength == 1) {
-			tctx.Session.pushSpectralFragment(SpectralBlob::Ones(), current.Throughput, radiance, cameraIP.Ray, tctx.CameraPath);
+			tctx.Session.pushSpectralFragment(SpectralBlob::Ones(), current.Throughput, radiance, cameraIP.Ray, tctx.ThreadContext.CameraPath);
+			return;
+		}
+
+		if constexpr (UseMerging) {
+			if (current.OnlySpecularSoFar)
+				tctx.Session.pushSpectralFragment(SpectralBlob::Ones(), current.Throughput, radiance, cameraIP.Ray, tctx.ThreadContext.CameraPath);
 			return;
 		}
 
@@ -591,11 +735,11 @@ private:
 		PR_ASSERT(mis <= 1.0f, "MIS must be between 0 and 1");
 
 		// Splat
-		tctx.Session.pushSpectralFragment(SpectralBlob(mis), current.Throughput, radiance, cameraIP.Ray, tctx.CameraPath);
+		tctx.Session.pushSpectralFragment(SpectralBlob(mis), current.Throughput, radiance, cameraIP.Ray, tctx.ThreadContext.CameraPath);
 	}
 
 	// Handle case where camera ray hits nothing (inf light contribution)
-	void handleInfLights(const TracerContext& tctx, CameraTraversalContext& current, const Ray& ray) const
+	void handleInfLights(const IterationContext& tctx, CameraTraversalContext& current, const Ray& ray) const
 	{
 		const uint32 cameraPathLength = ray.IterationDepth + 1;
 
@@ -639,10 +783,17 @@ private:
 
 		// If directly visible from camera, do not calculate mis weights
 		if (cameraPathLength == 1) {
-			tctx.Session.pushSpectralFragment(SpectralBlob::Ones(), current.Throughput, radiance, ray, tctx.CameraPath);
+			tctx.Session.pushSpectralFragment(SpectralBlob::Ones(), current.Throughput, radiance, ray, tctx.ThreadContext.CameraPath);
 			return;
 		}
 
+		if constexpr (UseMerging) {
+			if (current.OnlySpecularSoFar)
+				tctx.Session.pushSpectralFragment(SpectralBlob::Ones(), current.Throughput, radiance, ray, tctx.ThreadContext.CameraPath);
+			return;
+		}
+
+		// Calculate MIS weights
 		const float mis = 1 / (1 + misDenom);
 
 		if (mis <= PR_EPSILON)
@@ -651,7 +802,7 @@ private:
 		PR_ASSERT(mis <= 1.0f, "MIS must be between 0 and 1");
 
 		// Splat
-		tctx.Session.pushSpectralFragment(SpectralBlob(mis), current.Throughput, radiance, ray, tctx.CameraPath);
+		tctx.Session.pushSpectralFragment(SpectralBlob(mis), current.Throughput, radiance, ray, tctx.ThreadContext.CameraPath);
 	}
 
 private:
@@ -661,6 +812,9 @@ private:
 	const Walker mLightWalker;
 	const RussianRoulette mLightRR;
 	const std::shared_ptr<LightSampler> mLightSampler;
+
+	std::mutex mRegistrationMutex;
+	std::vector<std::unique_ptr<ThreadContext>> mThreadContexts;
 };
 } // namespace VCM
 } // namespace PR

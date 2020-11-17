@@ -22,19 +22,19 @@ struct position_getter<Vector3f> {
 };
 
 // Spatial Hashmap
-template <typename T>
+template <typename T, template <typename> typename PositionGetter = position_getter>
 class HashGrid {
 	PR_CLASS_NON_COPYABLE(HashGrid);
 
 public:
 	template <typename U = T>
 	inline HashGrid(const BoundingBox& bbox, float gridDelta,
-					typename std::enable_if<std::is_default_constructible<position_getter<U>>::value>::type* = 0)
-		: HashGrid(bbox, gridDelta, position_getter<U>())
+					typename std::enable_if<std::is_default_constructible<PositionGetter<U>>::value>::type* = 0)
+		: HashGrid(bbox, gridDelta, PositionGetter<U>())
 	{
 	}
 
-	inline HashGrid(const BoundingBox& bbox, float gridDelta, const position_getter<T>& getter);
+	inline HashGrid(const BoundingBox& bbox, float gridDelta, const PositionGetter<T>& getter);
 	inline virtual ~HashGrid();
 
 	inline void reset();
@@ -68,7 +68,7 @@ private:
 	const uint32 mGridX;
 	const uint32 mGridY;
 	const uint32 mGridZ;
-	const position_getter<T> mPositionGetter;
+	const PositionGetter<T> mPositionGetter;
 };
 } // namespace PR
 

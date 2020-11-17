@@ -29,10 +29,10 @@
 namespace PR {
 /// Bidirectional path tracer
 /// Based on VCM without merging and direct camera connections
-template <bool HasInfLights, VCM::MISMode MISMode>
+template <VCM::MISMode MISMode>
 class IntBiDiInstance : public IIntegratorInstance {
 public:
-	using Tracer = VCM::Tracer<false, HasInfLights, MISMode>;
+	using Tracer = VCM::Tracer<false, MISMode>;
 
 	explicit IntBiDiInstance(const VCM::Options& options, const std::shared_ptr<LightSampler>& lightSampler)
 		: mTracer(options, lightSampler)
@@ -45,7 +45,8 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		VCM::TracerContext tctx(session, mTracer.options());
+		typename Tracer::ThreadContext threadContext(mTracer.options());
+		typename Tracer::IterationContext tctx(session, threadContext, mTracer.options());
 
 		for (size_t i = 0; i < sg.size(); ++i) {
 			IntersectionPoint spt;
@@ -55,14 +56,13 @@ public:
 			const Light* light = mTracer.traceLightPath(tctx, spt.Ray.WavelengthNM);
 			if (PR_UNLIKELY(!light))
 				return; // Giveup as no light is present
-			PR_ASSERT(tctx.LightPath.currentSize() >= tctx.LightVertices.size(), "Light vertices and path do not match");
+			PR_ASSERT(threadContext.LightPath.currentSize() >= threadContext.LightVertices.size(), "Light vertices and path do not match");
 
 			mTracer.traceCameraPath(tctx, spt, sg.entity(), session.getMaterial(spt.Surface.Geometry.MaterialID));
 
 			// Reset
-			tctx.CameraPath.popTokenUntil(1); // Keep first token
-			tctx.LightPath.popTokenUntil(0);  // Do NOT keep first token!
-			tctx.LightVertices.clear();
+			threadContext.resetCamera();
+			threadContext.resetLights();
 		}
 	}
 
@@ -97,11 +97,7 @@ public:
 
 	inline std::shared_ptr<IIntegratorInstance> createThreadInstance(RenderContext* ctx, size_t) override
 	{
-		const bool hasInfLights = !ctx->scene()->infiniteLights().empty();
-		if (hasInfLights)
-			return std::make_shared<IntBiDiInstance<true, MISMode>>(mParameters, ctx->lightSampler());
-		else
-			return std::make_shared<IntBiDiInstance<false, MISMode>>(mParameters, ctx->lightSampler());
+		return std::make_shared<IntBiDiInstance<MISMode>>(mParameters, ctx->lightSampler());
 	}
 
 private:

@@ -14,9 +14,8 @@
 	  :radius 1
 	)
 	(integrator 
-	  :type 'bidirect'
+	  :type 'vcm'
 	  :max_ray_depth 8
-	  :light_sample_count 1
 	)
 	; Outputs
 	(output

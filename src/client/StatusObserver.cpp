@@ -73,8 +73,9 @@ void StatusObserver::update(const UpdateInfo& info)
 				  << " EH: " << std::setw(VALUE_OUTPUT_FIELD_SIZE) << status.getField("global.entity_hit_count").getUInt()
 				  << " BH: " << std::setw(VALUE_OUTPUT_FIELD_SIZE) << status.getField("global.background_hit_count").getUInt();
 
+		const float etaFactor = status.percentage() > PR_EPSILON ? (100 - status.percentage()) / status.percentage() : 100.0f /* Just something high*/;
 		std::cout << " | RT: " << std::setw(TIME_OUTPUT_FIELD_SIZE) << timestr(fullDuration.count())
-				  << " ETA: " << std::setw(TIME_OUTPUT_FIELD_SIZE) << timestr(fullDuration.count() * ((100 - status.percentage()) / status.percentage()));
+				  << " ETA: " << std::setw(TIME_OUTPUT_FIELD_SIZE) << timestr(fullDuration.count() * etaFactor);
 
 		if (!mBeautify)
 			std::cout << std::endl;
