@@ -9,8 +9,9 @@
 #include "TraversalContext.h"
 #include "Utils.h"
 #include "Walker.h"
-#include "renderer/RenderTileSession.h"
 #include "Wavelength.h"
+#include "container/Interval.h"
+#include "renderer/RenderTileSession.h"
 
 namespace PR {
 namespace VCM {
@@ -27,6 +28,10 @@ public:
 		, mLightWalker(options.MaxLightRayDepthHard)
 		, mLightRR(options.MaxLightRayDepthSoft)
 		, mLightSampler(lightSampler)
+		, mLightPathSlice(options.MaxLightRayDepthHard + 1)
+		, mLightVertices(UseMerging ? options.MaxLightSamples * mLightPathSlice : 1)
+		, mLightPathSize(UseMerging ? options.MaxLightSamples : 1)
+		, mLightPathWavelengthSortMap(mLightPathSize.size())
 	{
 	}
 
@@ -39,27 +44,28 @@ public:
 
 		tctx.Session.pushSPFragment(initial_hit, tctx.ThreadContext.CameraPath);
 
-		if (tctx.ThreadContext.LightPathEnds.empty())
+		if (mLightPathCounter == 0)
 			return;
 
 		// Initial camera vertex
-		CameraTraversalContext current = CameraTraversalContext{ SpectralBlob::Ones(), 0, 0, 0, true, 0 };
+		CameraTraversalContext current;
 
 		if constexpr (UseMerging) {
 			// Select light path to work with
-			// TODO: Construct reasonable structure!
-			const size_t lightPathCount = tctx.ThreadContext.LightPathEnds.size();
-			SpectralPermutation permutation;
-			for (size_t i = 0; i < 100; ++i) { // Try to find a eligible light path
-				current.LightPath		 = tctx.Session.random().get64(0, lightPathCount);
-				const PathVertex* vertex = tctx.ThreadContext.lightVertex(current.LightPath, 0);
-				PR_ASSERT(vertex, "Expected valid light vertex");
-
-				if (checkWavelengthSupport(initial_hit.Ray.WavelengthNM, initial_hit.Ray.Flags & RF_Monochrome,
-										   vertex->IP.Ray.WavelengthNM, vertex->IP.Ray.Flags & RF_Monochrome,
-										   permutation))
-					break;
+			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
+				current.LightPath		 = pickClosestLightPath(initial_hit.Ray.WavelengthNM[i]);
+				const PathVertex* vertex = lightVertex(current.LightPath, 0);
+				if (!checkWavelengthSupport(initial_hit.Ray.WavelengthNM, initial_hit.Ray.Flags & RF_Monochrome,
+											vertex->IP.Ray.WavelengthNM, vertex->IP.Ray.Flags & RF_Monochrome,
+											current.Permutation))
+					break; // Nothing found
 			}
+
+			const PathVertex* finalVertex = lightVertex(current.LightPath, 0);
+			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
+				current.WavelengthFilter[i] = wavelengthFilter(
+					initial_hit.Ray.WavelengthNM[i],
+					finalVertex->IP.Ray.WavelengthNM[i]);
 		}
 
 		// Initial camera vertex
@@ -77,9 +83,11 @@ public:
 	}
 
 	// First light vertex
-	const Light* traceLightPath(IterationContext& tctx, const SpectralBlob& wvl) const
+	const Light* traceLightPath(IterationContext& tctx, const SpectralBlob& wvl)
 	{
 		PR_PROFILE_THIS;
+		if constexpr (UseMerging)
+			PR_ASSERT(mLightPathCounter < mOptions.MaxLightSamples, "Do not call trace more than the expected number of light samples");
 
 		// Sample light
 		LightSampleInput lsin;
@@ -117,7 +125,11 @@ public:
 			return light;
 
 		// Setup light path context
-		LightTraversalContext current = LightTraversalContext{ lsout.Radiance, 0, 0, 0, true, !light->isInfinite() };
+		LightTraversalContext current;
+		current.Throughput	  = lsout.Radiance;
+		current.LightPath	  = mLightPathCounter.fetch_add(1);
+		current.LightPathSize = 0;
+		current.IsFiniteLight = !light->isInfinite();
 
 		current.Throughput /= emissionPdfS;
 		if (current.Throughput.isZero(PR_EPSILON)) // Don't even try
@@ -148,44 +160,80 @@ public:
 			});
 
 		// Make sure the end of the path is given
-		// but do not add it to the cache if no vertex was generated to begin with
-		const size_t end = tctx.ThreadContext.LightVertices.size();
-		if (tctx.ThreadContext.LightPathEnds.empty() || tctx.ThreadContext.LightPathEnds.back() != end)
-			tctx.ThreadContext.LightPathEnds.emplace_back(end);
+		if constexpr (UseMerging)
+			mLightPathSize[current.LightPath] = current.LightPathSize;
+		// TODO: Map the lightPath LPE stuff here
 
 		return light;
-	}
-
-	/// Construct search grid for this particular thread context
-	inline void setupSearchGrid(ThreadContext& threadContext) const
-	{
-		PR_ASSERT(threadContext.LightMap, "Expected initialized lightmap");
-		auto* lightMap = threadContext.LightMap.get();
-
-		lightMap->reset(); // Clear previous content
-
-		const size_t vertices = threadContext.LightVertices.size();
-		for (size_t i = 0; i < vertices; ++i)
-			lightMap->storeUnsafe(i);
 	}
 
 	// We assume only registration is done within multiple threads
 	// You may ignore registration of thread contexts if UseMerging is false
 	inline void registerThreadContext()
 	{
-		std::lock_guard<std::mutex> guard(mRegistrationMutex);
+		std::lock_guard<std::mutex> guard(mMutex);
 		mThreadContexts.emplace_back(std::make_unique<ThreadContext>(mOptions));
 	}
 
 	inline void registerThreadContext(const BoundingBox& bbox, float sceneGridDelta)
 	{
-		std::lock_guard<std::mutex> guard(mRegistrationMutex);
+		std::lock_guard<std::mutex> guard(mMutex);
 		mThreadContexts.emplace_back(std::make_unique<ThreadContext>(bbox, sceneGridDelta, mOptions));
 	}
 
 	// While accessing thread contexts, no new registration should occur!
 	inline ThreadContext& threadContext(size_t id) { return *mThreadContexts[id].get(); }
 	inline size_t threadContextCount() { return mThreadContexts.size(); }
+
+	// Make sure only one thread is calling this function!
+	inline void resetLights()
+	{
+		mLightPathCounter = 0;
+		if (mLightMap)
+			mLightMap->reset();
+	}
+
+	// Make sure only one thread is calling this function!
+	/// Construct search grid for this particular thread context
+	inline void setupSearchGrid(const BoundingBox& bbox, float sceneGatherRadius)
+	{
+		mMutex.lock();
+		if (!mLightMap)
+			mLightMap = std::make_unique<PathVertexMap>(bbox, sceneGatherRadius, mLightVertices);
+		mMutex.unlock();
+
+		const size_t amount = mLightPathCounter;
+		for (size_t i = 0; i < amount; ++i) // This can be parallelized
+			mLightMap->storeUnsafe(i);
+	}
+
+	inline void setupWavelengthSelector()
+	{
+		// Fill array with increasing numbers
+		const auto end = mLightPathWavelengthSortMap.begin() + mLightPathCounter;
+		std::iota(mLightPathWavelengthSortMap.begin(), end, 0);
+
+		// Sort based on the hero wavelength
+		std::sort(mLightPathWavelengthSortMap.begin(), end,
+				  [this](size_t a, size_t b) {
+					  const PathVertex* v1 = lightVertex(a, 0);
+					  const PathVertex* v2 = lightVertex(b, 0);
+					  return v1->IP.Ray.WavelengthNM[0] < v2->IP.Ray.WavelengthNM[0];
+				  });
+	}
+
+	inline uint32 pickClosestLightPath(float wvl) const
+	{
+		// Select closest pick based on the given wavelength
+		int pick = Interval::binary_search(mLightPathCounter, [&](size_t index) {
+			const PathVertex* v1 = lightVertex(mLightPathWavelengthSortMap[index], 0);
+			return v1->IP.Ray.WavelengthNM[0] <= wvl;
+		});
+
+		if (pick < 0 || static_cast<size_t>(pick) >= mLightPathCounter)
+			return 0;
+		return pick;
+	}
 
 private:
 	template <bool IsCamera>
@@ -293,7 +341,7 @@ private:
 	}
 
 	std::optional<Ray> handleLightVertex(IterationContext& tctx, const IntersectionPoint& ip,
-										 IEntity* entity, IMaterial* material, LightTraversalContext& current) const
+										 IEntity* entity, IMaterial* material, LightTraversalContext& current)
 	{
 		PR_ASSERT(entity, "Expected valid entity");
 
@@ -331,7 +379,12 @@ private:
 			vertex.MIS_VC	  = current.MIS_VC;
 			vertex.MIS_VM	  = current.MIS_VM;
 
-			tctx.ThreadContext.LightVertices.emplace_back(vertex);
+			if constexpr (UseMerging) {
+				mLightVertices[current.LightPath * mLightPathSlice + current.LightPathSize] = std::move(vertex);
+				current.LightPathSize++;
+			} else {
+				tctx.ThreadContext.BDPTLightVertices.emplace_back(vertex);
+			}
 		}
 		// Our implementation does not support direct camera hits (no C_s0)
 
@@ -375,9 +428,14 @@ private:
 			// c1t
 			handleNEE(tctx, ip, material, current);
 			// cst
-			const auto range = tctx.ThreadContext.lightPath(current.LightPath);
-			for (auto it = range.first; it != range.second; ++it)
-				handleConnection(tctx, *it, ip, material, current);
+			if constexpr (UseMerging) {
+				const auto range = lightPath(current.LightPath);
+				for (auto it = range.first; it != range.second; ++it)
+					handleConnection(tctx, *it, ip, material, current);
+			} else {
+				for (const auto& vertex : tctx.ThreadContext.BDPTLightVertices)
+					handleConnection(tctx, vertex, ip, material, current);
+			}
 
 			// VM
 			if constexpr (UseMerging)
@@ -556,9 +614,23 @@ private:
 		float lightForwardPDF_S;
 		float lightBackwardPDF_S;
 		MaterialScatteringType lightScatteringType; // Unused
-		const SpectralBlob lightW = extractMaterial(tctx, lightVertex.IP, lightMaterial, -cD, lightForwardPDF_S, lightBackwardPDF_S, lightScatteringType);
+		SpectralBlob lightW = extractMaterial(tctx, lightVertex.IP, lightMaterial, -cD, lightForwardPDF_S, lightBackwardPDF_S, lightScatteringType);
 		lightForwardPDF_S *= lightRoulette;
 		lightBackwardPDF_S *= lightRoulette;
+
+		// We apply permutation to make sure each wavelength fits its counter part
+		if constexpr (UseMerging) {
+			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
+				for (size_t j = i; j < PR_SPECTRAL_BLOB_SIZE; ++j) {
+					if (current.Permutation[j] == i) {
+						std::swap(lightW[i], lightW[j]);
+						break;
+					}
+				}
+
+				lightW *= current.WavelengthFilter;
+			}
+		}
 
 		// Calculate geometry term
 		const float cosCS	   = cD.dot(cameraIP.Surface.N);
@@ -661,14 +733,8 @@ private:
 		};
 
 		// Start gathering
-		size_t found		 = 0;
-		SpectralBlob contrib = SpectralBlob::Zero();
-		const size_t threads = mThreadContexts.size();
-		for (size_t i = 0; i < threads; ++i) {
-			size_t partial_found = 0;
-			contrib += mThreadContexts[i]->LightMap->estimateDome(query, accumFunc, partial_found);
-			found += partial_found;
-		}
+		size_t found			   = 0;
+		const SpectralBlob contrib = mLightMap->estimateDome(query, accumFunc, found);
 
 		// Splat
 		// TODO: One way to define mis directly here?
@@ -805,6 +871,20 @@ private:
 		tctx.Session.pushSpectralFragment(SpectralBlob(mis), current.Throughput, radiance, ray, tctx.ThreadContext.CameraPath);
 	}
 
+	inline std::pair<std::vector<PathVertex>::const_iterator, std::vector<PathVertex>::const_iterator>
+	lightPath(size_t path) const
+	{
+		PR_ASSERT(path < mLightPathCounter, "Expected valid path index");
+		const auto start = mLightVertices.begin() + path * mLightPathSlice;
+		return { start, start + mLightPathSize[path] };
+	}
+
+	inline const PathVertex* lightVertex(size_t path, size_t index) const
+	{
+		PR_ASSERT(path < mLightPathCounter, "Expected valid path index");
+		return &mLightVertices[path * mLightPathSlice + index];
+	}
+
 private:
 	const Options mOptions;
 	const Walker mCameraWalker;
@@ -812,9 +892,17 @@ private:
 	const Walker mLightWalker;
 	const RussianRoulette mLightRR;
 	const std::shared_ptr<LightSampler> mLightSampler;
+	const size_t mLightPathSlice;
 
-	std::mutex mRegistrationMutex;
+	std::mutex mMutex;
 	std::vector<std::unique_ptr<ThreadContext>> mThreadContexts;
+
+	// Members below are only used when UseMerging=true
+	std::atomic<size_t> mLightPathCounter;
+	std::vector<PathVertex> mLightVertices;
+	std::vector<size_t> mLightPathSize;
+	std::vector<size_t> mLightPathWavelengthSortMap;
+	std::unique_ptr<PathVertexMap> mLightMap;
 };
 } // namespace VCM
 } // namespace PR

@@ -13,8 +13,8 @@ class TracerThreadContext;
 template <bool UseMerging, MISMode Mode>
 class TracerIterationContext {
 public:
-	inline TracerIterationContext(size_t iteration, RenderTileSession& session, TracerThreadContext& threadContext, const Options& options)
-		: Radius(std::max<float>(0.000001f, options.MaxGatherRadius / std::pow<float>(iteration + 1, 0.5f * (1 - options.ContractRatio))))
+	inline TracerIterationContext(size_t iteration, float maxSceneGatherRadius, RenderTileSession& session, TracerThreadContext& threadContext, const Options& options)
+		: Radius(std::max<float>(0.000001f, maxSceneGatherRadius / std::pow<float>(iteration + 1, 0.5f * (1 - options.ContractRatio))))
 		, Radius2(Radius * Radius)
 		, VMNormalization(1 / (kernelarea(Radius2) * options.MaxLightSamples))
 		, _MISVMWeightFactor(mis_term<Mode>(1 / VMNormalization))
@@ -23,11 +23,11 @@ public:
 		, ThreadContext(threadContext)
 	{
 	}
-	
+
 	template <bool UM = UseMerging>
 	inline TracerIterationContext(RenderTileSession& session, TracerThreadContext& threadContext, const Options& options,
 								  typename std::enable_if<!UM>::type* = 0)
-		: TracerIterationContext(0, session, threadContext, options)
+		: TracerIterationContext(0, 0.0f, session, threadContext, options)
 	{
 	}
 

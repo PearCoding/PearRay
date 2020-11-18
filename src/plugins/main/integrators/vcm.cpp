@@ -28,8 +28,7 @@
 
 namespace PR {
 
-/// Bidirectional path tracer
-/// Based on VCM without merging and direct camera connections
+/// Full Vertex Connection and Merging integrator
 template <VCM::MISMode MISMode>
 class IntVCMInstance : public IIntegratorInstance {
 public:
@@ -46,9 +45,10 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		const size_t iteration = session.tile()->iterationCount() / 2;
-		auto& threadContext	   = mTracer->threadContext(session.threadID());
-		typename Tracer::IterationContext tctx(iteration, session, threadContext, mTracer->options());
+		const size_t iteration			 = session.tile()->iterationCount() / 2;
+		auto& threadContext				 = mTracer->threadContext(session.threadID());
+		const float maxSceneGatherRadius = mTracer->options().GatherRadiusFactor * session.context()->scene()->boundingBox().longestEdge();
+		typename Tracer::IterationContext tctx(iteration, maxSceneGatherRadius, session, threadContext, mTracer->options());
 
 		for (size_t i = 0; i < sg.size(); ++i) {
 			IntersectionPoint spt;
@@ -80,12 +80,14 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		const size_t iteration = session.tile()->iterationCount() / 2;
-		auto& threadContext	   = mTracer->threadContext(session.threadID());
-		typename Tracer::IterationContext tctx(iteration, session, threadContext, mTracer->options());
+		const size_t iteration			 = session.tile()->iterationCount() / 2;
+		auto& threadContext				 = mTracer->threadContext(session.threadID());
+		const float maxSceneGatherRadius = mTracer->options().GatherRadiusFactor * session.context()->scene()->boundingBox().longestEdge();
+
+		typename Tracer::IterationContext tctx(iteration, maxSceneGatherRadius, session, threadContext, mTracer->options());
 
 		// Construct light paths
-		const size_t maxLights = (mTracer->options().MaxLightSamples * mTracer->threadContextCount()) / session.context()->tileCount();
+		const size_t maxLights = mTracer->options().MaxLightSamples / session.context()->tileCount();
 		for (size_t i = 0; i < maxLights; ++i) {
 			const SpectralBlob wavelength = VCM::sampleWavelength(session.random());
 			const Light* light			  = mTracer->traceLightPath(tctx, wavelength);
@@ -124,38 +126,37 @@ public:
 	{
 		std::lock_guard<std::mutex> lock(mCreationMutex);
 		if (!mTracer) {
-			VCM::Options options = mParameters;
-			options.MaxLightSamples /= ctx->threadCount(); // Make sure all threads together sum up to the original count
 			mTracer = std::make_unique<Tracer>(mParameters, ctx->lightSampler());
 
-			ctx->addIterationCallback([this](uint32 iter) {
+			const BoundingBox bbox		  = ctx->scene()->boundingBox();
+			const float sceneGatherRadius = std::max(0.0001f, mParameters.GatherRadiusFactor * bbox.longestEdge());
+
+			// Can we be sure about the ctx inside the lambda?
+			ctx->addIterationCallback([=](uint32 iter) {
 				if (iter % 2 == 0)
-					beforeLightPass(iter / 2);
+					beforeLightPass();
 				else
-					beforeCameraPass(iter / 2);
+					beforeCameraPass(bbox, sceneGatherRadius);
 			});
 		}
 
-		const BoundingBox bbox		 = ctx->scene()->boundingBox();
-		const float scene_grid_delta = std::max(0.0001f, mParameters.MaxGatherRadius * bbox.longestEdge());
-
-		mTracer->registerThreadContext(bbox, scene_grid_delta);
+		mTracer->registerThreadContext();
 		return std::make_shared<IntVCMInstance<MISMode>>(mTracer.get());
 	}
 
 private:
-	inline void beforeLightPass(size_t)
+	inline void beforeLightPass()
 	{
 		// Clear previous pass
 		for (size_t i = 0; i < mTracer->threadContextCount(); ++i)
 			mTracer->threadContext(i).resetLights();
+		mTracer->resetLights();
 	}
 
-	inline void beforeCameraPass(size_t)
+	inline void beforeCameraPass(const BoundingBox& bbox, float sceneGatherRadius)
 	{
-		// Construct search/neighrest neighbor structure
-		for (size_t i = 0; i < mTracer->threadContextCount(); ++i)
-			mTracer->setupSearchGrid(mTracer->threadContext(i));
+		mTracer->setupSearchGrid(bbox, sceneGatherRadius);
+		mTracer->setupWavelengthSelector();
 	}
 
 	const VCM::Options mParameters;
@@ -176,8 +177,8 @@ public:
 		mParameters.MaxLightRayDepthHard  = std::min<size_t>(maximumDepth, params.getUInt("max_light_ray_depth", mParameters.MaxLightRayDepthHard));
 		mParameters.MaxLightRayDepthSoft  = std::min(mParameters.MaxLightRayDepthHard, (size_t)params.getUInt("soft_max_light_ray_depth", mParameters.MaxLightRayDepthSoft));
 
-		mParameters.MaxLightSamples = std::max<size_t>(100, params.getUInt("max_light_samples", mParameters.MaxLightSamples));
-		mParameters.MaxGatherRadius = std::max(0.00001f, params.getNumber("max_gather_radius", mParameters.MaxGatherRadius));
+		mParameters.MaxLightSamples	   = std::max<size_t>(100, params.getUInt("max_light_samples", mParameters.MaxLightSamples));
+		mParameters.GatherRadiusFactor = std::max(0.00001f, params.getNumber("gather_radius_factor", mParameters.GatherRadiusFactor));
 
 		mParameters.SqueezeWeight2 = std::max(0.0f, std::min(1.0f, params.getNumber("squeeze_weight", mParameters.SqueezeWeight2)));
 		mParameters.SqueezeWeight2 *= mParameters.SqueezeWeight2;

@@ -56,7 +56,7 @@ public:
 			const Light* light = mTracer.traceLightPath(tctx, spt.Ray.WavelengthNM);
 			if (PR_UNLIKELY(!light))
 				return; // Giveup as no light is present
-			PR_ASSERT(threadContext.LightPath.currentSize() >= threadContext.LightVertices.size(), "Light vertices and path do not match");
+			PR_ASSERT(threadContext.LightPath.currentSize() >= threadContext.BDPTLightVertices.size(), "Light vertices and path do not match");
 
 			mTracer.traceCameraPath(tctx, spt, sg.entity(), session.getMaterial(spt.Surface.Geometry.MaterialID));
 
@@ -82,7 +82,7 @@ public:
 	}
 
 private:
-	const Tracer mTracer;
+	Tracer mTracer;
 };
 
 template <VCM::MISMode MISMode>
