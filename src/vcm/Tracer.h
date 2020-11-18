@@ -32,6 +32,7 @@ public:
 		, mLightVertices(UseMerging ? options.MaxLightSamples * mLightPathSlice : 1)
 		, mLightPathSize(UseMerging ? options.MaxLightSamples : 1)
 		, mLightPathWavelengthSortMap(mLightPathSize.size())
+		, mLightPathBuffer(UseMerging ? options.MaxLightSamples * LightPath::packedSizeRequirement(mLightPathSlice + 1) : 1)
 	{
 	}
 
@@ -53,19 +54,25 @@ public:
 		if constexpr (UseMerging) {
 			// Select light path to work with
 			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
-				current.LightPath		 = pickClosestLightPath(initial_hit.Ray.WavelengthNM[i]);
-				const PathVertex* vertex = lightVertex(current.LightPath, 0);
+				current.LightPathID		 = pickClosestLightPath(initial_hit.Ray.WavelengthNM[i]);
+				const PathVertex* vertex = lightVertex(current.LightPathID, 0);
 				if (!checkWavelengthSupport(initial_hit.Ray.WavelengthNM, initial_hit.Ray.Flags & RF_Monochrome,
 											vertex->IP.Ray.WavelengthNM, vertex->IP.Ray.Flags & RF_Monochrome,
 											current.Permutation))
 					break; // Nothing found
 			}
 
-			const PathVertex* finalVertex = lightVertex(current.LightPath, 0);
+			const PathVertex* finalVertex = lightVertex(current.LightPathID, 0);
 			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
 				current.WavelengthFilter[i] = wavelengthFilter(
 					initial_hit.Ray.WavelengthNM[i],
 					finalVertex->IP.Ray.WavelengthNM[i]);
+
+			// Setup light path
+			const size_t packSize = LightPath::packedSizeRequirement(mLightPathSlice + 1);
+			tctx.ThreadContext.LightPath.reset();
+			tctx.ThreadContext.LightPath.addFromPacked(&mLightPathBuffer[current.LightPathID * packSize],
+													   packSize);
 		}
 
 		// Initial camera vertex
@@ -102,6 +109,7 @@ public:
 		PR_ASSERT(lsout.CosLight >= 0.0f, "Expected light emission only from the front side!");
 		const Light* light = lsample.first;
 
+		tctx.ThreadContext.LightPath.reset();
 		if (light->isInfinite())
 			tctx.ThreadContext.LightPath.addToken(LightPathToken::Background());
 		else
@@ -127,7 +135,7 @@ public:
 		// Setup light path context
 		LightTraversalContext current;
 		current.Throughput	  = lsout.Radiance;
-		current.LightPath	  = mLightPathCounter.fetch_add(1);
+		current.LightPathID	  = mLightPathCounter.fetch_add(1);
 		current.LightPathSize = 0;
 		current.IsFiniteLight = !light->isInfinite();
 
@@ -160,9 +168,12 @@ public:
 			});
 
 		// Make sure the end of the path is given
-		if constexpr (UseMerging)
-			mLightPathSize[current.LightPath] = current.LightPathSize;
-		// TODO: Map the lightPath LPE stuff here
+		if constexpr (UseMerging) {
+			mLightPathSize[current.LightPathID] = current.LightPathSize;
+			const size_t packSize				= LightPath::packedSizeRequirement(mLightPathSlice + 1);
+			tctx.ThreadContext.LightPath.toPacked(&mLightPathBuffer[current.LightPathID * packSize],
+												  packSize);
+		}
 
 		return light;
 	}
@@ -280,8 +291,10 @@ private:
 		const bool isDelta		  = material->hasDeltaDistribution();
 		current.OnlySpecularSoFar = current.OnlySpecularSoFar && isDelta;
 
-		if (sout.Weight.isZero())
+		if (sout.Weight.isZero()) {
+			path.popToken();
 			return {};
+		}
 
 		// Calculate forward and backward PDFs
 		float forwardPDF_S	= sout.PDF_S[0]; // Hero wavelength
@@ -315,11 +328,17 @@ private:
 			current.MIS_VCM = mis_term<Mode>(1 / forwardPDF_S);
 		}
 
-		if (NdotL <= PR_EPSILON) // Do not bother if laying flat on the sampling plane
+		// Do not bother if laying flat on the sampling plane
+		if (NdotL <= PR_EPSILON) {
+			path.popToken();
 			return {};
+		}
 
-		if (backwardPDF_S <= PR_EPSILON || forwardPDF_S <= PR_EPSILON) // Catch this case, or everything will explode
+		// Catch this case, or everything will explode
+		if (backwardPDF_S <= PR_EPSILON || forwardPDF_S <= PR_EPSILON) {
+			path.popToken();
 			return {};
+		}
 
 		// Update throughput
 		current.Throughput *= sout.Weight / forwardPDF_S;
@@ -329,8 +348,10 @@ private:
 		if (material->isSpectralVarying())
 			current.Throughput *= SpectralBlobUtils::HeroOnly();
 
-		if (current.Throughput.isZero(PR_EPSILON))
+		if (current.Throughput.isZero(PR_EPSILON)) {
+			path.popToken();
 			return {};
+		}
 
 		// Setup ray flags
 		int rflags = RF_Bounce;
@@ -380,7 +401,7 @@ private:
 			vertex.MIS_VM	  = current.MIS_VM;
 
 			if constexpr (UseMerging) {
-				mLightVertices[current.LightPath * mLightPathSlice + current.LightPathSize] = std::move(vertex);
+				mLightVertices[current.LightPathID * mLightPathSlice + current.LightPathSize] = std::move(vertex);
 				current.LightPathSize++;
 			} else {
 				tctx.ThreadContext.BDPTLightVertices.emplace_back(vertex);
@@ -429,7 +450,7 @@ private:
 			handleNEE(tctx, ip, material, current);
 			// cst
 			if constexpr (UseMerging) {
-				const auto range = lightPath(current.LightPath);
+				const auto range = lightPath(current.LightPathID);
 				for (auto it = range.first; it != range.second; ++it)
 					handleConnection(tctx, *it, ip, material, current);
 			} else {
@@ -673,12 +694,8 @@ private:
 
 		tctx.ThreadContext.TmpPath.addToken(cameraScatteringType);
 
-		if constexpr (!UseMerging) {
-			for (size_t s2 = 0; s2 < lightPathLength; ++s2)
-				tctx.ThreadContext.TmpPath.addToken(tctx.ThreadContext.LightPath.token(lightPathLength - 1 - s2));
-		} else {
-			// FIXME!!!!
-		}
+		for (size_t s2 = 0; s2 < lightPathLength; ++s2)
+			tctx.ThreadContext.TmpPath.addToken(tctx.ThreadContext.LightPath.token(lightPathLength - 1 - s2));
 
 		// Splat
 		tctx.Session.pushSpectralFragment(SpectralBlob(mis), current.Throughput, contrib, cameraIP.Ray, tctx.ThreadContext.TmpPath);
@@ -902,6 +919,7 @@ private:
 	std::vector<PathVertex> mLightVertices;
 	std::vector<size_t> mLightPathSize;
 	std::vector<size_t> mLightPathWavelengthSortMap;
+	std::vector<uint8> mLightPathBuffer; // Contains light path (LPE) in packed form
 	std::unique_ptr<PathVertexMap> mLightMap;
 };
 } // namespace VCM

@@ -14,13 +14,13 @@ struct BaseTraversalContext {
 };
 
 struct CameraTraversalContext : public BaseTraversalContext {
-	size_t LightPath = 0;			 // Selected light path
+	size_t LightPathID = 0;			 // Selected light path
 	SpectralPermutation Permutation; // Permutation used between selected light path and this (only when VM is enabled, as bdpt used the same wavelengths for light and camera path)
 	SpectralBlob WavelengthFilter = SpectralBlob::Ones();
 };
 
 struct LightTraversalContext : public BaseTraversalContext {
-	size_t LightPath	 = 0; // ID of light path
+	size_t LightPathID	 = 0; // ID of light path
 	size_t LightPathSize = 0;
 	bool IsFiniteLight	 = false;
 };

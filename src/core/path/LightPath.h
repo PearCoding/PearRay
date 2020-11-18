@@ -43,12 +43,14 @@ public:
 	/// Creates a 'Camera -> Background' path
 	static LightPath createCB();
 
-	/// Returns size in bytes required to store the path in packed representation
-	inline size_t packedSizeRequirement() const;
 	/// Converts current path to packed representation. Size of the buffer should be atleast as big as the return value of packedSizeRequirement()
 	inline void toPacked(uint8* buffer, size_t size) const;
 	/// Append tokens from a packed representation
 	inline void addFromPacked(const uint8* buffer, size_t size);
+
+	/// Returns size in bytes required to store the path in packed representation
+	inline size_t packedSizeRequirement() const;
+	inline static size_t packedSizeRequirement(size_t length);
 
 private:
 	std::vector<LightPathToken> mTokens;

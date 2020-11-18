@@ -67,9 +67,14 @@ LightPathToken LightPath::token(int index) const
 	return mTokens[index];
 }
 
+inline size_t LightPath::packedSizeRequirement(size_t length)
+{
+	return (length + 1) * sizeof(uint32);
+}
+
 inline size_t LightPath::packedSizeRequirement() const
 {
-	return (currentSize() + 1) * sizeof(uint32);
+	return packedSizeRequirement(currentSize());
 }
 
 inline void LightPath::toPacked(uint8* buffer, size_t size) const
@@ -89,7 +94,7 @@ inline void LightPath::addFromPacked(const uint8* buffer, size_t size)
 	PR_ASSERT(size >= sizeof(uint32), "At least size information is required");
 	const uint32* b = reinterpret_cast<const uint32*>(buffer);
 	uint32 elems	= b[0];
-	PR_ASSERT(size >= (elems + 1) * sizeof(uint32), "Buffer is not well sized");
+	PR_ASSERT(size >= packedSizeRequirement(elems), "Buffer is not well sized");
 	for (uint32 i = 0; i < elems; ++i)
 		addToken(LightPathToken::fromPacked(b[i + 1]));
 }
