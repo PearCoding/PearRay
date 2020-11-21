@@ -3,4 +3,4 @@ target_link_libraries(prtonemap PRIVATE pr_lib_base std::filesystem OpenImageIO:
 add_lto(prtonemap)
 strip_binary(prtonemap)
 
-install(TARGETS prtonemap)
+install(TARGETS prtonemap COMPONENT runtime)

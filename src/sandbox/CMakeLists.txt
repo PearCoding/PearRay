@@ -23,4 +23,4 @@ target_include_directories(prsandbox PRIVATE ${OpenEXR_INCLUDE_DIRS})# For lmath
 add_lto(prsandbox)
 strip_binary(prsandbox)
 
-install(TARGETS prsandbox EXCLUDE_FROM_ALL) # Make it optional
+install(TARGETS prsandbox COMPONENT development EXCLUDE_FROM_ALL) # Make it optional

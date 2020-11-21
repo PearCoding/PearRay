@@ -3,4 +3,4 @@ target_link_libraries(prsplitprc PRIVATE std::filesystem)
 add_lto(prsplitprc)
 strip_binary(prsplitprc)
 
-install(TARGETS prsplitprc)
+install(TARGETS prsplitprc COMPONENT runtime)

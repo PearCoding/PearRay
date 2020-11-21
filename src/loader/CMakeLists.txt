@@ -118,4 +118,5 @@ if(BUILD_SHARED_LIBS)
   strip_binary(pr_lib_loader)
 endif()
 
-install(TARGETS pr_lib_loader)
+install(TARGETS pr_lib_loader COMPONENT runtime)
+installHeaderFiles(${PR_Src})

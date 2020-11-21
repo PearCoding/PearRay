@@ -120,4 +120,4 @@ if(BUILD_SHARED_LIBS)
   strip_binary(pr_lib_ui)
 endif()
 
-install(TARGETS pr_lib_ui)
+install(TARGETS pr_lib_ui COMPONENT runtime)

@@ -19,4 +19,4 @@ target_link_libraries(pr_lib_vcm INTERFACE pr_lib_loader)
 # Calling convention is vcm/
 target_include_directories(pr_lib_vcm INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>)
 
-install(TARGETS pr_lib_vcm)
+install(TARGETS pr_lib_vcm COMPONENT development)

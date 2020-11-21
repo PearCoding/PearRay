@@ -17,4 +17,4 @@ target_link_libraries(pr_lib_skysun PUBLIC pr_lib_loader)
 target_include_directories(pr_lib_skysun PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>/..)
 set_property(TARGET pr_lib_skysun PROPERTY POSITION_INDEPENDENT_CODE ON)
 
-install(TARGETS pr_lib_skysun)
+install(TARGETS pr_lib_skysun COMPONENT development)
