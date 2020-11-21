@@ -35,3 +35,5 @@ add_executable(prmateriallab ${Src} ${Hdr} ${GenFiles})
 target_link_libraries(prmateriallab PRIVATE pr_lib_ui)
 add_lto(prmateriallab)
 strip_binary(prmateriallab)
+
+install(TARGETS prmateriallab)

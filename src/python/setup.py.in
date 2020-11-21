@@ -1,10 +1,19 @@
 from distutils.core import setup
-from distutils.extension import Extension
 
 setup(name='pearray',
-      version='${PR_Version}',
-      package_dir={'': '${CMAKE_CURRENT_BINARY_DIR}' },
+      version='${PearRay_VERSION}',
+      author="${PearRay_VENDOR}",
+      description="${PearRay_DESCRIPTION}",
+      url="https://pearcoding.eu/projects/PearRay",
+      classifiers=[
+        'Development Status :: 4 - Beta',
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+      ],
+      package_dir={'': '${CMAKE_BINARY_DIR}/api' },
       packages=['pearray'],
-      package_data={'pearray': ['${PYTHON_MODULE_PREFIX}pypearray${PYTHON_MODULE_EXTENSION}']})
+      package_data={'pearray': ['${PYTHON_MODULE_PREFIX}pypearray${PYTHON_MODULE_EXTENSION}']},
+)
 
-
+# TODO: What about not embedded plugins??

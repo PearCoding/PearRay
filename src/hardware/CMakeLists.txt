@@ -1,4 +1,5 @@
 add_executable(prhwinfo hwinfo.cpp)
+install(TARGETS prhwinfo EXCLUDE_FROM_ALL) # Optional
 
 set(out_file "${CMAKE_BINARY_DIR}/config/HW_Features.inl")
 add_custom_command(TARGET prhwinfo

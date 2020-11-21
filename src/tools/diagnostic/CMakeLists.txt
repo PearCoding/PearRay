@@ -49,3 +49,5 @@ add_executable(prdiag ${Src} ${Hdr} ${GenFiles})
 target_link_libraries(prdiag PRIVATE pr_lib_ui Qt5::Charts)
 add_lto(prdiag)
 strip_binary(prdiag)
+
+install(TARGETS prdiag)

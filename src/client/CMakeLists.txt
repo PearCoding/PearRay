@@ -19,3 +19,5 @@ add_executable(pearray ${Src})
 target_link_libraries(pearray PRIVATE pr_lib_loader)
 add_lto(pearray)
 strip_binary(pearray)
+
+install(TARGETS pearray)

@@ -131,7 +131,7 @@ link_directories(${CMAKE_CURRENT_BINARY_DIR} ${Boost_LIBRARY_DIRS})
 
 # Python API
 if(PR_WITH_PYTHON)
-	add_subdirectory(external/pybind11)
+	add_subdirectory(external/pybind11 EXCLUDE_FROM_ALL)
 	set(PR_HAS_PYTHON_API ON)
 endif()
 
@@ -144,7 +144,7 @@ set(DL_WITH_TOOLS OFF CACHE BOOL "")
 set(DL_WITH_PYTHON OFF CACHE BOOL "")
 set(DL_BUILD_TESTS OFF CACHE BOOL "")
 set(DL_BUILD_DOCUMENTATION OFF CACHE BOOL "")
-add_subdirectory(external/DataLisp)
+add_subdirectory(external/DataLisp EXCLUDE_FROM_ALL)
 
 # Detect hardware
 add_subdirectory(src/hardware)

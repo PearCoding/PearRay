@@ -188,3 +188,5 @@ add_lto(pr_lib_core)
 if(BUILD_SHARED_LIBS)
   strip_binary(pr_lib_core)
 endif()
+
+install(TARGETS pr_lib_core)

@@ -22,3 +22,5 @@ target_link_libraries(prsandbox PRIVATE pr_lib_loader OpenImageIO::OpenImageIO)
 target_include_directories(prsandbox PRIVATE ${OpenEXR_INCLUDE_DIRS})# For lmathVec.h
 add_lto(prsandbox)
 strip_binary(prsandbox)
+
+install(TARGETS prsandbox EXCLUDE_FROM_ALL) # Make it optional

@@ -117,3 +117,5 @@ add_lto(pr_lib_loader)
 if(BUILD_SHARED_LIBS)
   strip_binary(pr_lib_loader)
 endif()
+
+install(TARGETS pr_lib_loader)

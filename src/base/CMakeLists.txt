@@ -107,3 +107,6 @@ add_lto(pr_lib_base)
 if(BUILD_SHARED_LIBS)
   strip_binary(pr_lib_base)
 endif()
+
+install(TARGETS pr_lib_base 
+        PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/pearray")
