@@ -2,7 +2,7 @@
 
 // clang-format off
 #define PR_NAME_STRING		"${PROJECT_NAME}"
-#define PR_VENDOR_STRING	"${VENDOR}"
+#define PR_VENDOR_STRING	"${PearRay_VENDOR}"
 
 #define PR_VERSION_MAJOR	${PearRay_VERSION_MAJOR}
 #define PR_VERSION_MINOR	${PearRay_VERSION_MINOR}

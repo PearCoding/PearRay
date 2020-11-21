@@ -1,5 +1,4 @@
 MESSAGE(STATUS "Building UI library")
-MESSAGE(STATUS "Using Qt: ${Qt5Widgets_VERSION_STRING}")
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 

@@ -1,5 +1,4 @@
-MESSAGE(STATUS "Building PearRayDiagnostic")
-MESSAGE(STATUS "Using Qt: ${Qt5Widgets_VERSION_STRING}")
+MESSAGE(STATUS "Building prmateriallab")
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 

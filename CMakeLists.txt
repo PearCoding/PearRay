@@ -4,13 +4,21 @@ if(${CMAKE_VERSION} VERSION_LESS 3.12)
     cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
 endif()
 
+# Prevent in source builds
+if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
+	if(NOT DEFINED WITH_IN_SOURCE_BUILD)
+		message(FATAL_ERROR "CMake generation for PearRay is not allowed within the source directory! Define WITH_IN_SOURCE_BUILD if absolutely necessary!" )
+	endif()
+endif()
+
+# Setup project
 project(PearRay
 	VERSION 0.13
 	DESCRIPTION "Experimental high accurate spectral path and ray tracer")
 
 set(PR_PLUGIN_VERSION "1.0")
 
-#SETS
+# SETS
 if(BUILD_SHARED_LIBS AND WIN32 AND NOT CYGWIN)
    	set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR})
 else()
@@ -21,7 +29,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 set(CMAKE_DEBUG_POSTFIX  "_d")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/)
 
-set(VENDOR "PearRay project 2015-2020")
+set(PearRay_VENDOR "PearRay project 2015-2020")
 include(Git)
 
 #CHECKS
@@ -61,7 +69,7 @@ CMAKE_DEPENDENT_OPTION(PR_USE_LTO 				"Use linked time optimization if available
 CMAKE_DEPENDENT_OPTION(PR_USE_CCACHE 			"Use ccache if available." ON
 	"MSVC" OFF)
 
-# march should be default, as we use simdpp
+# march should be default
 option(PR_OPTIMIZE_FOR_NATIVE	"Build with -march=native if possible" ON)
 
 option(PR_EXTRA_OPENSUBDIV		"Build extra OpenSubDiv plugin" ON)
@@ -93,9 +101,7 @@ endif()
 
 find_package(Filesystem REQUIRED)
 
-if(PR_WITH_DIAGNOSTIC)
-	find_package(Qt5 COMPONENTS Core Widgets Charts REQUIRED)
-endif()
+find_package(Qt5 COMPONENTS Core Widgets Charts)
 
 find_package(Eigen3 REQUIRED NO_MODULE)
 find_package(OpenImageIO REQUIRED)
@@ -217,6 +223,7 @@ if(PR_WITH_CLIENT)
 endif()
 
 if(${Qt5Widgets_FOUND})
+	MESSAGE(STATUS "Using Qt: ${Qt5Widgets_VERSION_STRING}")
 	add_subdirectory(src/ui)
 endif()
 

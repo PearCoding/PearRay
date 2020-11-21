@@ -125,6 +125,7 @@ foreach(component ${SeExpr2_FIND_COMPONENTS})
       IMPORTED_LOCATION_MINSIZEREL      "${SeExpr2_${component}_LIBRARY_RELEASE}"
       IMPORTED_LOCATION_RELWITHDEBINFO  "${SeExpr2_${component}_LIBRARY_DEBUG}"
       IMPORTED_LOCATION_DEBUG           "${SeExpr2_${component}_LIBRARY_DEBUG}"
+      IMPORTED_LOCATION                 "${SeExpr2_${component}_LIBRARY}"
       ## TODO: Set this to a proper value (on windows -> dll)
       IMPORTED_IMPLIB_RELEASE           "${SeExpr2_${component}_LIBRARY_RELEASE}"
       IMPORTED_IMPLIB_MINSIZEREL        "${SeExpr2_${component}_LIBRARY_RELEASE}"

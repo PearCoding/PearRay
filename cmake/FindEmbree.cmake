@@ -123,6 +123,7 @@ foreach(component ${EMBREE_FIND_COMPONENTS})
       IMPORTED_LOCATION_MINSIZEREL      "${EMBREE_${component}_LIBRARY_RELEASE}"
       IMPORTED_LOCATION_RELWITHDEBINFO  "${EMBREE_${component}_LIBRARY_DEBUG}"
       IMPORTED_LOCATION_DEBUG           "${EMBREE_${component}_LIBRARY_DEBUG}"
+      IMPORTED_LOCATION                 "${EMBREE_${component}_LIBRARY}"
       ## TODO: Set this to a proper value (on windows -> dll)
       IMPORTED_IMPLIB_RELEASE           "${EMBREE_${component}_LIBRARY_RELEASE}"
       IMPORTED_IMPLIB_MINSIZEREL        "${EMBREE_${component}_LIBRARY_RELEASE}"

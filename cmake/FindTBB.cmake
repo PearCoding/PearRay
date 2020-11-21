@@ -127,6 +127,7 @@ foreach(component ${TBB_FIND_COMPONENTS})
       IMPORTED_LOCATION_MINSIZEREL      "${TBB_${component}_LIBRARY_RELEASE}"
       IMPORTED_LOCATION_RELWITHDEBINFO  "${TBB_${component}_LIBRARY_DEBUG}"
       IMPORTED_LOCATION_DEBUG           "${TBB_${component}_LIBRARY_DEBUG}"
+      IMPORTED_LOCATION                 "${TBB_${component}_LIBRARY}"
       ## TODO: Set this to a proper value (on windows -> dll)
       IMPORTED_IMPLIB_RELEASE           "${TBB_${component}_LIBRARY_RELEASE}"
       IMPORTED_IMPLIB_MINSIZEREL        "${TBB_${component}_LIBRARY_RELEASE}"

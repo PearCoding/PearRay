@@ -132,6 +132,7 @@ foreach(component ${OpenSubdiv_FIND_COMPONENTS})
       IMPORTED_LOCATION_MINSIZEREL      "${OpenSubdiv_${component}_LIBRARY_RELEASE}"
       IMPORTED_LOCATION_RELWITHDEBINFO  "${OpenSubdiv_${component}_LIBRARY_DEBUG}"
       IMPORTED_LOCATION_DEBUG           "${OpenSubdiv_${component}_LIBRARY_DEBUG}"
+      IMPORTED_LOCATION                 "${OpenSubdiv_${component}_LIBRARY}"
       ## TODO: Set this to a proper value (on windows -> dll)
       IMPORTED_IMPLIB_RELEASE           "${OpenSubdiv_${component}_LIBRARY_RELEASE}"
       IMPORTED_IMPLIB_MINSIZEREL        "${OpenSubdiv_${component}_LIBRARY_RELEASE}"
