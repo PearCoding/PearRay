@@ -11,6 +11,11 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
 	endif()
 endif()
 
+# Omit superfluous "Up-to-date" messages.
+if(NOT DEFINED CMAKE_INSTALL_MESSAGE)
+	set(CMAKE_INSTALL_MESSAGE "LAZY")
+endif()
+
 # Setup project
 project(PearRay
 	VERSION 0.13
