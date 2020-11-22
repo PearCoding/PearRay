@@ -178,7 +178,8 @@ target_link_libraries(pr_lib_core PUBLIC pr_lib_base std::filesystem TBB::tbb Em
 set_target_properties(pr_lib_core PROPERTIES CXX_VISIBILITY_PRESET hidden)
 target_include_directories(pr_lib_core PUBLIC 
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-  ../../external/pcg-cpp/include)
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>/external/pcg-cpp/include
+  $<INSTALL_INTERFACE:${INCLUDE_PREFIX}/>)
 if(NOT BUILD_SHARED_LIBS)
   target_compile_definitions(pr_lib_core PUBLIC "PR_LIB_CORE_STATIC")
   set_target_properties(pr_lib_core PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
@@ -189,5 +190,11 @@ if(BUILD_SHARED_LIBS)
   strip_binary(pr_lib_core)
 endif()
 
-install(TARGETS pr_lib_core COMPONENT runtime)
+if(BUILD_SHARED_LIBS)
+  set(INSTALL_COMPONENT runtime)
+else()
+  set(INSTALL_COMPONENT development)
+endif()
+set_target_properties(pr_lib_core PROPERTIES EXPORT_NAME core)
+install(TARGETS pr_lib_core COMPONENT ${INSTALL_COMPONENT} EXPORT PearRay-targets)
 installHeaderFiles(${PR_Src})

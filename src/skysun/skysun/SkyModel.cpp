@@ -4,7 +4,7 @@
 #include "SceneLoadContext.h"
 #include "shader/INode.h"
 #include "shader/ShadingContext.h"
-#include "skymodel/ArHosekSkyModel.h"
+#include "model/ArHosekSkyModel.h"
 
 #include "DebugIO.h"
 

@@ -16,6 +16,11 @@ if(NOT DEFINED CMAKE_INSTALL_MESSAGE)
 	set(CMAKE_INSTALL_MESSAGE "LAZY")
 endif()
 
+# Set default to Release
+if (NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Release")
+endif()
+
 # Setup project
 project(PearRay
 	VERSION 0.13
@@ -29,6 +34,8 @@ if(BUILD_SHARED_LIBS AND WIN32 AND NOT CYGWIN)
 else()
 	set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin/)
 endif()
+
+set(INCLUDE_PREFIX "${PROJECT_NAME}")
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 set(CMAKE_DEBUG_POSTFIX  "_d")
@@ -154,10 +161,19 @@ configure_file(src/base/config/HW_Switch.inl.in     ${CMAKE_CURRENT_BINARY_DIR}/
 configure_file(src/base/config/Git.h.in             ${CMAKE_CURRENT_BINARY_DIR}/config/Git.h)
 configure_file(src/base/config/Version.h.in         ${CMAKE_CURRENT_BINARY_DIR}/config/Version.h)
 
+# Install generated header files
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/PR_Config.h 
+	DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${INCLUDE_PREFIX}" 
+	COMPONENT development)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/config/HW_Switch.inl
+			  ${CMAKE_CURRENT_BINARY_DIR}/config/Git.h
+			  ${CMAKE_CURRENT_BINARY_DIR}/config/Version.h
+		 DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${INCLUDE_PREFIX}/config"
+		 COMPONENT development)
+
 include_directories(${CMAKE_CURRENT_BINARY_DIR}
 			external/DataLisp/src ${CMAKE_CURRENT_BINARY_DIR}/external/DataLisp
-			external/tinyobjloader external/cxxopts/include
-			${OIIO_INCLUDE_DIR})
+			external/tinyobjloader external/cxxopts/include)
 
 # Extras
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -166,6 +182,7 @@ include(Strip)
 include(LTO)
 include(ExtraUtils)
 include(Deploy)
+include(Install)
 
 if(PR_GENERATE_COVERAGE AND (CMAKE_BUILD_TYPE MATCHES Debug))
 	include(Coveralls)

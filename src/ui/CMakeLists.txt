@@ -120,4 +120,19 @@ if(BUILD_SHARED_LIBS)
   strip_binary(pr_lib_ui)
 endif()
 
-install(TARGETS pr_lib_ui COMPONENT runtime)
+# Better do not include this in the actual release!
+if(TRUE)
+  if(BUILD_SHARED_LIBS)
+    install(TARGETS pr_lib_ui COMPONENT ${INSTALL_COMPONENT})
+  endif()
+  return()
+endif()
+
+if(BUILD_SHARED_LIBS)
+  set(INSTALL_COMPONENT runtime)
+else()
+  set(INSTALL_COMPONENT development)
+endif()
+set_target_properties(pr_lib_ui PROPERTIES EXPORT_NAME ui)
+install(TARGETS pr_lib_ui COMPONENT ${INSTALL_COMPONENT} EXPORT PearRay-targets)
+installHeaderFiles(${Hdr}) # TODO: This is unfinished

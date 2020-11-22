@@ -100,7 +100,12 @@ target_link_libraries(pr_lib_loader
     datalisp OpenImageIO::OpenImageIO OpenImageIO::OpenImageIO_Util
 )
 set_target_properties(pr_lib_loader PROPERTIES CXX_VISIBILITY_PRESET hidden)
-target_include_directories(pr_lib_loader PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}> PRIVATE ${OpenEXR_INCLUDE_DIRS})# For lmathVec.h
+target_include_directories(pr_lib_loader 
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<INSTALL_INTERFACE:${INCLUDE_PREFIX}/>
+  PRIVATE
+    ${OpenEXR_INCLUDE_DIRS})# For lmathVec.h
 if(NOT BUILD_SHARED_LIBS)
   target_compile_definitions(pr_lib_loader PUBLIC "PR_LIB_LOADER_STATIC")
   set_target_properties(pr_lib_loader PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
@@ -118,5 +123,11 @@ if(BUILD_SHARED_LIBS)
   strip_binary(pr_lib_loader)
 endif()
 
-install(TARGETS pr_lib_loader COMPONENT runtime)
+if(BUILD_SHARED_LIBS)
+  set(INSTALL_COMPONENT runtime)
+else()
+  set(INSTALL_COMPONENT development)
+endif()
+set_target_properties(pr_lib_loader PROPERTIES EXPORT_NAME loader)
+install(TARGETS pr_lib_loader COMPONENT ${INSTALL_COMPONENT} EXPORT PearRay-targets)
 installHeaderFiles(${PR_Src})
