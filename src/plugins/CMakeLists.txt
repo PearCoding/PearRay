@@ -56,7 +56,10 @@ function(PR_ADD_PLUGIN NAME)
     add_lto(${TARGET})
     strip_binary(${TARGET})
 
-    install(TARGETS ${TARGET} COMPONENT runtime OPTIONAL)
+    install(TARGETS ${TARGET} COMPONENT runtime
+      RUNTIME DESTINATION ${PLUGINS_INSTALL_DIR}
+      LIBRARY DESTINATION ${PLUGINS_INSTALL_DIR}
+      OPTIONAL)
 
     add_dependencies(pr_plugins ${TARGET})
   endif()

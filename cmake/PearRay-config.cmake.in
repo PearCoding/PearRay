@@ -1,3 +1,9 @@
 @PACKAGE_INIT@
 
+# If no plugins are available (e.g. everything is embedded), this directory may not exist.
+set(PearRay_PLUGINS_DIR "@PACKAGE_PLUGINS_INSTALL_DIR@")
+if(EXISTS "${PearRay_PLUGINS_DIR}")
+    set(PearRay_HAS_PLUGINS TRUE)
+endif()
+
 include("${CMAKE_CURRENT_LIST_DIR}/PearRay-targets.cmake")
