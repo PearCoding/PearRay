@@ -46,19 +46,23 @@ set(CPACK_RESOURCE_FILE_README "${PROJECT_SOURCE_DIR}/README.md")
 set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/LICENSE")
 set(CPACK_PACKAGE_CONTACT "https://pearcoding.eu/projects/PearRay")
 
+SET(CPACK_COMPONENTS_ALL runtime viewer development documentation)
+set(CPACK_COMPONENT_viewer_DEPENDS runtime)
+set(CPACK_COMPONENT_development_DEPENDS runtime)
+
 include(InstallArchive)
 include(InstallBSD)
 include(InstallDeb)
 include(InstallRPM)
 
-SET(CPACK_COMPONENTS_ALL runtime development documentation)
-
 include(CPack)
 
 cpack_add_component_group(runtime DISPLAY_NAME "PearRay runtime files")
+cpack_add_component_group(viewer PARENT_GROUP runtime DISPLAY_NAME "PearRay viewers")
 cpack_add_component_group(development PARENT_GROUP runtime DISPLAY_NAME "PearRay development files")
 cpack_add_component_group(documentation DISPLAY_NAME "PearRay documentation files")
 
 cpack_add_component(runtime GROUP runtime)
+cpack_add_component(viewer GROUP viewer)
 cpack_add_component(development GROUP development)
 cpack_add_component(documentation GROUP documentation)
