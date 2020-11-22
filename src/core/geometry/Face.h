@@ -44,7 +44,6 @@ public:
 			return Triangle::interpolate(UV[0], UV[1], UV[2], local_uv);
 	}
 
-	// FIXME: Quad?
 	inline Vector2f mapGlobalToLocalUV(const Vector2f& uv) const
 	{
 		Vector2f duv1 = UV[1] - UV[0];

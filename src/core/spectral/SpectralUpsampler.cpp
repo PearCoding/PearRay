@@ -26,7 +26,7 @@ SpectralUpsampler::SpectralUpsampler(Serializer& serializer)
 	serializer.read(mInternal->Resolution);
 
 	const size_t size_scale = mInternal->Resolution;
-	const size_t size_data	= mInternal->Resolution * mInternal->Resolution * mInternal->Resolution * 3 * COEFFS_N;
+	const size_t size_data	= size_scale * size_scale * size_scale * 3 * COEFFS_N;
 
 	mInternal->Scale = new float[size_scale];
 	serializer.readRaw(reinterpret_cast<uint8*>(mInternal->Scale), size_scale * sizeof(float));

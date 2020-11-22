@@ -7,11 +7,12 @@ class PR_LIB_CORE FilterCache {
 public:
 	FilterCache(IFilter* filter)
 		: mRadius(filter->radius())
-		, mCache((2 * mRadius + 1) * (2 * mRadius + 1))
+		, mDiameter(static_cast<size_t>(2 * mRadius + 1))
+		, mCache(mDiameter * mDiameter)
 	{
 		for (int y = -mRadius; y <= mRadius; ++y)
 			for (int x = -mRadius; x <= mRadius; ++x)
-				mCache[(y + mRadius) * (2 * mRadius + 1) + x + mRadius] = filter->evalWeight(x, y);
+				mCache[(y + mRadius) * mDiameter + x + mRadius] = filter->evalWeight(x, y);
 	}
 
 	inline int radius() const { return mRadius; }
@@ -20,11 +21,12 @@ public:
 		int ix = std::max(std::min((int)std::round(x), mRadius), -mRadius) + mRadius;
 		int iy = std::max(std::min((int)std::round(y), mRadius), -mRadius) + mRadius;
 
-		return mCache.at(iy * (2 * mRadius + 1) + ix);
+		return mCache.at(iy * mDiameter + ix);
 	}
 
 private:
-	int mRadius;
+	const int mRadius;
+	const size_t mDiameter;
 	std::vector<float> mCache;
 };
 } // namespace PR

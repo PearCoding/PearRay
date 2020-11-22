@@ -27,7 +27,7 @@ void StreamPipeline::reset(RenderTile* tile)
 {
 	mTile					  = tile;
 	const Size2i size		  = mTile->viewSize();
-	mMaxPixelCount			  = size.Width * size.Height;
+	mMaxPixelCount			  = static_cast<size_t>(size.Width) * static_cast<size_t>(size.Height);
 	mCurrentVirtualPixelIndex = 0;
 	mCurrentPixelIndex		  = 0;
 

@@ -12,7 +12,7 @@ struct PR_LIB_CORE SpectralMapSample {
 
 class RenderTile;
 class StreamPipeline;
-class OutputSpectralEntry;
+struct OutputSpectralEntry;
 class PR_LIB_CORE ISpectralMapper {
 public:
 	inline ISpectralMapper(float start, float end)

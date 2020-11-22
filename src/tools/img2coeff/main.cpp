@@ -102,7 +102,7 @@ bool read_input(const std::string& filename, std::vector<float>& data, int& widt
 		return false;
 	}
 
-	data.resize(width * height * channels);
+	data.resize(static_cast<size_t>(width) * static_cast<size_t>(height) * static_cast<size_t>(channels));
 	in->read_image(OIIO::TypeDesc::FLOAT, &data[0]);
 	in->close();
 
@@ -175,9 +175,10 @@ int main(int argc, char** argv)
 		std::vector<float> ob_buffer(width);
 		std::vector<float> oc_buffer(width);
 
+		const size_t slice = static_cast<size_t>(width);
 		for (int i = 0; i < height; ++i) {
-			const float* in = &in_data[i * width * 3];
-			float* out		= &out_data[i * width * 3];
+			const float* in = &in_data[i * slice * 3];
+			float* out		= &out_data[i * slice * 3];
 
 			PR_OPT_LOOP
 			for (int j = 0; j < width; ++j) {

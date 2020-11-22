@@ -18,13 +18,14 @@ class IIntegrator;
 class IMaterial;
 class FrameBufferSystem;
 class LightSampler;
-class OutputSpectralEntry;
 class RayStream;
 class RenderTileSession;
 class RenderThread;
 class RenderTile;
 class RenderTileMap;
 class Scene;
+
+struct OutputSpectralEntry;
 
 using RenderIterationCallback			= std::function<void(uint32)>;
 using RenderOutputSpectralSplatCallback = std::function<void(const RenderThread*, const OutputSpectralEntry*, size_t)>;

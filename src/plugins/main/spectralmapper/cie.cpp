@@ -44,6 +44,8 @@ public:
 				  "Expected truncated domain to be inside cie domain");
 	}
 
+	virtual ~TruncatedCIESpectralMapper() = default;
+
 	SpectralMapSample sample(const Point2i&, float u) const override
 	{
 		SpectralMapSample S;
