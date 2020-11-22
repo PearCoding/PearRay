@@ -15,7 +15,7 @@ function(installHeaderFiles)
 endfunction()
 
 # Set plugin install folder 
-set(PLUGINS_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR}/${PROJECT_NAME}/plugins)
+set(PR_PLUGINS_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR}/${PROJECT_NAME}/plugins CACHE PATH "Directory available plugins are installed to.")
 
 # Setup cmake package
 # TODO: This could be further optimized
@@ -26,7 +26,7 @@ configure_package_config_file(
     INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
     NO_CHECK_REQUIRED_COMPONENTS_MACRO
     NO_SET_AND_CHECK_MACRO
-    PATH_VARS PLUGINS_INSTALL_DIR)
+    PATH_VARS PR_PLUGINS_INSTALL_DIR)
 
 write_basic_package_version_file(
     "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake"
