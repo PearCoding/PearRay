@@ -25,10 +25,9 @@
 
 using namespace PR;
 
-constexpr float SUN_R	   = 0.1f;
-constexpr float SUN_D	   = 4.0f;
-constexpr int ANIM_MS	   = 200;
-constexpr int STITCH_COUNT = 32;
+constexpr float SUN_R = 0.1f;
+constexpr float SUN_D = 4.0f;
+constexpr int ANIM_MS = 200;
 MaterialWindow::MaterialWindow(const QString& typeName, PR::IMaterialPlugin* factory, QWidget* parent)
 	: QWidget(parent)
 	, mTypeName(typeName)
@@ -189,7 +188,7 @@ void MaterialWindow::calculateBSDF()
 	mBRDFCache.clear();
 	mBTDFCache.clear();
 
-	const auto pipeline = [this](auto calc) {
+	const auto pipeline = [/*this*/](auto calc) {
 #if 0 /* Deterministic calculation instead */
 		constexpr PR::uint64 SEED = 181; // 42th prime number
 		constexpr int ITRATIONS	  = 5000;
@@ -305,6 +304,7 @@ inline static void cleanup(std::vector<float>& vals)
 		v = std::isfinite(v) ? v : 0;
 }
 
+#if 0
 inline static void cleanup(std::vector<Vector2f>& pts, std::vector<float>& vals)
 {
 	constexpr float EPS = 0.0001f;
@@ -332,6 +332,7 @@ inline static void cleanup(std::vector<Vector2f>& pts, std::vector<float>& vals)
 		}
 	}
 }
+#endif
 
 void MaterialWindow::buildBRDF()
 {

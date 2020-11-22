@@ -95,8 +95,8 @@ protected:
 	void mouseReleaseEvent(QMouseEvent* event) override;
 	void wheelEvent(QWheelEvent* event) override;
 
-	void enterEvent(QEvent* event);
-	void leaveEvent(QEvent* event);
+	void enterEvent(QEvent* event) override;
+	void leaveEvent(QEvent* event) override;
 
 private slots:
 	void contextMenu(const QPoint& point);

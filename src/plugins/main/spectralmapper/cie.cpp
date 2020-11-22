@@ -13,6 +13,8 @@ public:
 	{
 	}
 
+	virtual ~FullCIESpectralMapper() = default;
+
 	SpectralMapSample sample(const Point2i&, float u) const override
 	{
 		SpectralMapSample S;

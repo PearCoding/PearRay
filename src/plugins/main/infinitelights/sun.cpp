@@ -192,7 +192,7 @@ public:
 	void samplePosDir(const InfiniteLightSamplePosDirInput& in, InfiniteLightSamplePosDirOutput& out,
 					  const RenderTileSession& session) const override
 	{
-		samplePosDir(in, out, session);
+		sampleDir(in, out, session);
 
 		if (in.Point) {
 			out.LightPosition = in.Point->P + mSceneRadius * out.Outgoing;

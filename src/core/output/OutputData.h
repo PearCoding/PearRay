@@ -8,7 +8,8 @@ enum OutputSpectralEntryFlags {
 	OSEF_Mono = 0x1
 };
 
-struct PR_LIB_CORE OutputSpectralEntry {
+class PR_LIB_CORE OutputSpectralEntry {
+public:
 	Point2i Position;
 	SpectralBlob MIS;
 	SpectralBlob Importance;

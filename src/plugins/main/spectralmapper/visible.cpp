@@ -15,6 +15,8 @@ public:
 	{
 	}
 
+	virtual ~FullVisibleSpectralMapper() = default;
+
 	SpectralMapSample sample(const Point2i&, float u) const override
 	{
 		SpectralMapSample S;
@@ -56,6 +58,8 @@ public:
 		PR_ASSERT(spectralStart >= PR_VISIBLE_WAVELENGTH_START && spectralEnd <= PR_VISIBLE_WAVELENGTH_END,
 				  "Expected truncated domain to be inside visible domain");
 	}
+	
+	virtual ~TruncatedVisibleSpectralMapper() = default;
 
 	SpectralMapSample sample(const Point2i&, float u) const override
 	{
