@@ -102,6 +102,8 @@ set(PR_Src
   photon/Photon.h
   photon/PhotonMap.h
   photon/PhotonMap.inl
+  random/pcg_extras.hpp
+  random/pcg_random.hpp
   ray/Ray.h
   ray/RayGroup.h
   ray/RayGroupContainer.h
@@ -178,7 +180,6 @@ target_link_libraries(pr_lib_core PUBLIC pr_lib_base std::filesystem TBB::tbb Em
 set_target_properties(pr_lib_core PROPERTIES CXX_VISIBILITY_PRESET hidden)
 target_include_directories(pr_lib_core PUBLIC 
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>/external/pcg-cpp/include
   $<INSTALL_INTERFACE:${INCLUDE_PREFIX}/>)
 if(NOT BUILD_SHARED_LIBS)
   target_compile_definitions(pr_lib_core PUBLIC "PR_LIB_CORE_STATIC")

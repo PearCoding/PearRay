@@ -1,7 +1,7 @@
 # Call extractHeaderFiles(headers test.h test.cpp test.inl)
 function(extractHeaderFiles LIST)
     set(data ${ARGN})
-    list(FILTER data INCLUDE REGEX "(.*\.h$)|(.*\.inl$)")
+    list(FILTER data INCLUDE REGEX "(.*\.h$)|(.*\.hpp$)|(.*\.inl$)")
     set(${LIST} ${data} PARENT_SCOPE)
 endfunction()
 

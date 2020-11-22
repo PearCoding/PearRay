@@ -19,7 +19,7 @@
 #endif
 
 #if PR_RANDOM_ALGORITHM == 3
-#include "pcg_random.hpp"
+#include "random/pcg_random.hpp"
 #endif
 
 namespace PR {

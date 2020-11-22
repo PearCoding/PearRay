@@ -17,7 +17,7 @@ Experimental high accurate spectral path and ray tracer for research and data ac
 
 :exclamation: **This is experimental software. API changes regularly** :exclamation:
 
-![Example render by PearRay. Constructed with Blender 2.80](examples/complex.jpeg)
+![Example render by PearRay. Modeled with Blender 2.80](examples/complex.jpeg)
 
 ## Blender Addon
 
@@ -39,9 +39,12 @@ There is an open source (still experimental) blender integration addon available
 
 - cxxopts <https://github.com/jarro2783/cxxopts>
 - DataLisp <https://github.com/PearCoding/DataLisp>
-- PCG Random Number Generation, C++ Edition <https://github.com/imneme/pcg-cpp>
 - pybind11 <https://github.com/pybind/pybind11>
 - tinyobjloader <https://github.com/syoyo/tinyobjloader>
+
+### Embedded
+
+- PCG Random Number Generation, C++ Edition <https://github.com/imneme/pcg-cpp>
 
 ### Other
 
