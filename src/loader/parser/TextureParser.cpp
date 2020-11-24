@@ -101,6 +101,8 @@ void TextureParser::parse(SceneLoadContext& ctx, const std::string& name, const 
 		std::string mip = mipModeD.getString();
 		std::transform(mip.begin(), mip.end(), mip.begin(), ::tolower);
 		opts.mipmode = parseMIP(mip);
+	} else {
+		opts.mipmode = OIIO::TextureOpt::MipModeNoMIP;// For now
 	}
 
 	if (interpolationModeD.type() == DL::DT_String) {
@@ -173,7 +175,6 @@ void TextureParser::parse(SceneLoadContext& ctx, const std::string& name, const 
 			return;
 		}
 
-		// TODO: Prepare image and cache it out if necessary!
 		auto output = std::make_shared<ImageNode>(
 			(OIIO::TextureSystem*)ctx.environment()->textureSystem(),
 			opts, filename);

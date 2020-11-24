@@ -641,7 +641,7 @@ void SceneLoader::addMaterial(const DL::DataGroup& group, SceneLoadContext& ctx)
 	}
 
 	if (ctx.environment()->hasMaterial(name)) {
-		PR_LOG(L_ERROR) << "[Loader] Material name already set" << std::endl;
+		PR_LOG(L_ERROR) << "[Loader] Material name '" << name << "' already set" << std::endl;
 		return;
 	}
 
@@ -649,7 +649,7 @@ void SceneLoader::addMaterial(const DL::DataGroup& group, SceneLoadContext& ctx)
 		type = typeD.getString();
 		std::transform(type.begin(), type.end(), type.begin(), ::tolower);
 	} else {
-		PR_LOG(L_ERROR) << "[Loader] No material type set" << std::endl;
+		PR_LOG(L_ERROR) << "[Loader] No material type set for material '" << name << "'" << std::endl;
 		return;
 	}
 

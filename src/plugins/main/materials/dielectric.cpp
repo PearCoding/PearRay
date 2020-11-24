@@ -138,9 +138,9 @@ public:
 	}
 
 private:
-	std::shared_ptr<FloatSpectralNode> mSpecularity;
-	std::shared_ptr<FloatSpectralNode> mTransmission;
-	std::shared_ptr<FloatSpectralNode> mIOR;
+	const std::shared_ptr<FloatSpectralNode> mSpecularity;
+	const std::shared_ptr<FloatSpectralNode> mTransmission;
+	const std::shared_ptr<FloatSpectralNode> mIOR;
 };
 
 // System of function which probably could be simplified with template meta programming
@@ -187,7 +187,12 @@ class DielectricMaterialPlugin : public IMaterialPlugin {
 public:
 	std::shared_ptr<IMaterial> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
 	{
-		// TODO: If roughness is given -> yield to roughglass material
+		// Construct rough dielectric instead
+		/*if (ctx.parameters().hasParameter("roughness")
+			|| ctx.parameters().hasParameter("roughness_x")
+			|| ctx.parameters().hasParameter("roughness_y"))
+			return ctx.yieldToMaterial(id, "roughdielectric", ctx.parameters());*/
+
 		return createMaterial4(id, ctx);
 	}
 

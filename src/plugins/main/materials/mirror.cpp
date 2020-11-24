@@ -67,7 +67,7 @@ public:
 	}
 
 private:
-	std::shared_ptr<FloatSpectralNode> mSpecularity;
+	const std::shared_ptr<FloatSpectralNode> mSpecularity;
 };
 
 class MirrorMaterialPlugin : public IMaterialPlugin {

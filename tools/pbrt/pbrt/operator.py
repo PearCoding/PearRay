@@ -7,6 +7,9 @@ from .writer import Writer
 from . import colexport, matexport, objexport
 
 
+WRAP_MAP = {'repeat': 'periodic', 'black': 'black', 'clamp': 'clamp'}
+
+
 class Operator:
     class Context:
         def __init__(self):
@@ -36,6 +39,11 @@ class Operator:
         self.matCount = 0
         self.objectShapeAssoc = {}
         self.includes = {}
+        self.aspectRatio = None
+
+        # The following warnings can be annoying, so show them only once
+        self.warnedAboutCurves = False
+        self.warnedAboutSubdiv = False
 
     def apply(self, op):
         try:
@@ -183,13 +191,22 @@ class Operator:
         cam_mat = np.linalg.inv(self.contextStack[-1].transform)
 
         w = 1
+        h = 1
         if 'fov' in op.parameters:
-            w = math.radians(op.parameters['fov'])
-            #w = math.tan(math.radians(op.parameters['fov']))
+            h = 2*math.tan(math.radians(op.parameters['fov'])/2)
+            if self.aspectRatio is None:
+                print("Can not detect aspect ratio at the moment!")
+                w = h
+            else:
+                if self.aspectRatio > 1:
+                    w = h*self.aspectRatio
+                else:
+                    w = h
+                    h = w/self.aspectRatio
 
         cam_mat = np.dot(cam_mat, np.array([[1, 0, 0, 0],
-                                            [0, -1, 0, 0],
                                             [0, 0, 1, 0],
+                                            [0, 1, 0, 0],
                                             [0, 0, 0, 1]]))
         self.coords['camera'] = cam_mat
 
@@ -203,7 +220,7 @@ class Operator:
         self.w.write(":name 'Camera'")
         self.w.write(":type 'standard'")
         self.w.write(":width %f" % w)
-        self.w.write(":height %f" % w)
+        self.w.write(":height %f" % h)
         self.w.write(":transform %s" % Operator.mat2str(cam_mat))
         self.w.goOut()
         self.w.write(")")
@@ -378,10 +395,18 @@ class Operator:
             print("ERROR: Only support image output!")
             return
 
+        if self.aspectRatio is not None:
+            print("WARNING: Only support one film! Ignoring")
+            return
+
+        w = op.parameters["xresolution"]
+        h = op.parameters["yresolution"]
+        self.aspectRatio = float(w) / float(h)
+
         filename = os.path.splitext(
             os.path.basename(op.parameters["filename"]))[0]
-        self.w.write(":render_width %i" % op.parameters["xresolution"])
-        self.w.write(":render_height %i" % op.parameters["yresolution"])
+        self.w.write(":render_width %i" % w)
+        self.w.write(":render_height %i" % h)
         self.w.write("(output")
         self.w.goIn()
         self.w.write(":name '%s'" % filename)
@@ -405,7 +430,43 @@ class Operator:
         pass  # Ignoring for now
 
     def op_Texture(self, op):
-        pass  # TODO
+        if self.options.skipTex:
+            return
+
+        textype = op.parameters['']
+        if textype != "imagemap":
+            print("Does not support '%s' texture types" % textype)
+            return
+
+        has_scale = "scale" in op.parameters
+
+        tex_name = "%s-tex" % op.operand if has_scale else op.operand
+
+        filename = op.parameters["filename"]
+        inc_file = self.resolveInclude(op.filename, filename)
+
+        mapper = op.parameters['wrap'] if 'wrap' in op.parameters else "repeat"
+        if not mapper in WRAP_MAP:
+            print("Unknown wrap method '%'" % mapper)
+
+        self.w.write("(texture")
+        self.w.goIn()
+        self.w.write(":name '%s'" % tex_name)
+        self.w.write(":type 'color'")
+        self.w.write(":file '%s'" % inc_file)
+        self.w.write(":wrap '%s'" % WRAP_MAP.get(mapper, WRAP_MAP['repeat']))
+        self.w.goOut()
+        self.w.write(")")
+
+        if has_scale:
+            self.w.write("(node")
+            self.w.goIn()
+            self.w.write(":name '%s'" % op.operand)
+            self.w.write(":type 'smul'")
+            self.w.write("%f, '%s'" %
+                         (float(op.parameters["scale"]), tex_name))
+            self.w.goOut()
+            self.w.write(")")
 
     def setupTexture(self, base, filename):
         if self.options.skipTex:
@@ -444,7 +505,7 @@ class Operator:
             return
 
         if op.operand == "point":
-            pass  # TODO
+            print("WARNING: Point light sources not yet implemented!")  # TODO
         elif op.operand == "infinite":
             tex_name = None
             if 'mapname' in op.parameters:
@@ -455,9 +516,10 @@ class Operator:
             self.w.goIn()
             self.w.write(":type 'environment'")
             if tex_name is not None:
-                self.w.write(":radiance %s" % tex_name)
+                self.w.write(
+                    ":radiance (smul (illuminant 'd65') %s)" % tex_name)
             else:
-                self.w.write(":radiance %s" %
+                self.w.write(":radiance (smul (illuminant 'd65') %s)" %
                              colexport.unpackIllum(self, op.parameters['L']))
             self.w.goOut()
             self.w.write(")")
@@ -470,7 +532,7 @@ class Operator:
             self.w.goIn()
             self.w.write(":type 'distant'")
             self.w.write(":direction [%f, %f, %f]" % (D[0], D[1], D[2]))
-            self.w.write(":radiance '%s'" % color)
+            self.w.write(":radiance (smul (illuminant 'd65') %s)" % color)
             self.w.goOut()
             self.w.write(")")
         else:
@@ -488,7 +550,7 @@ class Operator:
             self.w.goIn()
             self.w.write(":name '%s'" % name)
             self.w.write(":type 'diffuse'")
-            self.w.write(":radiance '%s'" % color)
+            self.w.write(":radiance (smul (illuminant 'd65') %s)" % color)
             self.w.goOut()
             self.w.write(")")
         else:
@@ -604,11 +666,15 @@ class Operator:
                 self.writeShape(shape)
             self.shapeCount += 1
         elif op.operand == "loopsubdiv":
-            print("ERROR: loopsubdiv - Not yet supported")
+            if not self.warnedAboutSubdiv:
+                print("ERROR: loopsubdiv - Not yet supported")
+                self.warnedAboutSubdiv = True
         elif op.operand == "curve":
             if self.options.skipCurve:
                 return
-            print("ERROR: curve - Not yet supported")
+            if not self.warnedAboutCurves:
+                print("ERROR: curve - Not yet supported")
+                self.warnedAboutCurves = True
         elif op.operand == "sphere":
             if self.options.skipPrim:
                 return

@@ -2,6 +2,7 @@ set(PR_Src
   Random.h
   ServiceObserver.h
   ServiceObserver.inl
+  archive/IArchive.h
   buffer/AOV.h
   buffer/ColorBuffer.cpp
   buffer/ColorBuffer.h

@@ -5,8 +5,8 @@
 
 namespace PR {
 ImageNode::ImageNode(OIIO::TextureSystem* tsys,
-							   const OIIO::TextureOpt& options,
-							   const std::string& filename)
+					 const OIIO::TextureOpt& options,
+					 const std::string& filename)
 	: FloatSpectralNode()
 	, mFilename(filename)
 	, mTextureOptions(options)
@@ -57,8 +57,9 @@ void ImageNode::lookup(const ShadingContext& ctx, SpectralBlob& rgb) const
 	ParametricBlob value;
 	if (!mTextureSystem->texture(mFilename, ops,
 								 ctx.UV(0), 1 - ctx.UV(1),
-								 ctx.dUV(0), ctx.dUV(1), ctx.dUV(0), ctx.dUV(1),
-								 3, &value[0])) {
+								 0.0f, 0.0f, 0.0f, 0.0f,
+								 /*ctx.dUV(0), ctx.dUV(1), ctx.dUV(0), ctx.dUV(1)*/
+								 PR_PARAMETRIC_BLOB_SIZE, &value[0])) {
 		std::string err = mTextureSystem->geterror();
 		PR_LOG(L_ERROR) << "Couldn't lookup luminance of texture: " << err << std::endl;
 		rgb = SpectralBlob::Zero();

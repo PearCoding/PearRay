@@ -84,8 +84,13 @@ public:
 
 	std::shared_ptr<IMaterial> registerMaterial(const std::string& name, const std::string& type, const ParameterGroup& params) const;
 	std::shared_ptr<IMaterial> loadMaterial(const std::string& type, const ParameterGroup& params) const;
+	/// Replace material with id by a new material. Should only be used inside a material factory
+	std::shared_ptr<IMaterial> yieldToMaterial(uint32 id, const std::string& type, const ParameterGroup& params) const;
+
 	std::shared_ptr<IEmission> registerEmission(const std::string& name, const std::string& type, const ParameterGroup& params) const;
 	std::shared_ptr<IEmission> loadEmission(const std::string& type, const ParameterGroup& params) const;
+	/// Replace emission with id by a new emission. Should only be used inside a emission factory
+	std::shared_ptr<IEmission> yieldToEmission(uint32 id, const std::string& type, const ParameterGroup& params) const;
 
 private:
 	ParameterGroup mParameters;

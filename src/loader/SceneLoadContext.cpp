@@ -300,8 +300,13 @@ std::shared_ptr<IMaterial> SceneLoadContext::loadMaterial(const std::string& typ
 {
 	auto manag		= mEnvironment->materialManager();
 	const uint32 id = manag->nextID();
+	return yieldToMaterial(id, type, params);
+}
 
-	auto fac = manag->getFactory(type);
+std::shared_ptr<IMaterial> SceneLoadContext::yieldToMaterial(uint32 id, const std::string& type, const ParameterGroup& params) const
+{
+	auto manag = mEnvironment->materialManager();
+	auto fac   = manag->getFactory(type);
 	if (!fac) {
 		PR_LOG(L_ERROR) << "Unknown material type " << type << std::endl;
 		return nullptr;
@@ -341,8 +346,13 @@ std::shared_ptr<IEmission> SceneLoadContext::loadEmission(const std::string& typ
 {
 	auto manag		= mEnvironment->emissionManager();
 	const uint32 id = manag->nextID();
+	return yieldToEmission(id, type, params);
+}
 
-	auto fac = manag->getFactory(type);
+std::shared_ptr<IEmission> SceneLoadContext::yieldToEmission(uint32 id, const std::string& type, const ParameterGroup& params) const
+{
+	auto manag = mEnvironment->emissionManager();
+	auto fac   = manag->getFactory(type);
 	if (!fac) {
 		PR_LOG(L_ERROR) << "Unknown emission type " << type << std::endl;
 		return nullptr;

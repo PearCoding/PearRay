@@ -22,8 +22,17 @@ def unpackSpec(operator, col, spec_type):
 
 
 def unpackRefl(operator, col):
-    return unpackSpec(operator, col, 'refl')
+    if isinstance(col, str):
+        return "(texture '%s')" % col
+
+    return "(refl %f %f %f)" % (col[0], col[1], col[2])
 
 
 def unpackIllum(operator, col):
-    return unpackSpec(operator, np.multiply(operator.options.lightFactor, col), 'illum')
+    if isinstance(col, str):
+        return "(texture '%s')" % col
+
+    if operator.options.lightFactor == 1.0:
+        return "(illum %f %f %f)" % (col[0], col[1], col[2])
+    else:
+        return "(smul (illum %f %f %f) %f)" % (col[0], col[1], col[2], operator.options.lightFactor)

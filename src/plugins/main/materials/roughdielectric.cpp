@@ -358,11 +358,11 @@ public:
 	}
 
 private:
-	std::shared_ptr<FloatSpectralNode> mSpecularity;
-	std::shared_ptr<FloatSpectralNode> mTransmission;
-	std::shared_ptr<FloatSpectralNode> mIOR;
-	std::shared_ptr<FloatScalarNode> mRoughnessX;
-	std::shared_ptr<FloatScalarNode> mRoughnessY;
+	const std::shared_ptr<FloatSpectralNode> mSpecularity;
+	const std::shared_ptr<FloatSpectralNode> mTransmission;
+	const std::shared_ptr<FloatSpectralNode> mIOR;
+	const std::shared_ptr<FloatScalarNode> mRoughnessX;
+	const std::shared_ptr<FloatScalarNode> mRoughnessY;
 };
 
 // System of function which probably could be simplified with template meta programming

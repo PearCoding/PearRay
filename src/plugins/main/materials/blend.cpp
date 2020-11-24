@@ -82,7 +82,7 @@ public:
 
 		const float prob = std::min(1.0f, std::max(0.0f, mFactor->eval(in.ShadingContext)));
 
-		if (in.RND[0] < prob) {
+		if (in.RND[0] < (1 - prob)) {
 			MaterialSampleInput in1 = in;
 			in1.RND[0] /= (1 - prob);
 			mMaterials[0]->sample(in1, out, session);
