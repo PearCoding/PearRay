@@ -108,13 +108,12 @@ public:
 										  entity2, material2, current);
 			},
 			[&](const Ray& ray) {
-				if constexpr (HasInfLights) {
-					mCameraPath.addToken(LightPathToken::Background());
+				mCameraPath.addToken(LightPathToken::Background());
+				if constexpr (HasInfLights)
 					handleInfLights(session, current, ray);
-					mCameraPath.popToken();
-				} else {
-					PR_UNUSED(ray);
-				}
+				else
+					handleZero(session, current, ray);
+				mCameraPath.popToken();
 			});
 
 		mCameraPath.popTokenUntil(1);
@@ -389,6 +388,12 @@ private:
 
 		// Splat
 		session.pushSpectralFragment(SpectralBlob(mis), current.Throughput, radiance, ray, mCameraPath);
+	}
+
+	// Handle case where camera ray hits nothing and there is no inf-lights
+	inline void handleZero(const RenderTileSession& session, TraversalContext& current, const Ray& ray) const
+	{
+		session.pushSpectralFragment(SpectralBlob::Ones(), current.Throughput, SpectralBlob::Zero(), ray, mCameraPath);
 	}
 
 private:

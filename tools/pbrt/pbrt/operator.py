@@ -4,10 +4,18 @@ import math
 
 from .parser import Parser
 from .writer import Writer
-from . import colexport, matexport, objexport
+from . import colexport, matexport, objexport, texexport
 
 
-WRAP_MAP = {'repeat': 'periodic', 'black': 'black', 'clamp': 'clamp'}
+
+TRANSFORM = np.array([[1, 0, 0],
+                      [0, 0, 1],
+                      [0, 1, 0]])
+
+TRANSFORM_CAM = np.array([[1, 0, 0, 0],
+                      [0, 0, 1, 0],
+                      [0, 1, 0, 0],
+                      [0, 0, 0, 1]])
 
 
 class Operator:
@@ -204,10 +212,7 @@ class Operator:
                     w = h
                     h = w/self.aspectRatio
 
-        cam_mat = np.dot(cam_mat, np.array([[1, 0, 0, 0],
-                                            [0, 0, 1, 0],
-                                            [0, 1, 0, 0],
-                                            [0, 0, 0, 1]]))
+        cam_mat = cam_mat @ TRANSFORM_CAM
         self.coords['camera'] = cam_mat
 
         if self.options.skipCamera:
@@ -433,40 +438,7 @@ class Operator:
         if self.options.skipTex:
             return
 
-        textype = op.parameters['']
-        if textype != "imagemap":
-            print("Does not support '%s' texture types" % textype)
-            return
-
-        has_scale = "scale" in op.parameters
-
-        tex_name = "%s-tex" % op.operand if has_scale else op.operand
-
-        filename = op.parameters["filename"]
-        inc_file = self.resolveInclude(op.filename, filename)
-
-        mapper = op.parameters['wrap'] if 'wrap' in op.parameters else "repeat"
-        if not mapper in WRAP_MAP:
-            print("Unknown wrap method '%'" % mapper)
-
-        self.w.write("(texture")
-        self.w.goIn()
-        self.w.write(":name '%s'" % tex_name)
-        self.w.write(":type 'color'")
-        self.w.write(":file '%s'" % inc_file)
-        self.w.write(":wrap '%s'" % WRAP_MAP.get(mapper, WRAP_MAP['repeat']))
-        self.w.goOut()
-        self.w.write(")")
-
-        if has_scale:
-            self.w.write("(node")
-            self.w.goIn()
-            self.w.write(":name '%s'" % op.operand)
-            self.w.write(":type 'smul'")
-            self.w.write("%f, '%s'" %
-                         (float(op.parameters["scale"]), tex_name))
-            self.w.goOut()
-            self.w.write(")")
+        texexport.export(self, op)
 
     def setupTexture(self, base, filename):
         if self.options.skipTex:
@@ -524,8 +496,9 @@ class Operator:
             self.w.goOut()
             self.w.write(")")
         elif op.operand == "distant":
-            D = np.array(op.parameters['to']) - np.array(op.parameters['from'])
+            D = np.array(op.parameters['from'])-np.array(op.parameters['to'])
             D = D/np.linalg.norm(D, ord=2)
+            D = TRANSFORM @ D
             color = colexport.unpackIllum(self, op.parameters['L'])
 
             self.w.write("(light")

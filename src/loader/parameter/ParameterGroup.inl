@@ -27,6 +27,7 @@ inline Parameter ParameterGroup::getParameter(const std::string& name) const
 
 inline const std::unordered_map<std::string, Parameter>& ParameterGroup::parameters() const { return mParameters; }
 inline const std::vector<Parameter>& ParameterGroup::positionalParameters() const { return mPositionalParameters; }
+inline size_t ParameterGroup::positionalParameterCount() const { return mPositionalParameters.size(); }
 
 inline bool ParameterGroup::getBool(const std::string& name, bool def) const { return getParameter(name).getBool(def); }
 inline int64 ParameterGroup::getInt(const std::string& name, int64 def) const { return getParameter(name).getInt(def); }

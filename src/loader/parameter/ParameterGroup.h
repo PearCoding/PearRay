@@ -17,6 +17,7 @@ public:
 
 	inline const std::unordered_map<std::string, Parameter>& parameters() const;
 	inline const std::vector<Parameter>& positionalParameters() const;
+	inline size_t positionalParameterCount() const;
 
 	// Named parameters
 	inline void addParameter(const std::string& name, const Parameter& param);
