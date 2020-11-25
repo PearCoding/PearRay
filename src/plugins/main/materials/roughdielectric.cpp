@@ -319,9 +319,7 @@ public:
 			out.PDF_S  = prob * pdf * jacobian;
 		} else {
 			out.Type = MST_SpecularTransmission;
-			out.L	 = Scattering::refract(eta, HdotT, HdotV, Scattering::faceforward(in.Context.V), H);
-			if (in.Context.NdotV() < 0)
-				out.L = out.L.flipZ();
+			out.L	 = Scattering::refract(eta, HdotT, HdotV, in.Context.V, H);
 
 			// Side check: As we have a refraction case, both vectors should not be on the same side!
 			if (in.Context.V.sameHemisphere(out.L)) {

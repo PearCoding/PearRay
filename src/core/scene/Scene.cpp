@@ -48,15 +48,6 @@ void Scene::beforeRender(RenderContext* ctx)
 {
 	PR_LOG(L_DEBUG) << "Setup before render start..." << std::endl;
 	mServiceObserver->callBeforeRender(ctx);
-
-	mDeltaInfLights.clear();
-	mNonDeltaInfLights.clear();
-	for (auto o : mInfLights) {
-		if (o->hasDeltaDistribution())
-			mDeltaInfLights.push_back(o);
-		else
-			mNonDeltaInfLights.push_back(o);
-	}
 }
 
 void Scene::afterRender(RenderContext* ctx)

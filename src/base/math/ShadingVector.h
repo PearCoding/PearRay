@@ -81,6 +81,13 @@ public:
 		else
 			return other.flipZ();
 	}
+	inline ShadingVector makePositiveHemisphere() const
+	{
+		if (cosTheta() < 0)
+			return flipZ();
+		else
+			return *this;
+	}
 
 	inline float x() const { return mVector.x(); }
 	inline float y() const { return mVector.y(); }

@@ -5,28 +5,37 @@
 namespace PR {
 Eigen::Matrix4f MathParser::getMatrix(const DL::DataGroup& grp, bool& ok)
 {
-	ok = false;
-	if (grp.anonymousCount() == 16) {
-		ok = true;
-		for (int i = 0; i < 16; ++i) {
-			if (!grp.at(i).isNumber()) {
-				ok = false;
-				break;
-			}
-		}
-
-		if (ok) {
-			Eigen::Matrix4f m;
-			for (int i = 0; i < 4; ++i) {
-				for (int j = 0; j < 4; ++j) {
-					m(i, j) = grp.at(i * 4 + j).getNumber();
-				}
-			}
-
-			return m;
+	ok = true;
+	for (size_t i = 0; i < grp.anonymousCount(); ++i) {
+		if (!grp.at(i).isNumber()) {
+			ok = false;
+			break;
 		}
 	}
+	if (!ok)
+		return Eigen::Matrix4f::Identity();
 
+	if (grp.anonymousCount() == 16) {
+		Eigen::Matrix4f m;
+		for (int i = 0; i < 4; ++i) {
+			for (int j = 0; j < 4; ++j) {
+				m(i, j) = grp.at(i * 4 + j).getNumber();
+			}
+		}
+
+		return m;
+	} else if (grp.anonymousCount() == 9) {
+		Eigen::Matrix4f m = Eigen::Matrix4f::Identity();
+		for (int i = 0; i < 3; ++i) {
+			for (int j = 0; j < 3; ++j) {
+				m(i, j) = grp.at(i * 3 + j).getNumber();
+			}
+		}
+
+		return m;
+	}
+
+	ok = false;
 	return Eigen::Matrix4f::Identity();
 }
 
@@ -75,6 +84,10 @@ Eigen::Quaternionf MathParser::getRotation(const DL::Data& data, bool& ok)
 			} else {
 				ok = false;
 			}
+		} else if (grp.isArray() && grp.anonymousCount() == 9) {
+			Eigen::Matrix3f orient = getMatrix(grp, ok).block<3, 3>(0, 0);
+			if (ok)
+				return Eigen::Quaternionf(orient);
 		} else if (grp.id() == "euler" && grp.anonymousCount() == 3 && grp.at(0).isNumber() && grp.at(1).isNumber() && grp.at(2).isNumber()) {
 			float x = grp.at(0).getNumber() * PR_PI / 180;
 			float y = grp.at(1).getNumber() * PR_PI / 180;

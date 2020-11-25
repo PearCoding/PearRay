@@ -121,14 +121,16 @@ inline Vector3f refract(float eta, float NdotT, float NdotV,
 * @brief Refracts the ray based on the eta parameter (eta = n1/n2) and previously calculated NdotT (Angle between Normal and refracted ray)
 *
 * @param eta Index ratio (n1/n2) between the two mediums.
-* @param NdotT Angle between N and the result of this function
+* @param NdotT Positive angle between N and the result of this function
 * @param V Unit vector pointing FROM the surface point in shading space.
 * @return Unit vector pointing FROM the surface point outwards in shading space.
 */
 inline Vector3f refract(float eta, float NdotT,
 						const Vector3f& V)
 {
-	return Vector3f(-V(0) * eta, -V(1) * eta, -NdotT).normalized();
+	// In case the view vector hits from below, flip the normal, which results into a flip in sign
+	const float k = V(2) < 0 ? NdotT : -NdotT;
+	return Vector3f(-V(0) * eta, -V(1) * eta, k).normalized();
 }
 
 /**

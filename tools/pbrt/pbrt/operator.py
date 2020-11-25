@@ -7,15 +7,14 @@ from .writer import Writer
 from . import colexport, matexport, objexport, texexport
 
 
-
 TRANSFORM = np.array([[1, 0, 0],
-                      [0, 0, 1],
+                      [0, 0, -1],
                       [0, 1, 0]])
 
 TRANSFORM_CAM = np.array([[1, 0, 0, 0],
-                      [0, 0, 1, 0],
-                      [0, 1, 0, 0],
-                      [0, 0, 0, 1]])
+                          [0, 0, 1, 0],
+                          [0, 1, 0, 0],
+                          [0, 0, 0, 1]])
 
 
 class Operator:
@@ -487,6 +486,7 @@ class Operator:
             self.w.write("(light")
             self.w.goIn()
             self.w.write(":type 'environment'")
+            self.w.write(":transform  %s" % Operator.mat2str(TRANSFORM))
             if tex_name is not None:
                 self.w.write(
                     ":radiance (smul (illuminant 'd65') %s)" % tex_name)

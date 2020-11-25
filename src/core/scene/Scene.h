@@ -37,8 +37,6 @@ public:
 	inline const std::vector<std::shared_ptr<IMaterial>>& materials() const { return mMaterials; }
 	inline const std::vector<std::shared_ptr<IEmission>>& emissions() const { return mEmissions; }
 	inline const std::vector<std::shared_ptr<IInfiniteLight>>& infiniteLights() const { return mInfLights; }
-	inline const std::vector<std::shared_ptr<IInfiniteLight>>& deltaInfiniteLights() const { return mDeltaInfLights; }
-	inline const std::vector<std::shared_ptr<IInfiniteLight>>& nonDeltaInfiniteLights() const { return mNonDeltaInfLights; }
 	inline const std::vector<std::shared_ptr<INode>>& nodes() const { return mNodes; }
 
 	inline std::shared_ptr<ICamera> activeCamera() const { return mActiveCamera; }
@@ -68,8 +66,6 @@ private:
 	std::vector<std::shared_ptr<IMaterial>> mMaterials;
 	std::vector<std::shared_ptr<IEmission>> mEmissions;
 	std::vector<std::shared_ptr<IInfiniteLight>> mInfLights;
-	std::vector<std::shared_ptr<IInfiniteLight>> mDeltaInfLights;
-	std::vector<std::shared_ptr<IInfiniteLight>> mNonDeltaInfLights;
 	std::vector<std::shared_ptr<INode>> mNodes;
 
 	std::unique_ptr<struct SceneInternal> mInternal;

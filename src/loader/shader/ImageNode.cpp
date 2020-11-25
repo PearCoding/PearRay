@@ -12,6 +12,7 @@ ImageNode::ImageNode(OIIO::TextureSystem* tsys,
 	, mTextureOptions(options)
 	, mTextureSystem(tsys)
 	, mIsPtex(false)
+	, mErrorIdenticator(false)
 {
 	PR_ASSERT(tsys, "Given texture system has to be valid");
 	PR_ASSERT(!mFilename.empty(), "Given filename shouldn't be empty");
@@ -60,8 +61,12 @@ void ImageNode::lookup(const ShadingContext& ctx, SpectralBlob& rgb) const
 								 0.0f, 0.0f, 0.0f, 0.0f,
 								 /*ctx.dUV(0), ctx.dUV(1), ctx.dUV(0), ctx.dUV(1)*/
 								 PR_PARAMETRIC_BLOB_SIZE, &value[0])) {
-		std::string err = mTextureSystem->geterror();
-		PR_LOG(L_ERROR) << "Couldn't lookup luminance of texture: " << err << std::endl;
+
+		if (!mErrorIdenticator.exchange(true)) {
+			const std::string err = mTextureSystem->geterror();
+			PR_LOG(L_ERROR) << "Could not lookup texture [" << mFilename << "]: " << err << std::endl;
+		}
+
 		rgb = SpectralBlob::Zero();
 		return;
 	}

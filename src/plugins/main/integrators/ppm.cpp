@@ -230,14 +230,16 @@ public:
 			},
 			[&](const SpectralBlob& weight, const Ray& ray) {
 				path.addToken(LightPathToken::Background());
-				if (!session.tile()->context()->scene()->nonDeltaInfiniteLights().empty()) {
-					IntegratorUtils::handleBackground(session, ray, [&](const InfiniteLightEvalOutput& ileout) {
-						session.pushSpectralFragment(SpectralBlob::Ones(), weight, ileout.Radiance, ray, path);
-					});
-				} else {
+
+				const bool illuminated = IntegratorUtils::handleBackground(session, ray, [&](const InfiniteLightEvalOutput& ileout) {
+					session.pushSpectralFragment(SpectralBlob::Ones(), weight, ileout.Radiance, ray, path);
+				});
+
+				if (!illuminated) {
 					session.tile()->statistics().addBackgroundHitCount();
 					session.pushSpectralFragment(SpectralBlob::Ones(), weight, SpectralBlob::Zero(), ray, path);
 				}
+				
 				path.popToken();
 			});
 		path.popTokenUntil(1);

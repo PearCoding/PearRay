@@ -381,10 +381,10 @@ void SceneLoader::addIntegrator(const DL::DataGroup& group, SceneLoadContext& ct
 
 Transformf SceneLoader::extractTransform(const DL::DataGroup& group)
 {
-	DL::Data transformD = group.getFromKey("transform");
-	DL::Data posD		= group.getFromKey("position");
-	DL::Data rotD		= group.getFromKey("rotation");
-	DL::Data scaleD		= group.getFromKey("scale");
+	DL::Data transformD	  = group.getFromKey("transform");
+	DL::Data posD		  = group.getFromKey("position");
+	DL::Data rotD		  = group.getFromKey("rotation");
+	DL::Data scaleD		  = group.getFromKey("scale");
 
 	if (transformD.type() == DL::DT_Group) {
 		bool ok		 = false;
@@ -395,7 +395,7 @@ Transformf SceneLoader::extractTransform(const DL::DataGroup& group)
 			PR_LOG(L_WARNING) << "Couldn't set transform " << std::endl;
 
 		return t;
-	} else {
+	}else {
 		bool ok				   = true;
 		Vector3f pos		   = Vector3f(0, 0, 0);
 		Eigen::Quaternionf rot = Eigen::Quaternionf::Identity();

@@ -85,18 +85,16 @@ public:
 		} else {
 			if constexpr (IsThin) {
 				out.Type = MST_SpecularTransmission;
-				out.L	 = -in.Context.V;
+				out.L	 = -in.Context.V; // Passthrough
 			} else {
-				const float NdotT = Scattering::refraction_angle(std::abs(in.Context.NdotV()), eta);
+				const float NdotT = Scattering::refraction_angle(in.Context.NdotV(), eta);
 
 				if (NdotT < 0) { // TOTAL REFLECTION
 					out.Type = MST_SpecularReflection;
 					out.L	 = Scattering::reflect(in.Context.V);
 				} else {
 					out.Type = MST_SpecularTransmission;
-					out.L	 = Scattering::refract(eta, NdotT, Scattering::faceforward(in.Context.V));
-					if (in.Context.NdotV() < 0)
-						out.L = out.L.flipZ();
+					out.L	 = Scattering::refract(eta, NdotT, in.Context.V);
 				}
 			}
 		}

@@ -23,5 +23,7 @@ private:
 	OIIO::TextureSystem* mTextureSystem;
 
 	bool mIsPtex;
+
+	mutable std::atomic<bool> mErrorIdenticator;
 };
 } // namespace PR
