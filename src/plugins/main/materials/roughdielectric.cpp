@@ -303,9 +303,8 @@ public:
 			out.Type = MST_SpecularReflection;
 			out.L	 = Scattering::reflect(in.Context.V, H);
 
-			if (out.L(2) <= PR_EPSILON) { // Side check
-				out.Weight = SpectralBlob::Zero();
-				out.PDF_S  = 0;
+			if (!in.Context.V.sameHemisphere(out.L)) { // Side check
+				out = MaterialSampleOutput::Reject(MST_SpecularReflection);
 				return;
 			}
 
@@ -320,10 +319,13 @@ public:
 			out.PDF_S  = prob * pdf * jacobian;
 		} else {
 			out.Type = MST_SpecularTransmission;
-			out.L	 = Scattering::refract(eta, HdotT, HdotV, in.Context.V, H);
-			if (out.L(2) >= PR_EPSILON) { // Side check
-				out.Weight = SpectralBlob::Zero();
-				out.PDF_S  = 0;
+			out.L	 = Scattering::refract(eta, HdotT, HdotV, Scattering::faceforward(in.Context.V), H);
+			if (in.Context.NdotV() < 0)
+				out.L = out.L.flipZ();
+
+			// Side check: As we have a refraction case, both vectors should not be on the same side!
+			if (in.Context.V.sameHemisphere(out.L)) {
+				out = MaterialSampleOutput::Reject(MST_SpecularTransmission);
 				return;
 			}
 

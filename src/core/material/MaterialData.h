@@ -39,5 +39,13 @@ struct PR_LIB_CORE MaterialSampleOutput {
 	{
 		return Tangent::fromTangentSpace(ip.Surface.N, ip.Surface.Nx, ip.Surface.Ny, L).normalized();
 	}
+
+	static inline MaterialSampleOutput Reject(MaterialScatteringType type = MST_DiffuseReflection)
+	{
+		return MaterialSampleOutput{ ShadingVector(Vector3f::Zero()),
+									 SpectralBlob::Zero(),
+									 SpectralBlob::Zero(),
+									 type };
+	}
 };
 } // namespace PR

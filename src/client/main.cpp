@@ -49,7 +49,7 @@ void printStatistics(const RenderStatus& status)
 		<< "  Mean Ray Depth:  " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.depth_count").getUInt() / (double)pixelcount << std::endl
 		<< "    Camera:        " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.camera_depth_count").getUInt() / (double)pixelcount << std::endl
 		<< "    Light:         " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.light_depth_count").getUInt() / (double)pixelcount << std::endl
-		<< "  Iterations:      " << std::setw(OUTPUT_FIELD_SIZE) << (status.getField("global.iteration_count").getUInt() - 1) << std::endl;
+		<< "  Iterations:      " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.iteration_count").getUInt() << std::endl;
 }
 
 constexpr uint32 PROFILE_SAMPLE_RATE = 10;

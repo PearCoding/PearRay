@@ -96,7 +96,7 @@ public:
 					out.Type = MST_SpecularTransmission;
 					out.L	 = Scattering::refract(eta, NdotT, Scattering::faceforward(in.Context.V));
 					if (in.Context.NdotV() < 0)
-						out.L = -out.L;
+						out.L = out.L.flipZ();
 				}
 			}
 		}

@@ -165,7 +165,7 @@ public:
 		SpectralBlob fresnel;
 		PR_UNROLL_LOOP(PR_SPECTRAL_BLOB_SIZE)
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-			fresnel[i] = Fresnel::conductor(in.Context.V.cosTheta(), eta[i], k[i]);
+			fresnel[i] = Fresnel::conductor(in.Context.V.absCosTheta(), eta[i], k[i]);
 
 		// Sample microfacet normal
 		const float m1 = adaptR(mRoughnessX->eval(in.ShadingContext));
@@ -194,9 +194,8 @@ public:
 		// Calculate Fresnel term
 		out.L = Scattering::reflect(in.Context.V, H);
 
-		if (out.L(2) <= PR_EPSILON) { // Side check
-			out.Weight = SpectralBlob::Zero();
-			out.PDF_S  = 0;
+		if (!in.Context.V.sameHemisphere(out.L)) { // Side check
+			out = MaterialSampleOutput::Reject(MST_SpecularReflection);
 			return;
 		}
 

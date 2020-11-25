@@ -83,8 +83,8 @@ public:
 		if (PR_UNLIKELY(!material))
 			return {};
 
-		/*if (!material->hasDeltaDistribution())
-			handleNEE(session, ip, material, current);*/
+		if (!material->hasDeltaDistribution())
+			handleNEE(session, ip, material, current);
 
 		return handleScattering(session, ip, entity, material, current);
 	}

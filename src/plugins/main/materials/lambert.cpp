@@ -55,11 +55,21 @@ public:
 	{
 		PR_PROFILE_THIS;
 
+		if constexpr (!TwoSided) {
+			if (in.Context.NdotV() < 0.0f) {
+				out = MaterialSampleOutput::Reject(MST_DiffuseReflection);
+				return;
+			}
+		}
+
 		out.L = Sampling::cos_hemi(in.RND[0], in.RND[1]);
 
 		out.Weight = mAlbedo->eval(in.ShadingContext) * out.L(2) * PR_INV_PI;
 		out.PDF_S  = Sampling::cos_hemi_pdf(out.L(2));
 		out.Type   = MST_DiffuseReflection;
+
+		// Make sure the output direction is on the same side
+		out.L = in.Context.V.makeSameHemisphere(out.L);
 	}
 
 	std::string dumpInformation() const override

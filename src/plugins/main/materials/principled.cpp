@@ -253,9 +253,6 @@ public:
 
 		// Reflect incoming ray by the calculated half vector
 		out.L = Scattering::reflect(in.Context.V, out.L).normalized();
-
-		if (out.L[2] <= PR_EPSILON)
-			out.PDF_S = 0.0f;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -278,6 +275,10 @@ public:
 		float clearcoatGloss = mClearcoatGloss->eval(sctx);
 
 		sampleSpecularPath(in, in.RND[0] /* / weight*/, in.RND[1], out, roughness, anisotropic);
+		if (!in.Context.V.sameHemisphere(out.L)) { // Side check
+			out = MaterialSampleOutput::Reject(MST_SpecularReflection);
+			return;
+		}
 
 		if (roughness < in.RND[0])
 			out.Type = MST_DiffuseReflection;
@@ -288,7 +289,7 @@ public:
 							  Scattering::halfway_reflection(in.Context.V, out.L),
 							  base, lum, subsurface, anisotropic, roughness, metallic, spec, specTint,
 							  sheen, sheenTint, clearcoat, clearcoatGloss)
-					 * std::abs(out.L[2]);
+					 * out.L.absCosTheta();
 
 		PR_ASSERT(out.PDF_S[0] >= 0.0f, "PDF has to be positive");
 	}

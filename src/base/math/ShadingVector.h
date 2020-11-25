@@ -74,13 +74,25 @@ public:
 	}
 
 	inline bool sameHemisphere(const ShadingVector& other) const { return cosTheta() * other.cosTheta() > 0.0f; }
+	inline ShadingVector makeSameHemisphere(const ShadingVector& other) const
+	{
+		if (sameHemisphere(other))
+			return other;
+		else
+			return other.flipZ();
+	}
 
 	inline float x() const { return mVector.x(); }
 	inline float y() const { return mVector.y(); }
 	inline float z() const { return mVector.z(); }
 
+	inline ShadingVector flipZ() const { return ShadingVector(Vector3f(mVector.x(), mVector.y(), -mVector.z())); }
+
 	inline float operator[](size_t i) const { return mVector[i]; }
 	inline float operator()(size_t i) const { return mVector[i]; }
+
+	inline float& operator[](size_t i) { return mVector[i]; }
+	inline float& operator()(size_t i) { return mVector[i]; }
 
 	inline float dot(const ShadingVector& other) const { return mVector.dot(other.mVector); }
 

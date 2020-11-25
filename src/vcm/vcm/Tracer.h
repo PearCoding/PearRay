@@ -29,6 +29,7 @@ public:
 		, mLightRR(options.MaxLightRayDepthSoft)
 		, mLightSampler(lightSampler)
 		, mLightPathSlice(options.MaxLightRayDepthHard + 1)
+		, mLightPathCounter(0)
 		, mLightVertices(UseMerging ? options.MaxLightSamples * mLightPathSlice : 1)
 		, mLightPathSize(UseMerging ? options.MaxLightSamples : 1)
 		, mLightPathWavelengthSortMap(mLightPathSize.size())
@@ -604,10 +605,14 @@ private:
 						  const PathVertex& lightVertex,
 						  const IntersectionPoint& cameraIP, const IMaterial* cameraMaterial, CameraTraversalContext& current) const
 	{
-		Vector3f cD		  = (lightVertex.IP.P - cameraIP.P); // Camera Vertex -> Light Vertex
-		const float dist2 = cD.squaredNorm();
-
-		if (dist2 <= DISTANCE_EPS) // If we are that close, we should merge instead
+		// Calculate geometry term
+		Vector3f cD			  = (lightVertex.IP.P - cameraIP.P); // Camera Vertex -> Light Vertex
+		const float dist2	  = cD.squaredNorm();
+		const float cosC	  = std::abs(cD.dot(cameraIP.Surface.N));
+		const float cosL	  = std::abs(cD.dot(lightVertex.IP.Surface.N));
+		const float Geometry  = cosL / dist2; // cosC already included in material
+		const bool isFeasible = cosC * Geometry > GEOMETRY_EPS && dist2 > DISTANCE_EPS;
+		if (!isFeasible)
 			return;
 
 		const float dist = std::sqrt(dist2);
@@ -641,28 +646,16 @@ private:
 
 		// We apply permutation to make sure each wavelength fits its counter part
 		if constexpr (UseMerging) {
-			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
-				for (size_t j = i; j < PR_SPECTRAL_BLOB_SIZE; ++j) {
-					if (current.Permutation[j] == i) {
-						std::swap(lightW[i], lightW[j]);
-						break;
-					}
-				}
-
-				lightW *= current.WavelengthFilter;
-			}
+			SpectralBlob lightSwizzle;
+			PR_UNROLL_LOOP(PR_SPECTRAL_BLOB_SIZE)
+			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
+				lightSwizzle[i] = lightW[current.Permutation[i]];
+			lightW = lightSwizzle * current.WavelengthFilter;
 		}
 
-		// Calculate geometry term
-		const float cosCS	   = cD.dot(cameraIP.Surface.N);
-		const float cosC	   = std::abs(cosCS);
-		const float cosLS	   = -cD.dot(lightVertex.IP.Surface.N);
-		const float cosL	   = std::abs(cosLS);
-		const bool front2front = cosCS >= 0.0f && cosLS >= 0.0f;
-		const float Geometry   = cosL / dist2; // cosC already included in material
-		const bool isFeasible  = cosC * Geometry > GEOMETRY_EPS;
-		if (!isFeasible)
-			return;
+		// Calculate connection weight
+		const SpectralBlob connectionW = lightW * cameraW;
+		const bool worthACheck		   = !connectionW.isZero();
 
 		// To Area
 		const float cameraForwardPDF_A = IS::toArea(cameraForwardPDF_S, dist2, cosL);
@@ -682,10 +675,10 @@ private:
 		const Ray shadow = cameraIP.nextRay(cD, RF_Shadow, SHADOW_RAY_MIN, dist);
 
 		// Extract visible and geometry term
-		const bool isVisible = front2front && !tctx.Session.traceShadowRay(shadow, dist);
+		const bool isVisible = worthACheck && !tctx.Session.traceShadowRay(shadow, dist);
 
 		// Extract terms
-		const SpectralBlob contrib = isVisible ? (lightW * Geometry * cameraW).eval() : SpectralBlob::Zero();
+		const SpectralBlob contrib = isVisible ? (connectionW * Geometry).eval() : SpectralBlob::Zero();
 
 		// Construct LPE path
 		tctx.ThreadContext.TmpPath.reset();
