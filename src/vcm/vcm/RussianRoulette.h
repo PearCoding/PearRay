@@ -34,7 +34,7 @@ public:
 	inline std::optional<float> check(Random& rnd, uint32 path_length) const
 	{
 		const float scatProb = probability(path_length);
-		if (scatProb == 0.0f) {
+		if (scatProb <= PR_EPSILON) {
 			return {};
 		} else if (scatProb < 1.0f) {
 			const float russian_prob = rnd.getFloat();

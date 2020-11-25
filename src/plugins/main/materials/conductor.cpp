@@ -13,7 +13,6 @@
 
 namespace PR {
 
-// TODO: Rough version?
 class ConductorMaterial : public IMaterial {
 public:
 	ConductorMaterial(uint32 id,
@@ -98,7 +97,7 @@ public:
 			|| ctx.parameters().hasParameter("roughness_y"))
 			return ctx.yieldToMaterial(id, "roughconductor", ctx.parameters());
 
-		const auto eta	= ctx.lookupSpectralNode("eta", 1.2f); 
+		const auto eta	= ctx.lookupSpectralNode("eta", 1.2f);
 		const auto k	= ctx.lookupSpectralNode("k", 2.605f);
 		const auto spec = ctx.lookupSpectralNode("specularity", 1);
 

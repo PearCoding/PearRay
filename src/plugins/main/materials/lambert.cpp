@@ -11,6 +11,7 @@
 
 namespace PR {
 
+template <bool TwoSided>
 class LambertMaterial : public IMaterial {
 public:
 	LambertMaterial(uint32 id, const std::shared_ptr<FloatSpectralNode>& alb)
@@ -21,12 +22,20 @@ public:
 
 	virtual ~LambertMaterial() = default;
 
+	inline static float culling(float u)
+	{
+		if constexpr (TwoSided)
+			return std::abs(u);
+		else
+			return std::max(0.0f, u);
+	}
+
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
 			  const RenderTileSession&) const override
 	{
 		PR_PROFILE_THIS;
 
-		const float dot = std::max(0.0f, in.Context.NdotL());
+		const float dot = in.Context.V.sameHemisphere(in.Context.L) ? culling(in.Context.NdotL()) : 0;
 		out.Weight		= mAlbedo->eval(in.ShadingContext) * dot * PR_INV_PI;
 		out.PDF_S		= Sampling::cos_hemi_pdf(dot);
 		out.Type		= MST_DiffuseReflection;
@@ -37,7 +46,7 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		const float dot = std::max(0.0f, in.Context.NdotL());
+		const float dot = in.Context.V.sameHemisphere(in.Context.L) ? culling(in.Context.NdotL()) : 0;
 		out.PDF_S		= Sampling::cos_hemi_pdf(dot);
 	}
 
@@ -59,20 +68,24 @@ public:
 
 		stream << std::boolalpha << IMaterial::dumpInformation()
 			   << "  <DiffuseMaterial>:" << std::endl
-			   << "    Albedo: " << (mAlbedo ? mAlbedo->dumpInformation() : "NONE") << std::endl;
+			   << "    Albedo:   " << mAlbedo->dumpInformation() << std::endl
+			   << "    TwoSided: " << (TwoSided ? "true" : "false") << std::endl;
 
 		return stream.str();
 	}
 
 private:
-	std::shared_ptr<FloatSpectralNode> mAlbedo;
+	const std::shared_ptr<FloatSpectralNode> mAlbedo;
 };
 
 class LambertMaterialPlugin : public IMaterialPlugin {
 public:
 	std::shared_ptr<IMaterial> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
 	{
-		return std::make_shared<LambertMaterial>(id, ctx.lookupSpectralNode("albedo", 1));
+		if (ctx.parameters().getBool("two_sided", true))
+			return std::make_shared<LambertMaterial<true>>(id, ctx.lookupSpectralNode("albedo", 1));
+		else
+			return std::make_shared<LambertMaterial<false>>(id, ctx.lookupSpectralNode("albedo", 1));
 	}
 
 	const std::vector<std::string>& getNames() const

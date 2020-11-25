@@ -126,7 +126,9 @@
       "mixinvector": "c",
       "state": "cpp",
       "observer_ptr": "cpp",
-      "ref_ptr": "cpp"
+      "ref_ptr": "cpp",
+      "node": "cpp",
+      "nodevisitor": "cpp"
     },
     "files.exclude": {
         "**/.git": true,

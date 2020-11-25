@@ -76,11 +76,8 @@ public:
 		if (pathLength == 1)
 			session.pushSPFragment(ip, mCameraPath);
 
-		if (entity->hasEmission()) {
-			mCameraPath.addToken(LightPathToken::Emissive());
+		if (entity->hasEmission())
 			handleDirectHit(session, ip, entity, current);
-			mCameraPath.popToken();
-		}
 
 		// If there is no material to scatter from, give up
 		if (PR_UNLIKELY(!material))
@@ -146,6 +143,7 @@ public:
 	}
 
 private:
+	/// Handle scattering (aka, next ray direction)
 	std::optional<Ray> handleScattering(RenderTileSession& session, const IntersectionPoint& ip,
 										IEntity* entity, IMaterial* material, TraversalContext& current)
 	{
@@ -189,7 +187,7 @@ private:
 			return {};
 
 		// Update throughput
-		current.Throughput *= sout.Weight / pdf_s; // cosinus term already applied inside material
+		current.Throughput *= sout.Weight / pdf_s; // cosine term already applied inside material
 
 		if (material->isSpectralVarying())
 			current.Throughput *= SpectralBlobUtils::HeroOnly();
@@ -205,6 +203,7 @@ private:
 		return std::make_optional(ip.nextRay(L, rflags, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX));
 	}
 
+	/// Handle simple Next Event Estimation (aka, connect point with light)
 	void handleNEE(RenderTileSession& session, const IntersectionPoint& cameraIP, const IMaterial* cameraMaterial, TraversalContext& current)
 	{
 		const EntitySamplingInfo sampleInfo = { cameraIP.P, cameraIP.Surface.N };
@@ -223,14 +222,13 @@ private:
 			return;
 
 		// Calculate geometry stuff
-		const float sqrD	   = (lsout.LightPosition - cameraIP.P).squaredNorm();
-		const Vector3f L	   = lsout.Outgoing;
-		const float cosCS	   = L.dot(cameraIP.Surface.N);
-		const float cosC	   = std::abs(cosCS);
-		const float cosL	   = std::abs(lsout.CosLight);
-		const bool front2front = cosCS >= 0.0f && lsout.CosLight >= 0.0f;
-		const float Geometry   = cosC * cosL / sqrD;
-		const bool isFeasible  = Geometry > GEOMETRY_EPS && sqrD > DISTANCE_EPS;
+		const float sqrD	  = (lsout.LightPosition - cameraIP.P).squaredNorm();
+		const Vector3f L	  = lsout.Outgoing;
+		const float cosC	  = std::abs(L.dot(cameraIP.Surface.N));
+		const float cosL	  = std::abs(lsout.CosLight);
+		const bool front	  = lsout.CosLight >= 0.0f;
+		const float Geometry  = cosC * cosL / sqrD;
+		const bool isFeasible = Geometry > GEOMETRY_EPS && sqrD > DISTANCE_EPS;
 
 		if (!isFeasible) // MIS is zero
 			return;
@@ -242,24 +240,35 @@ private:
 		MaterialEvalOutput mout;
 		cameraMaterial->eval(min, mout, session);
 
+		// Check if a check between point and light is necessary
+		const SpectralBlob connectionW = lsout.Radiance * mout.Weight;
+		const bool worthACheck		   = front && !connectionW.isZero();
+
 		// Evaluate direct pdf
 		float lightPdfS = 0;
-		if (light->isInfinite()) {
-			lightPdfS = lsout.Direction_PDF_S;
+		if (light->hasDeltaDistribution()) {
+			lightPdfS = 1;
 		} else {
-			// Convert position pdf to solid angle if necessary
-			lightPdfS = lsout.Position_PDF.Value;
-			if (lsout.Position_PDF.IsArea)
-				lightPdfS = IS::toSolidAngle(lightPdfS, sqrD, cosL);
+			if (light->isInfinite()) {
+				lightPdfS = lsout.Direction_PDF_S;
+			} else {
+				// Convert position pdf to solid angle if necessary
+				lightPdfS = lsout.Position_PDF.Value;
+				if (lsout.Position_PDF.IsArea)
+					lightPdfS = IS::toSolidAngle(lightPdfS, sqrD, cosL);
+			}
+			lightPdfS *= lsample.second;
+			if (lightPdfS <= PR_EPSILON)
+				return;
 		}
-		lightPdfS *= lsample.second;
 
 		// Calculate MIS
 		const uint32 cameraPathLength = cameraIP.Ray.IterationDepth + 1;
 		const float cameraRoulette	  = mCameraRR.probability(cameraPathLength);
 
-		const float bsdfPdfS = mout.PDF_S[0] * cameraRoulette;
-		const float mis		 = light->hasDeltaDistribution() ? 1 : 1 / (1 + VCM::mis_term<MISMode>(bsdfPdfS / lightPdfS));
+		const float bsdfWvlPdfS = (cameraIP.Ray.Flags & RF_Monochrome) ? mout.PDF_S[0] : mout.PDF_S.sum(); // Each wavelength could have generated the path
+		const float bsdfPdfS	= bsdfWvlPdfS * cameraRoulette;
+		const float mis			= light->hasDeltaDistribution() ? 1 : 1 / (1 + VCM::mis_term<MISMode>(bsdfPdfS / lightPdfS));
 
 		if (mis <= PR_EPSILON)
 			return;
@@ -269,12 +278,10 @@ private:
 		// Trace shadow ray
 		const float distance = light->isInfinite() ? PR_INF : std::sqrt(sqrD);
 		const Ray shadow	 = cameraIP.nextRay(L, RF_Shadow, SHADOW_RAY_MIN, distance);
-
-		const bool isVisible	  = front2front && !session.traceShadowRay(shadow, distance);
-		const SpectralBlob lightW = lsout.Radiance;
+		const bool isVisible = worthACheck && !session.traceShadowRay(shadow, distance);
 
 		// Calculate contribution (cosinus term already applied inside material)
-		const SpectralBlob contrib = isVisible ? (lightW * mout.Weight / lightPdfS).eval() : SpectralBlob::Zero();
+		const SpectralBlob contrib = isVisible ? (connectionW / lightPdfS).eval() : SpectralBlob::Zero();
 
 		// Construct LPE path
 		mCameraPath.addToken(mout.Type);
@@ -290,7 +297,7 @@ private:
 		mCameraPath.popToken(2);
 	}
 
-	// Handle case where camera ray directly hits emissive object
+	/// Handle case where camera ray directly hits emissive object
 	void handleDirectHit(RenderTileSession& session, const IntersectionPoint& cameraIP,
 						 const IEntity* cameraEntity, TraversalContext& current)
 	{
@@ -321,7 +328,9 @@ private:
 
 		// If directly visible from camera, do not calculate mis weights
 		if (cameraPathLength == 1 || current.LastWasDelta) {
+			mCameraPath.addToken(LightPathToken::Emissive());
 			session.pushSpectralFragment(SpectralBlob::Ones(), current.Throughput, radiance, cameraIP.Ray, mCameraPath);
+			mCameraPath.popToken();
 			return;
 		}
 
@@ -338,16 +347,19 @@ private:
 		// Calculate MIS
 		const float mis = 1 / (1 + VCM::mis_term<MISMode>(posPDF_S / current.LastPDF_S));
 
+		// Note: No need to check LastPDF_S as handleScattering checks it already
 		if (mis <= PR_EPSILON)
 			return;
 
 		PR_ASSERT(mis <= 1.0f, "MIS must be between 0 and 1");
 
 		// Splat
+		mCameraPath.addToken(LightPathToken::Emissive());
 		session.pushSpectralFragment(SpectralBlob(mis), current.Throughput, radiance, cameraIP.Ray, mCameraPath);
+		mCameraPath.popToken();
 	}
 
-	// Handle case where camera ray hits nothing (inf light contribution)
+	/// Handle case where camera ray hits nothing (inf light contribution)
 	void handleInfLights(const RenderTileSession& session, TraversalContext& current, const Ray& ray) const
 	{
 		const uint32 cameraPathLength = ray.IterationDepth + 1;
@@ -390,7 +402,7 @@ private:
 		session.pushSpectralFragment(SpectralBlob(mis), current.Throughput, radiance, ray, mCameraPath);
 	}
 
-	// Handle case where camera ray hits nothing and there is no inf-lights
+	/// Handle case where camera ray hits nothing and there is no inf-lights
 	inline void handleZero(const RenderTileSession& session, TraversalContext& current, const Ray& ray) const
 	{
 		session.pushSpectralFragment(SpectralBlob::Ones(), current.Throughput, SpectralBlob::Zero(), ray, mCameraPath);
