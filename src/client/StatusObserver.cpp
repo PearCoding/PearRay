@@ -71,7 +71,7 @@ void StatusObserver::update(const UpdateInfo& info)
 
 		std::cout << " | I: " << std::setw(ITER_OUTPUT_FIELD_SIZE) << info.CurrentIteration;
 		if (mHasPasses)
-			std::cout << " P: " << std::setw(ITER_OUTPUT_FIELD_SIZE) << info.CurrentPass;
+			std::cout << " P: " << std::setw(ITER_OUTPUT_FIELD_SIZE / 2) << info.CurrentPass;
 		std::cout << " S: " << std::setw(VALUE_OUTPUT_FIELD_SIZE) << status.getField("global.pixel_sample_count").getUInt()
 				  << " R: " << std::setw(VALUE_OUTPUT_FIELD_SIZE) << status.getField("global.ray_count").getUInt()
 				  << " EH: " << std::setw(VALUE_OUTPUT_FIELD_SIZE) << status.getField("global.entity_hit_count").getUInt()

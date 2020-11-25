@@ -13,6 +13,8 @@
 #include "container/Interval.h"
 #include "renderer/RenderTileSession.h"
 
+#include "Logger.h"
+
 namespace PR {
 namespace VCM {
 template <bool UseMerging, MISMode Mode = MM_Balance>
@@ -46,7 +48,7 @@ public:
 
 		tctx.Session.pushSPFragment(initial_hit, tctx.ThreadContext.CameraPath);
 
-		if (mLightPathCounter == 0)
+		if (PR_UNLIKELY(mLightPathCounter == 0))
 			return;
 
 		// Initial camera vertex
@@ -139,6 +141,9 @@ public:
 		current.LightPathID	  = mLightPathCounter.fetch_add(1);
 		current.LightPathSize = 0;
 		current.IsFiniteLight = !light->isInfinite();
+
+		// After acquiring the path, make sure its initialized to the empty size
+		mLightPathSize[current.LightPathID] = 0;
 
 		current.Throughput /= emissionPdfS;
 		if (current.Throughput.isZero(PR_EPSILON)) // Don't even try

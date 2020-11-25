@@ -98,9 +98,7 @@ public:
 
 	void onTile(RenderTileSession& session) override
 	{
-		const bool isCameraPass = session.context()->currentIteration().Pass != 0;
-
-		if (!isCameraPass)
+		if (session.context()->currentIteration().Pass == 0)
 			lightPass(session);
 		else
 			cameraPass(session);

@@ -65,6 +65,8 @@ RenderTile::~RenderTile()
  */
 std::optional<CameraRay> RenderTile::constructCameraRay(const Point2i& p, const RenderIteration& iter)
 {
+	PR_ASSERT(mWorking && !mDone, "Trying to use a tile which is not acquired");
+
 	PR_PROFILE_THIS;
 
 	statistics().addPixelSampleCount();

@@ -109,6 +109,7 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 	// Get other informations
 	PR_LOG(L_INFO) << "Rendering with:" << std::endl
 				   << "  Threads:                " << threadCount << std::endl
+				   << "  Passes:                 " << mIntegratorPassCount << std::endl
 				   << "  Tiles:                  " << rtx << " x " << rty << std::endl
 				   << "  Entities:               " << mScene->entities().size() << std::endl
 				   << "  Lights:                 " << mLightSampler->emissiveEntityCount() << std::endl
@@ -284,9 +285,9 @@ void RenderContext::handleNextIteration()
 		mOutputMap->clear(true);
 	}
 
-	const RenderIteration iter = currentIteration();
-
 	++mIncrementalCurrentIteration;
+	
+	const RenderIteration iter = currentIteration();
 	for (const auto& clb : mIterationCallbacks)
 		clb(iter);
 }
@@ -306,8 +307,10 @@ RenderStatus RenderContext::status() const
 {
 	PR_PROFILE_THIS;
 
-	RenderTileStatistics s = statistics();
-	RenderStatus status	   = mIntegrator->status();
+	RenderStatus status = mIntegrator->status();
+
+	const RenderTileStatistics s = statistics();
+	const RenderIteration iter	 = currentIteration();
 
 	// Approximate percentage if not given by the integrator
 	if (status.percentage() < 0)
@@ -324,7 +327,8 @@ RenderStatus RenderContext::status() const
 	status.setField("global.depth_count", s.depthCount());
 	status.setField("global.camera_depth_count", s.cameraDepthCount());
 	status.setField("global.light_depth_count", s.lightDepthCount());
-	status.setField("global.iteration_count", (uint64)mIncrementalCurrentIteration.load());
+	status.setField("global.iteration_count", (uint64)iter.Iteration);
+	status.setField("global.pass_count", (uint64)iter.Pass);
 
 	return status;
 }

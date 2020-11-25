@@ -66,19 +66,17 @@ inline bool checkWavelengthSupport(const SpectralBlob& wvlA, bool monoA, const S
 		}
 	}
 
-	// Make sure the permutation vector is still filled reasonable
-	if (anyGood) {
-		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
-			if (maskA[i])
+	// Make sure the permutation vector is always filled reasonable
+	for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
+		if (maskA[i])
+			continue;
+		for (size_t j = 0; j < PR_SPECTRAL_BLOB_SIZE; ++j) {
+			if (maskB[j])
 				continue;
-			for (size_t j = 0; j < PR_SPECTRAL_BLOB_SIZE; ++j) {
-				if (maskB[j])
-					continue;
-				maskA[i]	   = true;
-				maskB[j]	   = true;
-				permutation[i] = j;
-				break;
-			}
+			//maskA[i]	   = true;
+			maskB[j]	   = true;
+			permutation[i] = j;
+			break;
 		}
 	}
 

@@ -85,6 +85,7 @@ public:
 	/// Will request a full clear of the output buffers the next starting iteration (not pass)
 	inline void requestOutputClear() { mOutputClearRequest = true; }
 
+	/// Threads used for rendering. Will not change while running
 	inline size_t threadCount() const { return mThreads.size(); }
 
 	// Slow and only copies!
@@ -93,6 +94,7 @@ public:
 	/// Returns current render iteration with current iteration and pass
 	inline RenderIteration currentIteration() const { return RenderIteration{ mIncrementalCurrentIteration / mIntegratorPassCount, mIncrementalCurrentIteration % mIntegratorPassCount }; }
 
+	/// Integrator used for rendering
 	inline std::shared_ptr<IIntegrator> integrator() const { return mIntegrator; }
 
 	// Settings
