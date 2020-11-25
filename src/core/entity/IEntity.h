@@ -37,6 +37,8 @@ struct PR_LIB_CORE EntitySamplePoint {
 		, PDF_A(pdf_a)
 	{
 	}
+
+	inline EntityGeometryQueryPoint toQueryPoint(const Vector3f& view) const { return EntityGeometryQueryPoint{ view, Position, UV, PrimitiveID, 0 }; }
 };
 
 // Extra information useful for sampling

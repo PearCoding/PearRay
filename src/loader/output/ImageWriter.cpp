@@ -135,6 +135,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::filesystem::path& file
 			size_t id		= x * channelCount;
 			const Point2i p = Point2i(x, y);
 
+			// Blendweights are only used for spectral AOVs
 			const float blendWeight = data.getInternalChannel_1D(AOV_PixelWeight)->getFragment(p, 0);
 			const float blendFactor = blendWeight <= PR_EPSILON ? 1.0f : 1.0f / blendWeight;
 
@@ -164,6 +165,10 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::filesystem::path& file
 				id += 3;
 			}
 
+			// Scale weights is only for technical AOVs
+			const uint32 samples	 = data.getInternalChannel_Counter(AOV_SampleCount)->getFragment(p, 0);
+			const float sampleFactor = samples == 0 ? 1.0f : 1.0f / samples;
+
 			for (const IM_ChannelSetting3D& sett : ch3d) {
 				std::shared_ptr<FrameBufferFloat> channel;
 				if (sett.LPE < 0)
@@ -172,9 +177,9 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::filesystem::path& file
 					channel = data.getLPEChannel_3D(sett.Variable, sett.LPE);
 
 				if (channel) {
-					line[id]	 = blendFactor * channel->getFragment(p, 0);
-					line[id + 1] = blendFactor * channel->getFragment(p, 1);
-					line[id + 2] = blendFactor * channel->getFragment(p, 2);
+					line[id]	 = sampleFactor * channel->getFragment(p, 0);
+					line[id + 1] = sampleFactor * channel->getFragment(p, 1);
+					line[id + 2] = sampleFactor * channel->getFragment(p, 2);
 				}
 
 				id += 3;
@@ -188,13 +193,12 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::filesystem::path& file
 					channel = data.getLPEChannel_1D(sett.Variable, sett.LPE);
 
 				if (channel)
-					line[id] = (sett.Variable != AOV_PixelWeight ? blendFactor : 1.0f) * channel->getFragment(p, 0);
+					line[id] = sampleFactor * channel->getFragment(p, 0);
 
 				id += 1;
 			}
 
-			// TODO: Maybe apply blend weight also on auxillary aov data?
-
+			// No weights here
 			for (const IM_ChannelSettingCounter& sett : chcounter) {
 				std::shared_ptr<FrameBufferUInt32> channel;
 				if (sett.LPE < 0)

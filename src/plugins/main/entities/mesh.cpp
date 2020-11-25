@@ -146,13 +146,12 @@ public:
 	provideGeometryPoint2(const EntityGeometryQueryPoint& query,
 						  GeometryPoint& pt) const
 	{
-		// pt.P is not populated, as we will use the query position directly
-
 		Face face	= mMesh->base()->getFace(query.PrimitiveID);
 		pt.N		= face.interpolateNormals(query.UV);
 		Vector2f uv = face.interpolateUVs(query.UV);
 
-		face.tangentFromUV(pt.N, pt.Nx, pt.Ny);
+		Tangent::unnormalized_frame(pt.N, pt.Nx, pt.Ny);
+		//face.tangentFromUV(pt.N, pt.Nx, pt.Ny);
 		pt.UV = uv;
 
 		pt.MaterialID = face.MaterialSlot < mMaterials.size() ? mMaterials.at(face.MaterialSlot) : PR_INVALID_ID;
@@ -164,8 +163,6 @@ public:
 	provideGeometryPoint2(const EntityGeometryQueryPoint& query,
 						  GeometryPoint& pt) const
 	{
-		// pt.P is not populated, as we will use the query position directly
-
 		Face face = mMesh->base()->getFace(query.PrimitiveID);
 		pt.N	  = face.interpolateNormals(query.UV);
 
@@ -195,7 +192,7 @@ public:
 		pt.EntityID	   = id();
 		pt.PrimitiveID = query.PrimitiveID;
 		pt.EmissionID  = emissionID();
-		pt.DisplaceID  = 0;
+		pt.DisplaceID  = PR_INVALID_ID;
 	}
 
 private:

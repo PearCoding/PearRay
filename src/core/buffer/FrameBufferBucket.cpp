@@ -170,101 +170,89 @@ void FrameBufferBucket::commitSpectrals2(StreamPipeline* pipeline, const OutputS
 	}
 }
 
-#define BLEND_1D(var, val)                                                                                    \
-	if (mData.mInt1D[var]) {                                                                                  \
-		const auto var_e = mData.mInt1D[var];                                                                 \
-		PR_OPT_LOOP                                                                                           \
-		for (size_t i = 0; i < entry_count; ++i) {                                                            \
-			const auto& entry		 = entries[i];                                                            \
-			const Point2i sp		 = entry.Position + filterSize;                                           \
-			const uint32 sampleCount = mData.getInternalChannel_Counter(AOV_SampleCount)->getFragment(sp, 0); \
-			const float blend		 = 1.0f / (sampleCount);                                                  \
-			var_e->blendFragment(sp, 0, val, blend);                                                          \
-		}                                                                                                     \
+#define BLEND_1D(var, val)                                   \
+	if (mData.mInt1D[var]) {                                 \
+		const auto var_e = mData.mInt1D[var];                \
+		PR_OPT_LOOP                                          \
+		for (size_t i = 0; i < entry_count; ++i) {           \
+			const auto& entry = entries[i];                  \
+			const Point2i sp  = entry.Position + filterSize; \
+			var_e->getFragment(sp, 0) += val;                \
+		}                                                    \
 	}
 
-#define BLEND_1D_LPE(var, val)                                                                                \
-	for (auto pair : mData.mLPE_1D[var]) {                                                                    \
-		PR_OPT_LOOP                                                                                           \
-		for (size_t i = 0; i < entry_count; ++i) {                                                            \
-			const auto& entry		 = entries[i];                                                            \
-			const LightPathView path = LightPathView(entry.Path);                                             \
-			if (!pair.first.match(path))                                                                      \
-				continue;                                                                                     \
-			const Point2i sp		 = entry.Position + filterSize;                                           \
-			const uint32 sampleCount = mData.getInternalChannel_Counter(AOV_SampleCount)->getFragment(sp, 0); \
-			const float blend		 = 1.0f / (sampleCount);                                                  \
-			pair.second->blendFragment(sp, 0, val, blend);                                                    \
-		}                                                                                                     \
+#define BLEND_1D_LPE(var, val)                                    \
+	for (auto pair : mData.mLPE_1D[var]) {                        \
+		PR_OPT_LOOP                                               \
+		for (size_t i = 0; i < entry_count; ++i) {                \
+			const auto& entry		 = entries[i];                \
+			const LightPathView path = LightPathView(entry.Path); \
+			if (!pair.first.match(path))                          \
+				continue;                                         \
+			const Point2i sp = entry.Position + filterSize;       \
+			pair.second->getFragment(sp, 0) += val;               \
+		}                                                         \
 	}
 
 // Actually 3d by ignoring last channel
-#define BLEND_2D(var, val)                                                                                    \
-	if (mData.mInt3D[var]) {                                                                                  \
-		const auto var_e = mData.mInt3D[var];                                                                 \
-		PR_OPT_LOOP                                                                                           \
-		for (size_t i = 0; i < entry_count; ++i) {                                                            \
-			const auto& entry		 = entries[i];                                                            \
-			const Point2i sp		 = entry.Position + filterSize;                                           \
-			const uint32 sampleCount = mData.getInternalChannel_Counter(AOV_SampleCount)->getFragment(sp, 0); \
-			const float blend		 = 1.0f / (sampleCount);                                                  \
-			const Vector2f v		 = val;                                                                   \
-			PR_UNROLL_LOOP(2)                                                                                 \
-			for (Size1i k = 0; k < 2; ++k)                                                                    \
-				var_e->blendFragment(sp, k, v(k), blend);                                                     \
-		}                                                                                                     \
+#define BLEND_2D(var, val)                                   \
+	if (mData.mInt3D[var]) {                                 \
+		const auto var_e = mData.mInt3D[var];                \
+		PR_OPT_LOOP                                          \
+		for (size_t i = 0; i < entry_count; ++i) {           \
+			const auto& entry = entries[i];                  \
+			const Point2i sp  = entry.Position + filterSize; \
+			const Vector2f v  = val;                         \
+			PR_UNROLL_LOOP(2)                                \
+			for (Size1i k = 0; k < 2; ++k)                   \
+				var_e->getFragment(sp, k) += v(k);           \
+		}                                                    \
 	}
 
-#define BLEND_2D_LPE(var, val)                                                                                \
-	for (auto pair : mData.mLPE_3D[var]) {                                                                    \
-		PR_OPT_LOOP                                                                                           \
-		for (size_t i = 0; i < entry_count; ++i) {                                                            \
-			const auto& entry		 = entries[i];                                                            \
-			const LightPathView path = LightPathView(entry.Path);                                             \
-			if (!pair.first.match(path))                                                                      \
-				continue;                                                                                     \
-			const Point2i sp		 = entry.Position + filterSize;                                           \
-			const uint32 sampleCount = mData.getInternalChannel_Counter(AOV_SampleCount)->getFragment(sp, 0); \
-			const float blend		 = 1.0f / (sampleCount);                                                  \
-			const Vector2f v		 = val;                                                                   \
-			PR_UNROLL_LOOP(2)                                                                                 \
-			for (Size1i k = 0; k < 2; ++k)                                                                    \
-				pair.second->blendFragment(sp, k, v(k), blend);                                               \
-		}                                                                                                     \
+#define BLEND_2D_LPE(var, val)                                    \
+	for (auto pair : mData.mLPE_3D[var]) {                        \
+		PR_OPT_LOOP                                               \
+		for (size_t i = 0; i < entry_count; ++i) {                \
+			const auto& entry		 = entries[i];                \
+			const LightPathView path = LightPathView(entry.Path); \
+			if (!pair.first.match(path))                          \
+				continue;                                         \
+			const Point2i sp = entry.Position + filterSize;       \
+			const Vector2f v = val;                               \
+			PR_UNROLL_LOOP(2)                                     \
+			for (Size1i k = 0; k < 2; ++k)                        \
+				pair.second->getFragment(sp, k) += v(k);          \
+		}                                                         \
 	}
 
-#define BLEND_3D(var, val)                                                                                    \
-	if (mData.mInt3D[var]) {                                                                                  \
-		const auto var_e = mData.mInt3D[var];                                                                 \
-		PR_OPT_LOOP                                                                                           \
-		for (size_t i = 0; i < entry_count; ++i) {                                                            \
-			const auto& entry		 = entries[i];                                                            \
-			const Point2i sp		 = entry.Position + filterSize;                                           \
-			const uint32 sampleCount = mData.getInternalChannel_Counter(AOV_SampleCount)->getFragment(sp, 0); \
-			const float blend		 = 1.0f / (sampleCount);                                                  \
-			const Vector3f v		 = val;                                                                   \
-			PR_UNROLL_LOOP(3)                                                                                 \
-			for (Size1i k = 0; k < 3; ++k)                                                                    \
-				var_e->blendFragment(sp, k, v(k), blend);                                                     \
-		}                                                                                                     \
+#define BLEND_3D(var, val)                                   \
+	if (mData.mInt3D[var]) {                                 \
+		const auto var_e = mData.mInt3D[var];                \
+		PR_OPT_LOOP                                          \
+		for (size_t i = 0; i < entry_count; ++i) {           \
+			const auto& entry = entries[i];                  \
+			const Point2i sp  = entry.Position + filterSize; \
+			const Vector3f v  = val;                         \
+			PR_UNROLL_LOOP(3)                                \
+			for (Size1i k = 0; k < 3; ++k)                   \
+				var_e->getFragment(sp, k) += v(k);           \
+		}                                                    \
 	}
 
-#define BLEND_3D_LPE(var, val)                                                                                \
-	for (auto pair : mData.mLPE_3D[var]) {                                                                    \
-		PR_OPT_LOOP                                                                                           \
-		for (size_t i = 0; i < entry_count; ++i) {                                                            \
-			const auto& entry		 = entries[i];                                                            \
-			const LightPathView path = LightPathView(entry.Path);                                             \
-			if (!pair.first.match(path))                                                                      \
-				continue;                                                                                     \
-			const Point2i sp		 = entry.Position + filterSize;                                           \
-			const uint32 sampleCount = mData.getInternalChannel_Counter(AOV_SampleCount)->getFragment(sp, 0); \
-			const float blend		 = 1.0f / (sampleCount);                                                  \
-			const Vector3f v		 = val;                                                                   \
-			PR_UNROLL_LOOP(3)                                                                                 \
-			for (Size1i k = 0; k < 3; ++k)                                                                    \
-				pair.second->blendFragment(sp, k, v(k), blend);                                               \
-		}                                                                                                     \
+#define BLEND_3D_LPE(var, val)                                    \
+	for (auto pair : mData.mLPE_3D[var]) {                        \
+		PR_OPT_LOOP                                               \
+		for (size_t i = 0; i < entry_count; ++i) {                \
+			const auto& entry		 = entries[i];                \
+			const LightPathView path = LightPathView(entry.Path); \
+			if (!pair.first.match(path))                          \
+				continue;                                         \
+			const Point2i sp = entry.Position + filterSize;       \
+			const Vector3f v = val;                               \
+			PR_UNROLL_LOOP(3)                                     \
+			for (Size1i k = 0; k < 3; ++k)                        \
+				pair.second->getFragment(sp, k) += v(k);          \
+		}                                                         \
 	}
 
 // TODO: Ignore medium shadingpoint entries

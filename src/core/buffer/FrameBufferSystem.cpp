@@ -78,35 +78,44 @@ void FrameBufferSystem::mergeBucket(const Point2i& p,
 	const Size2i src_size = Size2i::fromArray(bucket->extendedViewSize() - src_off);
 	const Size2i dst_size = src_size;
 
+	PR_OPT_LOOP
 	for (int i = 0; i < AOV_SPECTRAL_COUNT; ++i) {
 		if (mData.mSpectral[i])
 			mData.mSpectral[i]->addBlock(dst_off, dst_size, src_off, src_size, *bucket->data().mSpectral[i]);
+
+		PR_OPT_LOOP
 		for (size_t k = 0; k < mData.mLPE_Spectral[i].size(); ++k)
 			mData.mLPE_Spectral[i][k].second->addBlock(dst_off, dst_size, src_off, src_size, *bucket->data().mLPE_Spectral[i][k].second);
 	}
 
+	PR_OPT_LOOP
 	for (int i = 0; i < AOV_3D_COUNT; ++i) {
 		if (mData.mInt3D[i])
 			mData.mInt3D[i]->addBlock(dst_off, dst_size, src_off, src_size, *bucket->data().mInt3D[i]);
 
+		PR_OPT_LOOP
 		for (size_t k = 0; k < mData.mLPE_3D[i].size(); ++k)
 			mData.mLPE_3D[i][k].second->addBlock(dst_off, dst_size, src_off, src_size, *bucket->data().mLPE_3D[i][k].second);
 	}
 
+	PR_OPT_LOOP
 	for (int i = 0; i < AOV_1D_COUNT; ++i) {
 		if (mData.mInt1D[i])
 			mData.mInt1D[i]->addBlock(dst_off, dst_size, src_off, src_size, *bucket->data().mInt1D[i]);
 
+		PR_OPT_LOOP
 		for (size_t k = 0; k < mData.mLPE_1D[i].size(); ++k)
 			mData.mLPE_1D[i][k].second->addBlock(dst_off, dst_size, src_off, src_size, *bucket->data().mLPE_1D[i][k].second);
 	}
 
+	PR_OPT_LOOP
 	for (int i = 0; i < AOV_COUNTER_COUNT; ++i) {
 		if (i == AOV_Feedback) {
 			if (mData.mIntCounter[i])
 				mData.mIntCounter[i]->applyBlock(dst_off, dst_size, src_off, src_size, *bucket->data().mIntCounter[i],
 												 [](uint32 pre, uint32 val) { return pre | val; });
 
+			PR_OPT_LOOP
 			for (size_t k = 0; k < mData.mLPE_Counter[i].size(); ++k)
 				mData.mLPE_Counter[i][k].second->applyBlock(dst_off, dst_size, src_off, src_size, *bucket->data().mLPE_Counter[i][k].second,
 															[](uint32 pre, uint32 val) { return pre | val; });
@@ -114,27 +123,35 @@ void FrameBufferSystem::mergeBucket(const Point2i& p,
 			if (mData.mIntCounter[i])
 				mData.mIntCounter[i]->addBlock(dst_off, dst_size, src_off, src_size, *bucket->data().mIntCounter[i]);
 
+			PR_OPT_LOOP
 			for (size_t k = 0; k < mData.mLPE_Counter[i].size(); ++k)
 				mData.mLPE_Counter[i][k].second->addBlock(dst_off, dst_size, src_off, src_size, *bucket->data().mLPE_Counter[i][k].second);
 		}
 	}
 
 	// Custom
+	PR_OPT_LOOP
 	for (auto aI = mData.mCustom3D.begin(), bI = bucket->data().mCustom3D.begin();
 		 aI != mData.mCustom3D.end();
 		 ++aI, ++bI) {
 		aI->second->addBlock(dst_off, dst_size, src_off, src_size, *bI->second);
 	}
+
+	PR_OPT_LOOP
 	for (auto aI = mData.mCustom1D.begin(), bI = bucket->data().mCustom1D.begin();
 		 aI != mData.mCustom1D.end();
 		 ++aI, ++bI) {
 		aI->second->addBlock(dst_off, dst_size, src_off, src_size, *bI->second);
 	}
+
+	PR_OPT_LOOP
 	for (auto aI = mData.mCustomCounter.begin(), bI = bucket->data().mCustomCounter.begin();
 		 aI != mData.mCustomCounter.end();
 		 ++aI, ++bI) {
 		aI->second->addBlock(dst_off, dst_size, src_off, src_size, *bI->second);
 	}
+
+	PR_OPT_LOOP
 	for (auto aI = mData.mCustomSpectral.begin(), bI = bucket->data().mCustomSpectral.begin();
 		 aI != mData.mCustomSpectral.end();
 		 ++aI, ++bI) {

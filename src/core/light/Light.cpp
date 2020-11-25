@@ -135,12 +135,7 @@ void Light::sample(const LightSampleInput& in, LightSampleOutput& out, const Ren
 		IEntity* ent			   = reinterpret_cast<IEntity*>(mEntity);
 		const EntitySamplePoint pp = in.SamplingInfo ? ent->sampleParameterPoint(*in.SamplingInfo, Vector2f(in.RND[0], in.RND[1]))
 													 : ent->sampleParameterPoint(Vector2f(in.RND[0], in.RND[1]));
-
-		EntityGeometryQueryPoint qp;
-		qp.Position	   = pp.Position;
-		qp.UV		   = pp.UV;
-		qp.PrimitiveID = pp.PrimitiveID;
-		qp.View		   = Vector3f::Zero();
+		const EntityGeometryQueryPoint qp = pp.toQueryPoint(Vector3f::Zero());
 
 		GeometryPoint gp;
 		ent->provideGeometryPoint(qp, gp);
