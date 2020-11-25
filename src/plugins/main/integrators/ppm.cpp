@@ -343,8 +343,7 @@ public:
 	void onTile(RenderTileSession& session) override
 	{
 		PR_PROFILE_THIS;
-
-		const bool isAccumPass = session.tile()->iterationCount() % 2 != 0;
+		const bool isAccumPass = session.context()->currentIteration().Pass != 0;
 
 		if (!isAccumPass)
 			photonPass(session);
@@ -383,6 +382,8 @@ public:
 		return std::make_shared<IntPPMInstance<GM>>(mContext.get(), renderer->lightSampler(), mParameters);
 	}
 
+	IntegratorConfiguration configuration() const override { return IntegratorConfiguration{ 2 /*Pass Count*/ }; }
+
 private:
 	void beforePhotonPass(uint32 photonPass)
 	{
@@ -410,9 +411,9 @@ private:
 		LightMap().swap(lights); // Delete
 
 		// Make sure the photon map is always cleared before photon pass
-		renderer->addIterationCallback([this](uint32 iter) {
-			if (iter % 2 == 0)
-				beforePhotonPass(iter / 2);
+		renderer->addIterationCallback([this](const RenderIteration& iter) {
+			if (iter.Pass == 0)
+				beforePhotonPass(iter.Iteration);
 		});
 		// TODO: What if the integrator context gets destroyed?
 	}

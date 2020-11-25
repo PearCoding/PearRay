@@ -10,6 +10,7 @@ namespace PR {
 RenderTile::RenderTile(const Point2i& start, const Point2i& end,
 					   RenderContext* context, const RenderTileContext& tileContext)
 	: mWorking(false)
+	, mDone(false)
 	, mStart(start)
 	, mEnd(end)
 	, mViewSize(Size2i::fromPoints(start, end))
@@ -62,12 +63,13 @@ RenderTile::~RenderTile()
 /* Our sample approach gives each pixel in a single tile the SAME samples (except for random sampler)! 
  * This may sometimes good, but also bad... more investigations required...
  */
-std::optional<CameraRay> RenderTile::constructCameraRay(const Point2i& p, uint32 sample)
+std::optional<CameraRay> RenderTile::constructCameraRay(const Point2i& p, const RenderIteration& iter)
 {
 	PR_PROFILE_THIS;
 
 	statistics().addPixelSampleCount();
 	++mContext.PixelSamplesRendered;
+	const uint32 sample = iter.Iteration;
 
 	// Sample most information accesable by a camera
 	CameraSample cameraSample;
@@ -116,7 +118,7 @@ std::optional<CameraRay> RenderTile::constructCameraRay(const Point2i& p, uint32
 
 bool RenderTile::accuire()
 {
-	if (!isFinished() && !mWorking.exchange(true)) {
+	if (!isFinished() && !isMarkedDone() && !mWorking.exchange(true)) {
 		mWorkStart = std::chrono::high_resolution_clock::now();
 		return true;
 	} else {
@@ -129,6 +131,7 @@ void RenderTile::release()
 	if (mWorking.exchange(false)) {
 		auto end	  = std::chrono::high_resolution_clock::now();
 		mLastWorkTime = std::chrono::duration_cast<std::chrono::microseconds>(end - mWorkStart);
+		mDone		  = true;
 	}
 }
 
@@ -145,9 +148,6 @@ std::pair<RenderTile*, RenderTile*> RenderTile::split(int dim) const
 
 	// Construct context of the two tiles
 	RenderTileContext left, right;
-	left.IterationCount	 = mContext.IterationCount.load();
-	right.IterationCount = mContext.IterationCount.load();
-
 	left.PixelSamplesRendered = mContext.PixelSamplesRendered / 2;
 	// Sometimes PixelSamplesRendered is not a multiply of 2 -> Fix it
 	right.PixelSamplesRendered = mContext.PixelSamplesRendered / 2 + mContext.PixelSamplesRendered % 2;

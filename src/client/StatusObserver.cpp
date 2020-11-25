@@ -1,6 +1,7 @@
 #include "StatusObserver.h"
 #include "ProgramSettings.h"
 #include "Utils.h"
+#include "integrator/IIntegrator.h"
 #include "renderer/RenderContext.h"
 
 namespace PR {
@@ -34,6 +35,7 @@ void StatusObserver::begin(RenderContext* renderContext, const ProgramSettings& 
 
 	mLastUpdate = std::chrono::high_resolution_clock::now();
 	mFirstTime	= true;
+	mHasPasses	= renderContext->integrator()->configuration().PassCount > 1;
 }
 
 void StatusObserver::end()
@@ -67,8 +69,10 @@ void StatusObserver::update(const UpdateInfo& info)
 		if (status.hasField("int.feedback"))
 			std::cout << "( " << status.getField("int.feedback").getString() << ")";
 
-		std::cout << " | I: " << std::setw(ITER_OUTPUT_FIELD_SIZE) << info.CurrentIteration
-				  << " S: " << std::setw(VALUE_OUTPUT_FIELD_SIZE) << status.getField("global.pixel_sample_count").getUInt()
+		std::cout << " | I: " << std::setw(ITER_OUTPUT_FIELD_SIZE) << info.CurrentIteration;
+		if (mHasPasses)
+			std::cout << " P: " << std::setw(ITER_OUTPUT_FIELD_SIZE) << info.CurrentPass;
+		std::cout << " S: " << std::setw(VALUE_OUTPUT_FIELD_SIZE) << status.getField("global.pixel_sample_count").getUInt()
 				  << " R: " << std::setw(VALUE_OUTPUT_FIELD_SIZE) << status.getField("global.ray_count").getUInt()
 				  << " EH: " << std::setw(VALUE_OUTPUT_FIELD_SIZE) << status.getField("global.entity_hit_count").getUInt()
 				  << " BH: " << std::setw(VALUE_OUTPUT_FIELD_SIZE) << status.getField("global.background_hit_count").getUInt();

@@ -162,22 +162,22 @@ int main(int argc, char** argv)
 			env->dumpInformation();
 
 		// Status variables
-		uint32 fullIterCounter = 0;
-		auto start			   = sc::high_resolution_clock::now();
+		uint32 maxIterations = 0;
+		auto start			 = sc::high_resolution_clock::now();
 
 		// Setup observers
 		for (const auto& obs : observers)
 			obs->begin(renderer.get(), options);
 
 		// Setup iteration callback
-		renderer->addIterationCallback([&](uint32) {
+		renderer->addIterationCallback([&](const RenderIteration& iter) {
 			if (softStop.exchange(false))
 				renderer->requestStop();
 
-			++fullIterCounter;
+			maxIterations = std::max(maxIterations, iter.Iteration);
 
 			for (const auto& obs : observers)
-				obs->onIteration(UpdateInfo{ start, fullIterCounter });
+				obs->onIteration(UpdateInfo{ start, iter.Iteration, iter.Pass });
 		});
 
 		renderer->start(options.RenderTileXCount, options.RenderTileYCount, options.ThreadCount);
@@ -189,7 +189,7 @@ int main(int argc, char** argv)
 			const auto span_full = sc::duration_cast<sc::seconds>(end - start);
 
 			for (const auto& obs : observers)
-				obs->update(UpdateInfo{ start, fullIterCounter });
+				obs->update(UpdateInfo{ start, maxIterations, 0  });
 
 			if (options.MaxTime > 0 && span_full.count() >= options.MaxTime) {
 				if (options.MaxTimeForce)
@@ -214,7 +214,7 @@ int main(int argc, char** argv)
 
 			// Save images
 			OutputSaveOptions output_options;
-			output_options.Image.IterationMeta = fullIterCounter;
+			output_options.Image.IterationMeta = maxIterations;
 			output_options.Image.TimeMeta	   = span.count();
 			output_options.Image.WriteMeta	   = true;
 			// output_options.NameSuffix = ""; // (Do not make use of tags)

@@ -8,7 +8,8 @@ using time_point_t = std::chrono::high_resolution_clock::time_point;
 
 struct UpdateInfo {
 	time_point_t Start;
-	uint64 CurrentIteration;
+	uint32 CurrentIteration;
+	uint32 CurrentPass;
 };
 
 class ProgramSettings;

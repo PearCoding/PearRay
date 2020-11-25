@@ -20,12 +20,14 @@ public:
 
 	void init(RenderContext* context, uint32 rtx, uint32 rty, TileMode mode);
 
-	// Split tiles to minimize workoverload on single tiles
+	/// Split tiles to minimize workoverload on single tiles
 	void optimize();
 
-	RenderTile* getNextTile(uint32 maxIter);
+	RenderTile* getNextTile();
 	bool allFinished() const;
 	void reset();
+	/// Unmark all tiles to prepare for next linear iteration
+	void unmarkDoneAll();
 
 	RenderTileStatistics statistics() const;
 	double percentage() const;

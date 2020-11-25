@@ -70,7 +70,6 @@ void RenderThread::main()
 		queue->commitAndFlush(bucket.get());
 		mRenderer->output()->mergeBucket(mTile->start(), bucket);
 
-		mTile->incIteration();
 		mStatistics.addTileCount();
 		mTile->release();
 	}

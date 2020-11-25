@@ -24,5 +24,6 @@ private:
 
 	bool mBeautify;
 	bool mFirstTime;
+	bool mHasPasses;
 };
 } // namespace PR

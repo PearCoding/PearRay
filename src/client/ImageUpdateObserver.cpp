@@ -38,6 +38,9 @@ void ImageUpdateObserver::end()
 
 void ImageUpdateObserver::update(const UpdateInfo& info)
 {
+	if (info.CurrentPass != 0)
+		return;
+
 	auto now	  = std::chrono::high_resolution_clock::now();
 	auto duration = std::chrono::duration_cast<std::chrono::seconds>(now - mLastUpdate);
 
@@ -49,6 +52,9 @@ void ImageUpdateObserver::update(const UpdateInfo& info)
 
 void ImageUpdateObserver::onIteration(const UpdateInfo& info)
 {
+	if (info.CurrentPass != 0)
+		return;
+
 	if (mIterationCycleCount > 0 && mIterationCount >= mIterationCycleCount) {
 		save(info);
 		mIterationCount = 0;
@@ -62,9 +68,9 @@ void ImageUpdateObserver::save(const UpdateInfo& info)
 
 	OutputSaveOptions output_options;
 
-	output_options.Image.IterationMeta	= info.CurrentIteration;
-	output_options.Image.TimeMeta		= std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - info.Start).count();
-	output_options.Image.WriteMeta		= true;
+	output_options.Image.IterationMeta = info.CurrentIteration;
+	output_options.Image.TimeMeta	   = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - info.Start).count();
+	output_options.Image.WriteMeta	   = true;
 
 	if (mUseTags) {
 		std::stringstream stream;

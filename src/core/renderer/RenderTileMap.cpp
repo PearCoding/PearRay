@@ -125,15 +125,14 @@ void RenderTileMap::init(RenderContext* context, uint32 rtx, uint32 rty, TileMod
 	}
 }
 
-RenderTile* RenderTileMap::getNextTile(uint32 maxIter)
+RenderTile* RenderTileMap::getNextTile()
 {
 	PR_PROFILE_THIS;
 
 	Mutex::scoped_lock lock(mMutex, false);
 	for (auto tile : mTileMap)
-		if (tile && tile->iterationCount() < maxIter)
-			if (tile->accuire())
-				return tile;
+		if (tile && tile->accuire())
+			return tile;
 
 	return nullptr;
 }
@@ -147,6 +146,15 @@ bool RenderTileMap::allFinished() const
 		if (!tile->isFinished() || tile->isWorking())
 			return false;
 	return true;
+}
+
+void RenderTileMap::unmarkDoneAll()
+{
+	PR_PROFILE_THIS;
+
+	Mutex::scoped_lock lock(mMutex, false);
+	for (auto tile : mTileMap)
+		tile->unmarkDone();
 }
 
 RenderTileStatistics RenderTileMap::statistics() const

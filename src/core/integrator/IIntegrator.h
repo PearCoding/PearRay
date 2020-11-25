@@ -16,6 +16,10 @@ public:
 	virtual void onTile(RenderTileSession& session) = 0;
 };
 
+struct PR_LIB_CORE IntegratorConfiguration {
+	uint32 PassCount = 1;
+};
+
 // Main thread
 class PR_LIB_CORE IIntegrator {
 public:
@@ -29,5 +33,6 @@ public:
 
 	virtual std::shared_ptr<IIntegratorInstance> createThreadInstance(RenderContext*, size_t) = 0;
 	virtual RenderStatus status() const { return RenderStatus(); }
+	virtual IntegratorConfiguration configuration() const { return IntegratorConfiguration(); }
 };
 } // namespace PR

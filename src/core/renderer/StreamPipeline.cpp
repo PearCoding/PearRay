@@ -85,7 +85,7 @@ void StreamPipeline::fillWithCameraRays()
 	const Size2i size  = mTile->viewSize();
 	const uint32 slice = mTile->imageSize().Width;
 
-	const uint32 iterCount = mTile->iterationCount();
+	const RenderIteration iter = mContext->currentIteration();
 	while (mCurrentPixelIndex < mMaxPixelCount) {
 		if (mWriteRayStream->isFull() || mContext->isStopping())
 			break;
@@ -101,7 +101,7 @@ void StreamPipeline::fillWithCameraRays()
 
 		const Point2i p = Point2i(x, y) + mTile->start();
 
-		std::optional<CameraRay> camera_ray = mTile->constructCameraRay(p, iterCount);
+		std::optional<CameraRay> camera_ray = mTile->constructCameraRay(p, iter);
 		if (camera_ray.has_value()) {
 			uint32 grp_id;
 			{

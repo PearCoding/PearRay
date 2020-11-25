@@ -94,6 +94,9 @@ void TevObserver::update(const UpdateInfo& info)
 	if (!mConnection->Con.isOpen())
 		return;
 
+	if (info.CurrentPass != 0) // Only every real iteration
+		return;
+
 	auto now	  = std::chrono::high_resolution_clock::now();
 	auto duration = std::chrono::duration_cast<std::chrono::seconds>(now - mLastUpdate);
 

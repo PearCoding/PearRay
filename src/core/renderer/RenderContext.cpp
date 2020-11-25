@@ -33,7 +33,10 @@ RenderContext::RenderContext(uint32 index, const Point2i& viewOffset, const Size
 	, mIncrementalCurrentIteration(0)
 	, mRenderSettings(settings)
 	, mIntegrator(integrator)
+	, mIntegratorPassCount(1)
 	, mShouldStop(false)
+
+	, mShouldSoftStop(false)
 {
 	PR_ASSERT(mIntegrator, "Integrator can not be NULL!");
 	PR_ASSERT(mScene, "Scene can not be NULL!");
@@ -57,6 +60,8 @@ void RenderContext::reset()
 		delete thread;
 
 	mShouldStop					 = false;
+	mShouldSoftStop				 = false;
+	mOutputClearRequest			 = false;
 	mThreadsWaitingForIteration	 = 0;
 	mIncrementalCurrentIteration = 0;
 
@@ -99,6 +104,8 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 	mIntegrator->onInit(this);
 	mOutputMap->clear();
 
+	mIntegratorPassCount = mIntegrator->configuration().PassCount;
+
 	// Get other informations
 	PR_LOG(L_INFO) << "Rendering with:" << std::endl
 				   << "  Threads:                " << threadCount << std::endl
@@ -118,7 +125,7 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 	// Start
 	mIntegrator->onStart();
 	for (const auto& clb : mIterationCallbacks)
-		clb(mIncrementalCurrentIteration);
+		clb(RenderIteration{ 0, 0 });
 	PR_LOG(L_INFO) << "Starting threads." << std::endl;
 	for (RenderThread* thread : mThreads)
 		thread->start();
@@ -185,16 +192,24 @@ void RenderContext::waitForFinish()
 
 void RenderContext::requestStop()
 {
-	PR_PROFILE_THIS;
+	requestInternalStop();
 
+	// Make sure threads are not inside conditions
+	mIterationCondition.notify_all();
+}
+
+void RenderContext::requestSoftStop()
+{
+	mShouldSoftStop = true;
+}
+
+void RenderContext::requestInternalStop()
+{
 	mShouldStop = true;
 
 	// Request all threads to stop
 	for (RenderThread* thread : mThreads)
 		thread->requestStop();
-
-	// Make sure threads are not inside conditions
-	mIterationCondition.notify_all();
 }
 
 void RenderContext::stop()
@@ -219,18 +234,13 @@ RenderTile* RenderContext::getNextTile()
 
 	// Try till we find a tile to render
 	while (tile == nullptr) {
-		tile = mTileMap->getNextTile(mIncrementalCurrentIteration);
+		tile = mTileMap->getNextTile();
 		if (tile == nullptr) { // If no tile on this iteration was found sync all threads
 			std::unique_lock<std::mutex> lk(mIterationMutex);
 			++mThreadsWaitingForIteration;
 
 			if (mThreadsWaitingForIteration == threads) { // The last thread arriving here has the honor to call optional callbacks and initiate the next iteration
-				if (mRenderSettings.useAdaptiveTiling)
-					optimizeTileMap();
-
-				++mIncrementalCurrentIteration;
-				for (const auto& clb : mIterationCallbacks)
-					clb(mIncrementalCurrentIteration - 1);
+				handleNextIteration();
 				mThreadsWaitingForIteration = 0;
 				lk.unlock();
 
@@ -255,6 +265,30 @@ RenderTile* RenderContext::getNextTile()
 	}
 
 	return tile;
+}
+
+void RenderContext::handleNextIteration()
+{
+	if (mRenderSettings.useAdaptiveTiling) {
+		PR_LOG(L_DEBUG) << "Optimizing tile map" << std::endl;
+		optimizeTileMap();
+	}
+
+	if (mShouldSoftStop)
+		requestInternalStop();
+
+	mTileMap->unmarkDoneAll();
+
+	if (mOutputClearRequest.exchange(false)) {
+		PR_LOG(L_DEBUG) << "Clearing output buffer" << std::endl;
+		mOutputMap->clear(true);
+	}
+
+	const RenderIteration iter = currentIteration();
+
+	++mIncrementalCurrentIteration;
+	for (const auto& clb : mIterationCallbacks)
+		clb(iter);
 }
 
 void RenderContext::optimizeTileMap()

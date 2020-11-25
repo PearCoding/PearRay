@@ -45,7 +45,7 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		const size_t iteration			 = session.tile()->iterationCount() / 2;
+		const size_t iteration			 = session.context()->currentIteration().Iteration;
 		auto& threadContext				 = mTracer->threadContext(session.threadID());
 		const float maxSceneGatherRadius = mTracer->options().GatherRadiusFactor * session.context()->scene()->boundingBox().longestEdge();
 		typename Tracer::IterationContext tctx(iteration, maxSceneGatherRadius, session, threadContext, mTracer->options());
@@ -80,7 +80,7 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		const size_t iteration			 = session.tile()->iterationCount() / 2;
+		const size_t iteration			 = session.context()->currentIteration().Iteration;
 		auto& threadContext				 = mTracer->threadContext(session.threadID());
 		const float maxSceneGatherRadius = mTracer->options().GatherRadiusFactor * session.context()->scene()->boundingBox().longestEdge();
 
@@ -98,7 +98,7 @@ public:
 
 	void onTile(RenderTileSession& session) override
 	{
-		const bool isCameraPass = session.tile()->iterationCount() % 2 != 0;
+		const bool isCameraPass = session.context()->currentIteration().Pass != 0;
 
 		if (!isCameraPass)
 			lightPass(session);
@@ -132,8 +132,8 @@ public:
 			const float sceneGatherRadius = std::max(0.0001f, mParameters.GatherRadiusFactor * bbox.longestEdge());
 
 			// Can we be sure about the ctx inside the lambda?
-			ctx->addIterationCallback([=](uint32 iter) {
-				if (iter % 2 == 0)
+			ctx->addIterationCallback([=](const RenderIteration& iter) {
+				if (iter.Pass == 0)
 					beforeLightPass();
 				else
 					beforeCameraPass(bbox, sceneGatherRadius);
@@ -143,6 +143,8 @@ public:
 		mTracer->registerThreadContext();
 		return std::make_shared<IntVCMInstance<MISMode>>(mTracer.get());
 	}
+
+	IntegratorConfiguration configuration() const override { return IntegratorConfiguration{ 2 /*Pass Count*/ }; }
 
 private:
 	inline void beforeLightPass()
