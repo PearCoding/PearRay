@@ -65,7 +65,8 @@ RenderTile::~RenderTile()
  */
 std::optional<CameraRay> RenderTile::constructCameraRay(const Point2i& p, const RenderIteration& iter)
 {
-	PR_ASSERT(mWorking && !mDone, "Trying to use a tile which is not acquired");
+	PR_ASSERT(mWorking, "Trying to use a tile which is not acquired");
+	PR_ASSERT(!mDone, "Trying to use a tile which is already marked as done");
 
 	PR_PROFILE_THIS;
 
@@ -133,11 +134,14 @@ void RenderTile::release()
 	if (mWorking.exchange(false)) {
 		auto end	  = std::chrono::high_resolution_clock::now();
 		mLastWorkTime = std::chrono::duration_cast<std::chrono::microseconds>(end - mWorkStart);
-		mDone		  = true;
+
+		PR_ASSERT(!mDone, "Expected a render tile which is released to not be marked done");
+		mDone = true;
 	}
 }
 
-std::pair<RenderTile*, RenderTile*> RenderTile::split(int dim) const
+std::pair<std::unique_ptr<RenderTile>, std::unique_ptr<RenderTile>>
+RenderTile::split(int dim) const
 {
 	// Split view size in dim at half
 	Point2i startLeft = start();
@@ -158,8 +162,7 @@ std::pair<RenderTile*, RenderTile*> RenderTile::split(int dim) const
 	right.Statistics = left.Statistics;
 
 	// Create tiles
-	auto leftTile  = new RenderTile(startLeft, endLeft, mRenderContext, left);
-	auto rightTile = new RenderTile(startRight, endRight, mRenderContext, right);
-	return std::make_pair(leftTile, rightTile);
+	return std::make_pair(std::make_unique<RenderTile>(startLeft, endLeft, mRenderContext, left),
+						  std::make_unique<RenderTile>(startRight, endRight, mRenderContext, right));
 }
 } // namespace PR

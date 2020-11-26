@@ -134,7 +134,7 @@ def export(operator, op, isNamed):
         operator.w.write(":base %s" % colorDiff)
         operator.w.write(":specular %s" % getScal(operator, op, 'Ks', 0.5))
         operator.w.write(":roughness %s" % roughness)
-        operator.w.write(":anisotropy %f" % aniso)
+        operator.w.write(":anisotropic %f" % aniso)
         operator.w.goOut()
         operator.w.write(")")
     elif mat_type == "disney":

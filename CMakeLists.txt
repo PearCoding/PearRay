@@ -257,9 +257,7 @@ endif()
 include(CTest) 
 if(PR_BUILD_TESTS)
 	add_subdirectory(src/sandbox)
-	if(BUILD_TESTING)
-		add_subdirectory(src/tests)
-	endif()
+	add_subdirectory(src/tests)
 endif()
 
 # Documentation

@@ -30,6 +30,9 @@ set(PR_Src
   container/kdTreeBuilderNaive.h
   container/HashGrid.h
   container/HashGrid.inl
+  container/PointKdTree.h
+  container/PointKdTree.inl
+  container/PositionGetter.h
   entity/GeometryRepr.h
   entity/IEntity.cpp
   entity/IEntity.h

@@ -84,6 +84,9 @@ def export(operator, op):
         operator.w.write(":type 'checkerboard'")
         operator.w.write(getRefl(operator, op, "tex1", 0))
         operator.w.write(getRefl(operator, op, "tex2", 1))
+        if "uscale" in op.parameters:
+            operator.w.write(getScal(operator, op, "uscale", 1))
+            operator.w.write(getScal(operator, op, "vscale", 1))
         operator.w.goOut()
         operator.w.write(")")
     else:

@@ -121,7 +121,8 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 				   << "  Emissive Power:         " << mLightSampler->emissivePower() << std::endl
 				   << "  Scene Extent:           " << mScene->boundingBox().width() << " x " << mScene->boundingBox().height() << " x " << mScene->boundingBox().depth() << std::endl
 				   << "  Scene Origin Radius:    " << mScene->boundingSphere().radius() << std::endl
-				   << "  Spectral Domain:        [" << mRenderSettings.spectralStart << ", " << mRenderSettings.spectralEnd << "]" << std::endl;
+				   << "  Spectral Domain:        [" << mRenderSettings.spectralStart << ", " << mRenderSettings.spectralEnd << "]" << std::endl
+				   << "  Adaptive Tiling:        " << (mRenderSettings.useAdaptiveTiling ? "true" : "false") << std::endl;
 
 	// Start
 	mIntegrator->onStart();
@@ -230,8 +231,7 @@ RenderTile* RenderContext::getNextTile()
 
 	const size_t threads = threadCount();
 
-	RenderTile* tile		  = nullptr;
-	bool breakBecauseFinished = false;
+	RenderTile* tile = nullptr;
 
 	// Try till we find a tile to render
 	while (tile == nullptr) {
@@ -254,15 +254,11 @@ RenderTile* RenderContext::getNextTile()
 			}
 		}
 
-		if (mTileMap->allFinished()) {
-			breakBecauseFinished = true;
-			break;
+		if (mShouldStop || mTileMap->allFinished()) {
+			mThreadsWaitingForIteration = 0;
+			mIterationCondition.notify_all();
+			return nullptr;
 		}
-	}
-
-	if (breakBecauseFinished) {
-		mThreadsWaitingForIteration = 0;
-		mIterationCondition.notify_all();
 	}
 
 	return tile;
@@ -270,11 +266,6 @@ RenderTile* RenderContext::getNextTile()
 
 void RenderContext::handleNextIteration()
 {
-	if (mRenderSettings.useAdaptiveTiling) {
-		PR_LOG(L_DEBUG) << "Optimizing tile map" << std::endl;
-		optimizeTileMap();
-	}
-
 	if (mShouldSoftStop)
 		requestInternalStop();
 
@@ -286,8 +277,13 @@ void RenderContext::handleNextIteration()
 	}
 
 	++mIncrementalCurrentIteration;
-	
 	const RenderIteration iter = currentIteration();
+
+	if (iter.Pass == 0 && mRenderSettings.useAdaptiveTiling) {
+		PR_LOG(L_DEBUG) << "Optimizing tile map" << std::endl;
+		optimizeTileMap();
+	}
+
 	for (const auto& clb : mIterationCallbacks)
 		clb(iter);
 }

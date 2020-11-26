@@ -6,8 +6,8 @@
 	:camera 'Camera'
 	; Settings
 	(integrator
-		:type 'vcm'
-		:max_ray_depth 8
+		:type 'direct'
+		:max_ray_depth 1
 	)
 	(sampler
 		:slot 'aa'

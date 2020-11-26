@@ -3,23 +3,13 @@
 #include "geometry/BoundingBox.h"
 #include "math/Hash.h"
 
+#include "PositionGetter.h"
+
 #include <atomic>
 #include <tbb/concurrent_vector.h>
 #include <vector>
 
 namespace PR {
-// Default position getter
-template <typename T>
-struct position_getter;
-
-// Simple position getter
-template <>
-struct position_getter<Vector3f> {
-	inline Vector3f operator()(const Vector3f& p) const
-	{
-		return p;
-	}
-};
 
 // Spatial Hashmap
 template <typename T, template <typename> typename PositionGetter = position_getter>

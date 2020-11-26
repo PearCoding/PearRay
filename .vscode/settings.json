@@ -128,7 +128,18 @@
       "observer_ptr": "cpp",
       "ref_ptr": "cpp",
       "node": "cpp",
-      "nodevisitor": "cpp"
+      "nodevisitor": "cpp",
+      "barrier": "cpp",
+      "block": "cpp",
+      "bufferobject": "cpp",
+      "graphicscontext": "cpp",
+      "graphicsthread": "cpp",
+      "object": "cpp",
+      "operationthread": "cpp",
+      "program": "cpp",
+      "shader": "cpp",
+      "stateattribute": "cpp",
+      "stateset": "cpp"
     },
     "files.exclude": {
         "**/.git": true,

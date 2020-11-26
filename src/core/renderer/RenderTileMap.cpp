@@ -8,7 +8,7 @@
 #include "Logger.h"
 namespace PR {
 RenderTileMap::RenderTileMap()
-	: mTileMap()
+	: mTiles()
 {
 }
 
@@ -20,10 +20,7 @@ RenderTileMap::~RenderTileMap()
 void RenderTileMap::clearMap()
 {
 	Mutex::scoped_lock lock(mMutex, true);
-	for (auto tile : mTileMap)
-		delete tile;
-
-	mTileMap.clear();
+	mTiles.clear();
 }
 
 void RenderTileMap::init(RenderContext* context, uint32 rtx, uint32 rty, TileMode mode)
@@ -42,12 +39,11 @@ void RenderTileMap::init(RenderContext* context, uint32 rtx, uint32 rty, TileMod
 
 	// New data
 	PR_ASSERT(tx * ty > 0, "Expected positive tile size");
-	mTileMap.reserve(static_cast<size_t>(tx * ty));
+	mTiles.reserve(static_cast<size_t>(tx * ty));
 	auto addTile = [&](Point1i sx, Point1i sy) {
 		Point2i start = Point2i(sx, sy);
 		Point2i end	  = (start + mMaxTileSize).cwiseMin(Point2i(context->viewSize().Width, context->viewSize().Height));
-		auto tile	  = new RenderTile(start, end, context);
-		mTileMap.emplace_back(tile);
+		mTiles.emplace_back(std::make_unique<RenderTile>(start, end, context));
 	};
 
 	switch (mode) {
@@ -130,9 +126,9 @@ RenderTile* RenderTileMap::getNextTile()
 	PR_PROFILE_THIS;
 
 	Mutex::scoped_lock lock(mMutex, false);
-	for (auto tile : mTileMap)
-		if (tile && tile->accuire())
-			return tile;
+	for (size_t i = 0; i < mTiles.size(); ++i)
+		if (mTiles[i]->accuire())
+			return mTiles[i].get();
 
 	return nullptr;
 }
@@ -142,8 +138,8 @@ bool RenderTileMap::allFinished() const
 	PR_PROFILE_THIS;
 
 	Mutex::scoped_lock lock(mMutex, false);
-	for (auto tile : mTileMap)
-		if (!tile->isFinished() || tile->isWorking())
+	for (size_t i = 0; i < mTiles.size(); ++i)
+		if (!mTiles[i]->isFinished() || mTiles[i]->isWorking())
 			return false;
 	return true;
 }
@@ -153,8 +149,8 @@ void RenderTileMap::unmarkDoneAll()
 	PR_PROFILE_THIS;
 
 	Mutex::scoped_lock lock(mMutex, false);
-	for (auto tile : mTileMap)
-		tile->unmarkDone();
+	for (size_t i = 0; i < mTiles.size(); ++i)
+		mTiles[i]->unmarkDone();
 }
 
 RenderTileStatistics RenderTileMap::statistics() const
@@ -163,8 +159,8 @@ RenderTileStatistics RenderTileMap::statistics() const
 
 	Mutex::scoped_lock lock(mMutex, false);
 	RenderTileStatistics s;
-	for (auto tile : mTileMap)
-		s += tile->statistics();
+	for (size_t i = 0; i < mTiles.size(); ++i)
+		s += mTiles[i]->statistics();
 	return s;
 }
 
@@ -175,9 +171,9 @@ double RenderTileMap::percentage() const
 	Mutex::scoped_lock lock(mMutex, false);
 	uint64 maxSamples	   = 0;
 	uint64 samplesRendered = 0;
-	for (auto tile : mTileMap) {
-		maxSamples += tile->maxPixelSamples();
-		samplesRendered += tile->pixelSamplesRendered();
+	for (size_t i = 0; i < mTiles.size(); ++i) {
+		maxSamples += mTiles[i]->maxPixelSamples();
+		samplesRendered += mTiles[i]->pixelSamplesRendered();
 	}
 
 	if (maxSamples == 0)
@@ -191,8 +187,8 @@ void RenderTileMap::reset()
 	PR_PROFILE_THIS;
 
 	Mutex::scoped_lock lock(mMutex, false);
-	for (auto tile : mTileMap)
-		tile->reset();
+	for (size_t i = 0; i < mTiles.size(); ++i)
+		mTiles[i]->reset();
 }
 
 void RenderTileMap::optimize()
@@ -205,9 +201,9 @@ void RenderTileMap::optimize()
 
 	int64 fullWorkTime = 0;
 	int64 validTiles   = 0;
-	for (auto tile : mTileMap) {
-		if (tile->lastWorkTime().count() > 0) {
-			fullWorkTime += tile->lastWorkTime().count();
+	for (size_t i = 0; i < mTiles.size(); ++i) {
+		if (mTiles[i]->lastWorkTime().count() > 0) {
+			fullWorkTime += mTiles[i]->lastWorkTime().count();
 			++validTiles;
 		}
 	}
@@ -216,14 +212,15 @@ void RenderTileMap::optimize()
 		return;
 
 	const int64 thrWorkTime = std::max(MinTimeSpent, (int64)std::floor(fullWorkTime / (double)validTiles));
-	for (auto it = mTileMap.begin(); it != mTileMap.end();) {
+	for (auto it = mTiles.begin(); it != mTiles.end();) {
 		auto ms = (*it)->lastWorkTime().count();
 		if (ms < thrWorkTime || (*it)->isFinished()) {
 			++it;
 			continue;
 		}
 
-		auto tile = *it;
+		auto tile = it->get();
+		PR_ASSERT(!tile->isWorking(), "Did not expect a tile which is marked as working!");
 
 		// Split tile at the largest dimension
 		const Size2i tileSize = tile->viewSize();
@@ -240,9 +237,10 @@ void RenderTileMap::optimize()
 						<< " into " << PR_FMT_MAT(tiles.first->viewSize().asArray())
 						<< " | " << PR_FMT_MAT(tiles.second->viewSize().asArray()) << std::endl;
 
-		delete tile;
-		it = mTileMap.insert(mTileMap.erase(it), { tiles.first, tiles.second });
-		std::advance(it, 2);
+		it = mTiles.insert(mTiles.erase(it), std::move(tiles.first));
+		++it;
+		it = mTiles.insert(it, std::move(tiles.second));
+		++it;
 	}
 }
 } // namespace PR

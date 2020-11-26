@@ -1,6 +1,3 @@
-import numpy as np
-
-
 # TODO
 _IORMap = {"bk7": "(lookup_index 'bk7')",
            "glass": "(lookup_index 'bk7')",

@@ -8,7 +8,7 @@ from . import colexport, matexport, objexport, texexport
 
 
 TRANSFORM = np.array([[1, 0, 0],
-                      [0, 0, -1],
+                      [0, 0, 1],
                       [0, 1, 0]])
 
 TRANSFORM_CAM = np.array([[1, 0, 0, 0],
@@ -578,7 +578,7 @@ class Operator:
 
             points = op.parameters['P']
             normals = op.parameters.get('N')
-            uv = op.parameters.get('st')
+            uv = op.parameters.get('uv')
             inds = op.parameters['indices']
             if self.options.embedMesh or len(points) < 1000:
                 name = name + "_e"

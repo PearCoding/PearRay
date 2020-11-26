@@ -22,19 +22,19 @@ public:
 	{
 	}
 
-	inline static bool check(const Vector2f& uv) { return (uv[0] >= 0.5f) != (uv[1] >= 0.5f); }
+	inline static bool check(const Vector2f& uv) { return ((int)std::floor(uv[0]) + (int)std::floor(uv[1])) % 2 == 0; }
 
 	inline bool check(const ShadingContext& ctx) const
 	{
-		if constexpr (ST == ST_None)
+		if constexpr (ST == ST_None) {
 			return check(ctx.UV);
-		else if constexpr (ST == ST_Isotropic) {
+		} else if constexpr (ST == ST_Isotropic) {
 			const float scale = mScaleU->eval(ctx);
-			return check(ctx.UV / scale);
+			return check(ctx.UV * scale);
 		} else {
 			const float scaleU = mScaleU->eval(ctx);
 			const float scaleV = mScaleV->eval(ctx);
-			return check(ctx.UV.array() / Vector2f(scaleU, scaleV).array());
+			return check(ctx.UV.array() * Vector2f(scaleU, scaleV).array());
 		}
 	}
 

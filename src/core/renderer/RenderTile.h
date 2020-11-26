@@ -61,7 +61,8 @@ public:
 	inline uint64 maxPixelSamples() const { return mMaxPixelSamples; }
 	inline uint64 pixelSamplesRendered() const { return mContext.PixelSamplesRendered; }
 
-	std::pair<RenderTile*, RenderTile*> split(int dim) const;
+	std::pair<std::unique_ptr<RenderTile>, std::unique_ptr<RenderTile>>
+	split(int dim) const;
 
 	inline Random& random() { return mRandom; }
 

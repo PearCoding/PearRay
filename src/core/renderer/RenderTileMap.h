@@ -15,7 +15,7 @@ public:
 	RenderTileMap();
 	~RenderTileMap();
 
-	inline size_t tileCount() const { return mTileMap.size(); }
+	inline size_t tileCount() const { return mTiles.size(); }
 	inline Size2i maxTileSize() const { return mMaxTileSize; }
 
 	void init(RenderContext* context, uint32 rtx, uint32 rty, TileMode mode);
@@ -36,7 +36,7 @@ private:
 	void clearMap();
 
 	Size2i mMaxTileSize;
-	std::vector<RenderTile*> mTileMap;
+	std::vector<std::unique_ptr<RenderTile>> mTiles;
 
 	using Mutex = tbb::queuing_rw_mutex;
 	mutable Mutex mMutex;
