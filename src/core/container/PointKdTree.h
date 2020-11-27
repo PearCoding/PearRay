@@ -8,11 +8,6 @@ namespace PR {
 // Based on the implementation in the book:
 // Realistic Image Synthesis Using Photon Mapping (2nd Edition: 2001)
 // from Henrik Wann Jensen
-
-/* T must have attributes:
-		 *   float Position[3];
-		 *   uint8 KDFlags;
-		 */
 template <class T, template <typename> typename PositionGetter = position_getter>
 class PointKdTree {
 	PR_CLASS_NON_COPYABLE(PointKdTree);

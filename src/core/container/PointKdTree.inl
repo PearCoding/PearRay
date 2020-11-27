@@ -38,9 +38,10 @@ inline void PointKdTree<T, PositionGetter>::internalSearch(const Vector3f& cente
 	const T& el			= mElements[index].Element;
 	const uint32 phAxis = mElements[index].Axis;
 	const Vector3f pos	= mPositionGetter(el);
+	const Vector3f diff = center - pos;
 
 	if (index < mHalfStoredElements) {
-		const float dist1 = center(phAxis) - pos(phAxis);
+		const float dist1 = diff(phAxis);
 		if (dist1 > 0) { // Right search
 			internalSearch(center, radius2, 2 * index + 1, func);
 
@@ -54,7 +55,9 @@ inline void PointKdTree<T, PositionGetter>::internalSearch(const Vector3f& cente
 		}
 	}
 
-	const float dist2 = (center - pos).squaredNorm();
+	/*const Vector3f diff2 = diff.cwiseProduct(diff);
+	const float dist2	 = diff2[0] + diff2[1] + diff2[2];*/
+	const float dist2 = diff.squaredNorm();
 	if (dist2 <= radius2)
 		func(el);
 }
@@ -105,7 +108,7 @@ void PointKdTree<T, PositionGetter>::balanceTree()
 	ElementWrapper h_photon = mElements[j];
 
 	for (uint64 i = 1; i <= mStoredElements; ++i) {
-		d		 = (uint64)(pTmp1[j] - &mElements[0]);
+		d		 = (uint64)(pTmp1[j] - &mElements[0]) /* sizeof(ElementWrapper*)*/;
 		pTmp1[j] = nullptr;
 
 		if (d != h) {
@@ -188,9 +191,9 @@ void PointKdTree<T, PositionGetter>::medianSplit(ElementWrapper** elements, uint
 	uint64 right = end;
 
 	while (right > left) {
-		float v	 = mPositionGetter(elements[right]->Element)[axis];
-		uint64 i = left - 1;
-		uint64 j = right;
+		const float v = mPositionGetter(elements[right]->Element)[axis];
+		uint64 i	  = left - 1; // FIXME: A underflow is happening here
+		uint64 j	  = right;
 		while (true) {
 			while (mPositionGetter(elements[++i]->Element)[axis] < v)
 				;
