@@ -3,30 +3,36 @@
 namespace PR {
 inline const Light* LightSampler::sample(float rnd, float& pdf) const
 {
-	PR_ASSERT(mSelector, "Expected initialized light sampler");
-	const size_t id = mSelector->sampleDiscrete(rnd, pdf);
-	return id < mLights.size() ? mLights[id].get() : nullptr;
+	if (mSelector) {
+		const size_t id = mSelector->sampleDiscrete(rnd, pdf);
+		return id < mLights.size() ? mLights[id].get() : nullptr;
+	} else { // No lights available
+		return nullptr;
+	}
 }
 
 inline std::pair<const Light*, float> LightSampler::sample(const LightSampleInput& in, LightSampleOutput& out, const RenderTileSession& session) const
 {
-	PR_ASSERT(mSelector, "Expected initialized light sampler");
-	float pdf, rem;
-	const size_t id = mSelector->sampleDiscrete(in.RND[0], pdf, &rem);
-	if (id < mLights.size()) {
-		const Light* l = mLights[id].get();
+	if (mSelector) {
+		float pdf, rem;
+		const size_t id = mSelector->sampleDiscrete(in.RND[0], pdf, &rem);
+		if (id < mLights.size()) {
+			const Light* l = mLights[id].get();
 
-		LightSampleInput in2 = in;
-		in2.RND[0]			 = rem;
-		l->sample(in2, out, session);
-		return { l, pdf };
-	} else {
-		return { nullptr, 0.0f };
+			LightSampleInput in2 = in;
+			in2.RND[0]			 = rem;
+			l->sample(in2, out, session);
+			return { l, pdf };
+		}
 	}
+
+	// No lights available
+	return { nullptr, 0.0f };
 }
 
 inline float LightSampler::pdfLightSelection(const Light* light) const
 {
+	PR_ASSERT(mSelector, "Expected initialized light sampler"); // If you get here!
 	PR_ASSERT(light, "Invalid light given");
 	PR_ASSERT(light->lightID() < mLights.size(), "Light not member of sampler");
 	return mSelector->discretePdf(light->lightID());
