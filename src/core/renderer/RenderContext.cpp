@@ -269,7 +269,7 @@ void RenderContext::handleNextIteration()
 	if (mShouldSoftStop)
 		requestInternalStop();
 
-	mTileMap->unmarkDoneAll();
+	mTileMap->makeAllIdle();
 
 	if (mOutputClearRequest.exchange(false)) {
 		PR_LOG(L_DEBUG) << "Clearing output buffer" << std::endl;

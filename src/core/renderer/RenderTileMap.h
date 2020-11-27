@@ -27,7 +27,7 @@ public:
 	bool allFinished() const;
 	void reset();
 	/// Unmark all tiles to prepare for next linear iteration
-	void unmarkDoneAll();
+	void makeAllIdle();
 
 	RenderTileStatistics statistics() const;
 	double percentage() const;

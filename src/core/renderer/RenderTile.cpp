@@ -9,8 +9,7 @@
 namespace PR {
 RenderTile::RenderTile(const Point2i& start, const Point2i& end,
 					   RenderContext* context, const RenderTileContext& tileContext)
-	: mWorking(false)
-	, mDone(false)
+	: mStatus(RTS_Idle)
 	, mStart(start)
 	, mEnd(end)
 	, mViewSize(Size2i::fromPoints(start, end))
@@ -65,8 +64,7 @@ RenderTile::~RenderTile()
  */
 std::optional<CameraRay> RenderTile::constructCameraRay(const Point2i& p, const RenderIteration& iter)
 {
-	PR_ASSERT(mWorking, "Trying to use a tile which is not acquired");
-	PR_ASSERT(!mDone, "Trying to use a tile which is already marked as done");
+	PR_ASSERT(mStatus == RTS_Working, "Trying to use a tile which is not acquired");
 
 	PR_PROFILE_THIS;
 
@@ -121,7 +119,13 @@ std::optional<CameraRay> RenderTile::constructCameraRay(const Point2i& p, const 
 
 bool RenderTile::accuire()
 {
-	if (!isFinished() && !isMarkedDone() && !mWorking.exchange(true)) {
+	if (isFinished())
+		return false;
+
+	LockFreeAtomic::value_type expected = RTS_Idle;
+	const bool res						= mStatus.compare_exchange_strong(expected, RTS_Working);
+
+	if (res) {
 		mWorkStart = std::chrono::high_resolution_clock::now();
 		return true;
 	} else {
@@ -131,12 +135,12 @@ bool RenderTile::accuire()
 
 void RenderTile::release()
 {
-	if (mWorking.exchange(false)) {
+	LockFreeAtomic::value_type expected = RTS_Working;
+	const bool res						= mStatus.compare_exchange_strong(expected, RTS_Done);
+
+	if (res) {
 		auto end	  = std::chrono::high_resolution_clock::now();
 		mLastWorkTime = std::chrono::duration_cast<std::chrono::microseconds>(end - mWorkStart);
-
-		PR_ASSERT(!mDone, "Expected a render tile which is released to not be marked done");
-		mDone = true;
 	}
 }
 

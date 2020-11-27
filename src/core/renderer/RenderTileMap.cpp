@@ -144,13 +144,13 @@ bool RenderTileMap::allFinished() const
 	return true;
 }
 
-void RenderTileMap::unmarkDoneAll()
+void RenderTileMap::makeAllIdle()
 {
 	PR_PROFILE_THIS;
 
 	Mutex::scoped_lock lock(mMutex, false);
 	for (size_t i = 0; i < mTiles.size(); ++i)
-		mTiles[i]->unmarkDone();
+		mTiles[i]->makeIdle();
 }
 
 RenderTileStatistics RenderTileMap::statistics() const

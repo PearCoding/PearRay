@@ -31,6 +31,12 @@ struct RenderIteration;
 class ISampler;
 class ISpectralMapper;
 
+enum RenderTileStatus {
+	RTS_Idle	= 0,
+	RTS_Working = 1,
+	RTS_Done	= 2
+};
+
 class PR_LIB_CORE RenderTile {
 public:
 	RenderTile(const Point2i& start, const Point2i& end,
@@ -40,14 +46,16 @@ public:
 	inline void reset()
 	{
 		mContext.PixelSamplesRendered = 0;
-		mDone						  = false;
+		makeIdle();
 	}
 
 	std::optional<CameraRay> constructCameraRay(const Point2i& p, const RenderIteration& iter);
 
-	inline bool isWorking() const { return mWorking; }
+	inline RenderTileStatus status() const { return (RenderTileStatus)mStatus.load(); }
+	inline bool isWorking() const { return mStatus == RTS_Working; }
 	bool accuire();
 	void release();
+	inline void makeIdle() { mStatus = RTS_Idle; }
 
 	inline const Point2i& start() const { return mStart; }
 	inline const Point2i& end() const { return mEnd; }
@@ -55,8 +63,7 @@ public:
 	inline const Size2i& imageSize() const { return mImageSize; }
 
 	inline bool isFinished() const { return pixelSamplesRendered() >= maxPixelSamples(); }
-	inline bool isMarkedDone() const { return mDone; } // Used by RenderContext to mark an full pass being done
-	inline void unmarkDone() { mDone = false; }
+	inline bool isMarkedDone() const { return mStatus == RTS_Done; } // Used by RenderContext to mark an full pass being done
 
 	inline uint64 maxPixelSamples() const { return mMaxPixelSamples; }
 	inline uint64 pixelSamplesRendered() const { return mContext.PixelSamplesRendered; }
@@ -81,8 +88,20 @@ public:
 	inline std::chrono::microseconds lastWorkTime() const { return mLastWorkTime; }
 
 private:
-	std::atomic<bool> mWorking;
-	std::atomic<bool> mDone;
+#if ATOMIC_INT_LOCK_FREE == 2
+	using LockFreeAtomic = std::atomic<int>;
+#elif ATOMIC_LONG_LOCK_FREE == 2
+	using LockFreeAtomic = std::atomic<long>;
+#elif ATOMIC_LLONG_LOCK_FREE == 2
+	using LockFreeAtomic = std::atomic<long long>;
+#elif ATOMIC_SHORT_LOCK_FREE == 2
+	using LockFreeAtomic = std::atomic<short>;
+#elif ATOMIC_CHAR_LOCK_FREE == 2
+	using LockFreeAtomic = std::atomic<char>;
+#else
+	using LockFreeAtomic = std::atomic<int>;
+#endif
+	LockFreeAtomic mStatus;
 
 	const Point2i mStart;
 	const Point2i mEnd;
