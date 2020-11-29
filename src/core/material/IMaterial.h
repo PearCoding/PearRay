@@ -6,8 +6,7 @@ namespace PR {
 class RenderTileSession;
 
 enum MaterialFlags {
-	MF_DeltaDistribution = 0x1,
-	MF_SpectralVarying	 = 0x2 // The sampled direction (not the weight) is different for each wavelength
+	MF_OnlyDeltaDistribution = 0x1
 };
 
 class PR_LIB_CORE IMaterial {
@@ -28,9 +27,7 @@ public:
 	virtual void sample(const MaterialSampleInput& in, MaterialSampleOutput& out, const RenderTileSession& session) const = 0;
 
 	virtual int flags() const { return 0; }
-
-	inline bool hasDeltaDistribution() const { return this->flags() & MF_DeltaDistribution; }
-	inline bool isSpectralVarying() const { return this->flags() & MF_SpectralVarying; }
+	inline bool hasOnlyDeltaDistribution() const { return flags() & MF_OnlyDeltaDistribution; }
 
 	inline bool canBeShaded() const;
 	inline void enableShading(bool b);

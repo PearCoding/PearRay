@@ -295,7 +295,7 @@ private:
 		path.addToken(sout.Type);
 
 		const Vector3f L		  = sout.globalL(ip);
-		const bool isDelta		  = material->hasDeltaDistribution();
+		const bool isDelta		  = sout.isDelta();
 		current.OnlySpecularSoFar = current.OnlySpecularSoFar && isDelta;
 
 		if (sout.Weight.isZero()) {
@@ -352,7 +352,7 @@ private:
 		if constexpr (!IsCamera)
 			current.Throughput *= correctShadingNormalForLight(-ip.Ray.Direction, L, ip.Surface.N, ip.Surface.Geometry.N);
 
-		if (material->isSpectralVarying())
+		if (sout.isSpectralVarying())
 			current.Throughput *= SpectralBlobUtils::HeroOnly();
 
 		if (current.Throughput.isZero(PR_EPSILON)) {
@@ -362,7 +362,7 @@ private:
 
 		// Setup ray flags
 		int rflags = RF_Bounce;
-		if (material->isSpectralVarying())
+		if (sout.isSpectralVarying())
 			rflags |= RF_Monochrome;
 
 		return std::make_optional(ip.nextRay(L, rflags, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX));
@@ -399,7 +399,7 @@ private:
 			return {};
 
 		// Store vertex, unless material is purely specular
-		if (!material->hasDeltaDistribution()) {
+		if (!material->hasOnlyDeltaDistribution()) {
 			PathVertex vertex;
 			vertex.IP		  = ip;
 			vertex.Throughput = current.Throughput;
@@ -452,7 +452,7 @@ private:
 		if (PR_UNLIKELY(!material))
 			return {};
 
-		if (!material->hasDeltaDistribution()) {
+		if (!material->hasOnlyDeltaDistribution()) {
 			// c1t
 			handleNEE(tctx, ip, material, current);
 			// cst

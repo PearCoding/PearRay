@@ -137,10 +137,10 @@ private:
 					return {};
 
 				int rflags = RF_Bounce;
-				if (material->isSpectralVarying())
+				if (sout.isSpectralVarying())
 					rflags |= RF_Monochrome;
 
-				if (!material->hasDeltaDistribution())
+				if (!sout.isDelta())
 					weight /= sout.PDF_S[0];
 
 				return std::make_optional(ip.Ray.next(ip.P, sout.globalL(ip), ip.Surface.N,

@@ -41,8 +41,6 @@ public:
 
 	virtual ~RoughConductorMaterial() = default;
 
-	int flags() const override { return 0; }
-
 	inline float evalGD(const ShadingVector& H, const ShadingVector& V, const ShadingVector& L, const ShadingContext& sctx, float& pdf) const
 	{
 		const float absNdotH = H.absCosTheta();
@@ -184,9 +182,8 @@ public:
 		}
 
 		const float HdotV = std::abs(H.dot((Vector3f)in.Context.V));
-		if (HdotV <= PR_EPSILON) { // Giveup if V in respect to H is too close to the negative hemisphere
-			out.Weight = SpectralBlob::Zero();
-			out.PDF_S  = 0;
+		if (HdotV <= PR_EPSILON) { 
+			out = MaterialSampleOutput::Reject(MST_SpecularReflection);
 			return;
 		}
 

@@ -9,7 +9,14 @@
 
 namespace PR {
 
-template <bool HasDelta>
+enum MaterialDelta {
+	MD_None	  = 0,
+	MD_First  = 1,
+	MD_Second = 2,
+	MD_All
+};
+
+template <MaterialDelta Delta>
 class AddMaterial : public IMaterial {
 public:
 	explicit AddMaterial(const std::shared_ptr<IMaterial>& material0, const std::shared_ptr<IMaterial>& material1)
@@ -22,23 +29,29 @@ public:
 
 	int flags() const override
 	{
-		int flags = 0;
-		for (const auto& mat : mMaterials)
-			flags |= mat->flags();
-
-		return flags;
+		if constexpr (Delta == MD_All)
+			return MF_OnlyDeltaDistribution;
+		else
+			return 0;
 	}
 
+	// TODO: Weight?
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
 			  const RenderTileSession& session) const override
 	{
 		PR_PROFILE_THIS;
 
-		if constexpr (HasDelta) {
+		if constexpr (Delta == MD_All) {
 			PR_ASSERT(false, "Delta distribution materials should not be evaluated");
 			out.PDF_S  = 0.0f;
 			out.Type   = MST_SpecularTransmission;
 			out.Weight = SpectralBlob::Zero();
+		} else if constexpr (Delta == MD_First) {
+			mMaterials[1]->eval(in, out, session);
+			out.PDF_S *= 0.5f;
+		} else if constexpr (Delta == MD_Second) {
+			mMaterials[0]->eval(in, out, session);
+			out.PDF_S *= 0.5f;
 		} else {
 			MaterialEvalOutput out1;
 			mMaterials[0]->eval(in, out1, session);
@@ -51,13 +64,20 @@ public:
 		}
 	}
 
+	// TODO: Weight?
 	void pdf(const MaterialEvalInput& in, MaterialPDFOutput& out,
 			 const RenderTileSession& session) const override
 	{
 		PR_PROFILE_THIS;
-		if constexpr (HasDelta) {
+		if constexpr (Delta == MD_All) {
 			PR_ASSERT(false, "Delta distribution materials should not be evaluated");
 			out.PDF_S = 0.0f;
+		} else if constexpr (Delta == MD_First) {
+			mMaterials[1]->pdf(in, out, session);
+			out.PDF_S *= 0.5f;
+		} else if constexpr (Delta == MD_Second) {
+			mMaterials[0]->pdf(in, out, session);
+			out.PDF_S *= 0.5f;
 		} else {
 			MaterialPDFOutput out1;
 			mMaterials[0]->pdf(in, out1, session);
@@ -121,11 +141,24 @@ public:
 			return nullptr;
 		}
 
-		const bool delta = mat1->hasDeltaDistribution() || mat2->hasDeltaDistribution();
-		if (delta)
-			return std::make_shared<AddMaterial<true>>(mat1, mat2);
-		else
-			return std::make_shared<AddMaterial<false>>(mat1, mat2);
+		int deltaCount = 0;
+		if (mat1->hasOnlyDeltaDistribution())
+			++deltaCount;
+		if (mat2->hasOnlyDeltaDistribution())
+			++deltaCount;
+
+		switch (deltaCount) {
+		case 0:
+		default:
+			return std::make_shared<AddMaterial<MD_None>>(mat1, mat2);
+		case 1:
+			if (mat1->hasOnlyDeltaDistribution())
+				return std::make_shared<AddMaterial<MD_First>>(mat1, mat2);
+			else
+				return std::make_shared<AddMaterial<MD_Second>>(mat1, mat2);
+		case 2:
+			return std::make_shared<AddMaterial<MD_All>>(mat1, mat2);
+		}
 	}
 
 	const std::vector<std::string>& getNames() const

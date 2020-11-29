@@ -28,7 +28,7 @@ public:
 
 	virtual ~DielectricMaterial() = default;
 
-	int flags() const override { return MF_DeltaDistribution | (SpectralVarying ? MF_SpectralVarying : 0); }
+	int flags() const override { return MF_OnlyDeltaDistribution; }
 
 	inline float fresnelTermHero(float dot, const ShadingContext& sctx, float& eta) const
 	{
@@ -48,7 +48,8 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		// Delta distributions do not allow evaluation
+		PR_ASSERT(false, "Delta distribution materials should not be evaluated");
+
 		out.PDF_S  = 0.0f;
 		out.Type   = MST_SpecularTransmission;
 		out.Weight = SpectralBlob::Zero();
@@ -59,7 +60,8 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		// Delta distributions do not allow evaluation
+		PR_ASSERT(false, "Delta distribution materials should not be evaluated");
+
 		out.PDF_S = 0.0f;
 	}
 
@@ -113,6 +115,11 @@ public:
 		// Note that some implementations use 1/eta as eta
 		if ((in.Context.RayFlags & RF_Camera) && out.Type == MST_SpecularTransmission)
 			out.Weight /= eta * eta;
+
+		if constexpr (SpectralVarying)
+			out.Flags = MSF_DeltaDistribution | MSF_SpectralVarying;
+		else
+			out.Flags = MSF_DeltaDistribution;
 	}
 
 	std::string dumpInformation() const override

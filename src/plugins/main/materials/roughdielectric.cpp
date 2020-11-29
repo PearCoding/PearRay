@@ -62,8 +62,6 @@ public:
 
 	virtual ~RoughDielectricMaterial() = default;
 
-	int flags() const override { return (SpectralVarying ? MF_SpectralVarying : 0); }
-
 	inline SpectralBlob fresnelTerm(float dot, const ShadingContext& sctx) const
 	{
 		SpectralBlob n1 = SpectralBlob::Ones();
@@ -339,6 +337,9 @@ public:
 			out.Weight = mTransmission->eval(in.ShadingContext) * (1 - F) * gd * jacobian * factor * factor;
 			out.PDF_S  = (1 - F) * pdf * jacobian;
 		}
+
+		if constexpr (SpectralVarying)
+			out.Flags = MSF_SpectralVarying;
 	}
 
 	std::string dumpInformation() const override

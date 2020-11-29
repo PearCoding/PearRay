@@ -16,7 +16,7 @@ public:
 
 	virtual ~NullMaterial() = default;
 
-	int flags() const override { return MF_DeltaDistribution; }
+	int flags() const override { return MF_OnlyDeltaDistribution; }
 
 	void eval(const MaterialEvalInput&, MaterialEvalOutput& out,
 			  const RenderTileSession&) const override
@@ -48,6 +48,7 @@ public:
 		out.PDF_S  = 1;
 		out.Type   = MST_SpecularTransmission;
 		out.L	   = -in.Context.V;
+		out.Flags  = MSF_DeltaDistribution;
 	}
 
 	std::string dumpInformation() const override

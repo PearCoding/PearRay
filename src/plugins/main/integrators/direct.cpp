@@ -83,7 +83,7 @@ public:
 		if (PR_UNLIKELY(!material))
 			return {};
 
-		if (!material->hasDeltaDistribution())
+		if (!material->hasOnlyDeltaDistribution())
 			handleNEE(session, ip, material, current);
 
 		return handleScattering(session, ip, entity, material, current);
@@ -177,7 +177,7 @@ private:
 		mCameraPath.addToken(sout.Type);
 
 		const Vector3f L	 = sout.globalL(ip);
-		const bool isDelta	 = material->hasDeltaDistribution();
+		const bool isDelta	 = sout.isDelta();
 		current.LastWasDelta = isDelta;
 
 		const float pdf_s = sout.PDF_S[0] * scatProb;
@@ -189,7 +189,7 @@ private:
 		// Update throughput
 		current.Throughput *= sout.Weight / pdf_s; // cosine term already applied inside material
 
-		if (material->isSpectralVarying())
+		if (sout.isSpectralVarying())
 			current.Throughput *= SpectralBlobUtils::HeroOnly();
 
 		if (current.Throughput.isZero(PR_EPSILON))
@@ -197,7 +197,7 @@ private:
 
 		// Setup ray flags
 		int rflags = RF_Bounce;
-		if (material->isSpectralVarying())
+		if (sout.isSpectralVarying())
 			rflags |= RF_Monochrome;
 
 		return std::make_optional(ip.nextRay(L, rflags, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX));

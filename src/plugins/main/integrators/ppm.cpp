@@ -212,7 +212,7 @@ public:
 					return false;
 				}
 
-				if (!material_hit->hasDeltaDistribution()) {
+				if (!material_hit->hasOnlyDeltaDistribution()) {
 					const auto gather_contrib = gather(session, ip, material_hit);
 					path.addToken(LightPathToken::Emissive());
 					session.pushSpectralFragment(SpectralBlob::Ones(),
@@ -308,7 +308,7 @@ public:
 					if (entity->hasEmission()) // Stop at lights and do not save photons
 						return false;
 
-					if (!material->hasDeltaDistribution()) { // Always store when diffuse
+					if (!material->hasOnlyDeltaDistribution()) { // Always store when diffuse
 						Photon::Photon photon;
 						photon.Position		= ip.P;
 						photon.Direction	= -ray.Direction;

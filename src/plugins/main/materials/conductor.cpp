@@ -26,14 +26,15 @@ public:
 
 	virtual ~ConductorMaterial() = default;
 
-	int flags() const override { return MF_DeltaDistribution; }
+	int flags() const override { return MF_OnlyDeltaDistribution; }
 
 	void eval(const MaterialEvalInput&, MaterialEvalOutput& out,
 			  const RenderTileSession&) const override
 	{
 		PR_PROFILE_THIS;
 
-		// Delta distributions do not allow evaluation
+		PR_ASSERT(false, "Delta distribution materials should not be evaluated");
+
 		out.PDF_S  = 0.0f;
 		out.Type   = MST_SpecularReflection;
 		out.Weight = SpectralBlob::Zero();
@@ -44,7 +45,8 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		// Delta distributions do not allow evaluation
+		PR_ASSERT(false, "Delta distribution materials should not be evaluated");
+
 		out.PDF_S = 0;
 	}
 
@@ -65,6 +67,7 @@ public:
 		out.Type   = MST_SpecularReflection;
 		out.PDF_S  = 1;
 		out.L	   = Scattering::reflect(in.Context.V);
+		out.Flags  = MSF_DeltaDistribution;
 	}
 
 	std::string dumpInformation() const override
