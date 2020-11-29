@@ -70,7 +70,7 @@ private:
 
 class CheckerboardPlugin : public INodePlugin {
 public:
-	std::shared_ptr<INode> create(uint32, const std::string&, const SceneLoadContext& ctx) override
+	std::shared_ptr<INode> create(const std::string&, const SceneLoadContext& ctx) override
 	{
 		const auto op1	  = ctx.lookupSpectralNode(ctx.parameters().getParameter(0), 1);
 		const auto op2	  = ctx.lookupSpectralNode(ctx.parameters().getParameter(1), 0);

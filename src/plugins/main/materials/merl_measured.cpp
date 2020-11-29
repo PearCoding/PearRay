@@ -123,8 +123,8 @@ private:
 
 class MerlMeasuredMaterial : public IMaterial {
 public:
-	MerlMeasuredMaterial(uint32 id, const MerlMeasurement& measurement, const std::shared_ptr<FloatSpectralNode>& tint)
-		: IMaterial(id)
+	MerlMeasuredMaterial(const MerlMeasurement& measurement, const std::shared_ptr<FloatSpectralNode>& tint)
+		: IMaterial()
 		, mMeasurement(measurement)
 		, mTint(tint)
 	{
@@ -182,18 +182,13 @@ private:
 
 class MerlMeasuredMaterialPlugin : public IMaterialPlugin {
 public:
-	std::shared_ptr<IMaterial> create(uint32 id, const std::string&, const SceneLoadContext& ctx) override
+	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx) override
 	{
-		// Can not create a material without a functioning environment
-		if (!ctx.hasEnvironment())
-			return nullptr;
-
 		const ParameterGroup& params = ctx.parameters();
 		MerlMeasurement measurement(ctx.environment()->defaultSpectralUpsampler().get(), ctx.escapePath(params.getString("filename", "")));
 
 		if (measurement.isValid())
-			return std::make_shared<MerlMeasuredMaterial>(id,
-														  measurement,
+			return std::make_shared<MerlMeasuredMaterial>(measurement,
 														  ctx.lookupSpectralNode("tint", 1));
 		else
 			return nullptr;

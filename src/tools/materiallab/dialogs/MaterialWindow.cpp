@@ -1,4 +1,5 @@
 #include "MaterialWindow.h"
+#include "Environment.h"
 #include "SceneLoadContext.h"
 #include "material/IMaterial.h"
 #include "material/IMaterialPlugin.h"
@@ -28,9 +29,11 @@ using namespace PR;
 constexpr float SUN_R = 0.1f;
 constexpr float SUN_D = 4.0f;
 constexpr int ANIM_MS = 200;
-MaterialWindow::MaterialWindow(const QString& typeName, PR::IMaterialPlugin* factory, QWidget* parent)
+MaterialWindow::MaterialWindow(const QString& typeName, const std::shared_ptr<PR::Environment>& env,
+							   PR::IMaterialPlugin* factory, QWidget* parent)
 	: QWidget(parent)
 	, mTypeName(typeName)
+	, mEnv(env)
 	, mFactory(factory)
 	, mProperties(new PR::UI::PropertyContainer())
 {
@@ -103,7 +106,8 @@ void MaterialWindow::addProperty()
 
 void MaterialWindow::createMaterial()
 {
-	PR::SceneLoadContext ctx;
+	PR::SceneLoadContext ctx(mEnv.get());
+
 	for (auto prop : mProperties->topProperties()) {
 		if (prop->propertyName().isEmpty())
 			continue;
@@ -119,7 +123,7 @@ void MaterialWindow::createMaterial()
 	}
 
 	try {
-		mMaterial = mFactory->create(0, mTypeName.toLocal8Bit().data(), ctx);
+		mMaterial = mFactory->create(mTypeName.toLocal8Bit().data(), ctx);
 	} catch (const std::exception& e) {
 		QMessageBox::critical(this, tr("Could not create material"), tr("Could not create material of type %1:\n%2").arg(mTypeName).arg(e.what()));
 		mMaterial = nullptr;

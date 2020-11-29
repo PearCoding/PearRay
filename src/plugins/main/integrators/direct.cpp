@@ -429,7 +429,7 @@ public:
 
 	inline std::shared_ptr<IIntegratorInstance> createThreadInstance(RenderContext* ctx, size_t) override
 	{
-		const bool hasInfLights = !ctx->scene()->infiniteLights().empty();
+		const bool hasInfLights = ctx->scene()->infiniteLightCount() != 0;
 		if (hasInfLights)
 			return std::make_shared<IntDirectInstance<true, MISMode>>(mParameters, ctx->lightSampler());
 		else
@@ -473,7 +473,7 @@ private:
 
 class IntDirectFactoryFactory : public IIntegratorPlugin {
 public:
-	std::shared_ptr<IIntegratorFactory> create(uint32, const std::string&, const SceneLoadContext& ctx) override
+	std::shared_ptr<IIntegratorFactory> create(const std::string&, const SceneLoadContext& ctx) override
 	{
 		return std::make_shared<IntDirectFactory>(ctx.parameters());
 	}

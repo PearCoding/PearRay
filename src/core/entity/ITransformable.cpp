@@ -5,9 +5,8 @@
 #include "Logger.h"
 
 namespace PR {
-ITransformable::ITransformable(uint32 id, const std::string& name, const Transformf& transform)
+ITransformable::ITransformable(const std::string& name, const Transformf& transform)
 	: mName(name)
-	, mID(id)
 	, mFlags(0)
 	, mTransform(transform)
 	, mInvTransformCache(mTransform.inverse())
@@ -32,7 +31,7 @@ std::string ITransformable::dumpInformation() const
 	Vector3f scav = sca.diagonal();
 
 	std::stringstream stream;
-	stream << "<ITransformable> [" << mID << "]: " << std::endl
+	stream << "<ITransformable> [" << mName << "]: " << std::endl
 		   << "  Position:        " << PR_FMT_MAT(pos) << std::endl
 		   << "  Scale:           " << PR_FMT_MAT(scav) << std::endl
 		   << "  Rotation:        " << PR_FMT_MAT(quat) << std::endl

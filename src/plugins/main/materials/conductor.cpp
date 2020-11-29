@@ -15,10 +15,9 @@ namespace PR {
 
 class ConductorMaterial : public IMaterial {
 public:
-	ConductorMaterial(uint32 id,
-					  const std::shared_ptr<FloatSpectralNode>& eta, const std::shared_ptr<FloatSpectralNode>& k,
+	ConductorMaterial(const std::shared_ptr<FloatSpectralNode>& eta, const std::shared_ptr<FloatSpectralNode>& k,
 					  const std::shared_ptr<FloatSpectralNode>& spec)
-		: IMaterial(id)
+		: IMaterial()
 		, mEta(eta)
 		, mK(k)
 		, mSpecularity(spec)
@@ -89,19 +88,19 @@ private:
 
 class ConductorMaterialPlugin : public IMaterialPlugin {
 public:
-	std::shared_ptr<IMaterial> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx)
 	{
 		// Construct rough conductor instead
 		if (ctx.parameters().hasParameter("roughness")
 			|| ctx.parameters().hasParameter("roughness_x")
 			|| ctx.parameters().hasParameter("roughness_y"))
-			return ctx.yieldToMaterial(id, "roughconductor", ctx.parameters());
+			return ctx.loadMaterial("roughconductor", ctx.parameters());
 
 		const auto eta	= ctx.lookupSpectralNode("eta", 1.2f);
 		const auto k	= ctx.lookupSpectralNode("k", 2.605f);
 		const auto spec = ctx.lookupSpectralNode("specularity", 1);
 
-		return std::make_shared<ConductorMaterial>(id, eta, k, spec);
+		return std::make_shared<ConductorMaterial>(eta, k, spec);
 	}
 
 	const std::vector<std::string>& getNames() const

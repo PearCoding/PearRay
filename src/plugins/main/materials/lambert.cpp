@@ -14,8 +14,8 @@ namespace PR {
 template <bool TwoSided>
 class LambertMaterial : public IMaterial {
 public:
-	LambertMaterial(uint32 id, const std::shared_ptr<FloatSpectralNode>& alb)
-		: IMaterial(id)
+	LambertMaterial(const std::shared_ptr<FloatSpectralNode>& alb)
+		: IMaterial()
 		, mAlbedo(alb)
 	{
 	}
@@ -90,12 +90,12 @@ private:
 
 class LambertMaterialPlugin : public IMaterialPlugin {
 public:
-	std::shared_ptr<IMaterial> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx)
 	{
 		if (ctx.parameters().getBool("two_sided", true))
-			return std::make_shared<LambertMaterial<true>>(id, ctx.lookupSpectralNode("albedo", 1));
+			return std::make_shared<LambertMaterial<true>>(ctx.lookupSpectralNode("albedo", 1));
 		else
-			return std::make_shared<LambertMaterial<false>>(id, ctx.lookupSpectralNode("albedo", 1));
+			return std::make_shared<LambertMaterial<false>>(ctx.lookupSpectralNode("albedo", 1));
 	}
 
 	const std::vector<std::string>& getNames() const

@@ -15,10 +15,9 @@ namespace PR {
 
 class OrenNayarMaterial : public IMaterial {
 public:
-	OrenNayarMaterial(uint32 id,
-					  const std::shared_ptr<FloatSpectralNode>& alb,
+	OrenNayarMaterial(const std::shared_ptr<FloatSpectralNode>& alb,
 					  const std::shared_ptr<FloatScalarNode>& rough)
-		: IMaterial(id)
+		: IMaterial()
 		, mAlbedo(alb)
 		, mRoughness(rough)
 	{
@@ -99,10 +98,9 @@ private:
 
 class OrenNayarMaterialPlugin : public IMaterialPlugin {
 public:
-	std::shared_ptr<IMaterial> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx)
 	{
-		return std::make_shared<OrenNayarMaterial>(id,
-												   ctx.lookupSpectralNode("albedo", 1),
+		return std::make_shared<OrenNayarMaterial>(ctx.lookupSpectralNode("albedo", 1),
 												   ctx.lookupScalarNode("roughness", 0.5f));
 	}
 

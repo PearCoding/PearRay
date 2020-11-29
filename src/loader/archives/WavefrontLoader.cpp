@@ -22,11 +22,8 @@ WavefrontLoader::~WavefrontLoader()
 {
 }
 
-void WavefrontLoader::load(const std::filesystem::path& file, const SceneLoadContext& ctx)
+void WavefrontLoader::load(const std::filesystem::path& file, SceneLoadContext& ctx)
 {
-	if (!ctx.hasEnvironment())
-		return;
-
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;
 	std::vector<tinyobj::material_t> materials; // We ignore materials for now
@@ -104,11 +101,11 @@ void WavefrontLoader::load(const std::filesystem::path& file, const SceneLoadCon
 		if (!mName.empty())
 			name = mName;
 
-		if (ctx.environment()->hasMesh(name))
+		if (ctx.hasMesh(name))
 			PR_LOG(L_ERROR) << "Mesh " << name << " already in use." << std::endl;
 
 		mesh->triangulate();
-		ctx.environment()->addMesh(name, std::move(mesh));
+		ctx.addMesh(name, std::move(mesh));
 		PR_LOG(L_DEBUG) << "Added mesh " << name << std::endl;
 	}
 }

@@ -4,6 +4,6 @@
 
 namespace PR {
 
-PR_INTERNAL_PLUGIN_DEFINE_FACTORY(IEntityPlugin, IEntity, PT_ENTITY);
+PR_INTERNAL_PLUGIN_DEFINE_FACTORY(IEntityPlugin, IEntity, "ENTITY");
 
 } // namespace PR

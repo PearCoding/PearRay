@@ -20,10 +20,10 @@ class SphereEntity : public IEntity {
 public:
 	ENTITY_CLASS
 
-	SphereEntity(uint32 id, const std::string& name, const Transformf& transform,
+	SphereEntity(const std::string& name, const Transformf& transform,
 				 float r,
 				 uint32 matID, uint32 lightID)
-		: IEntity(id, lightID, name, transform)
+		: IEntity(lightID, name, transform)
 		, mSphere(r)
 		, mMaterialID(matID)
 		, mOptimizeSampling(true)
@@ -138,7 +138,6 @@ public:
 
 		const Vector2f uv = Spherical::uv_from_normal(pt.N);
 		pt.UV			  = uv;
-		pt.EntityID		  = id();
 		pt.PrimitiveID	  = 0;
 		pt.MaterialID	  = mMaterialID;
 		pt.EmissionID	  = emissionID();
@@ -157,26 +156,16 @@ private:
 
 class SphereEntityPlugin : public IEntityPlugin {
 public:
-	std::shared_ptr<IEntity> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<IEntity> create(const std::string&, const SceneLoadContext& ctx)
 	{
 		const ParameterGroup& params = ctx.parameters();
 		std::string name			 = params.getString("name", "__unnamed__");
 		float r						 = params.getNumber("radius", 1.0f);
 
-		std::string emsName = params.getString("emission", "");
-		std::string matName = params.getString("material", "");
+		const uint32 matID = ctx.lookupMaterialID(params.getParameter("material"));
+		const uint32 emsID = ctx.lookupEmissionID(params.getParameter("emission"));
 
-		uint32 matID				   = PR_INVALID_ID;
-		std::shared_ptr<IMaterial> mat = ctx.environment()->getMaterial(matName);
-		if (mat)
-			matID = mat->id();
-
-		uint32 emsID				   = PR_INVALID_ID;
-		std::shared_ptr<IEmission> ems = ctx.environment()->getEmission(emsName);
-		if (ems)
-			emsID = ems->id();
-
-		auto obj = std::make_shared<SphereEntity>(id, name, ctx.transform(), r, matID, emsID);
+		auto obj = std::make_shared<SphereEntity>(name, ctx.transform(), r, matID, emsID);
 		obj->optimizeSampling(params.getBool("optimize_sampling", true));
 		return obj;
 	}

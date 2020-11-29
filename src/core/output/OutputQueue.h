@@ -44,14 +44,14 @@ public:
 private:
 	inline const uint32* pushPath(const LightPath& path);
 
-	std::vector<OutputSpectralEntry> mSpectralEntries;
+	std::vector<OutputSpectralEntry, Eigen::aligned_allocator<OutputSpectralEntry>> mSpectralEntries;
 	size_t mSpectralIt;
 	std::vector<OutputQueueSpectralCallback> mSpectralCallbacks;
 
-	std::vector<OutputShadingPointEntry> mSPEntries;
+	std::vector<OutputShadingPointEntry, Eigen::aligned_allocator<OutputShadingPointEntry>> mSPEntries;
 	size_t mSPIt;
 
-	std::vector<OutputFeedbackEntry> mFeedbackEntries;
+	std::vector<OutputFeedbackEntry, Eigen::aligned_allocator<OutputFeedbackEntry>> mFeedbackEntries;
 	size_t mFeedbackIt;
 
 	MemoryStack mLightPathData;

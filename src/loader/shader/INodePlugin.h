@@ -4,6 +4,6 @@
 
 namespace PR {
 
-PR_INTERNAL_PLUGIN_DEFINE_FACTORY(INodePlugin, INode, PT_NODE);
+PR_INTERNAL_PLUGIN_DEFINE_FACTORY(INodePlugin, INode, "NODE");
 
 } // namespace PR

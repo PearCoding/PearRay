@@ -17,10 +17,10 @@ class DiskEntity : public IEntity {
 public:
 	ENTITY_CLASS
 
-	DiskEntity(uint32 id, const std::string& name, const Transformf& transform, 
+	DiskEntity(const std::string& name, const Transformf& transform,
 			   float radius,
 			   int32 matID, int32 lightID)
-		: IEntity(id, lightID, name, transform)
+		: IEntity(lightID, name, transform)
 		, mDisk(radius)
 		, mMaterialID(matID)
 		, mPDF_Cache(radius > PR_EPSILON ? 1.0f / worldSurfaceArea() : 0)
@@ -95,7 +95,6 @@ public:
 		Tangent::frame(pt.N, pt.Nx, pt.Ny);
 
 		pt.UV		   = query.UV;
-		pt.EntityID	   = id();
 		pt.PrimitiveID = 0;
 		pt.MaterialID  = mMaterialID;
 		pt.EmissionID  = emissionID();
@@ -110,27 +109,17 @@ private:
 
 class DiskEntityPlugin : public IEntityPlugin {
 public:
-	std::shared_ptr<IEntity> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<IEntity> create(const std::string&, const SceneLoadContext& ctx)
 	{
 		const ParameterGroup& params = ctx.parameters();
 
 		std::string name = params.getString("name", "__unnamed__");
 		float radius	 = params.getNumber("radius", 1);
 
-		std::string emsName = params.getString("emission", "");
-		std::string matName = params.getString("material", "");
+		const uint32 matID = ctx.lookupMaterialID(params.getParameter("material"));
+		const uint32 emsID = ctx.lookupEmissionID(params.getParameter("emission"));
 
-		uint32 matID				   = PR_INVALID_ID;
-		std::shared_ptr<IMaterial> mat = ctx.environment()->getMaterial(matName);
-		if (mat)
-			matID = mat->id();
-
-		uint32 emsID				   = PR_INVALID_ID;
-		std::shared_ptr<IEmission> ems = ctx.environment()->getEmission(emsName);
-		if (ems)
-			emsID = ems->id();
-
-		return std::make_shared<DiskEntity>(id, name, ctx.transform(), radius, matID, emsID);
+		return std::make_shared<DiskEntity>(name, ctx.transform(), radius, matID, emsID);
 	}
 
 	const std::vector<std::string>& getNames() const

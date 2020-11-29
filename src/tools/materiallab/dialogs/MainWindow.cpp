@@ -13,7 +13,7 @@
 #include <QMessageBox>
 #include <QSettings>
 
-#include "QueryEnvironment.h"
+#include "Environment.h"
 #include "config/Version.h"
 #include "material/MaterialManager.h"
 
@@ -30,7 +30,8 @@ MainWindow::MainWindow(QWidget* parent)
 
 	readSettings();
 
-	mEnv = std::make_unique<PR::QueryEnvironment>(L""); // TODO: Allow parameters to change
+	// TODO: Plugin dir?
+	mEnv = PR::Environment::createQueryEnvironment("./");
 }
 
 MainWindow::~MainWindow()
@@ -108,7 +109,7 @@ void MainWindow::newInspection(const QString& name)
 	if (!factory)
 		return;
 
-	MaterialWindow* w  = new MaterialWindow(name, factory.get(), ui.mdiArea);
+	MaterialWindow* w  = new MaterialWindow(name, mEnv, factory.get(), ui.mdiArea);
 	QMdiSubWindow* win = ui.mdiArea->addSubWindow(w);
 
 	win->setWindowIcon(QIcon(":/image_icon"));

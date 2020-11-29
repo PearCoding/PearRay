@@ -16,13 +16,12 @@ namespace PR {
 
 class WardMaterial : public IMaterial {
 public:
-	WardMaterial(uint32 id,
-				 const std::shared_ptr<FloatSpectralNode>& alb,
+	WardMaterial(const std::shared_ptr<FloatSpectralNode>& alb,
 				 const std::shared_ptr<FloatSpectralNode>& spec,
 				 const std::shared_ptr<FloatScalarNode>& reflectivity,
 				 const std::shared_ptr<FloatScalarNode>& roughnessX,
 				 const std::shared_ptr<FloatScalarNode>& roughnessY)
-		: IMaterial(id)
+		: IMaterial()
 		, mAlbedo(alb)
 		, mSpecularity(spec)
 		, mReflectivity(reflectivity)
@@ -197,7 +196,7 @@ private:
 
 class WardMaterialPlugin : public IMaterialPlugin {
 public:
-	std::shared_ptr<IMaterial> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx)
 	{
 		const ParameterGroup& params = ctx.parameters();
 
@@ -213,8 +212,7 @@ public:
 			roughnessY = ctx.lookupScalarNode("roughness_y", 0.5f);
 		}
 
-		return std::make_shared<WardMaterial>(id,
-											  ctx.lookupSpectralNode("albedo", 1),
+		return std::make_shared<WardMaterial>(ctx.lookupSpectralNode("albedo", 1),
 											  ctx.lookupSpectralNode("specularity", 1),
 											  ctx.lookupScalarNode("reflectivity", 0.5f),
 											  roughnessX, roughnessY);

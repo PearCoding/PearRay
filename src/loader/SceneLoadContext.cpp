@@ -8,27 +8,11 @@
 #include "material/MaterialManager.h"
 #include "parser/TextureParser.h"
 #include "sampler/SamplerManager.h"
+#include "scene/SceneDatabase.h"
 #include "shader/ConstNode.h"
 #include "spectral/SpectralMapperManager.h"
 
 namespace PR {
-
-SceneLoadContext::SceneLoadContext(Environment* env)
-	: mParameters()
-	, mTransform(Transformf::Identity())
-	, mFileStack()
-	, mEnvironment(env)
-{
-}
-
-SceneLoadContext::SceneLoadContext(const std::filesystem::path& filename)
-	: mParameters()
-	, mTransform(Transformf::Identity())
-	, mFileStack()
-	, mEnvironment(nullptr)
-{
-	mFileStack.push_back(filename);
-}
 
 SceneLoadContext::SceneLoadContext(Environment* env, const std::filesystem::path& filename)
 	: mParameters()
@@ -36,7 +20,8 @@ SceneLoadContext::SceneLoadContext(Environment* env, const std::filesystem::path
 	, mFileStack()
 	, mEnvironment(env)
 {
-	mFileStack.push_back(filename);
+	if (!filename.empty())
+		mFileStack.push_back(filename);
 }
 
 bool SceneLoadContext::hasFile(const std::filesystem::path& filename) const
@@ -68,6 +53,115 @@ std::filesystem::path SceneLoadContext::setupParametricImage(const std::filesyst
 	return para_path;
 }
 
+std::shared_ptr<IEmission> SceneLoadContext::getEmission(const std::string& name) const
+{
+	return mEnvironment->sceneDatabase()->Emissions->get(name);
+}
+
+bool SceneLoadContext::hasEmission(const std::string& name) const
+{
+	return mEnvironment->sceneDatabase()->Emissions->has(name);
+}
+
+uint32 SceneLoadContext::addEmission(const std::string& name, const std::shared_ptr<IEmission>& mat)
+{
+	PR_ASSERT(mat, "Given emission has to be valid");
+	PR_ASSERT(!hasEmission(name), "Given name should be unique");
+	return mEnvironment->sceneDatabase()->Emissions->add(name, mat);
+}
+
+size_t SceneLoadContext::emissionCount() const
+{
+	return mEnvironment->sceneDatabase()->Emissions->size();
+}
+
+std::shared_ptr<IMaterial> SceneLoadContext::getMaterial(const std::string& name) const
+{
+	return mEnvironment->sceneDatabase()->Materials->get(name);
+}
+
+bool SceneLoadContext::hasMaterial(const std::string& name) const
+{
+	return mEnvironment->sceneDatabase()->Materials->has(name);
+}
+
+uint32 SceneLoadContext::addMaterial(const std::string& name, const std::shared_ptr<IMaterial>& mat)
+{
+	PR_ASSERT(mat, "Given material has to be valid");
+	PR_ASSERT(!hasMaterial(name), "Given name should be unique");
+	return mEnvironment->sceneDatabase()->Materials->add(name, mat);
+}
+
+size_t SceneLoadContext::materialCount() const
+{
+	return mEnvironment->sceneDatabase()->Materials->size();
+}
+
+std::shared_ptr<MeshBase> SceneLoadContext::getMesh(const std::string& name) const
+{
+	return hasMesh(name) ? mMeshes.at(name) : nullptr;
+}
+
+bool SceneLoadContext::hasMesh(const std::string& name) const
+{
+	return mMeshes.count(name) != 0;
+}
+
+void SceneLoadContext::addMesh(const std::string& name, const std::shared_ptr<MeshBase>& m)
+{
+	PR_ASSERT(m, "Given mesh has to be valid");
+	PR_ASSERT(!hasMesh(name), "Given name should be unique");
+	mMeshes.emplace(name, m);
+}
+
+uint32 SceneLoadContext::addNode(const std::string& name, const std::shared_ptr<INode>& output)
+{
+	PR_ASSERT(!hasNode(name), "Given name should be unique");
+	return mEnvironment->sceneDatabase()->Nodes->add(name, output);
+}
+
+std::shared_ptr<INode> SceneLoadContext::getRawNode(uint32 id) const
+{
+	return mEnvironment->sceneDatabase()->Nodes->get(id);
+}
+
+std::shared_ptr<INode> SceneLoadContext::getRawNode(const std::string& name) const
+{
+	return mEnvironment->sceneDatabase()->Nodes->get(name);
+}
+
+void SceneLoadContext::getNode(const std::string& name, std::shared_ptr<FloatScalarNode>& node2) const
+{
+	const auto node = getRawNode(name);
+	if (node->type() == NT_FloatScalar)
+		node2 = std::reinterpret_pointer_cast<FloatScalarNode>(node);
+	else
+		node2 = nullptr;
+}
+
+void SceneLoadContext::getNode(const std::string& name, std::shared_ptr<FloatSpectralNode>& node2) const
+{
+	const auto node = getRawNode(name);
+	if (node->type() == NT_FloatSpectral)
+		node2 = std::reinterpret_pointer_cast<FloatSpectralNode>(node);
+	else
+		node2 = nullptr;
+}
+
+void SceneLoadContext::getNode(const std::string& name, std::shared_ptr<FloatVectorNode>& node2) const
+{
+	const auto node = getRawNode(name);
+	if (node->type() == NT_FloatVector)
+		node2 = std::reinterpret_pointer_cast<FloatVectorNode>(node);
+	else
+		node2 = nullptr;
+}
+
+bool SceneLoadContext::hasNode(const std::string& name) const
+{
+	return mEnvironment->sceneDatabase()->Nodes->has(name);
+}
+
 std::shared_ptr<INode> SceneLoadContext::lookupRawNode(const Parameter& parameter) const
 {
 	switch (parameter.type()) {
@@ -88,12 +182,10 @@ std::shared_ptr<INode> SceneLoadContext::lookupRawNode(const Parameter& paramete
 		}
 		break;
 	case PT_Reference:
-		if (hasEnvironment())
-			return mEnvironment->getRawNode(parameter.getReference());
+		return getRawNode(parameter.getReference());
 		break;
 	case PT_String:
-		if (hasEnvironment())
-			mEnvironment->getRawNode(parameter.getString(""));
+		return getRawNode(parameter.getString(""));
 		break;
 	}
 	return nullptr;
@@ -116,26 +208,26 @@ std::shared_ptr<FloatSpectralNode> SceneLoadContext::lookupSpectralNode(const Pa
 			return std::make_shared<ConstSpectralNode>(def);
 		else
 			return std::make_shared<ConstSpectralNode>(SpectralBlob(parameter.getNumber(0.0f)));
-	case PT_Reference:
-		if (hasEnvironment()) {
-			auto node = mEnvironment->getRawNode(parameter.getReference());
-			if (node->type() == NT_FloatSpectral)
-				return std::reinterpret_pointer_cast<FloatSpectralNode>(node);
-			else if (node->type() == NT_FloatScalar)
-				return std::make_shared<SplatSpectralNode>(std::reinterpret_pointer_cast<FloatScalarNode>(node));
-		}
-		return std::make_shared<ConstSpectralNode>(def);
-	case PT_String:
-		if (hasEnvironment()) {
-			std::string name = parameter.getString("");
+	case PT_Reference: {
+		const auto node = getRawNode(parameter.getReference());
+		if (node->type() == NT_FloatSpectral)
+			return std::reinterpret_pointer_cast<FloatSpectralNode>(node);
+		else if (node->type() == NT_FloatScalar)
+			return std::make_shared<SplatSpectralNode>(std::reinterpret_pointer_cast<FloatScalarNode>(node));
+		else
+			return std::make_shared<ConstSpectralNode>(def);
+	}
+	case PT_String: {
+		const std::string name = parameter.getString("");
 
-			if (mEnvironment->hasNode(name)) {
-				auto socket = mEnvironment->getNode<FloatSpectralNode>(name);
-				if (socket)
-					return socket;
-			}
+		if (hasNode(name)) {
+			auto socket = getNode<FloatSpectralNode>(name);
+			if (socket)
+				return socket;
 		}
+
 		return std::make_shared<ConstSpectralNode>(def);
+	}
 	}
 }
 
@@ -151,24 +243,23 @@ std::shared_ptr<FloatScalarNode> SceneLoadContext::lookupScalarNode(const Parame
 			return std::make_shared<ConstScalarNode>(def);
 		else
 			return std::make_shared<ConstScalarNode>(parameter.getNumber(def));
-	case PT_Reference:
-		if (hasEnvironment()) {
-			auto node = mEnvironment->getRawNode(parameter.getReference());
-			if (node->type() == NT_FloatScalar)
-				return std::reinterpret_pointer_cast<FloatScalarNode>(node);
-		}
-		return std::make_shared<ConstScalarNode>(def);
-	case PT_String:
-		if (hasEnvironment()) {
-			std::string name = parameter.getString("");
+	case PT_Reference: {
+		const auto node = getRawNode(parameter.getReference());
+		if (node->type() == NT_FloatScalar)
+			return std::reinterpret_pointer_cast<FloatScalarNode>(node);
+		else
+			return std::make_shared<ConstScalarNode>(def);
+	}
+	case PT_String: {
+		const std::string name = parameter.getString("");
 
-			if (mEnvironment->hasNode(name)) {
-				auto socket = mEnvironment->getNode<FloatScalarNode>(name);
-				if (socket)
-					return socket;
-			}
+		if (hasNode(name)) {
+			auto socket = getNode<FloatScalarNode>(name);
+			if (socket)
+				return socket;
 		}
 		return std::make_shared<ConstScalarNode>(def);
+	}
 	}
 }
 
@@ -194,8 +285,7 @@ std::shared_ptr<FloatScalarNode> SceneLoadContext::lookupScalarNode(const std::s
 
 std::shared_ptr<IIntegratorFactory> SceneLoadContext::loadIntegratorFactory(const std::string& type, const ParameterGroup& params) const
 {
-	auto manag		= mEnvironment->integratorManager();
-	const uint32 id = manag->nextID();
+	auto manag = mEnvironment->integratorManager();
 
 	auto fac = manag->getFactory(type);
 	if (!fac) {
@@ -205,13 +295,12 @@ std::shared_ptr<IIntegratorFactory> SceneLoadContext::loadIntegratorFactory(cons
 
 	SceneLoadContext copy = *this;
 	copy.mParameters	  = params;
-	return fac->create(id, type, copy);
+	return fac->create(type, copy);
 }
 
 std::shared_ptr<ISamplerFactory> SceneLoadContext::loadSamplerFactory(const std::string& type, const ParameterGroup& params) const
 {
-	auto manag		= mEnvironment->samplerManager();
-	const uint32 id = manag->nextID();
+	auto manag = mEnvironment->samplerManager();
 
 	auto fac = manag->getFactory(type);
 	if (!fac) {
@@ -221,13 +310,12 @@ std::shared_ptr<ISamplerFactory> SceneLoadContext::loadSamplerFactory(const std:
 
 	SceneLoadContext copy = *this;
 	copy.mParameters	  = params;
-	return fac->create(id, type, copy);
+	return fac->create(type, copy);
 }
 
 std::shared_ptr<IFilterFactory> SceneLoadContext::loadFilterFactory(const std::string& type, const ParameterGroup& params) const
 {
-	auto manag		= mEnvironment->filterManager();
-	const uint32 id = manag->nextID();
+	auto manag = mEnvironment->filterManager();
 
 	auto fac = manag->getFactory(type);
 	if (!fac) {
@@ -237,13 +325,12 @@ std::shared_ptr<IFilterFactory> SceneLoadContext::loadFilterFactory(const std::s
 
 	SceneLoadContext copy = *this;
 	copy.mParameters	  = params;
-	return fac->create(id, type, copy);
+	return fac->create(type, copy);
 }
 
 std::shared_ptr<ISpectralMapperFactory> SceneLoadContext::loadSpectralMapperFactory(const std::string& type, const ParameterGroup& params) const
 {
-	auto manag		= mEnvironment->spectralMapperManager();
-	const uint32 id = manag->nextID();
+	auto manag = mEnvironment->spectralMapperManager();
 
 	auto fac = manag->getFactory(type);
 	if (!fac) {
@@ -253,7 +340,7 @@ std::shared_ptr<ISpectralMapperFactory> SceneLoadContext::loadSpectralMapperFact
 
 	SceneLoadContext copy = *this;
 	copy.mParameters	  = params;
-	return fac->create(id, type, copy);
+	return fac->create(type, copy);
 }
 
 std::shared_ptr<IMaterial> SceneLoadContext::lookupMaterial(const Parameter& parameter) const
@@ -264,9 +351,49 @@ std::shared_ptr<IMaterial> SceneLoadContext::lookupMaterial(const Parameter& par
 	case PT_Reference: // TODO
 		return nullptr;
 	case PT_String:
-		if (hasEnvironment())
-			return mEnvironment->getMaterial(parameter.getString(""));
-		return nullptr;
+		return getMaterial(parameter.getString(""));
+	}
+}
+
+uint32 SceneLoadContext::lookupMaterialID(const Parameter& parameter) const
+{
+	switch (parameter.type()) {
+	default:
+		return PR_INVALID_ID;
+	case PT_Reference: // TODO
+		return PR_INVALID_ID;
+	case PT_String:
+		return environment()->sceneDatabase()->Materials->getID(parameter.getString(""));
+	}
+}
+
+std::vector<uint32> SceneLoadContext::lookupMaterialIDArray(const Parameter& parameter, bool skipInvalid) const
+{
+	if (parameter.isArray()) {
+		std::vector<uint32> mats;
+		mats.reserve(parameter.arraySize());
+
+		for (size_t i = 0; i < parameter.arraySize(); ++i) {
+			uint32 id;
+			switch (parameter.type()) {
+			default:
+				id = PR_INVALID_ID;
+				break;
+			case PT_Reference: // TODO
+				id = PR_INVALID_ID;
+				break;
+			case PT_String:
+				id = environment()->sceneDatabase()->Materials->getID(parameter.getString(""));
+				break;
+			}
+
+			if (id != PR_INVALID_ID || !skipInvalid)
+				mats.push_back(id);
+		}
+
+		return mats;
+	} else {
+		return { lookupMaterialID(parameter) };
 	}
 }
 
@@ -278,32 +405,34 @@ std::shared_ptr<IEmission> SceneLoadContext::lookupEmission(const Parameter& par
 	case PT_Reference: // TODO
 		return nullptr;
 	case PT_String:
-		if (hasEnvironment())
-			return mEnvironment->getEmission(parameter.getString(""));
-		return nullptr;
+		return getEmission(parameter.getString(""));
 	}
 }
 
-std::shared_ptr<IMaterial> SceneLoadContext::registerMaterial(const std::string& name, const std::string& type, const ParameterGroup& params) const
+uint32 SceneLoadContext::lookupEmissionID(const Parameter& parameter) const
+{
+	switch (parameter.type()) {
+	default:
+		return PR_INVALID_ID;
+	case PT_Reference: // TODO
+		return PR_INVALID_ID;
+	case PT_String:
+		return environment()->sceneDatabase()->Emissions->getID(parameter.getString(""));
+	}
+}
+
+std::shared_ptr<IMaterial> SceneLoadContext::registerMaterial(const std::string& name, const std::string& type, const ParameterGroup& params)
 {
 	auto mat = loadMaterial(type, params);
 	if (!mat)
 		return nullptr;
 
-	if (hasEnvironment())
-		environment()->addMaterial(name, mat);
+	addMaterial(name, mat);
 
 	return mat;
 }
 
 std::shared_ptr<IMaterial> SceneLoadContext::loadMaterial(const std::string& type, const ParameterGroup& params) const
-{
-	auto manag		= mEnvironment->materialManager();
-	const uint32 id = manag->nextID();
-	return yieldToMaterial(id, type, params);
-}
-
-std::shared_ptr<IMaterial> SceneLoadContext::yieldToMaterial(uint32 id, const std::string& type, const ParameterGroup& params) const
 {
 	auto manag = mEnvironment->materialManager();
 	auto fac   = manag->getFactory(type);
@@ -314,7 +443,7 @@ std::shared_ptr<IMaterial> SceneLoadContext::yieldToMaterial(uint32 id, const st
 
 	SceneLoadContext copy = *this;
 	copy.mParameters	  = params;
-	auto mat			  = fac->create(id, type, copy);
+	auto mat			  = fac->create(type, copy);
 	if (!mat) {
 		PR_LOG(L_ERROR) << "Could not create material of type " << type << std::endl;
 		return nullptr;
@@ -326,30 +455,21 @@ std::shared_ptr<IMaterial> SceneLoadContext::yieldToMaterial(uint32 id, const st
 	mat->enableSelfShadow(params.getBool("self_shadow", mat->allowsSelfShadow()));
 	mat->enableCameraVisibility(params.getBool("camera_visible", mat->isCameraVisible()));
 
-	manag->addObject(mat);
 	return mat;
 }
 
-std::shared_ptr<IEmission> SceneLoadContext::registerEmission(const std::string& name, const std::string& type, const ParameterGroup& params) const
+std::shared_ptr<IEmission> SceneLoadContext::registerEmission(const std::string& name, const std::string& type, const ParameterGroup& params)
 {
 	auto ems = loadEmission(type, params);
 	if (!ems)
 		return nullptr;
 
-	if (hasEnvironment())
-		environment()->addEmission(name, ems);
+	addEmission(name, ems);
 
 	return ems;
 }
 
 std::shared_ptr<IEmission> SceneLoadContext::loadEmission(const std::string& type, const ParameterGroup& params) const
-{
-	auto manag		= mEnvironment->emissionManager();
-	const uint32 id = manag->nextID();
-	return yieldToEmission(id, type, params);
-}
-
-std::shared_ptr<IEmission> SceneLoadContext::yieldToEmission(uint32 id, const std::string& type, const ParameterGroup& params) const
 {
 	auto manag = mEnvironment->emissionManager();
 	auto fac   = manag->getFactory(type);
@@ -360,13 +480,12 @@ std::shared_ptr<IEmission> SceneLoadContext::yieldToEmission(uint32 id, const st
 
 	SceneLoadContext copy = *this;
 	copy.mParameters	  = params;
-	auto obj			  = fac->create(id, type, copy);
+	auto obj			  = fac->create(type, copy);
 	if (!obj) {
 		PR_LOG(L_ERROR) << "Could not create emission of type " << type << std::endl;
 		return nullptr;
 	}
 
-	manag->addObject(obj);
 	return obj;
 }
 } // namespace PR

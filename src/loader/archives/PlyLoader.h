@@ -12,7 +12,7 @@ public:
 	inline void flipNormal(bool b) { mFlipNormal = b; }
 	inline void setCacheMode(int cm) { mCacheMode = cm; }
 
-	void load(const std::filesystem::path& file, const SceneLoadContext& ctx) override;
+	void load(const std::filesystem::path& file, SceneLoadContext& ctx) override;
 
 private:
 	std::string mName;

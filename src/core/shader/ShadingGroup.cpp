@@ -42,6 +42,7 @@ void ShadingGroup::extractGeometryPoint(size_t i, GeometryPoint& pt) const
 	query.PrimitiveID = entry.PrimitiveID;
 	query.UV		  = Vector2f(entry.Parameter[0], entry.Parameter[1]);
 	mEntity->provideGeometryPoint(query, pt);
+	pt.EntityID = mBlock.EntityID;
 }
 
 void ShadingGroup::computeShadingPoint(size_t i, IntersectionPoint& spt) const
@@ -56,6 +57,8 @@ void ShadingGroup::computeShadingPoint(size_t i, IntersectionPoint& spt) const
 	query.PrimitiveID = entry.PrimitiveID;
 	query.UV		  = Vector2f(entry.Parameter[0], entry.Parameter[1]);
 	mEntity->provideGeometryPoint(query, spt.Surface.Geometry);
+	spt.Surface.Geometry.EntityID = mBlock.EntityID;
+
 	spt.setForSurface(spt.Ray, query.Position, spt.Surface.Geometry);
 }
 } // namespace PR

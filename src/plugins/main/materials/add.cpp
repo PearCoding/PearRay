@@ -12,9 +12,8 @@ namespace PR {
 template <bool HasDelta>
 class AddMaterial : public IMaterial {
 public:
-	explicit AddMaterial(uint32 id,
-						 const std::shared_ptr<IMaterial>& material0, const std::shared_ptr<IMaterial>& material1)
-		: IMaterial(id)
+	explicit AddMaterial(const std::shared_ptr<IMaterial>& material0, const std::shared_ptr<IMaterial>& material1)
+		: IMaterial()
 		, mMaterials{ material0, material1 }
 	{
 	}
@@ -111,7 +110,7 @@ private:
 
 class AddMaterialPlugin : public IMaterialPlugin {
 public:
-	std::shared_ptr<IMaterial> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx)
 	{
 		const ParameterGroup& params = ctx.parameters();
 		const auto mat1				 = ctx.lookupMaterial(params.getParameter("material1"));
@@ -124,9 +123,9 @@ public:
 
 		const bool delta = mat1->hasDeltaDistribution() || mat2->hasDeltaDistribution();
 		if (delta)
-			return std::make_shared<AddMaterial<true>>(id, mat1, mat2);
+			return std::make_shared<AddMaterial<true>>(mat1, mat2);
 		else
-			return std::make_shared<AddMaterial<false>>(id, mat1, mat2);
+			return std::make_shared<AddMaterial<false>>(mat1, mat2);
 	}
 
 	const std::vector<std::string>& getNames() const

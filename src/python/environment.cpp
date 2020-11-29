@@ -21,15 +21,8 @@ void setup_environment(py::module& m)
 		.def_readwrite("Force", &OutputSaveOptions::Force);
 
 	py::class_<Environment, std::shared_ptr<Environment>>(m, "Environment")
-		.def(py::init<std::wstring, std::wstring>())
-		.def("getMaterial", &Environment::getMaterial)
-		.def("hasMaterial", &Environment::hasMaterial)
-		.def("addMaterial", &Environment::addMaterial)
-		.def_property_readonly("materialCount", &Environment::materialCount)
-		//.def("getMesh", &Environment::getMesh)
-		//.def("hasMesh", &Environment::hasMesh)
-		//.def("addMesh", &Environment::addMesh)
-		// TODO: Sockets
+		.def_static("createRenderEnvironment", &Environment::createRenderEnvironment)
+		.def_static("createQueryEnvironment", &Environment::createQueryEnvironment)
 		.def("dumpInformation", &Environment::dumpInformation)
 		.def("setup", &Environment::setup)
 		.def("save", &Environment::save)

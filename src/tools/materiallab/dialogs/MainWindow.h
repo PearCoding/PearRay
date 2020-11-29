@@ -6,7 +6,7 @@
 #include <memory>
 
 namespace PR {
-class QueryEnvironment;
+class Environment;
 }
 
 class SceneWindow;
@@ -33,5 +33,5 @@ private:
 	void writeSettings();
 
 	Ui::MainWindowClass ui;
-	std::unique_ptr<PR::QueryEnvironment> mEnv;
+	std::shared_ptr<PR::Environment> mEnv;
 };

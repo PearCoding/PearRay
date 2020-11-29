@@ -26,9 +26,9 @@ template <bool ExtendToGround>
 class SkyLight : public IInfiniteLight {
 public:
 	SkyLight(const std::shared_ptr<ServiceObserver>& so,
-			 uint32 id, const std::string& name, const Transformf& transform,
+			 const std::string& name, const Transformf& transform,
 			 const SkyModel& model, bool allowCompensation)
-		: IInfiniteLight(id, name, transform)
+		: IInfiniteLight(name, transform)
 		, mDistribution()
 		, mModel(model)
 		, mSceneRadius(0)
@@ -184,7 +184,7 @@ private:
 
 class SkyLightFactory : public IInfiniteLightPlugin {
 public:
-	std::shared_ptr<IInfiniteLight> create(uint32 id, const std::string&, const SceneLoadContext& ctx) override
+	std::shared_ptr<IInfiniteLight> create(const std::string&, const SceneLoadContext& ctx) override
 	{
 		const ParameterGroup& params = ctx.parameters();
 
@@ -195,12 +195,12 @@ public:
 		ElevationAzimuth sunEA		 = computeSunEA(ctx.parameters());
 		//PR_LOG(L_INFO) << "Sun: " << PR_RAD2DEG * sunEA.Elevation << "° " << PR_RAD2DEG * sunEA.Azimuth << "°" << std::endl;
 
-		const std::shared_ptr<ServiceObserver> so = ctx.hasEnvironment() ? ctx.environment()->serviceObserver() : nullptr;
+		const std::shared_ptr<ServiceObserver> so = ctx.environment()->serviceObserver();
 
 		if (params.getBool("extend", true))
-			return std::make_shared<SkyLight<true>>(so, id, name, ctx.transform(), SkyModel(ground_albedo, sunEA, ctx.parameters()), allowCompensation);
+			return std::make_shared<SkyLight<true>>(so, name, ctx.transform(), SkyModel(ground_albedo, sunEA, ctx.parameters()), allowCompensation);
 		else
-			return std::make_shared<SkyLight<false>>(so, id, name, ctx.transform(), SkyModel(ground_albedo, sunEA, ctx.parameters()), allowCompensation);
+			return std::make_shared<SkyLight<false>>(so, name, ctx.transform(), SkyModel(ground_albedo, sunEA, ctx.parameters()), allowCompensation);
 	}
 
 	const std::vector<std::string>& getNames() const override

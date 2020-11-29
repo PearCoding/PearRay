@@ -15,29 +15,16 @@ namespace PR {
 #define PR_PLUGIN_API_INTERFACE_NAME(name) PR_PLUGIN_API_INTERFACE_NAME_CORE
 #endif
 
-enum PluginType {
-	PT_MATERIAL = 0,
-	PT_ENTITY,
-	PT_CAMERA,
-	PT_EMISSION,
-	PT_INFINITELIGHT,
-	PT_INTEGRATOR,
-	PT_FILTER,
-	PT_SAMPLER,
-	PT_SPECTRALMAPPER,
-	PT_NODE
-};
-
 class PR_LIB_LOADER IPlugin {
 public:
 	IPlugin()		   = default;
 	virtual ~IPlugin() = default;
 
-	virtual bool init()				= 0;
-	virtual PluginType type() const = 0;
+	virtual bool init()				 = 0;
+	virtual const char* type() const = 0;
 };
 
-typedef IPlugin* (*GetFactoryPluginPtr)();
+using GetFactoryPluginPtr = IPlugin* (*)();
 
 struct PR_LIB_LOADER PluginInterface {
 	int APIVersion;
@@ -49,16 +36,16 @@ struct PR_LIB_LOADER PluginInterface {
 };
 } // namespace PR
 
-#define PR_INTERNAL_PLUGIN_DEFINE_FACTORY(className, entityType, typeEnum)                                                          \
-	class entityType;                                                                                                               \
-	class SceneLoadContext;                                                                                                         \
-	class PR_LIB_LOADER className : public IPlugin {                                                                                \
-	public:                                                                                                                         \
-		className()																										 = default; \
-		virtual ~className()																							 = default; \
-		virtual std::shared_ptr<entityType> create(uint32 id, const std::string& type_name, const SceneLoadContext& ctx) = 0;       \
-		virtual const std::vector<std::string>& getNames() const														 = 0;       \
-		inline PluginType type() const override { return typeEnum; }                                                                \
+#define PR_INTERNAL_PLUGIN_DEFINE_FACTORY(className, entityType, typeStr)                                                \
+	class entityType;                                                                                                    \
+	class SceneLoadContext;                                                                                              \
+	class PR_LIB_LOADER className : public IPlugin {                                                                     \
+	public:                                                                                                              \
+		className()																							  = default; \
+		virtual ~className()																				  = default; \
+		virtual std::shared_ptr<entityType> create(const std::string& type_name, const SceneLoadContext& ctx) = 0;       \
+		virtual const std::vector<std::string>& getNames() const											  = 0;       \
+		inline const char* type() const override { return typeStr; }                                                     \
 	}
 
 #define PR_PLUGIN_INIT(classType, pluginName, pluginVersion)                          \

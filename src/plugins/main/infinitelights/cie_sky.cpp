@@ -21,10 +21,10 @@ template <bool Cloudy>
 class CIESimpleSkyLight : public IInfiniteLight {
 public:
 	CIESimpleSkyLight(const std::shared_ptr<ServiceObserver>& so,
-					  uint32 id, const std::string& name, const Transformf& transform,
+					  const std::string& name, const Transformf& transform,
 					  const std::shared_ptr<FloatSpectralNode>& zenithTint,
 					  const std::shared_ptr<FloatSpectralNode>& groundTint, const std::shared_ptr<FloatScalarNode>& groundBrightness)
-		: IInfiniteLight(id, name, transform)
+		: IInfiniteLight(name, transform)
 		, mZenithTint(zenithTint)
 		, mGroundTint(groundTint)
 		, mGroundBrightness(groundBrightness)
@@ -130,7 +130,7 @@ private:
 
 class CIESkyLightFactory : public IInfiniteLightPlugin {
 public:
-	std::shared_ptr<IInfiniteLight> create(uint32 id, const std::string& type, const SceneLoadContext& ctx) override
+	std::shared_ptr<IInfiniteLight> create(const std::string& type, const SceneLoadContext& ctx) override
 	{
 		const ParameterGroup& params = ctx.parameters();
 
@@ -145,12 +145,12 @@ public:
 
 		const auto groundBrightness = ctx.lookupScalarNode("ground_brightness", 0.2f);
 
-		const std::shared_ptr<ServiceObserver> so = ctx.hasEnvironment() ? ctx.environment()->serviceObserver() : nullptr;
+		const std::shared_ptr<ServiceObserver> so = ctx.environment()->serviceObserver();
 
 		if (type == "uniform_sky")
-			return std::make_shared<CIESimpleSkyLight<false>>(so, id, name, ctx.transform(), zenithTint, groundTint, groundBrightness);
+			return std::make_shared<CIESimpleSkyLight<false>>(so, name, ctx.transform(), zenithTint, groundTint, groundBrightness);
 		else if (type == "cloudy_sky")
-			return std::make_shared<CIESimpleSkyLight<true>>(so, id, name, ctx.transform(), zenithTint, groundTint, groundBrightness);
+			return std::make_shared<CIESimpleSkyLight<true>>(so, name, ctx.transform(), zenithTint, groundTint, groundBrightness);
 		else {
 			PR_ASSERT(false, "CIESkyFactory plugin does not handle all offered types of operations!");
 			return nullptr;

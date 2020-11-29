@@ -16,11 +16,10 @@ namespace PR {
 template <bool HasTransmissionColor, bool IsThin, bool SpectralVarying>
 class DielectricMaterial : public IMaterial {
 public:
-	DielectricMaterial(uint32 id,
-					   const std::shared_ptr<FloatSpectralNode>& spec,
+	DielectricMaterial(const std::shared_ptr<FloatSpectralNode>& spec,
 					   const std::shared_ptr<FloatSpectralNode>& trans,
 					   const std::shared_ptr<FloatSpectralNode>& ior)
-		: IMaterial(id)
+		: IMaterial()
 		, mSpecularity(spec)
 		, mTransmission(trans)
 		, mIOR(ior)
@@ -143,47 +142,46 @@ private:
 
 // System of function which probably could be simplified with template meta programming
 template <bool HasTransmissionColor, bool IsThin, bool SpectralVarying>
-static std::shared_ptr<IMaterial> createMaterial1(uint32 id, const SceneLoadContext& ctx)
+static std::shared_ptr<IMaterial> createMaterial1(const SceneLoadContext& ctx)
 {
 	return std::make_shared<DielectricMaterial<HasTransmissionColor, IsThin, SpectralVarying>>(
-		id,
 		ctx.lookupSpectralNode("specularity", 1),
 		HasTransmissionColor ? ctx.lookupSpectralNode("transmission", 1) : nullptr,
 		ctx.lookupSpectralNode("index", 1.55f));
 }
 
 template <bool HasTransmissionColor, bool IsThin>
-static std::shared_ptr<IMaterial> createMaterial2(uint32 id, const SceneLoadContext& ctx)
+static std::shared_ptr<IMaterial> createMaterial2(const SceneLoadContext& ctx)
 {
 	const bool spectralVarying = ctx.parameters().getBool("spectral_varying", true);
 	if (spectralVarying)
-		return createMaterial1<HasTransmissionColor, IsThin, true>(id, ctx);
+		return createMaterial1<HasTransmissionColor, IsThin, true>(ctx);
 	else
-		return createMaterial1<HasTransmissionColor, IsThin, false>(id, ctx);
+		return createMaterial1<HasTransmissionColor, IsThin, false>(ctx);
 }
 
 template <bool HasTransmissionColor>
-static std::shared_ptr<IMaterial> createMaterial3(uint32 id, const SceneLoadContext& ctx)
+static std::shared_ptr<IMaterial> createMaterial3(const SceneLoadContext& ctx)
 {
 	const bool isThin = ctx.parameters().getBool("thin", false);
 	if (isThin)
-		return createMaterial2<HasTransmissionColor, true>(id, ctx);
+		return createMaterial2<HasTransmissionColor, true>(ctx);
 	else
-		return createMaterial2<HasTransmissionColor, false>(id, ctx);
+		return createMaterial2<HasTransmissionColor, false>(ctx);
 }
 
-static std::shared_ptr<IMaterial> createMaterial4(uint32 id, const SceneLoadContext& ctx)
+static std::shared_ptr<IMaterial> createMaterial4(const SceneLoadContext& ctx)
 {
 	const bool hasTransmission = ctx.parameters().hasParameter("transmission");
 	if (hasTransmission)
-		return createMaterial3<true>(id, ctx);
+		return createMaterial3<true>(ctx);
 	else
-		return createMaterial3<false>(id, ctx);
+		return createMaterial3<false>(ctx);
 }
 
 class DielectricMaterialPlugin : public IMaterialPlugin {
 public:
-	std::shared_ptr<IMaterial> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx)
 	{
 		// Construct rough dielectric instead
 		/*if (ctx.parameters().hasParameter("roughness")
@@ -191,7 +189,7 @@ public:
 			|| ctx.parameters().hasParameter("roughness_y"))
 			return ctx.yieldToMaterial(id, "roughdielectric", ctx.parameters());*/
 
-		return createMaterial4(id, ctx);
+		return createMaterial4(ctx);
 	}
 
 	const std::vector<std::string>& getNames() const

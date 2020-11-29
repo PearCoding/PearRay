@@ -12,27 +12,19 @@ enum MaterialFlags {
 
 class PR_LIB_CORE IMaterial {
 public:
-	IMaterial(uint32 id);
+	IMaterial();
 	virtual ~IMaterial() {}
 
-	inline uint32 id() const;
-
-	/*
-		Evaluate the BxDF based on incident and outgoing direction and point information.
-		The calculation is in shading space.
-	*/
+	/// Evaluate the BxDF based on incident and outgoing direction and point information.
+	/// The calculation is in shading space.
 	virtual void eval(const MaterialEvalInput& in, MaterialEvalOutput& out, const RenderTileSession& session) const = 0;
 
-	/*
-		Compute the pdf of the BxDF based on incident and outgoing direction and point information.
-		The calculation is in shading space.
-	*/
+	/// Compute the pdf of the BxDF based on incident and outgoing direction and point information.
+	/// The calculation is in shading space.
 	virtual void pdf(const MaterialEvalInput& in, MaterialPDFOutput& out, const RenderTileSession& session) const = 0;
 
-	/*
-		Sample a direction and evaluate.
-		The calculation and output is in shading space.
-	*/
+	/// Sample a direction and evaluate.
+	/// The calculation and output is in shading space.
 	virtual void sample(const MaterialSampleInput& in, MaterialSampleOutput& out, const RenderTileSession& session) const = 0;
 
 	virtual int flags() const { return 0; }
@@ -59,7 +51,6 @@ private:
 	bool mShadow;
 	bool mSelfShadow;
 	bool mCameraVisible;
-	uint32 mID;
 };
 } // namespace PR
 

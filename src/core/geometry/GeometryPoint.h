@@ -17,7 +17,7 @@ struct PR_LIB_CORE GeometryPoint {
 	Vector2f UV;
 	Vector2f dUV; // Pixel footprint
 
-	uint32 EntityID;
+	uint32 EntityID; // Will be set automatically
 	uint32 PrimitiveID;
 	uint32 MaterialID;
 	uint32 EmissionID;

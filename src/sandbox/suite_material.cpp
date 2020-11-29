@@ -127,18 +127,17 @@ static void handle_material_case(const std::string& name,
 }
 
 // Specific materials
-static void mat_lambert(Environment& env)
+static void mat_lambert(Environment* env)
 {
-	SceneLoadContext ctx(&env);
+	SceneLoadContext ctx(env);
 
-	auto manag		= env.materialManager();
-	const uint32 id = manag->nextID();
+	auto manag		= env->materialManager();
 	auto fac		= manag->getFactory("lambert");
 
 	ParameterGroup params;
 	params.addParameter("albedo", Parameter::fromString("white"));
 	ctx.parameters() = params;
-	auto mat		 = fac->create(id, "lambert", ctx);
+	auto mat		 = fac->create("lambert", ctx);
 	if (!mat) {
 		std::cout << "ERROR: Can not instantiate lambert material!" << std::endl;
 		return;
@@ -146,12 +145,11 @@ static void mat_lambert(Environment& env)
 	handle_material_case("lambert", mat);
 }
 
-static void mat_orennayar(Environment& env)
+static void mat_orennayar(Environment* env)
 {
-	SceneLoadContext ctx(&env);
+	SceneLoadContext ctx(env);
 
-	auto manag		= env.materialManager();
-	const uint32 id = manag->nextID();
+	auto manag		= env->materialManager();
 	auto fac		= manag->getFactory("orennayar");
 
 	ParameterGroup params;
@@ -159,7 +157,7 @@ static void mat_orennayar(Environment& env)
 	params.addParameter("albedo", Parameter::fromString("white"));
 	{
 		params.addParameter("roughness", Parameter::fromNumber(1.0f));
-		auto mat = fac->create(id, "orennayar", ctx);
+		auto mat = fac->create("orennayar", ctx);
 		if (!mat) {
 			std::cout << "ERROR: Can not instantiate orennayar material!" << std::endl;
 			return;
@@ -168,7 +166,7 @@ static void mat_orennayar(Environment& env)
 	}
 	{
 		params.addParameter("roughness", Parameter::fromNumber(0.5f));
-		auto mat = fac->create(id, "orennayar", ctx);
+		auto mat = fac->create("orennayar", ctx);
 		if (!mat) {
 			std::cout << "ERROR: Can not instantiate orennayar material!" << std::endl;
 			return;
@@ -177,7 +175,7 @@ static void mat_orennayar(Environment& env)
 	}
 	{
 		params.addParameter("roughness", Parameter::fromNumber(0.0f));
-		auto mat = fac->create(id, "orennayar", ctx);
+		auto mat = fac->create("orennayar", ctx);
 		if (!mat) {
 			std::cout << "ERROR: Can not instantiate orennayar material!" << std::endl;
 			return;
@@ -186,12 +184,11 @@ static void mat_orennayar(Environment& env)
 	}
 }
 
-static void mat_principled_p(Environment& env, float roughness, float specular)
+static void mat_principled_p(Environment* env, float roughness, float specular)
 {
-	SceneLoadContext ctx(&env);
+	SceneLoadContext ctx(env);
 
-	auto manag		= env.materialManager();
-	const uint32 id = manag->nextID();
+	auto manag		= env->materialManager();
 	auto fac		= manag->getFactory("principled");
 
 	ParameterGroup params;
@@ -201,7 +198,7 @@ static void mat_principled_p(Environment& env, float roughness, float specular)
 	params.addParameter("roughness", Parameter::fromNumber(roughness));
 	params.addParameter("specular", Parameter::fromNumber(specular));
 
-	auto mat = fac->create(id, "principled", ctx);
+	auto mat = fac->create("principled", ctx);
 	if (!mat) {
 		std::cout << "ERROR: Can not instantiate orennayar material!" << std::endl;
 		return;
@@ -215,7 +212,7 @@ static void mat_principled_p(Environment& env, float roughness, float specular)
 	handle_material_case(stream.str(), mat);
 }
 
-static void mat_principled(Environment& env)
+static void mat_principled(Environment* env)
 {
 	mat_principled_p(env, 0.0f, 0.0f);
 	mat_principled_p(env, 0.5f, 0.0f);
@@ -228,7 +225,7 @@ static void mat_principled(Environment& env)
 	mat_principled_p(env, 1.0f, 1.0f);
 }
 
-typedef void (*MAT_FUNC)(Environment&);
+typedef void (*MAT_FUNC)(Environment*);
 static MAT_FUNC s_funcs[] = {
 	mat_lambert,
 	mat_orennayar,
@@ -240,7 +237,7 @@ void suite_material()
 {
 	sf::create_directory(DIR);
 
-	Environment env(L"./", L"./", true);
+	const auto env = Environment::createQueryEnvironment("./");
 	for (int i = 0; s_funcs[i]; ++i)
-		s_funcs[i](env);
+		s_funcs[i](env.get());
 }

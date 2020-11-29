@@ -16,10 +16,10 @@ namespace PR {
 class DistantLight : public IInfiniteLight {
 public:
 	DistantLight(const std::shared_ptr<ServiceObserver>& so,
-				 uint32 id, const std::string& name, const Transformf& transform,
+				 const std::string& name, const Transformf& transform,
 				 const Vector3f& direction,
 				 const std::shared_ptr<FloatSpectralNode>& spec)
-		: IInfiniteLight(id, name, transform)
+		: IInfiniteLight(name, transform)
 		, mDirection(direction)
 		, mIrradiance(spec)
 		, mOutgoing_Cache((normalMatrix() * mDirection).normalized())
@@ -110,15 +110,15 @@ private:
 
 class DistantLightFactory : public IInfiniteLightPlugin {
 public:
-	std::shared_ptr<IInfiniteLight> create(uint32 id, const std::string&, const SceneLoadContext& ctx) override
+	std::shared_ptr<IInfiniteLight> create(const std::string&, const SceneLoadContext& ctx) override
 	{
 		const ParameterGroup& params = ctx.parameters();
 
 		const std::string name	 = params.getString("name", "__unknown");
 		const Vector3f direction = params.getVector3f("direction", Vector3f(0, 0, 1));
 
-		return std::make_shared<DistantLight>(ctx.hasEnvironment() ? ctx.environment()->serviceObserver() : nullptr,
-											  id, name, ctx.transform(), direction,
+		return std::make_shared<DistantLight>(ctx.environment()->serviceObserver(),
+											  name, ctx.transform(), direction,
 											  ctx.lookupSpectralNode("irradiance", 1));
 	}
 

@@ -283,18 +283,9 @@ public:
 		}
 
 		Vector2f width = params.getVector2f("width", Vector2f(1, 1));
-
-		std::string matName			   = params.getString("material", "");
-		uint32 matID				   = PR_INVALID_ID;
-		std::shared_ptr<IMaterial> mat = ctx.Env->getMaterial(matName);
-		if (mat)
-			matID = static_cast<int32>(mat->id());
-
-		std::string emsName			   = params.getString("emission", "");
-		uint32 emsID				   = PR_INVALID_ID;
-		std::shared_ptr<IEmission> ems = ctx.Env->getEmission(emsName);
-		if (ems)
-			emsID = static_cast<int32>(ems->id());
+		
+		const uint32 matID = ctx.lookupMaterialID(params.getParameter("material"));
+		const uint32 emsID = ctx.lookupEmissionID(params.getParameter("emission"));
 
 #define _CURVE(D)                                                                                                        \
 	case D: {                                                                                                            \

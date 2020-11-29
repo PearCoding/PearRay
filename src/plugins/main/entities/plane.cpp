@@ -19,10 +19,10 @@ class PlaneEntity : public IEntity {
 public:
 	ENTITY_CLASS
 
-	PlaneEntity(uint32 id, const std::string& name, const Transformf& transform,
+	PlaneEntity(const std::string& name, const Transformf& transform,
 				const Vector3f& xAxis, const Vector3f& yAxis,
 				uint32 matID, uint32 lightID)
-		: IEntity(id, lightID, name, transform)
+		: IEntity(lightID, name, transform)
 		, mPlane(Vector3f::Zero(), xAxis, yAxis)
 		, mMaterialID(matID)
 		, mPDF_Cache(0.0f)
@@ -213,7 +213,6 @@ public:
 		pt.Ny = mEy;
 
 		pt.UV		   = query.UV;
-		pt.EntityID	   = id();
 		pt.PrimitiveID = 0;
 		pt.MaterialID  = mMaterialID;
 		pt.EmissionID  = emissionID();
@@ -260,7 +259,7 @@ private:
 
 class PlaneEntityPlugin : public IEntityPlugin {
 public:
-	std::shared_ptr<IEntity> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<IEntity> create(const std::string&, const SceneLoadContext& ctx)
 	{
 		const ParameterGroup& params = ctx.parameters();
 
@@ -269,21 +268,11 @@ public:
 		Vector3f yAxis	 = params.getVector3f("y_axis", Vector3f(0, 1, 0));
 		float width		 = params.getNumber("width", 1);
 		float height	 = params.getNumber("height", 1);
+		
+		const uint32 matID = ctx.lookupMaterialID(params.getParameter("material"));
+		const uint32 emsID = ctx.lookupEmissionID(params.getParameter("emission"));
 
-		std::string emsName = params.getString("emission", "");
-		std::string matName = params.getString("material", "");
-
-		uint32 matID				   = PR_INVALID_ID;
-		std::shared_ptr<IMaterial> mat = ctx.environment()->getMaterial(matName);
-		if (mat)
-			matID = mat->id();
-
-		uint32 emsID				   = PR_INVALID_ID;
-		std::shared_ptr<IEmission> ems = ctx.environment()->getEmission(emsName);
-		if (ems)
-			emsID = ems->id();
-
-		auto obj = std::make_shared<PlaneEntity>(id, name, ctx.transform(), width * xAxis, height * yAxis, matID, emsID);
+		auto obj = std::make_shared<PlaneEntity>(name, ctx.transform(), width * xAxis, height * yAxis, matID, emsID);
 		if (params.getBool("centering", false))
 			obj->centerOn();
 

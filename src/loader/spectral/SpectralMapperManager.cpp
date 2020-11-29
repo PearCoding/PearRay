@@ -20,13 +20,8 @@ bool SpectralMapperManager::createDefaultsIfNecessary(Environment* env)
 		if (!fac)
 			return nullptr;
 
-		const uint32 id = this->nextID();
-
-		SceneLoadContext ctx(env);
-		auto obj = fac->create(id, type, ctx);
-		if (obj)
-			this->addObject(obj);
-		return obj;
+		SceneLoadContext ctx(env, {});
+		return fac->create(type, ctx);
 	};
 
 	auto& settings = env->renderSettings();

@@ -86,7 +86,7 @@ private:
 
 class LanczosFilterPlugin : public IFilterPlugin {
 public:
-	std::shared_ptr<IFilterFactory> create(uint32, const std::string&, const SceneLoadContext& ctx) override
+	std::shared_ptr<IFilterFactory> create(const std::string&, const SceneLoadContext& ctx) override
 	{
 		return std::make_shared<LanczosFilterFactory>(ctx.parameters());
 	}

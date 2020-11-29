@@ -8,6 +8,7 @@
 #include "math/SplitSample.h"
 #include "output/OutputQueue.h"
 #include "scene/Scene.h"
+#include "scene/SceneDatabase.h"
 #include "trace/IntersectionPoint.h"
 
 namespace PR {
@@ -37,23 +38,17 @@ RenderTileSession::~RenderTileSession()
 
 IEntity* RenderTileSession::getEntity(uint32 id) const
 {
-	return id < mTile->context()->scene()->entities().size()
-			   ? mTile->context()->scene()->entities()[id].get()
-			   : nullptr;
+	return context()->scene()->database()->Entities->getSafe(id).get();
 }
 
 IMaterial* RenderTileSession::getMaterial(uint32 id) const
 {
-	return id < mTile->context()->scene()->materials().size()
-			   ? mTile->context()->scene()->materials()[id].get()
-			   : nullptr;
+	return context()->scene()->database()->Materials->getSafe(id).get();
 }
 
 IEmission* RenderTileSession::getEmission(uint32 id) const
 {
-	return id < mTile->context()->scene()->emissions().size()
-			   ? mTile->context()->scene()->emissions()[id].get()
-			   : nullptr;
+	return context()->scene()->database()->Emissions->getSafe(id).get();
 }
 
 const RayGroup& RenderTileSession::getRayGroup(uint32 id) const
@@ -87,6 +82,7 @@ bool RenderTileSession::traceSingleRay(const Ray& ray, Vector3f& pos, GeometryPo
 	query.Position	  = ray.t(entry.Parameter.z());
 
 	entity->provideGeometryPoint(query, pt);
+	pt.EntityID = entry.EntityID;
 
 	pos		 = query.Position;
 	material = getMaterial(pt.MaterialID);

@@ -24,6 +24,7 @@
 #include "material/MaterialManager.h"
 #include "mesh/MeshBase.h"
 #include "sampler/SamplerManager.h"
+#include "scene/SceneDatabase.h"
 #include "shader/NodeManager.h"
 #include "spectral/SpectralMapperManager.h"
 
@@ -52,8 +53,7 @@ std::shared_ptr<Environment> SceneLoader::loadFromFile(const std::filesystem::pa
 
 	auto entries = container.getTopGroups();
 
-	SceneLoadContext ctx(path);
-	return createEnvironment(entries, opts, ctx);
+	return createEnvironment(entries, opts, path);
 }
 
 std::shared_ptr<Environment> SceneLoader::loadFromString(const std::string& source, const LoadOptions& opts)
@@ -67,13 +67,11 @@ std::shared_ptr<Environment> SceneLoader::loadFromString(const std::string& sour
 
 	auto entries = container.getTopGroups();
 
-	SceneLoadContext ctx;
-	return createEnvironment(entries, opts, ctx);
+	return createEnvironment(entries, opts, {});
 }
 
 std::shared_ptr<Environment> SceneLoader::createEnvironment(const std::vector<DL::DataGroup>& groups,
-															const LoadOptions& opts,
-															SceneLoadContext& ctx)
+															const LoadOptions& opts, const std::filesystem::path& path)
 {
 	if (groups.empty()) {
 		PR_LOG(L_ERROR) << "DataLisp file does not contain valid entries" << std::endl;
@@ -90,10 +88,13 @@ std::shared_ptr<Environment> SceneLoader::createEnvironment(const std::vector<DL
 			DL::Data cropD			 = top.getFromKey("crop");
 			DL::Data spectralDomainD = top.getFromKey("spectral_domain");
 			DL::Data spectralHeroD	 = top.getFromKey("spectral_hero");
+			DL::Data standardlibD	 = top.getFromKey("standard_lib");
+
+			const bool useStandardLib = standardlibD.type() == DL::DT_Bool ? standardlibD.getBool() : true;
 
 			std::shared_ptr<Environment> env;
 			try {
-				env = std::make_shared<Environment>(opts.WorkingDir, opts.PluginPath);
+				env = Environment::createRenderEnvironment(opts.WorkingDir, opts.PluginPath, useStandardLib);
 			} catch (const BadRenderEnvironment&) {
 				return nullptr;
 			}
@@ -143,7 +144,7 @@ std::shared_ptr<Environment> SceneLoader::createEnvironment(const std::vector<DL
 					inner_groups.push_back(dataD.getGroup());
 			}
 
-			ctx.setEnvironment(env.get());
+			SceneLoadContext ctx(env.get(), path);
 			setupEnvironment(inner_groups, ctx);
 			return env;
 		}
@@ -190,8 +191,7 @@ void SceneLoader::setupEnvironment(const std::vector<DL::DataGroup>& groups, Sce
 
 void SceneLoader::addSampler(const DL::DataGroup& group, SceneLoadContext& ctx)
 {
-	auto manag		= ctx.environment()->samplerManager();
-	const uint32 id = manag->nextID();
+	auto manag = ctx.environment()->samplerManager();
 
 	DL::Data typeD = group.getFromKey("type");
 	std::string type;
@@ -219,12 +219,11 @@ void SceneLoader::addSampler(const DL::DataGroup& group, SceneLoadContext& ctx)
 	}
 
 	ctx.parameters() = populateObjectParameters(group, ctx);
-	auto filter		 = fac->create(id, type, ctx);
+	auto filter		 = fac->create(type, ctx);
 	if (!filter) {
 		PR_LOG(L_ERROR) << "[Loader] Could not create sampler of type " << type << std::endl;
 		return;
 	}
-	manag->addObject(filter);
 
 	if (slot == "aa" || slot == "pixel" || slot == "antialiasing") {
 		if (ctx.environment()->renderSettings().aaSamplerFactory)
@@ -262,8 +261,7 @@ void SceneLoader::addSampler(const DL::DataGroup& group, SceneLoadContext& ctx)
 
 void SceneLoader::addFilter(const DL::DataGroup& group, SceneLoadContext& ctx)
 {
-	auto manag		= ctx.environment()->filterManager();
-	const uint32 id = manag->nextID();
+	auto manag = ctx.environment()->filterManager();
 
 	DL::Data typeD = group.getFromKey("type");
 	std::string type;
@@ -291,12 +289,11 @@ void SceneLoader::addFilter(const DL::DataGroup& group, SceneLoadContext& ctx)
 	}
 
 	ctx.parameters() = populateObjectParameters(group, ctx);
-	auto filter		 = fac->create(id, type, ctx);
+	auto filter		 = fac->create(type, ctx);
 	if (!filter) {
 		PR_LOG(L_ERROR) << "[Loader] Could not create filter of type " << type << std::endl;
 		return;
 	}
-	manag->addObject(filter);
 
 	if (slot == "pixel") {
 		if (ctx.environment()->renderSettings().pixelFilterFactory)
@@ -310,8 +307,7 @@ void SceneLoader::addFilter(const DL::DataGroup& group, SceneLoadContext& ctx)
 
 void SceneLoader::addSpectralMapper(const DL::DataGroup& group, SceneLoadContext& ctx)
 {
-	auto manag		= ctx.environment()->spectralMapperManager();
-	const uint32 id = manag->nextID();
+	auto manag = ctx.environment()->spectralMapperManager();
 
 	DL::Data typeD = group.getFromKey("type");
 
@@ -332,13 +328,12 @@ void SceneLoader::addSpectralMapper(const DL::DataGroup& group, SceneLoadContext
 	}
 
 	ctx.parameters() = populateObjectParameters(group, ctx);
-	auto mapper		 = fac->create(id, type, ctx);
+	auto mapper		 = fac->create(type, ctx);
 	if (!mapper) {
 		PR_LOG(L_ERROR) << "[Loader] Could not create spectral mapper of type " << type << std::endl;
 		return;
 	}
 
-	ctx.environment()->spectralMapperManager()->addObject(mapper);
 	if (ctx.environment()->renderSettings().spectralMapperFactory)
 		PR_LOG(L_WARNING) << "[Loader] Spectral mapper already selected. Replacing it " << std::endl;
 
@@ -347,8 +342,7 @@ void SceneLoader::addSpectralMapper(const DL::DataGroup& group, SceneLoadContext
 
 void SceneLoader::addIntegrator(const DL::DataGroup& group, SceneLoadContext& ctx)
 {
-	auto manag		= ctx.environment()->integratorManager();
-	const uint32 id = manag->nextID();
+	auto manag = ctx.environment()->integratorManager();
 
 	DL::Data typeD = group.getFromKey("type");
 	std::string type;
@@ -367,7 +361,7 @@ void SceneLoader::addIntegrator(const DL::DataGroup& group, SceneLoadContext& ct
 	}
 
 	ctx.parameters() = populateObjectParameters(group, ctx);
-	auto intgr		 = fac->create(id, type, ctx);
+	auto intgr		 = fac->create(type, ctx);
 	if (!intgr) {
 		PR_LOG(L_ERROR) << "[Loader] Could not create integrator of type " << type << std::endl;
 		return;
@@ -381,10 +375,10 @@ void SceneLoader::addIntegrator(const DL::DataGroup& group, SceneLoadContext& ct
 
 Transformf SceneLoader::extractTransform(const DL::DataGroup& group)
 {
-	DL::Data transformD	  = group.getFromKey("transform");
-	DL::Data posD		  = group.getFromKey("position");
-	DL::Data rotD		  = group.getFromKey("rotation");
-	DL::Data scaleD		  = group.getFromKey("scale");
+	DL::Data transformD = group.getFromKey("transform");
+	DL::Data posD		= group.getFromKey("position");
+	DL::Data rotD		= group.getFromKey("rotation");
+	DL::Data scaleD		= group.getFromKey("scale");
 
 	if (transformD.type() == DL::DT_Group) {
 		bool ok		 = false;
@@ -395,7 +389,7 @@ Transformf SceneLoader::extractTransform(const DL::DataGroup& group)
 			PR_LOG(L_WARNING) << "Couldn't set transform " << std::endl;
 
 		return t;
-	}else {
+	} else {
 		bool ok				   = true;
 		Vector3f pos		   = Vector3f(0, 0, 0);
 		Eigen::Quaternionf rot = Eigen::Quaternionf::Identity();
@@ -442,8 +436,7 @@ Transformf SceneLoader::extractTransform(const DL::DataGroup& group)
 void SceneLoader::addEntity(const DL::DataGroup& group,
 							const std::shared_ptr<PR::ITransformable>& parent, SceneLoadContext& ctx)
 {
-	auto manag		= ctx.environment()->entityManager();
-	const uint32 id = manag->nextID();
+	auto manag = ctx.environment()->entityManager();
 
 	DL::Data nameD			= group.getFromKey("name");
 	DL::Data typeD			= group.getFromKey("type");
@@ -480,7 +473,7 @@ void SceneLoader::addEntity(const DL::DataGroup& group,
 	else
 		ctx.transform() = extractTransform(group);
 
-	auto entity = fac->create(id, type, ctx);
+	auto entity = fac->create(type, ctx);
 	if (!entity) {
 		PR_LOG(L_ERROR) << "[Loader] Could not create entity of type " << type << std::endl;
 		return;
@@ -501,7 +494,7 @@ void SceneLoader::addEntity(const DL::DataGroup& group,
 	entity->setVisibilityFlags(visFlags);
 
 	// Add to scene
-	manag->addObject(entity);
+	ctx.environment()->sceneDatabase()->Entities->add(entity);
 
 	for (size_t i = 0; i < group.anonymousCount(); ++i) {
 		if (group.at(i).type() == DL::DT_Group) {
@@ -515,8 +508,7 @@ void SceneLoader::addEntity(const DL::DataGroup& group,
 
 void SceneLoader::addCamera(const DL::DataGroup& group, SceneLoadContext& ctx)
 {
-	auto manag		= ctx.environment()->cameraManager();
-	const uint32 id = manag->nextID();
+	auto manag = ctx.environment()->cameraManager();
 
 	//DL::Data nameD = group.getFromKey("name");
 	DL::Data typeD = group.getFromKey("type");
@@ -548,19 +540,21 @@ void SceneLoader::addCamera(const DL::DataGroup& group, SceneLoadContext& ctx)
 
 	ctx.parameters() = populateObjectParameters(group, ctx);
 	ctx.transform()	 = extractTransform(group);
-	auto camera		 = fac->create(id, type, ctx);
+	auto camera		 = fac->create(type, ctx);
 	if (!camera) {
 		PR_LOG(L_ERROR) << "[Loader] Could not create camera of type " << type << std::endl;
 		return;
 	}
 
-	manag->addObject(camera);
+	if (manag->hasActiveCamera())
+		PR_LOG(L_WARNING) << "[Loader] Active camera already exists. Replacing it " << type << std::endl;
+
+	manag->setActiveCamera(camera);
 }
 
 void SceneLoader::addLight(const DL::DataGroup& group, SceneLoadContext& ctx)
 {
-	auto manag		= ctx.environment()->infiniteLightManager();
-	const uint32 id = manag->nextID();
+	auto manag = ctx.environment()->infiniteLightManager();
 
 	DL::Data typeD = group.getFromKey("type");
 
@@ -582,13 +576,13 @@ void SceneLoader::addLight(const DL::DataGroup& group, SceneLoadContext& ctx)
 
 	ctx.parameters() = populateObjectParameters(group, ctx);
 	ctx.transform()	 = extractTransform(group);
-	auto light		 = fac->create(id, type, ctx);
+	auto light		 = fac->create(type, ctx);
 	if (!light) {
 		PR_LOG(L_ERROR) << "[Loader] Could not create light of type " << type << std::endl;
 		return;
 	}
 
-	ctx.environment()->infiniteLightManager()->addObject(light);
+	ctx.environment()->sceneDatabase()->InfiniteLights->add(light);
 }
 
 void SceneLoader::addEmission(const DL::DataGroup& group, SceneLoadContext& ctx)
@@ -604,7 +598,7 @@ void SceneLoader::addEmission(const DL::DataGroup& group, SceneLoadContext& ctx)
 		return;
 	}
 
-	if (ctx.environment()->hasEmission(name)) {
+	if (ctx.hasEmission(name)) {
 		PR_LOG(L_ERROR) << "[Loader] Emission name already set" << std::endl;
 		return;
 	}
@@ -640,7 +634,7 @@ void SceneLoader::addMaterial(const DL::DataGroup& group, SceneLoadContext& ctx)
 		return;
 	}
 
-	if (ctx.environment()->hasMaterial(name)) {
+	if (ctx.hasMaterial(name)) {
 		PR_LOG(L_ERROR) << "[Loader] Material name '" << name << "' already set" << std::endl;
 		return;
 	}
@@ -674,8 +668,7 @@ void SceneLoader::addTexture(const DL::DataGroup& group, SceneLoadContext& ctx)
 
 void SceneLoader::addNode(const DL::DataGroup& group, SceneLoadContext& ctx)
 {
-	auto manag		= ctx.environment()->nodeManager();
-	const uint32 id = manag->nextID();
+	auto manag = ctx.environment()->nodeManager();
 
 	DL::Data nameD = group.getFromKey("name");
 	DL::Data typeD = group.getFromKey("type");
@@ -690,7 +683,7 @@ void SceneLoader::addNode(const DL::DataGroup& group, SceneLoadContext& ctx)
 		return;
 	}
 
-	if (ctx.environment()->hasNode(name)) {
+	if (ctx.hasNode(name)) {
 		PR_LOG(L_ERROR) << "[Loader] Node name already set" << std::endl;
 		return;
 	}
@@ -710,21 +703,19 @@ void SceneLoader::addNode(const DL::DataGroup& group, SceneLoadContext& ctx)
 	}
 
 	ctx.parameters() = populateObjectParameters(group, ctx);
-	auto node		 = fac->create(id, type, ctx);
+	auto node		 = fac->create(type, ctx);
 	if (!node) {
 		PR_LOG(L_ERROR) << "[Loader] Could not create node of type " << type << std::endl;
 		return;
 	}
 
-	ctx.environment()->addNode(name, node);
-	manag->addObject(node);
+	ctx.addNode(name, node);
 }
 
 // Assume node from the groups id
 uint32 SceneLoader::addNodeInline(const DL::DataGroup& group, SceneLoadContext& ctx)
 {
-	auto manag		= ctx.environment()->nodeManager();
-	const uint32 id = manag->nextID();
+	auto manag = ctx.environment()->nodeManager();
 
 	std::string type = group.id();
 
@@ -735,13 +726,13 @@ uint32 SceneLoader::addNodeInline(const DL::DataGroup& group, SceneLoadContext& 
 	}
 
 	ctx.parameters() = populateObjectParameters(group, ctx);
-	auto node		 = fac->create(id, type, ctx);
+	auto node		 = fac->create(type, ctx);
 	if (!node) {
 		PR_LOG(L_ERROR) << "[Loader] Could not create node of type " << type << std::endl;
 		return P_INVALID_REFERENCE;
 	}
 
-	return manag->addObject(node);
+	return ctx.environment()->sceneDatabase()->Nodes->add(node);
 }
 
 void SceneLoader::addMesh(const DL::DataGroup& group, SceneLoadContext& ctx)
@@ -756,7 +747,7 @@ void SceneLoader::addMesh(const DL::DataGroup& group, SceneLoadContext& ctx)
 		return;
 	}
 
-	if (ctx.environment()->hasMesh(name)) {
+	if (ctx.hasMesh(name)) {
 		PR_LOG(L_ERROR) << "[Loader] Mesh name already set" << std::endl;
 		return;
 	}
@@ -781,7 +772,7 @@ void SceneLoader::addMesh(const DL::DataGroup& group, SceneLoadContext& ctx)
 		mesh->triangulate();
 	}
 
-	ctx.environment()->addMesh(name, std::move(mesh));
+	ctx.addMesh(name, std::move(mesh));
 }
 
 void SceneLoader::addSubGraph(const DL::DataGroup& group, SceneLoadContext& ctx)
@@ -999,9 +990,9 @@ Parameter SceneLoader::unpackShadingNetwork(const DL::DataGroup& group, SceneLoa
 {
 	if (group.id() == "texture") {
 		if (group.anonymousCount() == 1 && group.at(0).type() == DL::DT_String) {
-			auto node = ctx.environment()->getRawNode(group.at(0).getString());
+			const auto node = ctx.getRawNode(group.at(0).getString());
 			if (node) {
-				uint32 id = ctx.environment()->nodeManager()->addObject(node);
+				uint32 id = ctx.environment()->sceneDatabase()->Nodes->add(node);
 				return Parameter::fromReference(id);
 			} else {
 				PR_LOG(L_ERROR) << "[Loader] Unknown texture " << group.at(0).getString() << std::endl;
@@ -1011,9 +1002,9 @@ Parameter SceneLoader::unpackShadingNetwork(const DL::DataGroup& group, SceneLoa
 		}
 	} else if (group.id() == "node") {
 		if (group.anonymousCount() == 1 && group.at(0).type() == DL::DT_String) {
-			auto node = ctx.environment()->getRawNode(group.at(0).getString());
+			const auto node = ctx.getRawNode(group.at(0).getString());
 			if (node) {
-				uint32 id = ctx.environment()->nodeManager()->addObject(node);
+				uint32 id = ctx.environment()->sceneDatabase()->Nodes->add(node);
 				return Parameter::fromReference(id);
 			} else {
 				PR_LOG(L_ERROR) << "[Loader] Unknown node " << group.at(0).getString() << std::endl;

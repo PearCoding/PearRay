@@ -74,11 +74,11 @@ class MeshEntity : public IEntity {
 public:
 	ENTITY_CLASS
 
-	MeshEntity(uint32 id, const std::string& name, const Transformf& transform,
+	MeshEntity(const std::string& name, const Transformf& transform,
 			   const std::shared_ptr<Mesh>& mesh,
 			   const std::vector<uint32>& materials,
 			   uint32 lightID)
-		: IEntity(id, lightID, name, transform)
+		: IEntity(lightID, name, transform)
 		, mMaterials(materials)
 		, mMesh(mesh)
 		, mBoundingBox(mesh->base()->constructBoundingBox())
@@ -188,8 +188,7 @@ public:
 		pt.N.normalize();
 		pt.Nx.normalize();
 		pt.Ny.normalize();
-
-		pt.EntityID	   = id();
+		
 		pt.PrimitiveID = query.PrimitiveID;
 		pt.EmissionID  = emissionID();
 		pt.DisplaceID  = PR_INVALID_ID;
@@ -205,7 +204,7 @@ class MeshEntityPlugin : public IEntityPlugin {
 public:
 	std::unordered_map<MeshBase*, std::shared_ptr<Mesh>> mOriginalMesh;
 
-	std::shared_ptr<IEntity> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<IEntity> create(const std::string&, const SceneLoadContext& ctx)
 	{
 		const ParameterGroup& params = ctx.parameters();
 
@@ -214,23 +213,13 @@ public:
 
 		std::vector<std::string> matNames = params.getStringArray("materials");
 
-		std::vector<uint32> materials;
-		for (std::string n : matNames) {
-			std::shared_ptr<IMaterial> mat = ctx.environment()->getMaterial(n);
-			if (mat)
-				materials.push_back(mat->id());
-		}
+		const std::vector<uint32> materials = ctx.lookupMaterialIDArray(params.getParameter("materials"));
+		const uint32 emsID = ctx.lookupEmissionID(params.getParameter("emission"));
 
-		std::string emsName			   = params.getString("emission", "");
-		uint32 emsID				   = PR_INVALID_ID;
-		std::shared_ptr<IEmission> ems = ctx.environment()->getEmission(emsName);
-		if (ems)
-			emsID = ems->id();
-
-		if (!ctx.environment()->hasMesh(mesh_name))
+		if (!ctx.hasMesh(mesh_name))
 			return nullptr;
 		else {
-			auto mesh = ctx.environment()->getMesh(mesh_name);
+			auto mesh = ctx.getMesh(mesh_name);
 			std::shared_ptr<Mesh> mesh_p;
 			if (mOriginalMesh.count(mesh.get()) > 0) {
 				mesh_p = mOriginalMesh.at(mesh.get());
@@ -240,11 +229,11 @@ public:
 			}
 
 			if (mesh->features() & MF_HAS_UV)
-				return std::make_shared<MeshEntity<true>>(id, name, ctx.transform(),
+				return std::make_shared<MeshEntity<true>>(name, ctx.transform(),
 														  mesh_p,
 														  materials, emsID);
 			else
-				return std::make_shared<MeshEntity<false>>(id, name, ctx.transform(),
+				return std::make_shared<MeshEntity<false>>(name, ctx.transform(),
 														   mesh_p,
 														   materials, emsID);
 		}

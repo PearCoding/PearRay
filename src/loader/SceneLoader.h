@@ -22,8 +22,8 @@ class PR_LIB_LOADER SceneLoader {
 
 public:
 	struct LoadOptions {
-		std::wstring WorkingDir;
-		std::wstring PluginPath;
+		std::filesystem::path WorkingDir;
+		std::filesystem::path PluginPath;
 		uint32 CacheMode;
 	};
 
@@ -32,8 +32,7 @@ public:
 
 private:
 	static std::shared_ptr<Environment> createEnvironment(const std::vector<DL::DataGroup>& groups,
-														  const LoadOptions& opts,
-														  SceneLoadContext& ctx);
+														  const LoadOptions& opts, const std::filesystem::path& path);
 	static void setupEnvironment(const std::vector<DL::DataGroup>& groups, SceneLoadContext& ctx);
 	static void addCamera(const DL::DataGroup& group, SceneLoadContext& ctx);
 	static void addEmission(const DL::DataGroup& group, SceneLoadContext& ctx);

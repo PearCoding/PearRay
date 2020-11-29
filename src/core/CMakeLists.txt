@@ -1,4 +1,5 @@
 set(PR_Src
+  AbstractDatabase.h
   Random.h
   ServiceObserver.h
   ServiceObserver.inl
@@ -145,6 +146,8 @@ set(PR_Src
   sampler/SampleArray.h
   scene/Scene.cpp
   scene/Scene.h
+  scene/SceneDatabase.cpp
+  scene/SceneDatabase.h
   spectral/Blackbody.h
   spectral/CIE.cpp
   spectral/CIE.h

@@ -275,7 +275,7 @@ std::shared_ptr<FloatSpectralNode> createSellmeierIndex(const SceneLoadContext& 
 
 class ReflectivePlugin : public INodePlugin {
 public:
-	std::shared_ptr<INode> create(uint32, const std::string& type_name, const SceneLoadContext& ctx) override
+	std::shared_ptr<INode> create(const std::string& type_name, const SceneLoadContext& ctx) override
 	{
 		bool allNumber = true;
 		for (const auto& param : ctx.parameters().positionalParameters()) {

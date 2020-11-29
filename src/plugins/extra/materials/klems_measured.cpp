@@ -601,8 +601,8 @@ private:
 template <bool SwapSide, bool HasTint>
 class KlemsMeasuredMaterial : public IMaterial {
 public:
-	KlemsMeasuredMaterial(uint32 id, const KlemsMeasurement& measurement, const std::shared_ptr<FloatSpectralNode>& tint)
-		: IMaterial(id)
+	KlemsMeasuredMaterial(const KlemsMeasurement& measurement, const std::shared_ptr<FloatSpectralNode>& tint)
+		: IMaterial()
 		, mMeasurement(measurement)
 		, mTint(tint)
 	{
@@ -701,7 +701,7 @@ private:
 
 class KlemsMeasuredMaterialPlugin : public IMaterialPlugin {
 public:
-	std::shared_ptr<IMaterial> create(uint32 id, const std::string&, const SceneLoadContext& ctx) override
+	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx) override
 	{
 		const ParameterGroup& params = ctx.parameters();
 		int allowedComponents		 = AC_All;
@@ -732,14 +732,14 @@ public:
 			if (params.hasParameter("tint")) {
 				auto tint = ctx.lookupSpectralNode("tint", 1);
 				if (swapSide)
-					return std::make_shared<KlemsMeasuredMaterial<true, true>>(id, measurement, tint);
+					return std::make_shared<KlemsMeasuredMaterial<true, true>>(measurement, tint);
 				else
-					return std::make_shared<KlemsMeasuredMaterial<false, true>>(id, measurement, tint);
+					return std::make_shared<KlemsMeasuredMaterial<false, true>>(measurement, tint);
 			} else {
 				if (swapSide)
-					return std::make_shared<KlemsMeasuredMaterial<true, false>>(id, measurement, nullptr);
+					return std::make_shared<KlemsMeasuredMaterial<true, false>>(measurement, nullptr);
 				else
-					return std::make_shared<KlemsMeasuredMaterial<false, false>>(id, measurement, nullptr);
+					return std::make_shared<KlemsMeasuredMaterial<false, false>>(measurement, nullptr);
 			}
 		}
 		return nullptr;

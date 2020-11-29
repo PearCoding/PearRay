@@ -43,7 +43,7 @@ public:
 
 class RandomSpectralMapperPlugin : public ISpectralMapperPlugin {
 public:
-	std::shared_ptr<ISpectralMapperFactory> create(uint32, const std::string&, const SceneLoadContext&) override
+	std::shared_ptr<ISpectralMapperFactory> create(const std::string&, const SceneLoadContext&) override
 	{
 		return std::make_shared<RandomSpectralMapperFactory>();
 	}

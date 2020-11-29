@@ -352,7 +352,7 @@ private:
 
 class ExpressionPlugin : public INodePlugin {
 public:
-	std::shared_ptr<INode> create(uint32, const std::string& type_name, const SceneLoadContext& ctx) override
+	std::shared_ptr<INode> create(const std::string& type_name, const SceneLoadContext& ctx) override
 	{
 		std::string expr_str;
 		if (type_name == "expr" || type_name == "vexpr") {

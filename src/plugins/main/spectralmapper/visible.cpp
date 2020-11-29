@@ -110,7 +110,7 @@ public:
 
 class VisibleSpectralMapperPlugin : public ISpectralMapperPlugin {
 public:
-	std::shared_ptr<ISpectralMapperFactory> create(uint32, const std::string& name, const SceneLoadContext& ctx) override
+	std::shared_ptr<ISpectralMapperFactory> create(const std::string& name, const SceneLoadContext& ctx) override
 	{
 		if (name == "visible_y" || ctx.parameters().getBool("only_y", false))
 			return std::make_shared<VisibleSpectralMapperFactory<true>>();

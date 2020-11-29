@@ -46,13 +46,12 @@ inline static float adaptR(float r)
 template <bool SpectralVarying, bool HasAnisoRoughness>
 class RoughDielectricMaterial : public IMaterial {
 public:
-	RoughDielectricMaterial(uint32 id,
-							const std::shared_ptr<FloatSpectralNode>& spec,
+	RoughDielectricMaterial(const std::shared_ptr<FloatSpectralNode>& spec,
 							const std::shared_ptr<FloatSpectralNode>& trans,
 							const std::shared_ptr<FloatSpectralNode>& ior,
 							const std::shared_ptr<FloatScalarNode>& roughnessX,
 							const std::shared_ptr<FloatScalarNode>& roughnessY)
-		: IMaterial(id)
+		: IMaterial()
 		, mSpecularity(spec)
 		, mTransmission(trans)
 		, mIOR(ior)
@@ -367,7 +366,7 @@ private:
 
 // System of function which probably could be simplified with template meta programming
 template <bool SpectralVarying, bool HasAnisoRoughness>
-static std::shared_ptr<IMaterial> createMaterial1(uint32 id, const SceneLoadContext& ctx)
+static std::shared_ptr<IMaterial> createMaterial1(const SceneLoadContext& ctx)
 {
 	std::shared_ptr<FloatScalarNode> rx;
 	std::shared_ptr<FloatScalarNode> ry;
@@ -388,37 +387,36 @@ static std::shared_ptr<IMaterial> createMaterial1(uint32 id, const SceneLoadCont
 		trans = ctx.lookupSpectralNode("transmission", 1);
 
 	return std::make_shared<RoughDielectricMaterial<SpectralVarying, HasAnisoRoughness>>(
-		id,
 		spec, trans,
 		ctx.lookupSpectralNode("index", 1.55f),
 		rx, ry);
 }
 
 template <bool SpectralVarying>
-static std::shared_ptr<IMaterial> createMaterial2(uint32 id, const SceneLoadContext& ctx)
+static std::shared_ptr<IMaterial> createMaterial2(const SceneLoadContext& ctx)
 {
 	const bool roughness_y = ctx.parameters().hasParameter("roughness_y");
 	if (roughness_y)
-		return createMaterial1<SpectralVarying, true>(id, ctx);
+		return createMaterial1<SpectralVarying, true>(ctx);
 	else
-		return createMaterial1<SpectralVarying, false>(id, ctx);
+		return createMaterial1<SpectralVarying, false>(ctx);
 }
 
-static std::shared_ptr<IMaterial> createMaterial3(uint32 id, const SceneLoadContext& ctx)
+static std::shared_ptr<IMaterial> createMaterial3(const SceneLoadContext& ctx)
 {
 	const bool spectralVarying = ctx.parameters().getBool("spectral_varying", true);
 	if (spectralVarying)
-		return createMaterial2<true>(id, ctx);
+		return createMaterial2<true>(ctx);
 	else
-		return createMaterial2<false>(id, ctx);
+		return createMaterial2<false>(ctx);
 }
 
 class RoughDielectricMaterialPlugin : public IMaterialPlugin {
 public:
-	std::shared_ptr<IMaterial> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx)
 	{
 		// TODO: If no roughness is given -> yield to glass material
-		return createMaterial3(id, ctx);
+		return createMaterial3(ctx);
 	}
 
 	const std::vector<std::string>& getNames() const

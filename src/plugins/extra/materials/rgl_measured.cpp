@@ -26,8 +26,8 @@ namespace PR {
 
 class RGLMeasuredMaterial : public IMaterial {
 public:
-	RGLMeasuredMaterial(uint32 id, const std::string& filename, const std::shared_ptr<FloatSpectralNode>& tint)
-		: IMaterial(id)
+	RGLMeasuredMaterial(const std::string& filename, const std::shared_ptr<FloatSpectralNode>& tint)
+		: IMaterial()
 		, mFilename(filename)
 		, mBRDF(filename.c_str())
 		, mTint(tint)
@@ -112,11 +112,10 @@ private:
 
 class RGLMeasuredMaterialPlugin : public IMaterialPlugin {
 public:
-	std::shared_ptr<IMaterial> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx)
 	{
 		const ParameterGroup& params = ctx.parameters();
-		return std::make_shared<RGLMeasuredMaterial>(id,
-													 ctx.escapePath(params.getString("filename", "")),
+		return std::make_shared<RGLMeasuredMaterial>(ctx.escapePath(params.getString("filename", "")),
 													 ctx.lookupSpectralNode("tint", 1));
 	}
 

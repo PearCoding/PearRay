@@ -1,15 +1,5 @@
 // IWYU pragma: private, include "entity/ITransformable.h"
 namespace PR {
-inline uint32 ITransformable::id() const
-{
-	return mID;
-}
-
-inline void ITransformable::setName(const std::string& name)
-{
-	mName = name;
-}
-
 inline std::string ITransformable::name() const
 {
 	return mName;

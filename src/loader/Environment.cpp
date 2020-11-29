@@ -24,6 +24,7 @@
 #include "sampler/ISamplerPlugin.h"
 #include "sampler/SamplerManager.h"
 #include "scene/Scene.h"
+#include "scene/SceneDatabase.h"
 #include "shader/ConstNode.h"
 #include "shader/NodeManager.h"
 #include "spectral/ISpectralMapperPlugin.h"
@@ -37,27 +38,47 @@
 
 #include <filesystem>
 #include <regex>
+#include <typeinfo>
 
 namespace PR {
 Environment::Environment(const std::filesystem::path& workdir,
 						 const std::filesystem::path& plugdir,
 						 bool useStandardLib)
-	: QueryEnvironment(plugdir)
-	, mWorkingDir(workdir)
+	: mWorkingDir(workdir)
+	, mQueryMode(workdir.empty())
+	, mServiceObserver(std::make_shared<ServiceObserver>())
+	, mSceneDatabase(std::make_shared<SceneDatabase>())
+	, mPluginManager(std::make_shared<PluginManager>(plugdir))
+	, mCameraManager(std::make_shared<CameraManager>())
+	, mEmissionManager(std::make_shared<EmissionManager>())
+	, mEntityManager(std::make_shared<EntityManager>())
+	, mFilterManager(std::make_shared<FilterManager>())
+	, mInfiniteLightManager(std::make_shared<InfiniteLightManager>())
+	, mIntegratorManager(std::make_shared<IntegratorManager>())
+	, mMaterialManager(std::make_shared<MaterialManager>())
+	, mNodeManager(std::make_shared<NodeManager>())
+	, mSamplerManager(std::make_shared<SamplerManager>())
+	, mSpectralMapperManager(std::make_shared<SpectralMapperManager>())
+	, mDefaultSpectralUpsampler(DefaultSRGB::loadSpectralUpsampler())
 	, mResourceManager(std::make_shared<ResourceManager>(workdir))
 	, mCache(std::make_shared<Cache>(workdir))
 	, mTextureSystem(nullptr)
 	, mOutputSpecification(workdir)
 {
+	try {
+		loadPlugins(plugdir);
+	} catch (const std::exception& e) {
+		PR_LOG(L_ERROR) << "Error while loading plugins: " << e.what() << std::endl;
+	}
+
 	mTextureSystem = OIIO::TextureSystem::create();
 
 	if (useStandardLib) {
 		//Defaults
-		// TODO: Involve upsampler!
 		auto addColor = [&](const std::string& name, float r, float g, float b) {
 			ParametricBlob params;
 			mDefaultSpectralUpsampler->prepare(&r, &g, &b, &params[0], &params[1], &params[2], 1);
-			mNamedNodes.insert(std::make_pair(name, std::make_shared<ParametricSpectralNode>(params)));
+			mSceneDatabase->Nodes->add(name, std::make_shared<ParametricSpectralNode>(params));
 		};
 
 		addColor("black", 0, 0, 0);
@@ -81,25 +102,25 @@ Environment::~Environment()
 
 void Environment::dumpInformation() const
 {
-	for (auto p : mEntityManager->getAll())
+	for (auto p : mSceneDatabase->Entities->getAll())
 		PR_LOG(L_INFO) << p->name() << ":" << std::endl
 					   << p->dumpInformation() << std::endl;
 
-	/*for (auto p : mEmissionManager->getAll())
-		PR_LOG(L_INFO) << p->name() << ":" << std::endl
-					   << p->dumpInformation() << std::endl;*/
+	for (auto p : mSceneDatabase->Emissions->getAllNamed())
+		PR_LOG(L_INFO) << p.first << ":" << std::endl
+					   << mSceneDatabase->Emissions->get(p.second)->dumpInformation() << std::endl;
 
-	for (auto p : mInfiniteLightManager->getAll())
+	for (auto p : mSceneDatabase->InfiniteLights->getAll())
 		PR_LOG(L_INFO) << p->name() << ":" << std::endl
 					   << p->dumpInformation() << std::endl;
 
-	for (auto p : mMaterials)
+	for (auto p : mSceneDatabase->Materials->getAllNamed())
 		PR_LOG(L_INFO) << p.first << ":" << std::endl
-					   << p.second->dumpInformation() << std::endl;
+					   << mSceneDatabase->Materials->get(p.second)->dumpInformation() << std::endl;
 
-	for (auto p : mNamedNodes)
+	for (auto p : mSceneDatabase->Nodes->getAllNamed())
 		PR_LOG(L_INFO) << p.first << ":" << std::endl
-					   << p.second->dumpInformation() << std::endl;
+					   << mSceneDatabase->Nodes->get(p.second)->dumpInformation() << std::endl;
 }
 
 void Environment::setup(const std::shared_ptr<RenderContext>& renderer)
@@ -127,12 +148,6 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory()
 {
 	setupFloatingPointEnvironment();
 
-	const auto& entities  = mEntityManager->getAll();
-	const auto& materials = mMaterialManager->getAll();
-	const auto& emissions = mEmissionManager->getAll();
-	const auto& inflights = mInfiniteLightManager->getAll();
-	const auto& nodes	  = mNodeManager->getAll();
-
 	std::shared_ptr<ICamera> activeCamera = mCameraManager->getActiveCamera();
 	if (!activeCamera) {
 		PR_LOG(L_ERROR) << "No camera available!" << std::endl;
@@ -143,11 +158,7 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory()
 	try {
 		scene = std::make_shared<Scene>(mServiceObserver,
 										activeCamera,
-										entities,
-										materials,
-										emissions,
-										inflights,
-										nodes);
+										mSceneDatabase);
 	} catch (const std::exception& e) {
 		PR_LOG(L_ERROR) << e.what() << std::endl;
 		return nullptr;
@@ -173,12 +184,78 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory()
 	return fct;
 }
 
-std::shared_ptr<INode> Environment::getRawNode(uint64 refid) const
+void Environment::loadPlugins(const std::filesystem::path& basedir)
 {
-	if (refid != P_INVALID_REFERENCE && mNodeManager->hasObject(refid))
-		return mNodeManager->getObject(refid);
-	else
-		return nullptr;
+	// First load possible embedded plugins
+	mPluginManager->loadEmbeddedPlugins();
+
+	try {
+#ifdef PR_DEBUG
+		static const std::wregex e(L"(lib)?pr_pl_([\\w_]+)_d");
+#else
+		static const std::wregex e(L"(lib)?pr_pl_([\\w_]+)");
+#endif
+
+		// Load dlls
+		for (auto& entry : std::filesystem::directory_iterator(basedir)) {
+			if (!std::filesystem::is_regular_file(entry))
+				continue;
+
+			const std::wstring filename = entry.path().stem().generic_wstring();
+			const std::wstring ext		= entry.path().extension().generic_wstring();
+
+			if (ext != L".so" && ext != L".dll")
+				continue;
+
+			std::wsmatch what;
+			if (std::regex_match(filename, what, e)) {
+#ifndef PR_DEBUG
+				// Ignore debug builds
+				if (filename.substr(filename.size() - 2, 2) == L"_d")
+					continue;
+#endif
+
+				mPluginManager->load(entry.path());
+			}
+		}
+	} catch (const std::exception& e) {
+		PR_LOG(L_ERROR) << "Could not load external plugins: " << e.what() << std::endl;
+	}
+
+	// Load into respective managers
+	for (auto plugin : mPluginManager->plugins()) {
+		const char* type = plugin->type();
+		if (type == nullptr) {
+			PR_LOG(L_ERROR) << "Plugin " << typeid(plugin).name() << " returns null type" << std::endl;
+			continue;
+		}
+
+		std::string stype = type;
+		std::transform(stype.begin(), stype.end(), stype.begin(), ::tolower);
+
+		if (stype == "integrator")
+			mIntegratorManager->addFactory(std::dynamic_pointer_cast<IIntegratorPlugin>(plugin));
+		else if (stype == "camera")
+			mCameraManager->addFactory(std::dynamic_pointer_cast<ICameraPlugin>(plugin));
+		else if (stype == "material")
+			mMaterialManager->addFactory(std::dynamic_pointer_cast<IMaterialPlugin>(plugin));
+		else if (stype == "emission")
+			mEmissionManager->addFactory(std::dynamic_pointer_cast<IEmissionPlugin>(plugin));
+		else if (stype == "infinitelight")
+			mInfiniteLightManager->addFactory(std::dynamic_pointer_cast<IInfiniteLightPlugin>(plugin));
+		else if (stype == "entity")
+			mEntityManager->addFactory(std::dynamic_pointer_cast<IEntityPlugin>(plugin));
+		else if (stype == "filter")
+			mFilterManager->addFactory(std::dynamic_pointer_cast<IFilterPlugin>(plugin));
+		else if (stype == "sampler")
+			mSamplerManager->addFactory(std::dynamic_pointer_cast<ISamplerPlugin>(plugin));
+		else if (stype == "node")
+			mNodeManager->addFactory(std::dynamic_pointer_cast<INodePlugin>(plugin));
+		else if (stype == "spectralmapper")
+			mSpectralMapperManager->addFactory(std::dynamic_pointer_cast<ISpectralMapperPlugin>(plugin));
+		else
+			PR_LOG(L_ERROR) << "Plugin " << typeid(plugin).name() << " has unknown type '" << type << "'" << std::endl;
+	}
 }
 
 } // namespace PR

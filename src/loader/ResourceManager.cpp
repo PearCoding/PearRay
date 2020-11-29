@@ -5,17 +5,25 @@
 #include <cctype>
 
 namespace PR {
+
 ResourceManager::ResourceManager(const std::filesystem::path& workingDir)
 	: mWorkingDir(workingDir)
+	, mQueryMode(workingDir.empty())
 {
-	std::filesystem::create_directories(workingDir / "cache" / "mesh");
-	std::filesystem::create_directories(workingDir / "cache" / "scene");
-	std::filesystem::create_directories(workingDir / "cache" / "node");
+	if (!mQueryMode) {
+		std::filesystem::create_directories(workingDir / "cache" / "mesh");
+		std::filesystem::create_directories(workingDir / "cache" / "scene");
+		std::filesystem::create_directories(workingDir / "cache" / "node");
+	}
 }
 
+// TODO: Handle query mode properly
 std::filesystem::path ResourceManager::requestFile(const std::string& grp, const std::string& name, const std::string& ext,
 												   bool& updateNeeded)
 {
+	if (mQueryMode)
+		return {};
+
 	std::string dir = grp;
 	std::transform(dir.begin(), dir.end(), dir.begin(),
 				   [](char c) { return std::tolower(c); });

@@ -26,8 +26,7 @@ namespace PR {
 template <bool UseVNDF>
 class PrincipledMaterial : public IMaterial {
 public:
-	PrincipledMaterial(uint32 id,
-					   const std::shared_ptr<FloatSpectralNode>& baseColor,
+	PrincipledMaterial(const std::shared_ptr<FloatSpectralNode>& baseColor,
 					   const std::shared_ptr<FloatScalarNode>& spec,
 					   const std::shared_ptr<FloatScalarNode>& specTint,
 					   const std::shared_ptr<FloatScalarNode>& roughness,
@@ -38,7 +37,7 @@ public:
 					   const std::shared_ptr<FloatScalarNode>& sheenTint,
 					   const std::shared_ptr<FloatScalarNode>& clearcoat,
 					   const std::shared_ptr<FloatScalarNode>& clearcoatGloss)
-		: IMaterial(id)
+		: IMaterial()
 		, mBaseColor(baseColor)
 		, mSpecular(spec)
 		, mSpecularTint(specTint)
@@ -331,7 +330,7 @@ private:
 }; // namespace PR
 
 template <bool UseVNDF>
-inline static std::shared_ptr<IMaterial> createPrincipled(uint32 id, const SceneLoadContext& ctx)
+inline static std::shared_ptr<IMaterial> createPrincipled(const SceneLoadContext& ctx)
 {
 	const auto base_color	   = ctx.parameters().hasParameter("base_color") ? ctx.lookupSpectralNode("base_color", 0.8f) : ctx.lookupSpectralNode("base", 0.8f);
 	const auto specular		   = ctx.lookupScalarNode("specular", 0.5f);
@@ -346,7 +345,6 @@ inline static std::shared_ptr<IMaterial> createPrincipled(uint32 id, const Scene
 	const auto clearcoat_gloss = ctx.lookupScalarNode("clearcoat_gloss", 0.0f);
 
 	return std::make_shared<PrincipledMaterial<UseVNDF>>(
-		id,
 		base_color, specular, specular_tint, roughness,
 		anisotropic, subsurface, metallic, sheen,
 		sheen_tint, clearcoat, clearcoat_gloss);
@@ -354,15 +352,15 @@ inline static std::shared_ptr<IMaterial> createPrincipled(uint32 id, const Scene
 
 class PrincipledMaterialPlugin : public IMaterialPlugin {
 public:
-	std::shared_ptr<IMaterial> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx)
 	{
 		// TODO: Fix VNDF and make it default again
 		const bool use_vndf = ctx.parameters().getBool("vndf", false);
 
 		if (use_vndf)
-			return createPrincipled<true>(id, ctx);
+			return createPrincipled<true>(ctx);
 		else
-			return createPrincipled<false>(id, ctx);
+			return createPrincipled<false>(ctx);
 	}
 
 	const std::vector<std::string>& getNames() const

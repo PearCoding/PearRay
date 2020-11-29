@@ -35,7 +35,7 @@ class PR_LIB_CORE ICamera : public ITransformable {
 public:
 	ENTITY_CLASS
 
-	ICamera(uint32 id, const std::string& name, const Transformf& transform);
+	ICamera(const std::string& name, const Transformf& transform);
 	virtual ~ICamera();
 
 	virtual std::optional<CameraRay> constructRay(const CameraSample& sample) const = 0;

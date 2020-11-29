@@ -4,6 +4,7 @@
 #include "entity/IEntity.h"
 #include "infinitelight/IInfiniteLight.h"
 #include "scene/Scene.h"
+#include "scene/SceneDatabase.h"
 
 namespace PR {
 
@@ -15,9 +16,9 @@ LightSampler::LightSampler(Scene* scene)
 {
 	const float scene_area = 2 * PR_PI * scene->boundingSphere().radius(); /*Approximative*/ //scene->boundingSphere().surfaceArea();
 
-	const auto& entities  = scene->entities();
-	const auto& emissions = scene->emissions();
-	const auto& inflights = scene->infiniteLights();
+	const auto& entities  = scene->database()->Entities->getAll();
+	const auto& emissions = scene->database()->Emissions->getAll();
+	const auto& inflights = scene->database()->InfiniteLights->getAll();
 
 	// Get maximum amount of lights available
 	size_t light_count = inflights.size();

@@ -49,7 +49,7 @@ struct PR_LIB_CORE EntitySamplingInfo {
 
 class PR_LIB_CORE IEntity : public ITransformable {
 public:
-	IEntity(uint32 id, uint32 emission_id, const std::string& name, const Transformf& transform);
+	IEntity(uint32 emission_id, const std::string& name, const Transformf& transform);
 	virtual ~IEntity();
 
 	bool isRenderable() const override;

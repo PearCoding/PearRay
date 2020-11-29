@@ -14,8 +14,8 @@ namespace PR {
 
 class MirrorMaterial : public IMaterial {
 public:
-	MirrorMaterial(uint32 id, const std::shared_ptr<FloatSpectralNode>& alb)
-		: IMaterial(id)
+	MirrorMaterial(const std::shared_ptr<FloatSpectralNode>& alb)
+		: IMaterial()
 		, mSpecularity(alb)
 	{
 	}
@@ -72,9 +72,9 @@ private:
 
 class MirrorMaterialPlugin : public IMaterialPlugin {
 public:
-	std::shared_ptr<IMaterial> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx)
 	{
-		return std::make_shared<MirrorMaterial>(id, ctx.lookupSpectralNode("specularity", 1));
+		return std::make_shared<MirrorMaterial>(ctx.lookupSpectralNode("specularity", 1));
 	}
 
 	const std::vector<std::string>& getNames() const

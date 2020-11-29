@@ -11,9 +11,8 @@ PR_NO_SANITIZE_ADDRESS
 void setup_entity(py::module& m)
 {
 	py::class_<ITransformable, std::shared_ptr<ITransformable>>(m, "ITransformable")
-		.def(py::init<uint32, std::string, Transformf>())
-		.def_property_readonly("id", &ITransformable::id)
-		.def_property("name", &ITransformable::name, &ITransformable::setName)
+		.def(py::init<std::string, Transformf>())
+		.def_property_readonly("name", &ITransformable::name)
 		.def_property_readonly("type", &ITransformable::type)
 		.def_property("flags", &ITransformable::flags, &ITransformable::setFlags)
 		.def_property_readonly("transform", &ITransformable::transform)

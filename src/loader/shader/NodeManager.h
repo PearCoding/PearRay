@@ -4,7 +4,7 @@
 #include "plugin/AbstractManager.h"
 
 namespace PR {
-class PR_LIB_LOADER NodeManager : public AbstractManager<INode, INodePlugin> {
+class PR_LIB_LOADER NodeManager : public AbstractManager<INodePlugin> {
 public:
 	NodeManager();
 	virtual ~NodeManager();

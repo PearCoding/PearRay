@@ -308,21 +308,19 @@ private:
 
 class IntVFFactoryFactory : public IIntegratorPlugin {
 public:
-	std::shared_ptr<IIntegratorFactory> create(uint32, const std::string&, const SceneLoadContext& ctx) override
+	std::shared_ptr<IIntegratorFactory> create(const std::string&, const SceneLoadContext& ctx) override
 	{
 		// Prepare color cache
+		const auto mapper = ctx.environment()->defaultSpectralUpsampler();
 		VFParametricCache parametric;
-		if (ctx.hasEnvironment()) {
-			const auto mapper = ctx.environment()->defaultSpectralUpsampler();
-			for (size_t i = 0; i < RANDOM_COLOR_COUNT; ++i)
-				mapper->prepare(sRandomColors[i].data(), parametric.RandomColors[i].data(), 1);
+		for (size_t i = 0; i < RANDOM_COLOR_COUNT; ++i)
+			mapper->prepare(sRandomColors[i].data(), parametric.RandomColors[i].data(), 1);
 
-			mapper->prepare(TrueColor.data(), parametric.True.data(), 1);
-			mapper->prepare(FalseColor.data(), parametric.False.data(), 1);
-			mapper->prepare(RedColor.data(), parametric.Red.data(), 1);
-			mapper->prepare(GreenColor.data(), parametric.Green.data(), 1);
-			mapper->prepare(BlueColor.data(), parametric.Blue.data(), 1);
-		}
+		mapper->prepare(TrueColor.data(), parametric.True.data(), 1);
+		mapper->prepare(FalseColor.data(), parametric.False.data(), 1);
+		mapper->prepare(RedColor.data(), parametric.Red.data(), 1);
+		mapper->prepare(GreenColor.data(), parametric.Green.data(), 1);
+		mapper->prepare(BlueColor.data(), parametric.Blue.data(), 1);
 
 		return std::make_shared<IntVFFactory>(parametric, ctx.parameters());
 	}

@@ -4,7 +4,7 @@
 #include "plugin/AbstractManager.h"
 
 namespace PR {
-class PR_LIB_LOADER InfiniteLightManager : public AbstractManager<IInfiniteLight, IInfiniteLightPlugin> {
+class PR_LIB_LOADER InfiniteLightManager : public AbstractManager<IInfiniteLightPlugin> {
 public:
 	InfiniteLightManager();
 	virtual ~InfiniteLightManager();

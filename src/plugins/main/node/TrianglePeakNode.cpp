@@ -76,7 +76,7 @@ private:
 
 class TrianglePeakNodePlugin : public INodePlugin {
 public:
-	std::shared_ptr<INode> create(uint32, const std::string&, const SceneLoadContext& ctx) override
+	std::shared_ptr<INode> create(const std::string&, const SceneLoadContext& ctx) override
 	{
 		const bool isConst = !ctx.parameters().getParameter(0).isReference() && !ctx.parameters().getParameter(1).isReference();
 

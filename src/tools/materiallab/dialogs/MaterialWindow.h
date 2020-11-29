@@ -11,6 +11,8 @@
 namespace PR {
 class IMaterialPlugin;
 class IMaterial;
+class Environment;
+
 namespace UI {
 class PropertyContainer;
 class GraphicEntity;
@@ -24,7 +26,8 @@ class MaterialWindow : public QWidget {
 	Q_OBJECT
 
 public:
-	MaterialWindow(const QString& typeName, PR::IMaterialPlugin* factory, QWidget* parent = 0);
+	MaterialWindow(const QString& typeName, const std::shared_ptr<PR::Environment>& env,
+				   PR::IMaterialPlugin* factory, QWidget* parent = 0);
 	~MaterialWindow();
 
 private slots:
@@ -47,6 +50,7 @@ private:
 
 	Ui::MaterialWindowClass ui;
 	const QString mTypeName;
+	std::shared_ptr<PR::Environment> mEnv;
 	PR::IMaterialPlugin* mFactory;
 	PR::UI::PropertyContainer* mProperties;
 

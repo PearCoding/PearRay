@@ -6,8 +6,8 @@
 	:camera 'Camera'
 	; Settings
 	(integrator
-		:type 'direct'
-		:max_ray_depth 1
+		:type 'bidi'
+		:max_ray_depth 17
 	)
 	(sampler
 		:slot 'aa'

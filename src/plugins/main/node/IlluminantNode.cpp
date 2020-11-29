@@ -78,7 +78,7 @@ _ILLUMINANT_DEC_F(F12)
 
 class IlluminantPlugin : public INodePlugin {
 public:
-	std::shared_ptr<INode> create(uint32, const std::string&, const SceneLoadContext& ctx) override
+	std::shared_ptr<INode> create(const std::string&, const SceneLoadContext& ctx) override
 	{
 		std::string illum = ctx.parameters().getString("spectrum", "");
 		if (illum.empty())

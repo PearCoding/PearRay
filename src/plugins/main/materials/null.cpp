@@ -9,8 +9,8 @@ namespace PR {
 // Special material not scattering rays and changing energy
 class NullMaterial : public IMaterial {
 public:
-	explicit NullMaterial(uint32 id)
-		: IMaterial(id)
+	explicit NullMaterial()
+		: IMaterial()
 	{
 	}
 
@@ -63,9 +63,9 @@ public:
 
 class NullMaterialPlugin : public IMaterialPlugin {
 public:
-	std::shared_ptr<IMaterial> create(uint32 id, const std::string&, const SceneLoadContext&)
+	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext&)
 	{
-		return std::make_shared<NullMaterial>(id);
+		return std::make_shared<NullMaterial>();
 	}
 
 	const std::vector<std::string>& getNames() const

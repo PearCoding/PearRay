@@ -18,12 +18,9 @@ class PR_LIB_CORE ITransformable {
 public:
 	ENTITY_CLASS
 
-	ITransformable(uint32 id, const std::string& name, const Transformf& transform);
+	ITransformable(const std::string& name, const Transformf& transform);
 	virtual ~ITransformable();
 
-	inline uint32 id() const;
-
-	inline void setName(const std::string& name);
 	inline std::string name() const;
 
 	virtual std::string type() const;
@@ -43,8 +40,7 @@ public:
 	virtual std::string dumpInformation() const;
 
 private:
-	std::string mName;
-	const uint32 mID;
+	const std::string mName;
 	uint8 mFlags;
 
 	const Transformf mTransform;

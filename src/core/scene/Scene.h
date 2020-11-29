@@ -14,34 +14,27 @@
 
 namespace PR {
 class ICamera;
-class IEntity;
-class IMaterial;
-class IEmission;
-class IInfiniteLight;
-class INode;
 class RenderContext;
 class ServiceObserver;
+class SceneDatabase;
 
-class PR_LIB_CORE Scene : public IArchive{
+class PR_LIB_CORE Scene : public IArchive {
 public:
 	Scene(const std::shared_ptr<ServiceObserver>& serviceObserver,
 		  const std::shared_ptr<ICamera>& activeCamera,
-		  const std::vector<std::shared_ptr<IEntity>>& entities,
-		  const std::vector<std::shared_ptr<IMaterial>>& materials,
-		  const std::vector<std::shared_ptr<IEmission>>& emissions,
-		  const std::vector<std::shared_ptr<IInfiniteLight>>& infLights,
-		  const std::vector<std::shared_ptr<INode>>& nodes);
+		  const std::shared_ptr<SceneDatabase>& database);
 	virtual ~Scene();
 
-	inline const std::vector<std::shared_ptr<IEntity>>& entities() const { return mEntities; }
-	inline const std::vector<std::shared_ptr<IMaterial>>& materials() const { return mMaterials; }
-	inline const std::vector<std::shared_ptr<IEmission>>& emissions() const { return mEmissions; }
-	inline const std::vector<std::shared_ptr<IInfiniteLight>>& infiniteLights() const { return mInfLights; }
-	inline const std::vector<std::shared_ptr<INode>>& nodes() const { return mNodes; }
-
 	inline std::shared_ptr<ICamera> activeCamera() const { return mActiveCamera; }
-
+	inline std::shared_ptr<SceneDatabase> database() const { return mDatabase; }
 	inline std::shared_ptr<ServiceObserver> serviceObserver() const { return mServiceObserver; }
+
+	// Some information:
+	size_t entityCount() const;
+	size_t emissionCount() const;
+	size_t materialCount() const;
+	size_t infiniteLightCount() const;
+	size_t nodeCount() const;
 
 	/// Traces a stream of rays and produces a stream of hits
 	void traceRays(RayStream& rays, HitStream& hits) const override;
@@ -62,11 +55,7 @@ private:
 	const std::shared_ptr<ServiceObserver> mServiceObserver;
 
 	std::shared_ptr<ICamera> mActiveCamera;
-	std::vector<std::shared_ptr<IEntity>> mEntities;
-	std::vector<std::shared_ptr<IMaterial>> mMaterials;
-	std::vector<std::shared_ptr<IEmission>> mEmissions;
-	std::vector<std::shared_ptr<IInfiniteLight>> mInfLights;
-	std::vector<std::shared_ptr<INode>> mNodes;
+	std::shared_ptr<SceneDatabase> mDatabase;
 
 	std::unique_ptr<struct SceneInternal> mInternal;
 	BoundingBox mBoundingBox;

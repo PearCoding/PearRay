@@ -4,6 +4,6 @@
 
 namespace PR {
 
-PR_INTERNAL_PLUGIN_DEFINE_FACTORY(ICameraPlugin, ICamera, PT_CAMERA);
+PR_INTERNAL_PLUGIN_DEFINE_FACTORY(ICameraPlugin, ICamera, "CAMERA");
 
 } // namespace PR

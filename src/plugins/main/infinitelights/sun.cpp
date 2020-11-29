@@ -26,9 +26,9 @@ constexpr float SUN_VIS_RADIUS			= PR_DEG2RAD * 0.5358f * 0.5f; // Given in angu
 class SunLight : public IInfiniteLight {
 public:
 	SunLight(const std::shared_ptr<ServiceObserver>& so,
-			 uint32 id, const std::string& name, const Transformf& transform,
+			 const std::string& name, const Transformf& transform,
 			 const ElevationAzimuth& ea, float turbidity, float radius, float scale)
-		: IInfiniteLight(id, name, transform)
+		: IInfiniteLight(name, transform)
 		, mSpectrum(SUN_WAVELENGTH_SAMPLES, SUN_WAVELENGTH_START, SUN_WAVELENGTH_END)
 		, mEA(ea)
 		, mDirection((normalMatrix() * ea.toDirection()).normalized())
@@ -139,9 +139,9 @@ private:
 class SunDeltaLight : public IInfiniteLight {
 public:
 	SunDeltaLight(const std::shared_ptr<ServiceObserver>& so,
-				  uint32 id, const std::string& name, const Transformf& transform,
+				  const std::string& name, const Transformf& transform,
 				  const ElevationAzimuth& ea, float turbidity, float scale)
-		: IInfiniteLight(id, name, transform)
+		: IInfiniteLight(name, transform)
 		, mSpectrum(SUN_WAVELENGTH_SAMPLES, SUN_WAVELENGTH_START, SUN_WAVELENGTH_END)
 		, mEA(ea)
 		, mDirection((normalMatrix() * ea.toDirection()).normalized())
@@ -238,7 +238,7 @@ private:
 
 class SunLightFactory : public IInfiniteLightPlugin {
 public:
-	std::shared_ptr<IInfiniteLight> create(uint32 id, const std::string&, const SceneLoadContext& ctx) override
+	std::shared_ptr<IInfiniteLight> create(const std::string&, const SceneLoadContext& ctx) override
 	{
 		const ParameterGroup& params = ctx.parameters();
 
@@ -249,12 +249,12 @@ public:
 		const float turbidity  = ctx.parameters().getNumber("turbidity", 3.0f);
 		const float scale	   = ctx.parameters().getNumber("power_scale", 1.0f);
 
-		const std::shared_ptr<ServiceObserver> so = ctx.hasEnvironment() ? ctx.environment()->serviceObserver() : nullptr;
+		const std::shared_ptr<ServiceObserver> so = ctx.environment()->serviceObserver();
 
 		if (radius <= PR_EPSILON)
-			return std::make_shared<SunDeltaLight>(so, id, name, ctx.transform(), sunEA, turbidity, scale);
+			return std::make_shared<SunDeltaLight>(so, name, ctx.transform(), sunEA, turbidity, scale);
 		else
-			return std::make_shared<SunLight>(so, id, name, ctx.transform(), sunEA,
+			return std::make_shared<SunLight>(so, name, ctx.transform(), sunEA,
 											  turbidity, radius, scale);
 	}
 

@@ -17,10 +17,10 @@ class SphericalCamera : public ICamera {
 public:
 	ENTITY_CLASS
 
-	SphericalCamera(uint32 id, const std::string& name, const Transformf& transform,
+	SphericalCamera(const std::string& name, const Transformf& transform,
 					float thetaStart, float thetaEnd, float phiStart, float phiEnd, float nearT, float farT,
 					const Vector3f& ld, const Vector3f& lr, const Vector3f& lu)
-		: ICamera(id, name, transform)
+		: ICamera(name, transform)
 		, mThetaStart(thetaStart)
 		, mThetaEnd(thetaEnd)
 		, mPhiStart(phiStart)
@@ -98,12 +98,12 @@ private:
 
 class SphericalCameraPlugin : public ICameraPlugin {
 public:
-	std::shared_ptr<ICamera> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<ICamera> create(const std::string&, const SceneLoadContext& ctx)
 	{
 		const ParameterGroup& params = ctx.parameters();
 		std::string name			 = params.getString("name", "__unnamed__");
 
-		return std::make_shared<SphericalCamera>(id, name, ctx.transform(),
+		return std::make_shared<SphericalCamera>(name, ctx.transform(),
 												 params.getNumber("theta_start", 0.0f),
 												 params.getNumber("theta_end", PR_PI_2),
 												 params.getNumber("phi_start", -PR_PI),

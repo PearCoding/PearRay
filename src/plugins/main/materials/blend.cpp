@@ -12,10 +12,9 @@ namespace PR {
 template <bool HasDelta>
 class BlendMaterial : public IMaterial {
 public:
-	explicit BlendMaterial(uint32 id,
-						   const std::shared_ptr<IMaterial>& material0, const std::shared_ptr<IMaterial>& material1,
+	explicit BlendMaterial(const std::shared_ptr<IMaterial>& material0, const std::shared_ptr<IMaterial>& material1,
 						   const std::shared_ptr<FloatScalarNode>& factor)
-		: IMaterial(id)
+		: IMaterial()
 		, mMaterials{ material0, material1 }
 		, mFactor(factor)
 	{
@@ -119,7 +118,7 @@ private:
 
 class BlendMaterialPlugin : public IMaterialPlugin {
 public:
-	std::shared_ptr<IMaterial> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx)
 	{
 		const ParameterGroup& params = ctx.parameters();
 		const auto mat1				 = ctx.lookupMaterial(params.getParameter("material1"));
@@ -132,9 +131,9 @@ public:
 
 		const bool delta = mat1->hasDeltaDistribution() || mat2->hasDeltaDistribution();
 		if (delta)
-			return std::make_shared<BlendMaterial<true>>(id, mat1, mat2, ctx.lookupScalarNode("factor", 0.5f));
+			return std::make_shared<BlendMaterial<true>>(mat1, mat2, ctx.lookupScalarNode("factor", 0.5f));
 		else
-			return std::make_shared<BlendMaterial<false>>(id, mat1, mat2, ctx.lookupScalarNode("factor", 0.5f));
+			return std::make_shared<BlendMaterial<false>>(mat1, mat2, ctx.lookupScalarNode("factor", 0.5f));
 	}
 
 	const std::vector<std::string>& getNames() const

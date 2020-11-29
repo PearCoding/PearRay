@@ -27,11 +27,11 @@ class FisheyeCamera : public ICamera {
 public:
 	ENTITY_CLASS
 
-	FisheyeCamera(uint32 id, const std::string& name, const Transformf& transform,
+	FisheyeCamera(const std::string& name, const Transformf& transform,
 				  float fov, float nearT, float farT,
 				  const Vector3f& ld, const Vector3f& lr, const Vector3f& lu,
 				  MapType mapType)
-		: ICamera(id, name, transform)
+		: ICamera(name, transform)
 		, mFOV(fov)
 		, mNearT(nearT)
 		, mFarT(farT)
@@ -136,7 +136,7 @@ private:
 };
 
 template <bool ClipRange>
-static inline std::shared_ptr<ICamera> createCamera(uint32 id, const ParameterGroup& params, const Transformf& transform)
+static inline std::shared_ptr<ICamera> createCamera(const ParameterGroup& params, const Transformf& transform)
 {
 	std::string name	   = params.getString("name", "__unnamed__");
 	std::string mapTypeStr = params.getString("map", "circular");
@@ -148,7 +148,7 @@ static inline std::shared_ptr<ICamera> createCamera(uint32 id, const ParameterGr
 	else if (mapTypeStr == "full")
 		mapType = MT_Full;
 
-	return std::make_shared<FisheyeCamera<ClipRange>>(id, name, transform,
+	return std::make_shared<FisheyeCamera<ClipRange>>(name, transform,
 													  params.getNumber("fov", 180.0f * PR_DEG2RAD),
 													  params.getNumber("near", NEAR_DEFAULT),
 													  params.getNumber("far", FAR_DEFAULT),
@@ -160,13 +160,13 @@ static inline std::shared_ptr<ICamera> createCamera(uint32 id, const ParameterGr
 
 class FisheyeCameraPlugin : public ICameraPlugin {
 public:
-	std::shared_ptr<ICamera> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<ICamera> create(const std::string&, const SceneLoadContext& ctx)
 	{
 		bool clip_range = ctx.parameters().getBool("clip_range", true);
 		if (clip_range)
-			return createCamera<true>(id, ctx.parameters(), ctx.transform());
+			return createCamera<true>(ctx.parameters(), ctx.transform());
 		else
-			return createCamera<false>(id, ctx.parameters(), ctx.transform());
+			return createCamera<false>(ctx.parameters(), ctx.transform());
 	}
 
 	const std::vector<std::string>& getNames() const

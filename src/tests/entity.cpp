@@ -6,39 +6,33 @@ using namespace PR;
 
 PR_BEGIN_TESTCASE(ITransformable)
 
-PR_TEST("id")
-{
-	ITransformable entity(0, "Test", Transformf::Identity());
-	PR_CHECK_EQ(entity.id(), (uint32)0);
-}
-
 PR_TEST("name")
 {
-	ITransformable entity(0, "Test",Transformf::Identity());
+	ITransformable entity("Test",Transformf::Identity());
 	PR_CHECK_EQ(entity.name(), "Test");
 }
 
 PR_TEST("type")
 {
-	ITransformable entity(0, "Test",Transformf::Identity());
+	ITransformable entity("Test",Transformf::Identity());
 	PR_CHECK_EQ(entity.type(), "null");
 }
 
 PR_TEST("isRenderable")
 {
-	ITransformable entity(0, "Test",Transformf::Identity());
+	ITransformable entity("Test",Transformf::Identity());
 	PR_CHECK_FALSE(entity.isRenderable());
 }
 
 PR_TEST("matrix")
 {
-	ITransformable entity(0, "Test",Transformf::Identity());
+	ITransformable entity("Test",Transformf::Identity());
 	PR_CHECK_EQ(entity.transform().matrix(), Eigen::Matrix4f::Identity());
 }
 
 PR_TEST("normal matrix")
 {
-	ITransformable entity(0, "Test",Transformf::Identity());
+	ITransformable entity("Test",Transformf::Identity());
 	PR_CHECK_EQ(entity.normalMatrix(), Eigen::Matrix3f::Identity());
 }
 

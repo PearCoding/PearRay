@@ -168,18 +168,8 @@ public:
 		Vector3f minB		  = params.getVector3f("min", Vector3f(-1, -1, -1));
 		Vector3f maxB		  = params.getVector3f("max", Vector3f(1, 1, 1));
 
-		std::string emsName = params.getString("emission", "");
-		std::string matName = params.getString("material", "");
-
-		uint32 matID				   = PR_INVALID_ID;
-		std::shared_ptr<IMaterial> mat = ctx.Env->getMaterial(matName);
-		if (mat)
-			matID = mat->id();
-
-		uint32 emsID				   = PR_INVALID_ID;
-		std::shared_ptr<IEmission> ems = ctx.Env->getEmission(emsName);
-		if (ems)
-			emsID = ems->id();
+		const uint32 matID = ctx.lookupMaterialID(params.getParameter("material"));
+		const uint32 emsID = ctx.lookupEmissionID(params.getParameter("emission"));
 
 		std::array<float, 10> parameters;
 		if (qp.size() == 3)

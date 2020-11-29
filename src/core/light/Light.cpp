@@ -31,30 +31,6 @@ std::string Light::name() const
 		return reinterpret_cast<IEntity*>(mEntity)->name();
 }
 
-uint32 Light::id() const
-{
-	if (isInfinite())
-		return reinterpret_cast<IInfiniteLight*>(mEntity)->id();
-	else
-		return reinterpret_cast<IEntity*>(mEntity)->id();
-}
-
-uint32 Light::entityID() const
-{
-	if (isInfinite())
-		return PR_INVALID_ID;
-	else
-		return reinterpret_cast<IEntity*>(mEntity)->id();
-}
-
-uint32 Light::infiniteLightID() const
-{
-	if (isInfinite())
-		return reinterpret_cast<IInfiniteLight*>(mEntity)->id();
-	else
-		return PR_INVALID_ID;
-}
-
 bool Light::hasDeltaDistribution() const { return isInfinite() && reinterpret_cast<IInfiniteLight*>(mEntity)->hasDeltaDistribution(); }
 
 void Light::eval(const LightEvalInput& in, LightEvalOutput& out, const RenderTileSession& session) const
@@ -72,9 +48,16 @@ void Light::eval(const LightEvalInput& in, LightEvalOutput& out, const RenderTil
 		out.Radiance   = ileout.Radiance;
 		out.PDF.Value  = ileout.Direction_PDF_S;
 		out.PDF.IsArea = false;
-	} else if (in.Point
-			   && in.Point->Surface.Geometry.EntityID == reinterpret_cast<IEntity*>(mEntity)->id()) {
-		IEntity* ent = reinterpret_cast<IEntity*>(mEntity);
+	} else if (in.Point) {
+		IEntity* hitEntity = session.getEntity(in.Point->Surface.Geometry.EntityID);
+		IEntity* ent	   = reinterpret_cast<IEntity*>(mEntity);
+		// TODO: Why check??
+		if (hitEntity != ent) { // No real hit, giveup.
+			out.Radiance   = SpectralBlob::Zero();
+			out.PDF.Value  = 0;
+			out.PDF.IsArea = false;
+			return;
+		}
 
 		EmissionEvalInput eein;
 		eein.Entity			= ent;

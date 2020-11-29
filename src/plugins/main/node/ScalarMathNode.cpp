@@ -137,7 +137,7 @@ _OPF2(Pow, std::pow)
 
 class ScalarMathPlugin : public INodePlugin {
 public:
-	std::shared_ptr<INode> create(uint32, const std::string& type_name, const SceneLoadContext& ctx) override
+	std::shared_ptr<INode> create(const std::string& type_name, const SceneLoadContext& ctx) override
 	{
 		if (type_name == "add") {
 			return std::make_shared<AddMath>(ctx.lookupScalarNode(ctx.parameters().getParameter(0)),

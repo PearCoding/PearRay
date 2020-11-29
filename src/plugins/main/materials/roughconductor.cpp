@@ -26,12 +26,11 @@ inline static float adaptR(float r)
 template <bool IsAnisotropic>
 class RoughConductorMaterial : public IMaterial {
 public:
-	RoughConductorMaterial(uint32 id,
-						   const std::shared_ptr<FloatSpectralNode>& eta, const std::shared_ptr<FloatSpectralNode>& k,
+	RoughConductorMaterial(const std::shared_ptr<FloatSpectralNode>& eta, const std::shared_ptr<FloatSpectralNode>& k,
 						   const std::shared_ptr<FloatSpectralNode>& spec,
 						   const std::shared_ptr<FloatScalarNode>& roughnessX,
 						   const std::shared_ptr<FloatScalarNode>& roughnessY)
-		: IMaterial(id)
+		: IMaterial()
 		, mEta(eta)
 		, mK(k)
 		, mSpecularity(spec)
@@ -235,7 +234,7 @@ private:
 
 class RoughConductorMaterialPlugin : public IMaterialPlugin {
 public:
-	std::shared_ptr<IMaterial> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx)
 	{
 		std::shared_ptr<FloatScalarNode> rx;
 		std::shared_ptr<FloatScalarNode> ry;
@@ -255,9 +254,9 @@ public:
 		const auto spec = ctx.lookupSpectralNode("specularity", 1);
 
 		if (rx == ry)
-			return std::make_shared<RoughConductorMaterial<false>>(id, eta, k, spec, rx, ry);
+			return std::make_shared<RoughConductorMaterial<false>>(eta, k, spec, rx, ry);
 		else
-			return std::make_shared<RoughConductorMaterial<true>>(id, eta, k, spec, rx, ry);
+			return std::make_shared<RoughConductorMaterial<true>>(eta, k, spec, rx, ry);
 	}
 
 	const std::vector<std::string>& getNames() const

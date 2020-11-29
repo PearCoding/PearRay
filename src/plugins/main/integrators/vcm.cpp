@@ -211,7 +211,7 @@ private:
 
 class IntVCMPlugin : public IIntegratorPlugin {
 public:
-	std::shared_ptr<IIntegratorFactory> create(uint32, const std::string&, const SceneLoadContext& ctx) override
+	std::shared_ptr<IIntegratorFactory> create(const std::string&, const SceneLoadContext& ctx) override
 	{
 		return std::make_shared<IntVCMFactory>(ctx.parameters());
 	}

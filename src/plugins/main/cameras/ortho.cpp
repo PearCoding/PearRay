@@ -15,10 +15,10 @@ class OrthoCamera : public ICamera {
 public:
 	ENTITY_CLASS
 
-	OrthoCamera(uint32 id, const std::string& name, const Transformf& transform,
+	OrthoCamera(const std::string& name, const Transformf& transform,
 				float w, float h, float nearT, float farT,
 				const Vector3f& ld, const Vector3f& lr, const Vector3f& lu)
-		: ICamera(id, name, transform)
+		: ICamera(name, transform)
 		, mWidth(w)
 		, mHeight(h)
 		, mNearT(nearT)
@@ -83,12 +83,12 @@ private:
 
 class OrthoCameraPlugin : public ICameraPlugin {
 public:
-	std::shared_ptr<ICamera> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<ICamera> create(const std::string&, const SceneLoadContext& ctx)
 	{
 		const ParameterGroup& params = ctx.parameters();
 		std::string name			 = params.getString("name", "__unnamed__");
 
-		return std::make_shared<OrthoCamera>(id, name, ctx.transform(),
+		return std::make_shared<OrthoCamera>(name, ctx.transform(),
 											 params.getNumber("width", 1),
 											 params.getNumber("height", 1),
 											 params.getNumber("near", NEAR_DEFAULT),

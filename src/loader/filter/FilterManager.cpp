@@ -23,14 +23,9 @@ bool FilterManager::createDefaultsIfNecessary(Environment* env)
 		if (!fac)
 			return nullptr;
 
-		const uint32 id = this->nextID();
-
-		SceneLoadContext ctx(env);
+		SceneLoadContext ctx(env, {});
 		ctx.parameters().addParameter("radius", Parameter::fromInt(radius));
-		auto obj = fac->create(id, type, ctx);
-		if (obj)
-			this->addObject(obj);
-		return obj;
+		return fac->create(type, ctx);
 	};
 
 	auto& settings = env->renderSettings();

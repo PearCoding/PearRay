@@ -143,7 +143,8 @@ public:
 		current.IsFiniteLight = !light->isInfinite();
 
 		// After acquiring the path, make sure its initialized to the empty size
-		mLightPathSize[current.LightPathID] = 0;
+		if constexpr (UseMerging)
+			mLightPathSize[current.LightPathID] = 0;
 
 		current.Throughput /= emissionPdfS;
 		if (current.Throughput.isZero(PR_EPSILON)) // Don't even try

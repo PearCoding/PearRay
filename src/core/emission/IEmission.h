@@ -18,26 +18,14 @@ struct PR_LIB_CORE EmissionEvalOutput {
 
 class PR_LIB_CORE IEmission {
 public:
-	IEmission(uint32 id);
-	virtual ~IEmission() {}
-
-	inline uint32 id() const;
-
-	/*virtual void startGroup(size_t size, const RenderTileSession& session) = 0;
-	virtual void endGroup()											   = 0;*/
-
-	/*
-		Evaluate the light based on incident direction and point information.
-	*/
+	/// Evaluate the light based on incident direction and point information.
 	virtual void eval(const EmissionEvalInput& in, EmissionEvalOutput& out, const RenderTileSession& session) const = 0;
 
-	virtual SpectralBlob power(const SpectralBlob& wvl) const = 0; // Average (W/m^2)
+	/// Return average power (W/m^2) for given wavelengths
+	virtual SpectralBlob power(const SpectralBlob& wvl) const = 0;
 
+	/// Dump information
 	virtual std::string dumpInformation() const;
-
-private:
-	uint32 mID;
 };
 } // namespace PR
 
-#include "IEmission.inl"

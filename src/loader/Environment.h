@@ -1,6 +1,5 @@
 #pragma once
 
-#include "QueryEnvironment.h"
 #include "output/OutputSpecification.h"
 #include "renderer/RenderSettings.h"
 #include "shader/INode.h"
@@ -16,10 +15,24 @@ class Cache;
 class IEmission;
 class IIntegrator;
 class IMaterial;
-class MeshBase;
 class Parameter;
 class RenderFactory;
 class ResourceManager;
+class SceneDatabase;
+class ServiceObserver;
+class SpectralUpsampler;
+
+class CameraManager;
+class EmissionManager;
+class EntityManager;
+class FilterManager;
+class InfiniteLightManager;
+class IntegratorManager;
+class MaterialManager;
+class NodeManager;
+class PluginManager;
+class SamplerManager;
+class SpectralMapperManager;
 
 class PR_LIB_LOADER BadRenderEnvironment : public std::exception {
 public:
@@ -29,43 +42,27 @@ public:
 	}
 };
 
-class PR_LIB_LOADER Environment : public QueryEnvironment {
+class PR_LIB_LOADER Environment {
 public:
-	Environment(const std::filesystem::path& workdir,
-				const std::filesystem::path& plugdir,
-				bool useStandardLib = true);
+	inline static std::shared_ptr<Environment> createRenderEnvironment(const std::filesystem::path& workdir,
+																	   const std::filesystem::path& plugdir,
+																	   bool useStandardLib = true);
+
+	inline static std::shared_ptr<Environment> createQueryEnvironment(const std::filesystem::path& plugdir,
+																	  bool useStandardLib = true);
+
 	virtual ~Environment();
 
 	inline std::shared_ptr<ResourceManager> resourceManager() const;
 	inline std::shared_ptr<Cache> cache() const;
-
-	inline std::shared_ptr<IEmission> getEmission(const std::string& name) const;
-	inline bool hasEmission(const std::string& name) const;
-	inline void addEmission(const std::string& name, const std::shared_ptr<IEmission>& mat);
-	inline size_t emissionCount() const;
-
-	inline std::shared_ptr<IMaterial> getMaterial(const std::string& name) const;
-	inline bool hasMaterial(const std::string& name) const;
-	inline void addMaterial(const std::string& name, const std::shared_ptr<IMaterial>& mat);
-	inline size_t materialCount() const;
-
-	inline std::shared_ptr<MeshBase> getMesh(const std::string& name) const;
-	inline bool hasMesh(const std::string& name) const;
-	inline void addMesh(const std::string& name, const std::shared_ptr<MeshBase>& m);
-
-	inline void addNode(const std::string& name, const std::shared_ptr<INode>& output);
-	std::shared_ptr<INode> getRawNode(uint64 id) const;
-	inline std::shared_ptr<INode> getRawNode(const std::string& name) const;
-	template <typename Socket>
-	inline std::shared_ptr<Socket> getNode(const std::string& name) const;
-	inline bool hasNode(const std::string& name) const;
-	template <typename Socket>
-	inline bool isNode(const std::string& name) const;
+	inline std::shared_ptr<SceneDatabase> sceneDatabase() const;
 
 	inline void* textureSystem();
 
 	inline void setWorkingDir(const std::filesystem::path& dir);
 	inline std::filesystem::path workingDir() const;
+
+	inline bool queryMode() const { return mQueryMode; }
 
 	inline OutputSpecification& outputSpecification();
 	inline const RenderSettings& renderSettings() const;
@@ -79,22 +76,59 @@ public:
 	std::shared_ptr<IIntegrator> createSelectedIntegrator() const;
 	std::shared_ptr<RenderFactory> createRenderFactory();
 
+	inline std::shared_ptr<ServiceObserver> serviceObserver() const;
+
+	inline std::shared_ptr<PluginManager> pluginManager() const;
+	inline std::shared_ptr<CameraManager> cameraManager() const;
+	inline std::shared_ptr<EmissionManager> emissionManager() const;
+	inline std::shared_ptr<EntityManager> entityManager() const;
+	inline std::shared_ptr<FilterManager> filterManager() const;
+	inline std::shared_ptr<InfiniteLightManager> infiniteLightManager() const;
+	inline std::shared_ptr<IntegratorManager> integratorManager() const;
+	inline std::shared_ptr<MaterialManager> materialManager() const;
+	inline std::shared_ptr<NodeManager> nodeManager() const;
+	inline std::shared_ptr<SamplerManager> samplerManager() const;
+	inline std::shared_ptr<SpectralMapperManager> spectralMapperManager() const;
+
+	inline std::shared_ptr<SpectralUpsampler> defaultSpectralUpsampler() const { return mDefaultSpectralUpsampler; }
+
+protected:
+	Environment(const std::filesystem::path& workdir,
+				const std::filesystem::path& plugdir,
+				bool useStandardLib);
+
 private:
 	inline void getNode(const std::string& name, std::shared_ptr<FloatScalarNode>& node) const;
 	inline void getNode(const std::string& name, std::shared_ptr<FloatSpectralNode>& node) const;
 	inline void getNode(const std::string& name, std::shared_ptr<FloatVectorNode>& node) const;
 
+	void loadPlugins(const std::filesystem::path& basedir);
+
 	std::filesystem::path mWorkingDir;
 	RenderSettings mRenderSettings;
 
+	const bool mQueryMode;
+	const std::shared_ptr<ServiceObserver> mServiceObserver;
+
+	std::shared_ptr<SceneDatabase> mSceneDatabase;
+
+	// Order matters: PluginManager should be before other managers
+	std::shared_ptr<PluginManager> mPluginManager;
+	std::shared_ptr<CameraManager> mCameraManager;
+	std::shared_ptr<EmissionManager> mEmissionManager;
+	std::shared_ptr<EntityManager> mEntityManager;
+	std::shared_ptr<FilterManager> mFilterManager;
+	std::shared_ptr<InfiniteLightManager> mInfiniteLightManager;
+	std::shared_ptr<IntegratorManager> mIntegratorManager;
+	std::shared_ptr<MaterialManager> mMaterialManager;
+	std::shared_ptr<NodeManager> mNodeManager;
+	std::shared_ptr<SamplerManager> mSamplerManager;
+	std::shared_ptr<SpectralMapperManager> mSpectralMapperManager;
+
+	std::shared_ptr<SpectralUpsampler> mDefaultSpectralUpsampler;
+
 	std::shared_ptr<ResourceManager> mResourceManager;
 	std::shared_ptr<Cache> mCache;
-
-	std::map<std::string, std::shared_ptr<IEmission>> mEmissions;
-	std::map<std::string, std::shared_ptr<IMaterial>> mMaterials;
-	std::map<std::string, std::shared_ptr<MeshBase>> mMeshes;
-
-	std::map<std::string, std::shared_ptr<INode>> mNamedNodes;
 
 	void* mTextureSystem;
 	OutputSpecification mOutputSpecification;

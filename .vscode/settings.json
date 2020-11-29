@@ -139,7 +139,8 @@
       "program": "cpp",
       "shader": "cpp",
       "stateattribute": "cpp",
-      "stateset": "cpp"
+      "stateset": "cpp",
+      "userdatacontainer": "cpp"
     },
     "files.exclude": {
         "**/.git": true,

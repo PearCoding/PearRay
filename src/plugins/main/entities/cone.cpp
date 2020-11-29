@@ -226,18 +226,8 @@ public:
 		float radius	 = params.getNumber("radius", 1);
 		float height	 = params.getNumber("height", 1);
 
-		std::string emsName = params.getString("emission", "");
-		std::string matName = params.getString("material", "");
-
-		uint32 matID				   = PR_INVALID_ID;
-		std::shared_ptr<IMaterial> mat = ctx.Env->getMaterial(matName);
-		if (mat)
-			matID = mat->id();
-
-		uint32 emsID				   = PR_INVALID_ID;
-		std::shared_ptr<IEmission> ems = ctx.Env->getEmission(emsName);
-		if (ems)
-			emsID = ems->id();
+		const uint32 matID = ctx.lookupMaterialID(params.getParameter("material"));
+		const uint32 emsID = ctx.lookupEmissionID(params.getParameter("emission"));
 
 		auto obj = std::make_shared<ConeEntity>(id, name, ctx.transform(), radius, height, matID, emsID);
 		if (params.getBool("center_on", false))

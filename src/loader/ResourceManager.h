@@ -23,8 +23,9 @@ private:
 	size_t generateID(const std::string& grp, const std::string& name) const;
 	bool checkDependencies(size_t id, const std::filesystem::path& req_file) const;
 
-	std::filesystem::path mWorkingDir;
-
+	const std::filesystem::path mWorkingDir;
+	const bool mQueryMode;
+ 
 	std::unordered_multimap<size_t, std::filesystem::path> mRequestedFiles;
 	std::unordered_multimap<size_t, std::filesystem::path> mDependencies;
 };

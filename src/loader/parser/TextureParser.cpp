@@ -170,7 +170,7 @@ void TextureParser::parse(SceneLoadContext& ctx, const std::string& name, const 
 		|| type == "grayscale"
 		|| type == "color"
 		|| type == "spectral") {
-		if (ctx.environment()->hasNode(name)) {
+		if (ctx.hasNode(name)) {
 			PR_LOG(L_ERROR) << "Texture " << name << " already exists" << std::endl;
 			return;
 		}
@@ -178,7 +178,7 @@ void TextureParser::parse(SceneLoadContext& ctx, const std::string& name, const 
 		auto output = std::make_shared<ImageNode>(
 			(OIIO::TextureSystem*)ctx.environment()->textureSystem(),
 			opts, filename);
-		ctx.environment()->addNode(name, output);
+		ctx.addNode(name, output);
 	} else {
 		PR_LOG(L_ERROR) << "No known type given for texture " << name << std::endl;
 		return;

@@ -47,9 +47,6 @@ public:
 	inline uint32 lightID() const { return mID; }
 
 	std::string name() const;
-	uint32 id() const; // TODO: Different name?
-	uint32 entityID() const;
-	uint32 infiniteLightID() const;
 
 	inline bool isInfinite() const { return mEmission == nullptr; }
 	bool hasDeltaDistribution() const;

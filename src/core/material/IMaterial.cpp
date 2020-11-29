@@ -3,12 +3,11 @@
 #include <sstream>
 
 namespace PR {
-IMaterial::IMaterial(uint32 id)
+IMaterial::IMaterial()
 	: mCanBeShaded(true)
 	, mShadow(true)
 	, mSelfShadow(true)
 	, mCameraVisible(true)
-	, mID(id)
 {
 }
 

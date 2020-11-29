@@ -10,9 +10,6 @@ set(PR_Src
   Environment.inl
   ImageIO.cpp
   ImageIO.h
-  QueryEnvironment.cpp
-  QueryEnvironment.h
-  QueryEnvironment.inl
   SceneLoadContext.cpp
   SceneLoadContext.h
   SceneLoader.cpp

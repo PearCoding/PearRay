@@ -165,7 +165,7 @@ _OP(Value, svalue);
 
 class SpectralConvertPlugin : public INodePlugin {
 public:
-	std::shared_ptr<INode> create(uint32, const std::string& type_name, const SceneLoadContext& ctx) override
+	std::shared_ptr<INode> create(const std::string& type_name, const SceneLoadContext& ctx) override
 	{
 		if (type_name == "sciex") {
 			return std::make_shared<CIEXSpectralConvert>(ctx.lookupSpectralNode(ctx.parameters().getParameter(0)));

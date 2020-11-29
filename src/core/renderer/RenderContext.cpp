@@ -111,11 +111,12 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 				   << "  Threads:                " << threadCount << std::endl
 				   << "  Passes:                 " << mIntegratorPassCount << std::endl
 				   << "  Tiles:                  " << rtx << " x " << rty << std::endl
-				   << "  Entities:               " << mScene->entities().size() << std::endl
+				   << "  Entities:               " << mScene->entityCount() << std::endl
 				   << "  Lights:                 " << mLightSampler->emissiveEntityCount() << std::endl
-				   << "  Materials:              " << mScene->materials().size() << std::endl
-				   << "  Emissions:              " << mScene->emissions().size() << std::endl
-				   << "  InfLights:              " << mScene->infiniteLights().size() << std::endl
+				   << "  Materials:              " << mScene->materialCount() << std::endl
+				   << "  Emissions:              " << mScene->emissionCount() << std::endl
+				   << "  InfLights:              " << mScene->infiniteLightCount() << std::endl
+				   << "  Nodes:                  " << mScene->nodeCount() << std::endl
 				   << "  Emissive Surface Area:  " << mLightSampler->emissiveSurfaceArea() << std::endl
 				   << "  Emissive Surface Power: " << mLightSampler->emissiveSurfacePower() << std::endl
 				   << "  Emissive Power:         " << mLightSampler->emissivePower() << std::endl

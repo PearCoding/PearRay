@@ -1,5 +1,6 @@
 #include "Scene.h"
 #include "Platform.h"
+#include "SceneDatabase.h"
 #include "ServiceObserver.h"
 #include "camera/ICamera.h"
 #include "emission/IEmission.h"
@@ -20,18 +21,10 @@
 namespace PR {
 Scene::Scene(const std::shared_ptr<ServiceObserver>& serviceObserver,
 			 const std::shared_ptr<ICamera>& activeCamera,
-			 const std::vector<std::shared_ptr<IEntity>>& entities,
-			 const std::vector<std::shared_ptr<IMaterial>>& materials,
-			 const std::vector<std::shared_ptr<IEmission>>& emissions,
-			 const std::vector<std::shared_ptr<IInfiniteLight>>& infLights,
-			 const std::vector<std::shared_ptr<INode>>& nodes)
+			 const std::shared_ptr<SceneDatabase>& database)
 	: mServiceObserver(serviceObserver)
 	, mActiveCamera(activeCamera)
-	, mEntities(entities)
-	, mMaterials(materials)
-	, mEmissions(emissions)
-	, mInfLights(infLights)
-	, mNodes(nodes)
+	, mDatabase(database)
 {
 	PR_LOG(L_DEBUG) << "Setup before scene build..." << std::endl;
 	mServiceObserver->callBeforeSceneBuild();
@@ -98,9 +91,10 @@ void Scene::setupScene()
 {
 	mInternal = std::make_unique<SceneInternal>();
 
-	for (auto o : mEntities) {
-		auto repr = o->constructGeometryRepresentation(GeometryDev(mInternal->Device));
-		rtcAttachGeometryByID(mInternal->Scene, repr, o->id());
+	const auto& entities = mDatabase->Entities->getAll();
+	for (size_t i = 0; i < entities.size(); ++i) {
+		auto repr = entities[i]->constructGeometryRepresentation(GeometryDev(mInternal->Device));
+		rtcAttachGeometryByID(mInternal->Scene, repr, i);
 		rtcReleaseGeometry(repr); // No longer needed
 	}
 
@@ -115,7 +109,7 @@ void Scene::setupScene()
 	mBoundingBox	= BoundingBox();
 	mBoundingSphere = Sphere();
 
-	if (!mEntities.empty()) {
+	if (!entities.empty()) {
 		RTCBounds bounds;
 		rtcGetSceneBounds(mInternal->Scene, &bounds);
 		mBoundingBox = BoundingBox(Vector3f(bounds.lower_x, bounds.lower_y, bounds.lower_z),
@@ -264,4 +258,11 @@ bool Scene::traceShadowRay(const Ray& ray, float distance) const
 
 	return rray.tfar == -PR_INF; // RTCRay.tfar is set to -inf if hit anything
 }
+
+size_t Scene::entityCount() const { return mDatabase->Entities->size(); }
+size_t Scene::emissionCount() const { return mDatabase->Emissions->size(); }
+size_t Scene::materialCount() const { return mDatabase->Materials->size(); }
+size_t Scene::infiniteLightCount() const { return mDatabase->InfiniteLights->size(); }
+size_t Scene::nodeCount() const { return mDatabase->Nodes->size(); }
+
 } // namespace PR

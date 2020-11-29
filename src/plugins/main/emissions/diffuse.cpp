@@ -9,8 +9,8 @@
 namespace PR {
 class DiffuseEmission : public IEmission {
 public:
-	DiffuseEmission(uint32 id, const std::shared_ptr<FloatSpectralNode>& spec)
-		: IEmission(id)
+	DiffuseEmission(const std::shared_ptr<FloatSpectralNode>& spec)
+		: IEmission()
 		, mRadiance(spec)
 	{
 	}
@@ -24,16 +24,25 @@ public:
 
 	SpectralBlob power(const SpectralBlob& wvl) const override { return NodeUtils::average(wvl, mRadiance.get()); }
 
+	std::string dumpInformation() const override
+	{
+		std::stringstream stream;
+
+		stream << IEmission::dumpInformation()
+			   << "  <DiffuseEmission>: " << mRadiance->dumpInformation() << std::endl;
+
+		return stream.str();
+	}
+
 private:
 	std::shared_ptr<FloatSpectralNode> mRadiance;
 };
 
 class DiffuseEmissionPlugin : public IEmissionPlugin {
 public:
-	std::shared_ptr<IEmission> create(uint32 id, const std::string&, const SceneLoadContext& ctx) override
+	std::shared_ptr<IEmission> create(const std::string&, const SceneLoadContext& ctx) override
 	{
-		return std::make_shared<DiffuseEmission>(id,
-												 ctx.lookupSpectralNode("radiance", 1));
+		return std::make_shared<DiffuseEmission>(ctx.lookupSpectralNode("radiance", 1));
 	}
 
 	const std::vector<std::string>& getNames() const override

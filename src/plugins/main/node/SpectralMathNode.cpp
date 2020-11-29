@@ -252,7 +252,7 @@ private:
 
 class SpectralMathPlugin : public INodePlugin {
 public:
-	std::shared_ptr<INode> create(uint32, const std::string& type_name, const SceneLoadContext& ctx) override
+	std::shared_ptr<INode> create(const std::string& type_name, const SceneLoadContext& ctx) override
 	{
 		if (type_name == "sadd") {
 			return std::make_shared<AddSpectralMath>(ctx.lookupSpectralNode(ctx.parameters().getParameter(0)),

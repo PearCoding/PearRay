@@ -4,6 +4,6 @@
 
 namespace PR {
 
-PR_INTERNAL_PLUGIN_DEFINE_FACTORY(IInfiniteLightPlugin, IInfiniteLight, PT_INFINITELIGHT);
+PR_INTERNAL_PLUGIN_DEFINE_FACTORY(IInfiniteLightPlugin, IInfiniteLight, "INFINITELIGHT");
 
 } // namespace PR

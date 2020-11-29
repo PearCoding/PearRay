@@ -10,7 +10,6 @@ PR_NO_SANITIZE_ADDRESS
 void setup_scene(py::module& m)
 {
 	py::class_<Scene, std::shared_ptr<Scene>>(m, "Scene")
-		.def_property_readonly("entities", &Scene::entities)
 		.def_property_readonly("activeCamera", &Scene::activeCamera)
 		.def_property_readonly("boundingBox", &Scene::boundingBox);
 }

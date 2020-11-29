@@ -26,11 +26,11 @@ template <bool UseDistribution, bool UseSplit>
 class EnvironmentLight : public IInfiniteLight {
 public:
 	EnvironmentLight(const std::shared_ptr<ServiceObserver>& so,
-					 uint32 id, const std::string& name, const Transformf& transform,
+					 const std::string& name, const Transformf& transform,
 					 const std::shared_ptr<FloatSpectralNode>& spec,
 					 const std::shared_ptr<FloatSpectralNode>& background,
 					 const std::shared_ptr<Distribution2D>& distribution)
-		: IInfiniteLight(id, name, transform)
+		: IInfiniteLight(name, transform)
 		, mDistribution(distribution)
 		, mRadiance(spec)
 		, mBackground(background)
@@ -147,7 +147,7 @@ private:
 
 class EnvironmentLightFactory : public IInfiniteLightPlugin {
 public:
-	std::shared_ptr<IInfiniteLight> create(uint32 id, const std::string&, const SceneLoadContext& ctx) override
+	std::shared_ptr<IInfiniteLight> create(const std::string&, const SceneLoadContext& ctx) override
 	{
 		const ParameterGroup& params = ctx.parameters();
 
@@ -199,18 +199,18 @@ public:
 				dist->applyCompensation();
 		}
 
-		const std::shared_ptr<ServiceObserver> so = ctx.hasEnvironment() ? ctx.environment()->serviceObserver() : nullptr;
+		const std::shared_ptr<ServiceObserver> so = ctx.environment()->serviceObserver();
 
 		if (dist) {
 			if (radiance == background)
-				return std::make_shared<EnvironmentLight<true, false>>(so, id, name, ctx.transform(), radiance, background, dist);
+				return std::make_shared<EnvironmentLight<true, false>>(so, name, ctx.transform(), radiance, background, dist);
 			else
-				return std::make_shared<EnvironmentLight<true, true>>(so, id, name, ctx.transform(), radiance, background, dist);
+				return std::make_shared<EnvironmentLight<true, true>>(so, name, ctx.transform(), radiance, background, dist);
 		} else {
 			if (radiance == background)
-				return std::make_shared<EnvironmentLight<false, false>>(so, id, name, ctx.transform(), radiance, background, dist);
+				return std::make_shared<EnvironmentLight<false, false>>(so, name, ctx.transform(), radiance, background, dist);
 			else
-				return std::make_shared<EnvironmentLight<false, true>>(so, id, name, ctx.transform(), radiance, background, dist);
+				return std::make_shared<EnvironmentLight<false, true>>(so, name, ctx.transform(), radiance, background, dist);
 		}
 	}
 

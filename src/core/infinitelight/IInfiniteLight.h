@@ -39,7 +39,7 @@ struct PR_LIB_CORE InfiniteLightSamplePosDirOutput : public InfiniteLightSampleD
 class RenderTileSession;
 class PR_LIB_CORE IInfiniteLight : public ITransformable {
 public:
-	IInfiniteLight(uint32 id, const std::string& name, const Transformf& transform);
+	IInfiniteLight(const std::string& name, const Transformf& transform);
 	virtual ~IInfiniteLight() {}
 
 	virtual bool hasDeltaDistribution() const { return false; }
@@ -50,8 +50,10 @@ public:
 	/// Sample the light with light position and direction towards the newly sampled light position of the infinite light source.
 	virtual void samplePosDir(const InfiniteLightSamplePosDirInput& in, InfiniteLightSamplePosDirOutput& out, const RenderTileSession& session) const = 0;
 
+	/// Return average power (W/m^2) for given wavelengths
 	virtual SpectralBlob power(const SpectralBlob& wvl) const = 0; // Average (W/m^2)
 
+	/// Dump information
 	virtual std::string dumpInformation() const;
 };
 } // namespace PR
