@@ -284,8 +284,7 @@ public:
 
 		const float HdotV = std::abs(H.dot((Vector3f)in.Context.V));
 		if (HdotV <= PR_EPSILON) { // Giveup if V in respect to H is too close to the negative hemisphere
-			out.Weight = SpectralBlob::Zero();
-			out.PDF_S  = 0;
+			out = MaterialSampleOutput::Reject(MST_SpecularReflection);
 			return;
 		}
 

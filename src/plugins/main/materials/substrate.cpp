@@ -1,18 +1,16 @@
 #include "Environment.h"
+#include "Logger.h"
 #include "Profiler.h"
 #include "SceneLoadContext.h"
 #include "material/IMaterial.h"
 #include "material/IMaterialPlugin.h"
 #include "math/Fresnel.h"
 #include "math/Microfacet.h"
-#include "math/Projection.h"
-#include "math/Scattering.h"
-
-#include "renderer/RenderContext.h"
 
 #include <sstream>
 
 namespace PR {
+
 constexpr bool SQUARE_ROUGHNESS = true;
 inline static float adaptR(float r)
 {
@@ -22,24 +20,45 @@ inline static float adaptR(float r)
 		return r;
 }
 
-// TODO: Use VNDF?
+/// Pbrt like substrate material
+/// Sampling is purely based on microfacets, not the fresnel term
 template <bool IsAnisotropic>
-class RoughConductorMaterial : public IMaterial {
+class SubstrateMaterial : public IMaterial {
 public:
-	RoughConductorMaterial(const std::shared_ptr<FloatSpectralNode>& eta, const std::shared_ptr<FloatSpectralNode>& k,
-						   const std::shared_ptr<FloatSpectralNode>& spec,
-						   const std::shared_ptr<FloatScalarNode>& roughnessX,
-						   const std::shared_ptr<FloatScalarNode>& roughnessY)
+	explicit SubstrateMaterial(const std::shared_ptr<FloatSpectralNode>& ior,
+							   const std::shared_ptr<FloatSpectralNode>& alb, const std::shared_ptr<FloatSpectralNode>& spec,
+							   const std::shared_ptr<FloatScalarNode>& roughnessX,
+							   const std::shared_ptr<FloatScalarNode>& roughnessY)
 		: IMaterial()
-		, mEta(eta)
-		, mK(k)
+		, mIOR(ior)
+		, mAlbedo(alb)
 		, mSpecularity(spec)
 		, mRoughnessX(roughnessX)
 		, mRoughnessY(roughnessY)
 	{
 	}
 
-	virtual ~RoughConductorMaterial() = default;
+	virtual ~SubstrateMaterial() = default;
+
+	inline SpectralBlob fresnelTerm(float dot, const ShadingContext& sctx) const
+	{
+		SpectralBlob n1 = SpectralBlob::Ones();
+		SpectralBlob n2 = mIOR->eval(sctx);
+
+		SpectralBlob res;
+		PR_UNROLL_LOOP(PR_SPECTRAL_BLOB_SIZE)
+		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
+			res[i] = Fresnel::dielectric(std::abs(dot), n1[i], n2[i]);
+		return res;
+	}
+
+	inline float fresnelTermHero(float dot, const ShadingContext& sctx) const
+	{
+		SpectralBlob n1 = SpectralBlob::Ones();
+		SpectralBlob n2 = mIOR->eval(sctx);
+
+		return Fresnel::dielectric(std::abs(dot), n1[0], n2[0]);
+	}
 
 	inline float evalGD(const ShadingVector& H, const ShadingVector& V, const ShadingVector& L, const ShadingContext& sctx, float& pdf) const
 	{
@@ -110,11 +129,11 @@ public:
 			  const RenderTileSession&) const override
 	{
 		PR_PROFILE_THIS;
-		out.Type = MST_SpecularReflection;
 
+		out.Type = MST_SpecularReflection;
 		if (!in.Context.V.sameHemisphere(in.Context.L)) {
-			out.PDF_S  = 0.0f;
-			out.Weight = SpectralBlob::Zero();
+			out.Weight = 0;
+			out.PDF_S  = 0;
 			return;
 		}
 
@@ -125,9 +144,11 @@ public:
 		float pdf;
 		const float gd = evalGD(H, in.Context.V, in.Context.L, in.ShadingContext, pdf);
 
-		const float jacobian = 1 / (4 * HdotV * HdotV);
-		out.Weight			 = mSpecularity->eval(in.ShadingContext) * (gd * jacobian);
-		out.PDF_S			 = pdf * jacobian;
+		const float jacobian	   = 1 / (4 * HdotV * HdotV);
+		const SpectralBlob fresnel = fresnelTerm(HdotV, in.ShadingContext);
+
+		out.Weight = fresnel * mAlbedo->eval(in.ShadingContext) + (1 - fresnel) * mSpecularity->eval(in.ShadingContext) * (gd * jacobian);
+		out.PDF_S  = pdf * jacobian;
 	}
 
 	void pdf(const MaterialEvalInput& in, MaterialPDFOutput& out,
@@ -154,14 +175,6 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		const SpectralBlob eta = mEta->eval(in.ShadingContext);
-		const SpectralBlob k   = mK->eval(in.ShadingContext);
-
-		SpectralBlob fresnel;
-		PR_UNROLL_LOOP(PR_SPECTRAL_BLOB_SIZE)
-		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-			fresnel[i] = Fresnel::conductor(in.Context.V.absCosTheta(), eta[i], k[i]);
-
 		// Sample microfacet normal
 		const float m1 = adaptR(mRoughnessX->eval(in.ShadingContext));
 		float pdf	   = 1;
@@ -180,12 +193,14 @@ public:
 		}
 
 		const float HdotV = std::abs(H.dot((Vector3f)in.Context.V));
-		if (HdotV <= PR_EPSILON) { 
+		if (HdotV <= PR_EPSILON) {
 			out = MaterialSampleOutput::Reject(MST_SpecularReflection);
 			return;
 		}
 
 		// Calculate Fresnel term
+		const SpectralBlob fresnel = fresnelTerm(HdotV, in.ShadingContext);
+
 		out.L = Scattering::reflect(in.Context.V, H);
 
 		if (!in.Context.V.sameHemisphere(out.L)) { // Side check
@@ -199,7 +214,7 @@ public:
 		float _pdf;
 		const float gd = evalGD(H, in.Context.V, out.L, in.ShadingContext, _pdf);
 
-		out.Weight = fresnel * mSpecularity->eval(in.ShadingContext) * (gd * jacobian);
+		out.Weight = fresnel * mAlbedo->eval(in.ShadingContext) + (1 - fresnel) * mSpecularity->eval(in.ShadingContext) * (gd * jacobian);
 		out.Type   = MST_SpecularReflection;
 		out.PDF_S  = pdf * jacobian;
 	}
@@ -208,10 +223,10 @@ public:
 	{
 		std::stringstream stream;
 
-		stream << std::boolalpha << IMaterial::dumpInformation()
-			   << "  <RoughConductorMaterial>:" << std::endl
-			   << "    Eta:         " << mEta->dumpInformation() << std::endl
-			   << "    K:           " << mK->dumpInformation() << std::endl
+		stream << IMaterial::dumpInformation()
+			   << "  <SubstrateMaterial>:" << std::endl
+			   << "    IOR:         " << mIOR->dumpInformation() << std::endl
+			   << "    Albedo:      " << mAlbedo->dumpInformation() << std::endl
 			   << "    Specularity: " << mSpecularity->dumpInformation() << std::endl
 			   << "    RoughnessX:  " << mRoughnessX->dumpInformation() << std::endl
 			   << "    RoughnessY:  " << mRoughnessY->dumpInformation() << std::endl;
@@ -220,14 +235,14 @@ public:
 	}
 
 private:
-	const std::shared_ptr<FloatSpectralNode> mEta;
-	const std::shared_ptr<FloatSpectralNode> mK;
+	const std::shared_ptr<FloatSpectralNode> mIOR;
+	const std::shared_ptr<FloatSpectralNode> mAlbedo;
 	const std::shared_ptr<FloatSpectralNode> mSpecularity;
 	const std::shared_ptr<FloatScalarNode> mRoughnessX;
 	const std::shared_ptr<FloatScalarNode> mRoughnessY;
 };
 
-class RoughConductorMaterialPlugin : public IMaterialPlugin {
+class SubstrateMaterialPlugin : public IMaterialPlugin {
 public:
 	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx)
 	{
@@ -244,19 +259,19 @@ public:
 		else
 			ry = rx;
 
-		const auto eta	= ctx.lookupSpectralNode("eta", 1.2f);
-		const auto k	= ctx.lookupSpectralNode("k", 2.605f);
+		const auto ior	= ctx.lookupSpectralNode("index", 1.55f);
+		const auto alb	= ctx.lookupSpectralNode("albedo", 0.5f);
 		const auto spec = ctx.lookupSpectralNode("specularity", 1);
 
 		if (rx == ry)
-			return std::make_shared<RoughConductorMaterial<false>>(eta, k, spec, rx, ry);
+			return std::make_shared<SubstrateMaterial<false>>(ior, alb, spec, rx, ry);
 		else
-			return std::make_shared<RoughConductorMaterial<true>>(eta, k, spec, rx, ry);
+			return std::make_shared<SubstrateMaterial<true>>(ior, alb, spec, rx, ry);
 	}
 
 	const std::vector<std::string>& getNames() const
 	{
-		const static std::vector<std::string> names({ "roughconductor", "roughmetal" });
+		const static std::vector<std::string> names({ "substrate" });
 		return names;
 	}
 
@@ -267,4 +282,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::RoughConductorMaterialPlugin, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::SubstrateMaterialPlugin, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

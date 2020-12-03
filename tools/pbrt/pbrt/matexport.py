@@ -72,7 +72,7 @@ def export(operator, op, isNamed):
         operator.w.goIn()
         operator.w.write(":type 'glass'")
         operator.w.write(":name '%s'" % name)
-        operator.w.write(":specular %s" % color)
+        operator.w.write(":specularity %s" % color)
         operator.w.write(":index %s" % getIOR(operator, op, 'eta', 'bk7'))
 
         roughness = getRoughness(operator, op)
@@ -111,32 +111,29 @@ def export(operator, op, isNamed):
         operator.w.goIn()
         operator.w.write(":type 'mirror'")
         operator.w.write(":name '%s'" % name)
-        operator.w.write(":specular %s" % color)
+        operator.w.write(":specularity %s" % color)
         operator.w.goOut()
         operator.w.write(")")
-    elif mat_type == "substrate":  # TODO: Not yet implemented
-        print("WARNING: 'substrate' material not yet fully implemented!")
-        colorDiff = getRefl(operator, op, 'Kd', [0.5, 0.5, 0.5])
-
-        roughness = ""
-        aniso = 1
-        if "uroughness" in op.parameters and "vroughness" in op.parameters:
-            aniso = float(op.parameters["uroughness"]) / \
-                float(op.parameters["vroughness"])
-            roughness = getScal(operator, op, 'uroughness', 0.5)
-        else:
-            roughness = getScal(operator, op, 'roughness', 0.5)
-
+    elif mat_type == "substrate":
         operator.w.write("(material")
         operator.w.goIn()
-        operator.w.write(":type 'principled'")  # TODO:
+        operator.w.write(":type 'substrate'")
         operator.w.write(":name '%s'" % name)
-        operator.w.write(":base %s" % colorDiff)
-        operator.w.write(":specular %s" % getScal(operator, op, 'Ks', 0.5))
-        operator.w.write(":roughness %s" % roughness)
-        operator.w.write(":anisotropic %f" % aniso)
+        operator.w.write(":albedo %s" % getRefl(operator, op, 'Kd', [0.5, 0.5, 0.5]))
+        operator.w.write(":specularity %s" % getRefl(operator, op, 'Ks', [0.5, 0.5, 0.5]))
+        operator.w.write(":index %s" % getIOR(operator, op, 'eta', 'bk7'))
+
+        roughness = getRoughness(operator, op)
+        if roughness is not None:
+            if roughness[0] != roughness[1]:
+                operator.w.write(":roughness_x %s" % roughness[0])
+                operator.w.write(":roughness_y %s" % roughness[1])
+            else:
+                operator.w.write(":roughness %s" % roughness[0])
+
         operator.w.goOut()
         operator.w.write(")")
+
     elif mat_type == "disney":
         color = getRefl(operator, op, 'color', [1, 1, 1])
         eta = getRefl(operator, op, 'eta', 1)
