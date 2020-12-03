@@ -258,8 +258,10 @@ private:
 
 	inline void beforeCameraPass(const BoundingBox& bbox)
 	{
+		constexpr size_t MAX_ELEMS = 256;
+
 		// Make sure the memory use is reasonable
-		const float gridDelta = std::max(bbox.longestEdge() / 200.0f, 2 * mInitialGatherRadius);
+		const float gridDelta = std::max(bbox.longestEdge() / float(MAX_ELEMS), 2 * mInitialGatherRadius);
 		mTracer->setupSearchGrid(bbox, gridDelta);
 		mTracer->setupWavelengthSelector();
 	}

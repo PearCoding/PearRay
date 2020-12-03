@@ -1,7 +1,7 @@
 #pragma once
 
 #include "geometry/BoundingBox.h"
-#include "math/Hash.h"
+#include "math/Bits.h"
 
 #include "PositionGetter.h"
 
@@ -32,8 +32,9 @@ public:
 	inline bool isEmpty() const { return mStoredElements == 0; }
 	inline uint64 storedElements() const { return mStoredElements; }
 
-	template <typename Function>
-	inline void search(const Vector3f& center, float radius, const Function& func) const;
+	// Set RadiusSmall = true if given radius is smaller than gridDelta
+	template <bool RadiusSmall, typename Function>
+	inline void search(const Vector3f& center, float radius2, const Function& func) const;
 
 	inline void store(const T& point);
 	inline void storeUnsafe(const T& point); // Do not check for the boundary
@@ -55,9 +56,7 @@ private:
 	const float mGridDelta;
 	const float mInvGridDelta;
 	const BoundingBox mBoundingBox;
-	const uint32 mGridX;
-	const uint32 mGridY;
-	const uint32 mGridZ;
+	const uint32 mGridLength;
 	const PositionGetter<T> mPositionGetter;
 };
 } // namespace PR

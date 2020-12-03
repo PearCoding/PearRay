@@ -1,7 +1,7 @@
 #pragma once
 
-#include "container/HashGrid.h"
 #include "PathVertex.h"
+#include "container/HashGrid.h"
 
 namespace PR {
 namespace VCM {
@@ -28,6 +28,7 @@ struct QuerySphere // Setup for the estimation query
 // Spatial Hashmap
 class PathVertexMap : public HashGrid<size_t, vcm_position_getter> {
 	PR_CLASS_NON_COPYABLE(PathVertexMap);
+
 public:
 	using CheckFunction = bool (*)(const PathVertex&, const QuerySphere&, float&);
 
@@ -43,7 +44,8 @@ public:
 	template <typename AccumFunction>
 	inline SpectralBlob estimate(const QuerySphere& sphere, const CheckFunction& checkFunc, const AccumFunction& accumFunc, size_t& found) const;
 
-private:const std::vector<PathVertex>& mVertices;
+private:
+	const std::vector<PathVertex>& mVertices;
 };
 } // namespace VCM
 } // namespace PR
