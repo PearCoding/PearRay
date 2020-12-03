@@ -12,7 +12,7 @@ HashGrid<T, PositionGetter>::HashGrid(const BoundingBox& bbox, float gridDelta, 
 	, mGridZ(std::max<uint32>(1, std::ceil(mBoundingBox.edge(2) * mInvGridDelta)))
 	, mPositionGetter(getter)
 {
-	PR_ASSERT(mGridDelta > PR_EPSILON, "Grid delta has to greater 0");
+	PR_ASSERT(mGridDelta > PR_EPSILON, "Grid delta has to be greater 0");
 	PR_ASSERT(std::isfinite(mInvGridDelta), "Inverse of grid delta has to be valid");
 
 	mElements.resize(mGridX * mGridY * mGridZ);

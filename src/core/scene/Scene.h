@@ -1,19 +1,18 @@
 #pragma once
 
-#include "Profiler.h"
 #include "archive/IArchive.h"
-#include "entity/IEntity.h"
 #include "geometry/BoundingBox.h"
 #include "geometry/Sphere.h"
-#include "math/Compression.h"
-#include "ray/RayStream.h"
-#include "trace/HitStream.h"
 
 #include <string>
 #include <vector>
 
 namespace PR {
 class ICamera;
+class IEmission;
+class IEntity;
+class IMaterial;
+struct GeometryPoint;
 class RenderContext;
 class ServiceObserver;
 class SceneDatabase;
@@ -36,10 +35,16 @@ public:
 	size_t infiniteLightCount() const;
 	size_t nodeCount() const;
 
+	IEntity* getEntity(uint32 id) const;
+	IMaterial* getMaterial(uint32 id) const;
+	IEmission* getEmission(uint32 id) const;
+
 	/// Traces a stream of rays and produces a stream of hits
 	void traceRays(RayStream& rays, HitStream& hits) const override;
 	/// Traces a single ray and returns true if something was hit. Information about the hit are updated if a hit was found
 	bool traceSingleRay(const Ray& ray, HitEntry& entry) const override;
+	/// Traces a single ray and returns true if something was hit. Information about the position and geometry is updated if a hit was found
+	bool traceSingleRay(const Ray& ray, Vector3f& pos, GeometryPoint& pt) const;
 	/// Traces a single ray and returns true if something lays within the given distance
 	bool traceShadowRay(const Ray& ray, float distance = PR_INF) const override;
 

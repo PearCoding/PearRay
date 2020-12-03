@@ -6,7 +6,7 @@
 	:camera 'Camera'
 	; Settings
 	(integrator
-		:type 'bidi'
+		:type 'vcm'
 		:max_ray_depth 17
 	)
 	(sampler

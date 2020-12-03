@@ -90,9 +90,6 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 		mThreads.push_back(thread);
 	}
 
-	// Call all interested objects after thread count is fixed
-	mScene->beforeRender(this);
-
 	// Setup light sampler
 	mLightSampler = std::make_shared<LightSampler>(mScene.get());
 
@@ -105,6 +102,9 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 	mOutputMap->clear();
 
 	mIntegratorPassCount = mIntegrator->configuration().PassCount;
+
+	// Call all interested objects after thread count is fixed
+	mScene->beforeRender(this);
 
 	// Get other informations
 	PR_LOG(L_INFO) << "Rendering with:" << std::endl

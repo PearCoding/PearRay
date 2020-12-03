@@ -3,20 +3,14 @@
 #include "SceneDatabase.h"
 #include "ServiceObserver.h"
 #include "camera/ICamera.h"
-#include "emission/IEmission.h"
 #include "entity/GeometryDev.h"
 #include "entity/GeometryRepr.h"
-#include "infinitelight/IInfiniteLight.h"
-#include "light/LightSampler.h"
-#include "material/IMaterial.h"
-#include "renderer/RenderContext.h"
-#include "serialization/FileSerializer.h"
-#include "shader/INode.h"
+#include "entity/IEntity.h"
+#include "geometry/GeometryPoint.h"
+#include "ray/RayStream.h"
+#include "trace/HitStream.h"
 
 #include "Logger.h"
-
-#include <filesystem>
-#include <fstream>
 
 namespace PR {
 Scene::Scene(const std::shared_ptr<ServiceObserver>& serviceObserver,
@@ -48,6 +42,10 @@ void Scene::afterRender(RenderContext* ctx)
 	PR_LOG(L_DEBUG) << "Setup after render stop..." << std::endl;
 	mServiceObserver->callAfterRender(ctx);
 }
+
+IEntity* Scene::getEntity(uint32 id) const { return database()->Entities->getSafe(id).get(); }
+IMaterial* Scene::getMaterial(uint32 id) const { return database()->Materials->getSafe(id).get(); }
+IEmission* Scene::getEmission(uint32 id) const { return database()->Emissions->getSafe(id).get(); }
 
 static void embree_error_function(void* /*userPtr*/, RTCError /*code*/, const char* str)
 {
@@ -241,6 +239,28 @@ bool Scene::traceSingleRay(const Ray& ray, HitEntry& entry) const
 		entry.Parameter	  = Vector3f(rhit.hit.u, rhit.hit.v, rhit.ray.tfar);
 		return true;
 	}
+}
+
+bool Scene::traceSingleRay(const Ray& ray, Vector3f& pos, GeometryPoint& pt) const
+{
+	HitEntry entry;
+	if (!traceSingleRay(ray, entry))
+		return false;
+
+	const auto entity = getEntity(entry.EntityID);
+	if (!entity)
+		return false;
+
+	EntityGeometryQueryPoint query;
+	query.PrimitiveID = entry.PrimitiveID;
+	query.UV		  = Vector2f(entry.Parameter[0], entry.Parameter[1]);
+	query.View		  = ray.Direction;
+	query.Position	  = ray.t(entry.Parameter.z());
+
+	entity->provideGeometryPoint(query, pt);
+	pos = query.Position;
+
+	return true;
 }
 
 bool Scene::traceShadowRay(const Ray& ray, float distance) const
