@@ -11,7 +11,7 @@ struct Options {
 	size_t MaxLightRayDepthSoft	 = 2;
 	// Only used if VCM is used with merging:
 	size_t MaxLightSamples	 = 100000;
-	float GatherRadiusFactor = 0.25f; // In respect to pixel area
+	float GatherRadiusFactor = 1.0f; // In respect to pixel area
 	float ContractRatio		 = 0.4f;
 	float SqueezeWeight2	 = 0.0f;
 };

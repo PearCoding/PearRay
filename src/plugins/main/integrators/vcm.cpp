@@ -83,11 +83,9 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		const size_t iteration			 = session.context()->currentIteration().Iteration;
-		auto& threadContext				 = mTracer->threadContext(session.threadID());
-		const float maxSceneGatherRadius = mTracer->options().GatherRadiusFactor * session.context()->scene()->boundingBox().longestEdge();
-
-		typename Tracer::IterationContext tctx(iteration, maxSceneGatherRadius, session, threadContext, mTracer->options());
+		const size_t iteration = session.context()->currentIteration().Iteration;
+		auto& threadContext	   = mTracer->threadContext(session.threadID());
+		typename Tracer::IterationContext tctx(iteration, mInitialGatherRadius, session, threadContext, mTracer->options());
 
 		// Construct light paths
 		const size_t maxLights = mTracer->options().MaxLightSamples / session.context()->tileCount();

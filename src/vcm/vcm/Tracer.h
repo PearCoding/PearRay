@@ -48,8 +48,10 @@ public:
 
 		tctx.Session.pushSPFragment(initial_hit, tctx.ThreadContext.CameraPath);
 
-		if (PR_UNLIKELY(mLightPathCounter == 0))
-			return;
+		if constexpr (UseMerging) {
+			if (PR_UNLIKELY(mLightPathCounter == 0))
+				return;
+		}
 
 		// Initial camera vertex
 		CameraTraversalContext current;
@@ -242,6 +244,9 @@ public:
 
 	inline uint32 pickClosestLightPath(float wvl) const
 	{
+		if constexpr (!UseMerging)
+			PR_ASSERT(false, "Picking closest lightpath is disabled for bdpt, as it has its light path already associated with the camera path");
+
 		// Select closest pick based on the given wavelength
 		int pick = Interval::binary_search(mLightPathCounter, [&](size_t index) {
 			const PathVertex* v1 = lightVertex(mLightPathWavelengthSortMap[index], 0);
@@ -489,13 +494,13 @@ private:
 		MaterialPDFOutput pout;
 		material->pdf(in, pout, tctx.Session);
 
-		//if (ip.Ray.Flags & RF_Monochrome) {
-		forwardPDF_S  = out.PDF_S[0];
-		backwardPDF_S = pout.PDF_S[0];
-		/*} else {
+		if (ip.Ray.Flags & RF_Monochrome) {
+			forwardPDF_S  = out.PDF_S[0];
+			backwardPDF_S = pout.PDF_S[0];
+		} else {
 			forwardPDF_S  = out.PDF_S.sum();
 			backwardPDF_S = pout.PDF_S.sum();
-		}*/
+		}
 		type = out.Type;
 		return out.Weight;
 	}
@@ -669,7 +674,7 @@ private:
 
 		// Calculate MIS
 		const float cameraMIS = mis_term<Mode>(cameraForwardPDF_A) * (tctx.MISVMWeightFactor() + lightVertex.MIS_VCM + lightVertex.MIS_VC * mis_term<Mode>(lightBackwardPDF_S));
-		const float lightMIS  = mis_term<Mode>(lightForwardPDF_A) * (tctx.MISVCWeightFactor() + current.MIS_VCM + current.MIS_VC * mis_term<Mode>(cameraBackwardPDF_S));
+		const float lightMIS  = mis_term<Mode>(lightForwardPDF_A) * (tctx.MISVMWeightFactor() + current.MIS_VCM + current.MIS_VC * mis_term<Mode>(cameraBackwardPDF_S));
 		const float mis		  = 1 / (1 + lightMIS + cameraMIS);
 
 		if (mis <= PR_EPSILON)
