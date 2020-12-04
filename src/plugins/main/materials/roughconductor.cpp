@@ -64,9 +64,10 @@ public:
 		const SpectralBlob fresnel = fresnelTerm(in.Context.V.absCosTheta(), in.ShadingContext);
 
 		float pdf;
-		const float gd = mRoughness.eval(H, in.Context.V, in.Context.L, in.ShadingContext, pdf);
-		out.Weight	   = fresnel * mSpecularity->eval(in.ShadingContext) * gd;
-		out.PDF_S	   = pdf;
+		const float gd		 = mRoughness.eval(H, in.Context.V, in.Context.L, in.ShadingContext, pdf);
+		const float jacobian = 1 / (4 * HdotV * HdotV);
+		out.Weight			 = fresnel * mSpecularity->eval(in.ShadingContext) * (gd * jacobian);
+		out.PDF_S			 = pdf * jacobian;
 	}
 
 	void pdf(const MaterialEvalInput& in, MaterialPDFOutput& out,
@@ -80,8 +81,12 @@ public:
 		}
 
 		const ShadingVector H = Scattering::halfway_reflection(in.Context.V, in.Context.L);
-		const float pdf		  = mRoughness.pdf(H, in.Context.V, in.ShadingContext);
-		out.PDF_S			  = pdf;
+		const float HdotV	  = H.dot(in.Context.V);
+		PR_ASSERT(HdotV >= 0.0f, "HdotV must be positive");
+
+		const float jacobian = 1 / (4 * HdotV * HdotV);
+		const float pdf		 = mRoughness.pdf(H, in.Context.V, in.ShadingContext);
+		out.PDF_S			 = pdf * jacobian;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -119,8 +124,10 @@ public:
 		} else {
 			// Evaluate D*G*(V.H*L.H)/(V.N) but ignore pdf
 			float _pdf;
-			const float gd = mRoughness.eval(H, in.Context.V, out.L, in.ShadingContext, _pdf);
-			out.Weight *= gd;
+			const float gd		 = mRoughness.eval(H, in.Context.V, out.L, in.ShadingContext, _pdf);
+			const float jacobian = 1 / (4 * HdotV * HdotV);
+			out.Weight *= gd * jacobian;
+			out.PDF_S *= jacobian;
 		}
 	}
 

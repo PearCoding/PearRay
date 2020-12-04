@@ -1,4 +1,5 @@
 #include "ImageNode.h"
+#include "spectral/RGBConverter.h"
 #include "spectral/SpectralUpsampler.h"
 
 #include "Logger.h"
@@ -99,6 +100,7 @@ NonParametricImageNode::NonParametricImageNode(OIIO::TextureSystem* tsys,
 	, mTextureSystem(tsys)
 	, mUpsampler(upsampler)
 	, mIsPtex(false)
+	, mIsLinear(false)
 	, mErrorIdenticator(false)
 {
 	PR_ASSERT(tsys, "Given texture system has to be valid");
@@ -113,6 +115,8 @@ NonParametricImageNode::NonParametricImageNode(OIIO::TextureSystem* tsys,
 	if (!spec) {
 		PR_LOG(L_FATAL) << "Couldn't lookup texture specification of image " << mFilename << std::endl;
 	} else {
+		mIsLinear = spec->get_string_attribute("oiio:ColorSpace", "sRGB") != "sRGB";
+
 		const OIIO::ImageIOParameter* ptex = spec->find_attribute("ptex:meshType", OIIO::TypeDesc::STRING);
 		if (ptex && ptex->type() == OIIO::TypeDesc::STRING) {
 			mIsPtex = true;
@@ -147,6 +151,9 @@ SpectralBlob NonParametricImageNode::eval(const ShadingContext& ctx) const
 
 		return SpectralBlob::Zero();
 	}
+
+	if(!mIsLinear)
+		RGBConverter::linearize(value[0], value[1], value[2]);
 
 	ParametricBlob parametric;
 	mUpsampler->prepare(&value[0], &parametric[0], 1);

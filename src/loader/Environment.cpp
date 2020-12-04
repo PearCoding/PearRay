@@ -72,12 +72,12 @@ Environment::Environment(const std::filesystem::path& workdir,
 	}
 
 	auto ts = OIIO::TextureSystem::create();
-	ts->attribute("automip", 0);
-	ts->attribute("gray_to_rgb", 1);
+	/*ts->attribute("automip", 0);
+	ts->attribute("gray_to_rgb", 1);*/
 	ts->attribute("accept_untiled", 1);
 	ts->attribute("accept_unmipped", 1);
 	ts->attribute("forcefloat", 1);
-	
+
 	mTextureSystem = ts;
 
 	if (useStandardLib) {

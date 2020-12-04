@@ -100,6 +100,15 @@ public:
 	std::shared_ptr<FloatScalarNode> lookupScalarNode(
 		const std::string& parameter, float def = 1) const;
 
+	// Variadic approach
+	std::shared_ptr<INode> lookupRawNode(const std::initializer_list<std::string>& parameters) const;
+	std::shared_ptr<FloatSpectralNode> lookupSpectralNode(
+		const std::initializer_list<std::string>& parameters, float def = 1) const;
+	std::shared_ptr<FloatSpectralNode> lookupSpectralNode(
+		const std::initializer_list<std::string>& parameters, const SpectralBlob& def) const;
+	std::shared_ptr<FloatScalarNode> lookupScalarNode(
+		const std::initializer_list<std::string>& parameters, float def = 1) const;
+
 	std::shared_ptr<IMaterial> lookupMaterial(const Parameter& parameter) const;
 	uint32 lookupMaterialID(const Parameter& parameter) const;
 	std::vector<uint32> lookupMaterialIDArray(const Parameter& parameter, bool skipInvalid = false) const;

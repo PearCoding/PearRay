@@ -147,7 +147,8 @@
       "drawable": "cpp",
       "glextensions": "cpp",
       "graphicscostestimator": "cpp",
-      "image": "cpp"
+      "image": "cpp",
+      "fast_back_stack": "cpp"
     },
     "files.exclude": {
         "**/.git": true,

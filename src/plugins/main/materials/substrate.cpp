@@ -51,9 +51,14 @@ public:
 		return Fresnel::dielectric(dot, n1[0], n2[0]);
 	}
 
+	inline SpectralBlob evalDiff(const ShadingContext& sctx) const
+	{
+		return mAlbedo->eval(sctx) * PR_INV_PI;
+	}
+
 	inline SpectralBlob evalSpec(const SpectralBlob& fresnel, const ShadingContext& sctx) const
 	{
-		return (1 - fresnel) * mAlbedo->eval(sctx) + fresnel * mSpecularity->eval(sctx);
+		return fresnel * mSpecularity->eval(sctx);
 	}
 
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
@@ -74,10 +79,14 @@ public:
 
 		float pdf;
 		const float gd			   = mRoughness.eval(H, in.Context.V, in.Context.L, in.ShadingContext, pdf);
+		const float jacobian	   = 1 / (4 * HdotV * HdotV);
 		const SpectralBlob fresnel = fresnelTerm(HdotV, in.ShadingContext);
 
-		out.Weight = evalSpec(fresnel, in.ShadingContext) * gd;
-		out.PDF_S  = pdf;
+		out.Weight = evalDiff(in.ShadingContext) * in.Context.L.absCosTheta() + evalSpec(fresnel, in.ShadingContext) * (gd * jacobian);
+		out.PDF_S  = pdf * jacobian;
+
+		// Specular + Albedo might be greater than 1, clamp it
+		out.Weight = out.Weight.cwiseMin(1.0f);
 	}
 
 	void pdf(const MaterialEvalInput& in, MaterialPDFOutput& out,
@@ -91,8 +100,12 @@ public:
 		}
 
 		const ShadingVector H = Scattering::halfway_reflection(in.Context.V, in.Context.L);
-		const float pdf		  = mRoughness.pdf(H, in.Context.V, in.ShadingContext);
-		out.PDF_S			  = pdf;
+		const float HdotV	  = H.dot(in.Context.V);
+		PR_ASSERT(HdotV >= 0.0f, "HdotV must be positive");
+
+		const float jacobian = 1 / (4 * HdotV * HdotV);
+		const float pdf		 = mRoughness.pdf(H, in.Context.V, in.ShadingContext);
+		out.PDF_S			 = pdf * jacobian;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -120,19 +133,26 @@ public:
 			return;
 		}
 
-		out.Weight = evalSpec(fresnel, in.ShadingContext);
-		out.Type   = MST_SpecularReflection;
-		out.PDF_S  = pdf;
+		out.Type  = MST_SpecularReflection;
+		out.PDF_S = pdf;
 
 		if (delta) {
-			out.Weight *= out.L.absCosTheta();
-			out.Flags = MSF_DeltaDistribution;
+			out.Weight = evalSpec(fresnel, in.ShadingContext) * out.L.absCosTheta();
+			out.Flags  = MSF_DeltaDistribution;
 		} else {
 			// Evaluate D*G*(V.H*L.H)/(V.N) but ignore pdf
 			float _pdf;
-			const float gd = mRoughness.eval(H, in.Context.V, out.L, in.ShadingContext, _pdf);
-			out.Weight *= gd;
+			const float gd		 = mRoughness.eval(H, in.Context.V, out.L, in.ShadingContext, _pdf);
+			const float jacobian = 1 / (4 * HdotV * HdotV);
+			out.Weight			 = evalSpec(fresnel, in.ShadingContext) * (gd * jacobian);
+			out.PDF_S *= jacobian;
 		}
+
+		// Add diffuse term
+		out.Weight += evalDiff(in.ShadingContext) * out.L.absCosTheta();
+
+		// Specular + Albedo might be greater than 1, clamp it
+		out.Weight = out.Weight.cwiseMin(1.0f);
 	}
 
 	std::string dumpInformation() const override
@@ -197,7 +217,7 @@ public:
 
 	const std::vector<std::string>& getNames() const
 	{
-		const static std::vector<std::string> names({ "substrate", "plastic", "roughplastic" });
+		const static std::vector<std::string> names({ "substrate", "plastic", "roughplastic", "coateddiffuse" });
 		return names;
 	}
 

@@ -7,10 +7,6 @@ from .writer import Writer
 from . import colexport, matexport, objexport, texexport
 
 
-TRANSFORM = np.array([[1, 0, 0],
-                      [0, 0, 1],
-                      [0, 1, 0]])
-
 TRANSFORM_CAM = np.array([[1, 0, 0, 0],
                           [0, 0, 1, 0],
                           [0, 1, 0, 0],
@@ -486,7 +482,7 @@ class Operator:
             self.w.write("(light")
             self.w.goIn()
             self.w.write(":type 'environment'")
-            self.w.write(":transform  %s" % Operator.mat2str(TRANSFORM))
+            self.w.write(":transform  %s" % Operator.mat2str(TRANSFORM_CAM @ self.contextStack[-1].transform))
             if tex_name is not None:
                 self.w.write(
                     ":radiance (smul (illuminant 'd65') %s)" % tex_name)
@@ -496,9 +492,9 @@ class Operator:
             self.w.goOut()
             self.w.write(")")
         elif op.operand == "distant":
-            D = np.array(op.parameters['from'])-np.array(op.parameters['to'])
+            D = np.array(op.parameters['from']) - np.array(op.parameters['to'])
             D = D/np.linalg.norm(D, ord=2)
-            D = TRANSFORM @ D
+            D = self.contextStack[-1].transform @ np.array([D[0],D[1],D[2],0])
             color = colexport.unpackIllum(self, op.parameters['L'])
 
             self.w.write("(light")

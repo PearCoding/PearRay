@@ -283,6 +283,46 @@ std::shared_ptr<FloatScalarNode> SceneLoadContext::lookupScalarNode(const std::s
 	return lookupScalarNode(mParameters.getParameter(parameter), def);
 }
 
+std::shared_ptr<INode> SceneLoadContext::lookupRawNode(const std::initializer_list<std::string>& parameters) const
+{
+	PR_ASSERT(parameters.begin() != parameters.end(), "Expected at least one parameter");
+	for (const auto& p : parameters) {
+		if (mParameters.hasParameter(p))
+			return lookupRawNode(mParameters.getParameter(p));
+	}
+	return lookupRawNode(mParameters.getParameter(*parameters.end()));
+}
+
+std::shared_ptr<FloatSpectralNode> SceneLoadContext::lookupSpectralNode(const std::initializer_list<std::string>& parameters, float def) const
+{
+	PR_ASSERT(parameters.begin() != parameters.end(), "Expected at least one parameter");
+	for (const auto& p : parameters) {
+		if (mParameters.hasParameter(p))
+			return lookupSpectralNode(mParameters.getParameter(p), def);
+	}
+	return lookupSpectralNode(mParameters.getParameter(*parameters.end()), def);
+}
+
+std::shared_ptr<FloatSpectralNode> SceneLoadContext::lookupSpectralNode(const std::initializer_list<std::string>& parameters, const SpectralBlob& def) const
+{
+	PR_ASSERT(parameters.begin() != parameters.end(), "Expected at least one parameter");
+	for (const auto& p : parameters) {
+		if (mParameters.hasParameter(p))
+			return lookupSpectralNode(mParameters.getParameter(p), def);
+	}
+	return lookupSpectralNode(mParameters.getParameter(*parameters.end()), def);
+}
+
+std::shared_ptr<FloatScalarNode> SceneLoadContext::lookupScalarNode(const std::initializer_list<std::string>& parameters, float def) const
+{
+	PR_ASSERT(parameters.begin() != parameters.end(), "Expected at least one parameter");
+	for (const auto& p : parameters) {
+		if (mParameters.hasParameter(p))
+			return lookupScalarNode(mParameters.getParameter(p), def);
+	}
+	return lookupScalarNode(mParameters.getParameter(*parameters.end()), def);
+}
+
 std::shared_ptr<IIntegratorFactory> SceneLoadContext::loadIntegratorFactory(const std::string& type, const ParameterGroup& params) const
 {
 	auto manag = mEnvironment->integratorManager();

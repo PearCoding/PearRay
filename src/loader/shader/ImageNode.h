@@ -46,6 +46,7 @@ private:
 	SpectralUpsampler* mUpsampler;
 
 	bool mIsPtex;
+	bool mIsLinear;
 
 	mutable std::atomic<bool> mErrorIdenticator;
 };

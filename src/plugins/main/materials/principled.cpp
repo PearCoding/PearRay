@@ -332,7 +332,7 @@ private:
 template <bool UseVNDF>
 inline static std::shared_ptr<IMaterial> createPrincipled(const SceneLoadContext& ctx)
 {
-	const auto base_color	   = ctx.parameters().hasParameter("base_color") ? ctx.lookupSpectralNode("base_color", 0.8f) : ctx.lookupSpectralNode("base", 0.8f);
+	const auto base_color	   = ctx.lookupSpectralNode({ "base_color", "base" }, 0.8f);
 	const auto specular		   = ctx.lookupScalarNode("specular", 0.5f);
 	const auto specular_tint   = ctx.lookupScalarNode("specular_tint", 0.0f);
 	const auto roughness	   = ctx.lookupScalarNode("roughness", 0.5f);
