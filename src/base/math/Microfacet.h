@@ -237,36 +237,71 @@ inline float pdf_ggx(const ShadingVector& H, float roughnessX, float roughnessY)
 inline float pdf_ggx_vndf(const ShadingVector& V, const ShadingVector& H,
 						  float roughnessX, float roughnessY)
 {
-	const float Dv = g_1_smith(V, roughnessX, roughnessY) * V.dot(H) * ndf_ggx(H, roughnessX, roughnessY);
-	return Dv / V.absCosTheta();
+	return g_1_smith(V, roughnessX, roughnessY) * std::abs(V.dot(H)) * ndf_ggx(H, roughnessX, roughnessY) /* V.absCosTheta()*/;
 }
 
 // nV is in sample space!
-inline Vector3f sample_ggx_vndf(float u0, float u1,
+inline Vector3f sample_vndf_ggx(float u0, float u1,
 								const Vector3f& nV,
 								float roughnessX, float roughnessY, float& pdf)
 {
 	// Section 3.2: transforming the view direction to the hemisphere configuration
-	const Vector3f Vh = Vector3f(roughnessX * nV(0), roughnessY * nV(1), nV(2)).normalized();
+	const ShadingVector Vh = Vector3f(roughnessX * nV(0), roughnessY * nV(1), nV(2)).normalized();
 
+#if 1
 	// Section 4.1: orthonormal basis (with special case if cross product is zero)
-	float lensq = sumProd(Vh(0), Vh(0), Vh(1), Vh(1));
-	Vector3f T1 = lensq > PR_EPSILON ? Vector3f(-Vh(1), Vh(0), 0) / std::sqrt(lensq) : Vector3f(1, 0, 0);
-	Vector3f T2 = Vh.cross(T1);
+	const float lensq = sumProd(Vh(0), Vh(0), Vh(1), Vh(1));
+	const Vector3f T1 = lensq > PR_EPSILON ? Vector3f(-Vh(1), Vh(0), 0) / std::sqrt(lensq) : Vector3f(1, 0, 0);
+	const Vector3f T2 = ((Vector3f)Vh).cross(T1);
 
 	// Section 4.2: parameterization of the projected area
-	float r	  = std::sqrt(u0);
-	float phi = 2.0f * PR_PI * u1;
-	float t1  = r * std::cos(phi);
-	float t2  = r * std::sin(phi);
-	float s	  = 0.5f * (1.0f + Vh(2));
-	t2		  = (1.0f - s) * std::sqrt(1.0f - t1 * t1) + s * t2;
+	const float r	= std::sqrt(u0);
+	const float phi = 2.0f * PR_PI * u1;
+	const float t1	= r * std::cos(phi);
+	float t2		= r * std::sin(phi);
+	const float s	= 0.5f * (1.0f + Vh(2));
+	t2				= (1.0f - s) * std::sqrt(1.0f - t1 * t1) + s * t2;
 
 	// Section 4.3: reprojection onto hemisphere
-	Vector3f Nh = t1 * T1 + t2 * T2 + std::sqrt(std::max(0.0f, 1.0f + diffProd(-t1, t1, t2, t2))) * Vh;
+	const Vector3f Nh = t1 * T1 + t2 * T2 + std::sqrt(std::max(0.0f, 1.0f + diffProd(-t1, t1, t2, t2))) * (Vector3f)Vh;
+#else // Using the slope based approach
+	const float tanTheta = Vh.tanTheta();
+	const float a		 = 1 / tanTheta;
+	const float g1		 = 2 / (1 + std::sqrt(1.f + 1.f / (a * a)));
+
+	// sample slope_x
+	const float A = 2 * u0 / g1 - 1;
+	float C		  = 1.f / (A * A - 1.f);
+	if (C > 1e10)
+		C = 1e10;
+	const float B		  = tanTheta;
+	const float D		  = std::sqrt(std::max(0.0f, B * B * C * C - (A * A - B * B) * C));
+	const float slope_x_1 = B * C - D;
+	const float slope_x_2 = B * C + D;
+	float slope_x		  = (A < 0 || slope_x_2 > a) ? slope_x_1 : slope_x_2;
+
+	// sample slope_y
+	float S;
+	if (u1 > 0.5f) {
+		S  = 1.0f;
+		u1 = 2.0f * (u1 - 0.5f);
+	} else {
+		S  = -1.0f;
+		u1 = 2.0f * (0.5f - u1);
+	}
+	float z		  = (u1 * (u1 * (u1 * 0.27385f - 0.73369f) + 0.46341f)) / (u1 * (u1 * (u1 * 0.093073f + 0.309420f) - 1.000000f) + 0.597999f);
+	float slope_y = S * z * std::sqrt(1.f + slope_x * slope_x);
+
+	float tmp = Vh.cosPhi() * slope_x - Vh.sinPhi() * slope_y;
+	slope_y	  = Vh.sinPhi() * slope_x + Vh.cosPhi() * slope_y;
+	slope_x	  = tmp;
+
+	// 4. unstretch
+	const Vector3f Nh = Vector3f(-slope_x, -slope_y, 1);
+#endif
 
 	// Section 3.4: transforming the normal back to the ellipsoid configuration
-	Vector3f H = Vector3f(roughnessX * Nh(0), roughnessY * Nh(1), std::max(0.0f, Nh(2))).normalized();
+	const Vector3f H = Vector3f(roughnessX * Nh(0), roughnessY * Nh(1), std::max(0.0f, Nh(2))).normalized();
 
 	pdf = pdf_ggx_vndf(nV, H, roughnessX, roughnessY);
 	return H;

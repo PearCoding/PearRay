@@ -141,7 +141,13 @@
       "stateattribute": "cpp",
       "stateset": "cpp",
       "userdatacontainer": "cpp",
-      "viewport": "cpp"
+      "viewport": "cpp",
+      "camera": "cpp",
+      "cullsettings": "cpp",
+      "drawable": "cpp",
+      "glextensions": "cpp",
+      "graphicscostestimator": "cpp",
+      "image": "cpp"
     },
     "files.exclude": {
         "**/.git": true,

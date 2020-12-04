@@ -174,6 +174,31 @@
             ]
         },
         {
+            "name": "CornellBox-Substrate",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${command:cmake.buildDirectory}/bin/pearray",
+            "args": [
+                "-i",
+                "${workspaceFolder}/examples/cornellbox_substrate.prc",
+                "-v",
+                "-p"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "targetArchitecture": "x64",
+            "setupCommands": [
+                {
+                    "description": "Automatische Strukturierung und Einrückung für \"gdb\" aktivieren",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
             "name": "MERL",
             "type": "cppdbg",
             "request": "launch",

@@ -30,17 +30,20 @@ public:
 
 	inline std::filesystem::path currentFile() const
 	{
-		return mFileStack.empty() ? L"" : mFileStack.back();
+		return mFileStack.empty() ? "" : mFileStack.back();
 	}
 
 	inline std::filesystem::path escapePath(const std::filesystem::path& path) const
 	{
+		// If absolute, nothing to escape
 		if (path.is_absolute())
 			return path;
 
+		// If visible from the current working directory, use it
 		if (std::filesystem::exists(path))
 			return path;
 
+		// Combine current file directory with given path
 		return std::filesystem::absolute(currentFile().parent_path() / path);
 	}
 
@@ -102,7 +105,7 @@ public:
 	std::vector<uint32> lookupMaterialIDArray(const Parameter& parameter, bool skipInvalid = false) const;
 	std::shared_ptr<IMaterial> registerMaterial(const std::string& name, const std::string& type, const ParameterGroup& params);
 	std::shared_ptr<IMaterial> loadMaterial(const std::string& type, const ParameterGroup& params) const;
-	
+
 	std::shared_ptr<IEmission> lookupEmission(const Parameter& parameter) const;
 	uint32 lookupEmissionID(const Parameter& parameter) const;
 

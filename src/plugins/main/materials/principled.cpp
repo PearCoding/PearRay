@@ -238,7 +238,7 @@ public:
 
 		float pdf_s;
 		if constexpr (UseVNDF)
-			out.L = Microfacet::sample_ggx_vndf(u, v, in.Context.V, ax, ay, pdf_s);
+			out.L = Microfacet::sample_vndf_ggx(u, v, in.Context.V, ax, ay, pdf_s);
 		else
 			out.L = Microfacet::sample_ndf_ggx(u, v, ax, ay, pdf_s);
 		//out.Outgoing = Microfacet::sample_ndf_ggx(u, v, ax, ay, pdf_s);

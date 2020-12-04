@@ -12,6 +12,10 @@
 #include <algorithm>
 #include <filesystem>
 
+// Unfortunately saving parametric images to disk breaks them....
+// Need a fix for this or else OpenImageIO texture system can not be really used.
+#define PARAMETRIC_FILE_WORKAROUND
+
 namespace PR {
 OIIO::TextureOpt::Wrap parseWrap(const std::string& name)
 {
@@ -66,7 +70,10 @@ void TextureParser::parse(SceneLoadContext& ctx, const std::string& name, const 
 	DL::Data interpolationModeD = group.getFromKey("interpolation");
 	DL::Data blurD				= group.getFromKey("blur");
 	DL::Data anisoD				= group.getFromKey("anisotropic");
-	DL::Data parametricD		= group.getFromKey("parametric");
+
+#ifndef PARAMETRIC_FILE_WORKAROUND
+	DL::Data parametricD = group.getFromKey("parametric");
+#endif
 
 	OIIO::TextureOpt opts;
 	if (wrapModeD.type() == DL::DT_String) {
@@ -102,7 +109,7 @@ void TextureParser::parse(SceneLoadContext& ctx, const std::string& name, const 
 		std::transform(mip.begin(), mip.end(), mip.begin(), ::tolower);
 		opts.mipmode = parseMIP(mip);
 	} else {
-		opts.mipmode = OIIO::TextureOpt::MipModeNoMIP;// For now
+		opts.mipmode = OIIO::TextureOpt::MipModeNoMIP; // For now
 	}
 
 	if (interpolationModeD.type() == DL::DT_String) {
@@ -143,10 +150,14 @@ void TextureParser::parse(SceneLoadContext& ctx, const std::string& name, const 
 
 	std::filesystem::path filename;
 	if (filenameD.type() == DL::DT_String) {
+#ifndef PARAMETRIC_FILE_WORKAROUND
 		if (parametricD.type() == DL::DT_Bool && parametricD.getBool())
 			filename = ctx.escapePath(filenameD.getString());
 		else
-			filename = ctx.setupParametricImage(filenameD.getString());
+			filename = ctx.setupParametricImage(ctx.escapePath(filenameD.getString()));
+#else
+		filename	= ctx.escapePath(filenameD.getString());
+#endif
 	} else {
 		PR_LOG(L_ERROR) << "No valid filename given for texture " << name << std::endl;
 		return;
@@ -166,16 +177,26 @@ void TextureParser::parse(SceneLoadContext& ctx, const std::string& name, const 
 		type = "color";
 	}
 
-	if (type == "scalar"
-		|| type == "grayscale"
+	if (ctx.hasNode(name)) {
+		PR_LOG(L_ERROR) << "Texture " << name << " already exists" << std::endl;
+		return;
+	}
+
+	if (type == "grayscale"
 		|| type == "color"
 		|| type == "spectral") {
-		if (ctx.hasNode(name)) {
-			PR_LOG(L_ERROR) << "Texture " << name << " already exists" << std::endl;
-			return;
-		}
-
-		auto output = std::make_shared<ImageNode>(
+#ifndef PARAMETRIC_FILE_WORKAROUND
+		auto output = std::make_shared<ParametricImageNode>(
+			(OIIO::TextureSystem*)ctx.environment()->textureSystem(),
+			opts, filename);
+#else
+		auto output = std::make_shared<NonParametricImageNode>(
+			(OIIO::TextureSystem*)ctx.environment()->textureSystem(),
+			opts, filename, ctx.environment()->defaultSpectralUpsampler().get());
+#endif
+		ctx.addNode(name, output);
+	} else if (type == "scalar") {
+		auto output = std::make_shared<ScalarImageNode>(
 			(OIIO::TextureSystem*)ctx.environment()->textureSystem(),
 			opts, filename);
 		ctx.addNode(name, output);

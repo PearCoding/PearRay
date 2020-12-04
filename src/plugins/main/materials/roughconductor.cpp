@@ -10,20 +10,12 @@
 
 #include "renderer/RenderContext.h"
 
+#include "Roughness.h"
+
 #include <sstream>
 
 namespace PR {
-constexpr bool SQUARE_ROUGHNESS = true;
-inline static float adaptR(float r)
-{
-	if constexpr (SQUARE_ROUGHNESS)
-		return r * r;
-	else
-		return r;
-}
-
-// TODO: Use VNDF?
-template <bool IsAnisotropic>
+template <bool UseVNDF, bool IsAnisotropic>
 class RoughConductorMaterial : public IMaterial {
 public:
 	RoughConductorMaterial(const std::shared_ptr<FloatSpectralNode>& eta, const std::shared_ptr<FloatSpectralNode>& k,
@@ -34,76 +26,23 @@ public:
 		, mEta(eta)
 		, mK(k)
 		, mSpecularity(spec)
-		, mRoughnessX(roughnessX)
-		, mRoughnessY(roughnessY)
+		, mRoughness(roughnessX, roughnessY)
 	{
 	}
 
 	virtual ~RoughConductorMaterial() = default;
 
-	inline float evalGD(const ShadingVector& H, const ShadingVector& V, const ShadingVector& L, const ShadingContext& sctx, float& pdf) const
+	inline SpectralBlob fresnelTerm(float dot, const ShadingContext& sctx) const
 	{
-		const float absNdotH = H.absCosTheta();
-		const float absNdotV = V.absCosTheta();
+		const SpectralBlob eta = mEta->eval(sctx);
+		const SpectralBlob k   = mK->eval(sctx);
 
-		//PR_ASSERT(absNdotV >= 0, "By definition N.V has to be positive");
-		if (absNdotH <= PR_EPSILON
-			|| absNdotV <= PR_EPSILON) {
-			pdf = 0;
-			return 0.0f;
-		}
+		SpectralBlob fresnel;
+		PR_UNROLL_LOOP(PR_SPECTRAL_BLOB_SIZE)
+		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
+			fresnel[i] = Fresnel::conductor(dot, eta[i], k[i]);
 
-		const float m1 = adaptR(mRoughnessX->eval(sctx));
-		if (m1 < PR_EPSILON) {
-			pdf = 1;
-			return 1;
-		}
-
-		float G;
-		float D;
-		if constexpr (!IsAnisotropic) {
-			D = Microfacet::ndf_ggx(absNdotH, m1);
-			G = Microfacet::g_1_smith(V, m1) * Microfacet::g_1_smith(L, m1);
-		} else {
-			const float m2 = adaptR(mRoughnessY->eval(sctx));
-			if (m2 < PR_EPSILON) {
-				pdf = 1;
-				return 1;
-			}
-			D = Microfacet::ndf_ggx(H, m1, m2);
-			G = Microfacet::g_1_smith(V, m1, m2) * Microfacet::g_1_smith(L, m1, m2);
-		}
-
-		const float factor = std::abs(H.dot(V) * H.dot(L)) / absNdotV; // NdotL multiplied out
-		pdf				   = std::abs(D * absNdotH);
-		return G * D * factor;
-	}
-
-	inline float pdfGD(const ShadingVector& H, const ShadingVector& V, const ShadingContext& sctx) const
-	{
-		const float absNdotH = H.absCosTheta();
-		const float absNdotV = V.absCosTheta();
-
-		//PR_ASSERT(absNdotV >= 0, "By definition N.V has to be positive");
-		if (absNdotH <= PR_EPSILON
-			|| absNdotV <= PR_EPSILON)
-			return 0.0f;
-
-		const float m1 = adaptR(mRoughnessX->eval(sctx));
-		if (m1 < PR_EPSILON)
-			return 1;
-
-		float D;
-		if constexpr (!IsAnisotropic) {
-			D = Microfacet::ndf_ggx(absNdotH, m1);
-		} else {
-			const float m2 = adaptR(mRoughnessY->eval(sctx));
-			if (m2 < PR_EPSILON)
-				return 1;
-			D = Microfacet::ndf_ggx(H, m1, m2);
-		}
-
-		return std::abs(D * absNdotH);
+		return fresnel;
 	}
 
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
@@ -122,12 +61,12 @@ public:
 		const float HdotV	  = H.dot(in.Context.V);
 		PR_ASSERT(HdotV >= 0.0f, "HdotV must be positive");
 
-		float pdf;
-		const float gd = evalGD(H, in.Context.V, in.Context.L, in.ShadingContext, pdf);
+		const SpectralBlob fresnel = fresnelTerm(in.Context.V.absCosTheta(), in.ShadingContext);
 
-		const float jacobian = 1 / (4 * HdotV * HdotV);
-		out.Weight			 = mSpecularity->eval(in.ShadingContext) * (gd * jacobian);
-		out.PDF_S			 = pdf * jacobian;
+		float pdf;
+		const float gd = mRoughness.eval(H, in.Context.V, in.Context.L, in.ShadingContext, pdf);
+		out.Weight	   = fresnel * mSpecularity->eval(in.ShadingContext) * gd;
+		out.PDF_S	   = pdf;
 	}
 
 	void pdf(const MaterialEvalInput& in, MaterialPDFOutput& out,
@@ -141,12 +80,8 @@ public:
 		}
 
 		const ShadingVector H = Scattering::halfway_reflection(in.Context.V, in.Context.L);
-		const float HdotV	  = H.dot(in.Context.V);
-		PR_ASSERT(HdotV >= 0.0f, "HdotV must be positive");
-
-		const float pdf		 = pdfGD(H, in.Context.V, in.ShadingContext);
-		const float jacobian = 1 / (4 * HdotV * HdotV);
-		out.PDF_S			 = pdf * jacobian;
+		const float pdf		  = mRoughness.pdf(H, in.Context.V, in.ShadingContext);
+		out.PDF_S			  = pdf;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -154,33 +89,13 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		const SpectralBlob eta = mEta->eval(in.ShadingContext);
-		const SpectralBlob k   = mK->eval(in.ShadingContext);
-
-		SpectralBlob fresnel;
-		PR_UNROLL_LOOP(PR_SPECTRAL_BLOB_SIZE)
-		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-			fresnel[i] = Fresnel::conductor(in.Context.V.absCosTheta(), eta[i], k[i]);
-
 		// Sample microfacet normal
-		const float m1 = adaptR(mRoughnessX->eval(in.ShadingContext));
-		float pdf	   = 1;
-		Vector3f H;
-		if constexpr (IsAnisotropic) {
-			const float m2 = adaptR(mRoughnessY->eval(in.ShadingContext));
-			if (m1 > PR_EPSILON && m2 > PR_EPSILON)
-				H = Microfacet::sample_ndf_ggx(in.RND[0], in.RND[1], m1, m2, pdf);
-			else
-				H = Vector3f(0, 0, 1);
-		} else {
-			if (m1 > PR_EPSILON)
-				H = Microfacet::sample_ndf_ggx(in.RND[0], in.RND[1], m1, pdf);
-			else
-				H = Vector3f(0, 0, 1);
-		}
+		float pdf;
+		bool delta;
+		const Vector3f H = mRoughness.sample(in.RND, in.Context.V, in.ShadingContext, pdf, delta);
 
 		const float HdotV = std::abs(H.dot((Vector3f)in.Context.V));
-		if (HdotV <= PR_EPSILON) { 
+		if (HdotV <= PR_EPSILON) {
 			out = MaterialSampleOutput::Reject(MST_SpecularReflection);
 			return;
 		}
@@ -193,15 +108,20 @@ public:
 			return;
 		}
 
-		const float jacobian = 1 / (4 * HdotV * HdotV);
+		const SpectralBlob fresnel = fresnelTerm(in.Context.V.absCosTheta(), in.ShadingContext);
+		out.Weight				   = fresnel * mSpecularity->eval(in.ShadingContext);
+		out.Type				   = MST_SpecularReflection;
+		out.PDF_S				   = pdf;
 
-		// Evaluate D*G*(V.H*L.H)/(V.N) but ignore pdf
-		float _pdf;
-		const float gd = evalGD(H, in.Context.V, out.L, in.ShadingContext, _pdf);
-
-		out.Weight = fresnel * mSpecularity->eval(in.ShadingContext) * (gd * jacobian);
-		out.Type   = MST_SpecularReflection;
-		out.PDF_S  = pdf * jacobian;
+		if (delta) {
+			out.Weight *= out.L.absCosTheta();
+			out.Flags = MSF_DeltaDistribution;
+		} else {
+			// Evaluate D*G*(V.H*L.H)/(V.N) but ignore pdf
+			float _pdf;
+			const float gd = mRoughness.eval(H, in.Context.V, out.L, in.ShadingContext, _pdf);
+			out.Weight *= gd;
+		}
 	}
 
 	std::string dumpInformation() const override
@@ -213,8 +133,8 @@ public:
 			   << "    Eta:         " << mEta->dumpInformation() << std::endl
 			   << "    K:           " << mK->dumpInformation() << std::endl
 			   << "    Specularity: " << mSpecularity->dumpInformation() << std::endl
-			   << "    RoughnessX:  " << mRoughnessX->dumpInformation() << std::endl
-			   << "    RoughnessY:  " << mRoughnessY->dumpInformation() << std::endl;
+			   << "    RoughnessX:  " << mRoughness.roughnessX()->dumpInformation() << std::endl
+			   << "    RoughnessY:  " << mRoughness.roughnessY()->dumpInformation() << std::endl;
 
 		return stream.str();
 	}
@@ -223,8 +143,7 @@ private:
 	const std::shared_ptr<FloatSpectralNode> mEta;
 	const std::shared_ptr<FloatSpectralNode> mK;
 	const std::shared_ptr<FloatSpectralNode> mSpecularity;
-	const std::shared_ptr<FloatScalarNode> mRoughnessX;
-	const std::shared_ptr<FloatScalarNode> mRoughnessY;
+	const Roughness<IsAnisotropic, UseVNDF, false> mRoughness;
 };
 
 class RoughConductorMaterialPlugin : public IMaterialPlugin {
@@ -248,10 +167,20 @@ public:
 		const auto k	= ctx.lookupSpectralNode("k", 2.605f);
 		const auto spec = ctx.lookupSpectralNode("specularity", 1);
 
-		if (rx == ry)
-			return std::make_shared<RoughConductorMaterial<false>>(eta, k, spec, rx, ry);
-		else
-			return std::make_shared<RoughConductorMaterial<true>>(eta, k, spec, rx, ry);
+		// TODO: Fix VNDF and make it default again
+		const bool use_vndf = ctx.parameters().getBool("vndf", false);
+
+		if (use_vndf) {
+			if (rx == ry)
+				return std::make_shared<RoughConductorMaterial<true, false>>(eta, k, spec, rx, ry);
+			else
+				return std::make_shared<RoughConductorMaterial<true, true>>(eta, k, spec, rx, ry);
+		} else {
+			if (rx == ry)
+				return std::make_shared<RoughConductorMaterial<false, false>>(eta, k, spec, rx, ry);
+			else
+				return std::make_shared<RoughConductorMaterial<false, true>>(eta, k, spec, rx, ry);
+		}
 	}
 
 	const std::vector<std::string>& getNames() const

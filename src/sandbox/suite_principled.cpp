@@ -39,7 +39,7 @@ void produce_vndf_image(const std::string& path, const Vector3f& V, float alpha_
 			float v = y * du;
 
 			float pdf;
-			Vector3f Nh = Microfacet::sample_ggx_vndf(u, v, V, alpha_x, alpha_y, pdf);
+			Vector3f Nh = Microfacet::sample_vndf_ggx(u, v, V, alpha_x, alpha_y, pdf);
 
 			// Slope space
 			Vector2f slope = toSlopeSpace(Nh);

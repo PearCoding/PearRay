@@ -71,7 +71,14 @@ Environment::Environment(const std::filesystem::path& workdir,
 		PR_LOG(L_ERROR) << "Error while loading plugins: " << e.what() << std::endl;
 	}
 
-	mTextureSystem = OIIO::TextureSystem::create();
+	auto ts = OIIO::TextureSystem::create();
+	ts->attribute("automip", 0);
+	ts->attribute("gray_to_rgb", 1);
+	ts->attribute("accept_untiled", 1);
+	ts->attribute("accept_unmipped", 1);
+	ts->attribute("forcefloat", 1);
+	
+	mTextureSystem = ts;
 
 	if (useStandardLib) {
 		//Defaults

@@ -5,24 +5,16 @@
 #include "material/IMaterial.h"
 #include "material/IMaterialPlugin.h"
 #include "math/Fresnel.h"
-#include "math/Microfacet.h"
+
+#include "Roughness.h"
 
 #include <sstream>
 
 namespace PR {
 
-constexpr bool SQUARE_ROUGHNESS = true;
-inline static float adaptR(float r)
-{
-	if constexpr (SQUARE_ROUGHNESS)
-		return r * r;
-	else
-		return r;
-}
-
 /// Pbrt like substrate material
 /// Sampling is purely based on microfacets, not the fresnel term
-template <bool IsAnisotropic>
+template <bool UseVNDF, bool IsAnisotropic>
 class SubstrateMaterial : public IMaterial {
 public:
 	explicit SubstrateMaterial(const std::shared_ptr<FloatSpectralNode>& ior,
@@ -33,8 +25,7 @@ public:
 		, mIOR(ior)
 		, mAlbedo(alb)
 		, mSpecularity(spec)
-		, mRoughnessX(roughnessX)
-		, mRoughnessY(roughnessY)
+		, mRoughness(roughnessX, roughnessY)
 	{
 	}
 
@@ -42,87 +33,27 @@ public:
 
 	inline SpectralBlob fresnelTerm(float dot, const ShadingContext& sctx) const
 	{
-		SpectralBlob n1 = SpectralBlob::Ones();
-		SpectralBlob n2 = mIOR->eval(sctx);
+		const SpectralBlob n1 = SpectralBlob::Ones();
+		const SpectralBlob n2 = mIOR->eval(sctx);
 
 		SpectralBlob res;
 		PR_UNROLL_LOOP(PR_SPECTRAL_BLOB_SIZE)
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-			res[i] = Fresnel::dielectric(std::abs(dot), n1[i], n2[i]);
+			res[i] = Fresnel::dielectric(dot, n1[i], n2[i]);
 		return res;
 	}
 
 	inline float fresnelTermHero(float dot, const ShadingContext& sctx) const
 	{
-		SpectralBlob n1 = SpectralBlob::Ones();
-		SpectralBlob n2 = mIOR->eval(sctx);
+		const SpectralBlob n1 = SpectralBlob::Ones();
+		const SpectralBlob n2 = mIOR->eval(sctx);
 
-		return Fresnel::dielectric(std::abs(dot), n1[0], n2[0]);
+		return Fresnel::dielectric(dot, n1[0], n2[0]);
 	}
 
-	inline float evalGD(const ShadingVector& H, const ShadingVector& V, const ShadingVector& L, const ShadingContext& sctx, float& pdf) const
+	inline SpectralBlob evalSpec(const SpectralBlob& fresnel, const ShadingContext& sctx) const
 	{
-		const float absNdotH = H.absCosTheta();
-		const float absNdotV = V.absCosTheta();
-
-		//PR_ASSERT(absNdotV >= 0, "By definition N.V has to be positive");
-		if (absNdotH <= PR_EPSILON
-			|| absNdotV <= PR_EPSILON) {
-			pdf = 0;
-			return 0.0f;
-		}
-
-		const float m1 = adaptR(mRoughnessX->eval(sctx));
-		if (m1 < PR_EPSILON) {
-			pdf = 1;
-			return 1;
-		}
-
-		float G;
-		float D;
-		if constexpr (!IsAnisotropic) {
-			D = Microfacet::ndf_ggx(absNdotH, m1);
-			G = Microfacet::g_1_smith(V, m1) * Microfacet::g_1_smith(L, m1);
-		} else {
-			const float m2 = adaptR(mRoughnessY->eval(sctx));
-			if (m2 < PR_EPSILON) {
-				pdf = 1;
-				return 1;
-			}
-			D = Microfacet::ndf_ggx(H, m1, m2);
-			G = Microfacet::g_1_smith(V, m1, m2) * Microfacet::g_1_smith(L, m1, m2);
-		}
-
-		const float factor = std::abs(H.dot(V) * H.dot(L)) / absNdotV; // NdotL multiplied out
-		pdf				   = std::abs(D * absNdotH);
-		return G * D * factor;
-	}
-
-	inline float pdfGD(const ShadingVector& H, const ShadingVector& V, const ShadingContext& sctx) const
-	{
-		const float absNdotH = H.absCosTheta();
-		const float absNdotV = V.absCosTheta();
-
-		//PR_ASSERT(absNdotV >= 0, "By definition N.V has to be positive");
-		if (absNdotH <= PR_EPSILON
-			|| absNdotV <= PR_EPSILON)
-			return 0.0f;
-
-		const float m1 = adaptR(mRoughnessX->eval(sctx));
-		if (m1 < PR_EPSILON)
-			return 1;
-
-		float D;
-		if constexpr (!IsAnisotropic) {
-			D = Microfacet::ndf_ggx(absNdotH, m1);
-		} else {
-			const float m2 = adaptR(mRoughnessY->eval(sctx));
-			if (m2 < PR_EPSILON)
-				return 1;
-			D = Microfacet::ndf_ggx(H, m1, m2);
-		}
-
-		return std::abs(D * absNdotH);
+		return (1 - fresnel) * mAlbedo->eval(sctx) + fresnel * mSpecularity->eval(sctx);
 	}
 
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
@@ -142,13 +73,11 @@ public:
 		PR_ASSERT(HdotV >= 0.0f, "HdotV must be positive");
 
 		float pdf;
-		const float gd = evalGD(H, in.Context.V, in.Context.L, in.ShadingContext, pdf);
-
-		const float jacobian	   = 1 / (4 * HdotV * HdotV);
+		const float gd			   = mRoughness.eval(H, in.Context.V, in.Context.L, in.ShadingContext, pdf);
 		const SpectralBlob fresnel = fresnelTerm(HdotV, in.ShadingContext);
 
-		out.Weight = fresnel * mAlbedo->eval(in.ShadingContext) + (1 - fresnel) * mSpecularity->eval(in.ShadingContext) * (gd * jacobian);
-		out.PDF_S  = pdf * jacobian;
+		out.Weight = evalSpec(fresnel, in.ShadingContext) * gd;
+		out.PDF_S  = pdf;
 	}
 
 	void pdf(const MaterialEvalInput& in, MaterialPDFOutput& out,
@@ -162,12 +91,8 @@ public:
 		}
 
 		const ShadingVector H = Scattering::halfway_reflection(in.Context.V, in.Context.L);
-		const float HdotV	  = H.dot(in.Context.V);
-		PR_ASSERT(HdotV >= 0.0f, "HdotV must be positive");
-
-		const float pdf		 = pdfGD(H, in.Context.V, in.ShadingContext);
-		const float jacobian = 1 / (4 * HdotV * HdotV);
-		out.PDF_S			 = pdf * jacobian;
+		const float pdf		  = mRoughness.pdf(H, in.Context.V, in.ShadingContext);
+		out.PDF_S			  = pdf;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -176,21 +101,9 @@ public:
 		PR_PROFILE_THIS;
 
 		// Sample microfacet normal
-		const float m1 = adaptR(mRoughnessX->eval(in.ShadingContext));
-		float pdf	   = 1;
-		Vector3f H;
-		if constexpr (IsAnisotropic) {
-			const float m2 = adaptR(mRoughnessY->eval(in.ShadingContext));
-			if (m1 > PR_EPSILON && m2 > PR_EPSILON)
-				H = Microfacet::sample_ndf_ggx(in.RND[0], in.RND[1], m1, m2, pdf);
-			else
-				H = Vector3f(0, 0, 1);
-		} else {
-			if (m1 > PR_EPSILON)
-				H = Microfacet::sample_ndf_ggx(in.RND[0], in.RND[1], m1, pdf);
-			else
-				H = Vector3f(0, 0, 1);
-		}
+		float pdf;
+		bool delta;
+		const Vector3f H = mRoughness.sample(in.RND, in.Context.V, in.ShadingContext, pdf, delta);
 
 		const float HdotV = std::abs(H.dot((Vector3f)in.Context.V));
 		if (HdotV <= PR_EPSILON) {
@@ -200,23 +113,26 @@ public:
 
 		// Calculate Fresnel term
 		const SpectralBlob fresnel = fresnelTerm(HdotV, in.ShadingContext);
-
-		out.L = Scattering::reflect(in.Context.V, H);
+		out.L					   = Scattering::reflect(in.Context.V, H);
 
 		if (!in.Context.V.sameHemisphere(out.L)) { // Side check
 			out = MaterialSampleOutput::Reject(MST_SpecularReflection);
 			return;
 		}
 
-		const float jacobian = 1 / (4 * HdotV * HdotV);
-
-		// Evaluate D*G*(V.H*L.H)/(V.N) but ignore pdf
-		float _pdf;
-		const float gd = evalGD(H, in.Context.V, out.L, in.ShadingContext, _pdf);
-
-		out.Weight = fresnel * mAlbedo->eval(in.ShadingContext) + (1 - fresnel) * mSpecularity->eval(in.ShadingContext) * (gd * jacobian);
+		out.Weight = evalSpec(fresnel, in.ShadingContext);
 		out.Type   = MST_SpecularReflection;
-		out.PDF_S  = pdf * jacobian;
+		out.PDF_S  = pdf;
+
+		if (delta) {
+			out.Weight *= out.L.absCosTheta();
+			out.Flags = MSF_DeltaDistribution;
+		} else {
+			// Evaluate D*G*(V.H*L.H)/(V.N) but ignore pdf
+			float _pdf;
+			const float gd = mRoughness.eval(H, in.Context.V, out.L, in.ShadingContext, _pdf);
+			out.Weight *= gd;
+		}
 	}
 
 	std::string dumpInformation() const override
@@ -228,8 +144,8 @@ public:
 			   << "    IOR:         " << mIOR->dumpInformation() << std::endl
 			   << "    Albedo:      " << mAlbedo->dumpInformation() << std::endl
 			   << "    Specularity: " << mSpecularity->dumpInformation() << std::endl
-			   << "    RoughnessX:  " << mRoughnessX->dumpInformation() << std::endl
-			   << "    RoughnessY:  " << mRoughnessY->dumpInformation() << std::endl;
+			   << "    RoughnessX:  " << mRoughness.roughnessX()->dumpInformation() << std::endl
+			   << "    RoughnessY:  " << mRoughness.roughnessY()->dumpInformation() << std::endl;
 
 		return stream.str();
 	}
@@ -238,8 +154,8 @@ private:
 	const std::shared_ptr<FloatSpectralNode> mIOR;
 	const std::shared_ptr<FloatSpectralNode> mAlbedo;
 	const std::shared_ptr<FloatSpectralNode> mSpecularity;
-	const std::shared_ptr<FloatScalarNode> mRoughnessX;
-	const std::shared_ptr<FloatScalarNode> mRoughnessY;
+
+	const Roughness<IsAnisotropic, UseVNDF, false> mRoughness;
 };
 
 class SubstrateMaterialPlugin : public IMaterialPlugin {
@@ -263,15 +179,25 @@ public:
 		const auto alb	= ctx.lookupSpectralNode("albedo", 0.5f);
 		const auto spec = ctx.lookupSpectralNode("specularity", 1);
 
-		if (rx == ry)
-			return std::make_shared<SubstrateMaterial<false>>(ior, alb, spec, rx, ry);
-		else
-			return std::make_shared<SubstrateMaterial<true>>(ior, alb, spec, rx, ry);
+		// TODO: Fix VNDF and make it default again
+		const bool use_vndf = ctx.parameters().getBool("vndf", false);
+
+		if (use_vndf) {
+			if (rx == ry)
+				return std::make_shared<SubstrateMaterial<true, false>>(ior, alb, spec, rx, ry);
+			else
+				return std::make_shared<SubstrateMaterial<true, true>>(ior, alb, spec, rx, ry);
+		} else {
+			if (rx == ry)
+				return std::make_shared<SubstrateMaterial<false, false>>(ior, alb, spec, rx, ry);
+			else
+				return std::make_shared<SubstrateMaterial<false, true>>(ior, alb, spec, rx, ry);
+		}
 	}
 
 	const std::vector<std::string>& getNames() const
 	{
-		const static std::vector<std::string> names({ "substrate" });
+		const static std::vector<std::string> names({ "substrate", "plastic", "roughplastic" });
 		return names;
 	}
 
