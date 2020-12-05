@@ -544,6 +544,9 @@ private:
 		float cameraBackwardPDF_S;
 		MaterialScatteringType cameraScatteringType;
 		const SpectralBlob cameraW = extractMaterial(tctx, cameraIP, cameraMaterial, L, cameraForwardPDF_S, cameraBackwardPDF_S, cameraScatteringType);
+		// Its impossible to sample the bsdf, so skip it
+		if (cameraForwardPDF_S <= PR_EPSILON || cameraBackwardPDF_S <= PR_EPSILON)
+			return;
 
 		if (!light->hasDeltaDistribution())
 			cameraForwardPDF_S *= cameraRoulette;
@@ -644,6 +647,10 @@ private:
 		float cameraBackwardPDF_S;
 		MaterialScatteringType cameraScatteringType;
 		const SpectralBlob cameraW = extractMaterial(tctx, cameraIP, cameraMaterial, cD, cameraForwardPDF_S, cameraBackwardPDF_S, cameraScatteringType);
+		// Its impossible to sample the bsdf, so skip it
+		if (cameraForwardPDF_S <= PR_EPSILON || cameraBackwardPDF_S <= PR_EPSILON)
+			return;
+
 		cameraForwardPDF_S *= cameraRoulette;
 		cameraBackwardPDF_S *= cameraRoulette;
 
@@ -652,6 +659,10 @@ private:
 		float lightBackwardPDF_S;
 		MaterialScatteringType lightScatteringType; // Unused
 		SpectralBlob lightW = extractMaterial(tctx, lightVertex.IP, lightMaterial, -cD, lightForwardPDF_S, lightBackwardPDF_S, lightScatteringType);
+		// Its impossible to sample the bsdf, so skip it
+		if (lightForwardPDF_S <= PR_EPSILON || lightBackwardPDF_S <= PR_EPSILON)
+			return;
+
 		lightForwardPDF_S *= lightRoulette;
 		lightBackwardPDF_S *= lightRoulette;
 
@@ -739,6 +750,9 @@ private:
 			float cameraBackwardPDF_S;
 			MaterialScatteringType cameraScatteringType; // Ignore
 			const SpectralBlob cameraW = extractMaterial(tctx, cameraIP, cameraMaterial, L, cameraForwardPDF_S, cameraBackwardPDF_S, cameraScatteringType);
+			// Its impossible to sample the bsdf, so skip it
+			if (cameraForwardPDF_S <= PR_EPSILON || cameraBackwardPDF_S <= PR_EPSILON)
+				return;
 
 			// Apply russian roulette
 			cameraForwardPDF_S *= cameraRoulette;

@@ -267,6 +267,8 @@ private:
 		const float cameraRoulette	  = mCameraRR.probability(cameraPathLength);
 
 		const float bsdfWvlPdfS = (cameraIP.Ray.Flags & RF_Monochrome) ? mout.PDF_S[0] : mout.PDF_S.sum(); // Each wavelength could have generated the path
+		if(bsdfWvlPdfS <= PR_EPSILON) // Its impossible to sample the bsdf, so skip it
+			return;
 		const float bsdfPdfS	= bsdfWvlPdfS * cameraRoulette;
 		const float mis			= light->hasDeltaDistribution() ? 1 : 1 / (1 + VCM::mis_term<MISMode>(bsdfPdfS / lightPdfS));
 

@@ -10,6 +10,8 @@
 
 #include "renderer/RenderContext.h"
 
+#include "Roughness.h"
+
 #include <sstream>
 
 namespace PR {
@@ -24,26 +26,20 @@ namespace PR {
  *
  * Refraction:
  *   (1-F)*D*G*(V.H*L.H)/(V.N*L.N)*K
- *   K = n2^2 /(n1*(V.H)+n2*(L.H))^2 // Jacobian
+ *   K = V.H*n2^2 /(n1*(V.H)+n2*(L.H))^2 // Jacobian
  * 
  * To be precise the jacobian is already multiplied by 1/(V.H)
  * and the whole BSDF is multiplied by |L.N| therefore the L.N in the denominator disappears
  * 
  * Notice: eta is always n1/n2 with n1 being the IOR of V and n2 the IOR of L. This is inconsistent within Mitsuba and PBRT
+ * 
+ * Based on:
+ * Walter, Bruce & Marschner, Stephen & Li, Hongsong & Torrance, Kenneth. (2007). Microfacet Models for Refraction through Rough Surfaces.. 
+ * Eurographics Symposium on Rendering. 195-206. 10.2312/EGWR/EGSR07/195-206. 
  */
 
-#define SQUARE_ROUGHNESS
-inline static float adaptR(float r)
-{
-#ifdef SQUARE_ROUGHNESS
-	return r * r;
-#else
-	return r;
-#endif
-}
-
 // TODO: Roughness + Thin
-template <bool SpectralVarying, bool HasAnisoRoughness>
+template <bool SpectralVarying, bool UseVNDF, bool IsAnisotropic>
 class RoughDielectricMaterial : public IMaterial {
 public:
 	RoughDielectricMaterial(const std::shared_ptr<FloatSpectralNode>& spec,
@@ -55,8 +51,7 @@ public:
 		, mSpecularity(spec)
 		, mTransmission(trans)
 		, mIOR(ior)
-		, mRoughnessX(roughnessX)
-		, mRoughnessY(roughnessY)
+		, mRoughness(roughnessX, roughnessY)
 	{
 	}
 
@@ -91,42 +86,15 @@ public:
 		return Fresnel::dielectric(dot, NdotT, n1[0], n2[0]);
 	}
 
-	inline float evalGD(const ShadingVector& H, const ShadingVector& V, const ShadingVector& L, const ShadingContext& sctx, float& pdf) const
+	inline static float reflectiveJacobian(float HdotV)
 	{
-		const float absNdotH = H.absCosTheta();
-		const float absNdotV = V.absCosTheta();
+		return 1 / (4 * HdotV * HdotV);
+	}
 
-		//PR_ASSERT(absNdotV >= 0, "By definition N.V has to be positive");
-		if (absNdotH <= PR_EPSILON
-			|| absNdotV <= PR_EPSILON) {
-			pdf = 0;
-			return 0.0f;
-		}
-
-		const float m1 = adaptR(mRoughnessX->eval(sctx));
-		if (m1 < PR_EPSILON) {
-			pdf = 1;
-			return 1;
-		}
-
-		float G;
-		float D;
-		if constexpr (!HasAnisoRoughness) {
-			D = Microfacet::ndf_ggx(absNdotH, m1);
-			G = Microfacet::g_1_smith(V, m1) * Microfacet::g_1_smith(L, m1);
-		} else {
-			const float m2 = adaptR(mRoughnessY->eval(sctx));
-			if (m2 < PR_EPSILON) {
-				pdf = 1;
-				return 1;
-			}
-			D = Microfacet::ndf_ggx(H, m1, m2);
-			G = Microfacet::g_1_smith(V, m1, m2) * Microfacet::g_1_smith(L, m1, m2);
-		}
-
-		const float factor = std::abs(H.dot(V) * H.dot(L)) / absNdotV; // NdotL multiplied out
-		pdf				   = std::abs(D * absNdotH);
-		return G * D * factor;
+	inline static float refractiveJacobian(float HdotV, float HdotL, float inv_eta)
+	{
+		const float denom = inv_eta * HdotL + HdotV; // Unsigned length of (unnormalized) refractive H
+		return HdotV / (denom * denom);
 	}
 
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
@@ -141,74 +109,56 @@ public:
 			PR_ASSERT(HdotV >= 0.0f, "HdotV must be positive");
 
 			float pdf;
-			const float gd		 = evalGD(H, in.Context.V, in.Context.L, in.ShadingContext, pdf);
+			const float gd		 = mRoughness.eval(H, in.Context.V, in.Context.L, in.ShadingContext, pdf);
 			const SpectralBlob F = fresnelTerm(HdotV, in.ShadingContext);
 
-			const float jacobian = 1 / (4 * HdotV * HdotV);
+			const float jacobian = reflectiveJacobian(HdotV);
 			out.Weight			 = mSpecularity->eval(in.ShadingContext) * F * (gd * jacobian);
 			out.PDF_S			 = F * pdf * jacobian;
 		} else {
-			const SpectralBlob weight = mTransmission->eval(in.ShadingContext);
+			const bool flip		  = in.Context.V.cosTheta() < 0;
+			const ShadingVector V = flip ? -in.Context.V : in.Context.V;
+			const ShadingVector L = flip ? -in.Context.L : in.Context.L;
 
 			SpectralBlob n1 = SpectralBlob::Ones();
 			SpectralBlob n2 = mIOR->eval(in.ShadingContext);
 
-			if (in.Context.V.cosTheta() < 0)
+			if (flip)
 				std::swap(n1, n2);
 
-			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
-				Vector3f H = Scattering::halfway_transmission(n1[i], in.Context.V, n2[i], in.Context.L);
-				if (H(2) < 0)
-					H = -H;
+			// Mitsuba style eta definition
+			const SpectralBlob inv_eta = n2 / n1;
 
-				const float HdotV = H.dot((Vector3f)in.Context.V);
-				const float HdotL = H.dot((Vector3f)in.Context.L);
+			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
+				const Vector3f H = Scattering::halfway_transmission(inv_eta[i], V, L);
+
+				// The refractive H vector does not have the good property of HdotV == HdotL as in the reflective case:
+				float HdotV = H.dot((Vector3f)V);
+				float HdotL = H.dot((Vector3f)L);
 
 				if (HdotV * HdotL >= 0) { // Same side
 					out.Weight[i] = 0;
 					out.PDF_S[i]  = 0;
+					continue;
 				}
 
-				float pdf;
-				const float gd		 = evalGD(H, in.Context.V, in.Context.L, in.ShadingContext, pdf);
+				float _pdf;
+				const float gd		 = mRoughness.eval(H, in.Context.V, in.Context.L, in.ShadingContext, _pdf);
+				const float jacobian = refractiveJacobian(HdotV, -HdotL, inv_eta[i]);
 				const float F		 = Fresnel::dielectric(HdotV, -HdotL, n1[i], n2[i]); // Zero in case of total reflection
-				const float denom	 = n2[i] * HdotL + n1[i] * HdotV;					 // Unsigned length of (unnormalized) H
-				const float jacobian = n2[i] * n2[i] / (denom * denom);
 
-				// TODO: Deaccount for solid angle compression (see mitsuba & pbrt) when non-radiance mode is evaluated
-				const float factor = n2[i] / n1[i];
-
-				out.Weight[i] = (1 - F) * weight[i] * gd * jacobian * factor * factor;
-				out.PDF_S[i]  = (1 - F) * pdf * jacobian;
+				out.Weight[i] = (1 - F) * gd * jacobian;
+				out.PDF_S[i]  = (1 - F) * _pdf * jacobian;
 			}
+
+			out.Weight *= mTransmission->eval(in.ShadingContext);
+
+			// Only rays from lights are weighted by this factor
+			// as radiance flows in the opposite direction
+			// Note that some implementations use 1/eta as eta
+			if ((in.Context.RayFlags & RF_Light))
+				out.Weight *= inv_eta * inv_eta;
 		}
-	}
-
-	inline float pdfGD(const ShadingVector& H, const ShadingVector& V, const ShadingContext& sctx) const
-	{
-		const float absNdotH = H.absCosTheta();
-		const float absNdotV = V.absCosTheta();
-
-		//PR_ASSERT(absNdotV >= 0, "By definition N.V has to be positive");
-		if (absNdotH <= PR_EPSILON
-			|| absNdotV <= PR_EPSILON)
-			return 0.0f;
-
-		const float m1 = adaptR(mRoughnessX->eval(sctx));
-		if (m1 < PR_EPSILON)
-			return 1;
-
-		float D;
-		if constexpr (!HasAnisoRoughness) {
-			D = Microfacet::ndf_ggx(absNdotH, m1);
-		} else {
-			const float m2 = adaptR(mRoughnessY->eval(sctx));
-			if (m2 < PR_EPSILON)
-				return 1;
-			D = Microfacet::ndf_ggx(H, m1, m2);
-		}
-
-		return std::abs(D * absNdotH);
 	}
 
 	void pdf(const MaterialEvalInput& in, MaterialPDFOutput& out,
@@ -222,35 +172,39 @@ public:
 			const float HdotV	  = H.dot(in.Context.V);
 			PR_ASSERT(HdotV >= 0.0f, "HdotV must be positive");
 
-			const float pdf		 = pdfGD(H, in.Context.V, in.ShadingContext);
+			const float pdf		 = mRoughness.pdf(H, in.Context.V, in.ShadingContext);
 			const SpectralBlob F = fresnelTerm(HdotV, in.ShadingContext);
 
-			const float jacobian = 1 / (4 * HdotV * HdotV);
+			const float jacobian = reflectiveJacobian(HdotV);
 			out.PDF_S			 = F * pdf * jacobian;
 		} else {
+			const bool flip		  = in.Context.V.cosTheta() < 0;
+			const ShadingVector V = flip ? -in.Context.V : in.Context.V;
+			const ShadingVector L = flip ? -in.Context.L : in.Context.L;
+
 			SpectralBlob n1 = SpectralBlob::Ones();
 			SpectralBlob n2 = mIOR->eval(in.ShadingContext);
 
-			if (in.Context.V.cosTheta() < 0)
+			if (flip)
 				std::swap(n1, n2);
 
-			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
-				Vector3f H = Scattering::halfway_transmission(n1[i], in.Context.V, n2[i], in.Context.L);
-				if (H(2) < 0)
-					H = -H;
+			// Mitsuba style eta definition
+			const SpectralBlob inv_eta = n2 / n1;
 
-				const float HdotV = H.dot((Vector3f)in.Context.V);
-				const float HdotL = H.dot((Vector3f)in.Context.L);
+			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
+				const Vector3f H = Scattering::halfway_transmission(inv_eta[i], V, L);
+
+				float HdotV = H.dot((Vector3f)V);
+				float HdotL = H.dot((Vector3f)L);
 
 				if (HdotV * HdotL >= 0) { // Same side
 					out.PDF_S[i] = 0;
 					continue;
 				}
 
-				const float pdf		 = pdfGD(H, in.Context.V, in.ShadingContext);
+				const float pdf		 = mRoughness.pdf(H, in.Context.V, in.ShadingContext);
+				const float jacobian = refractiveJacobian(HdotV, -HdotL, inv_eta[i]);
 				const float F		 = Fresnel::dielectric(HdotV, -HdotL, n1[i], n2[i]); // Zero in case of total reflection
-				const float denom	 = n2[i] * HdotL + n1[i] * HdotV;					 // Unsigned length of (unnormalized) H
-				const float jacobian = n2[i] * n2[i] / (denom * denom);
 
 				out.PDF_S[i] = (1 - F) * pdf * jacobian;
 			}
@@ -265,26 +219,25 @@ public:
 		const float u1		  = int(in.RND[0] * SPLIT_F) / float(SPLIT_F);
 		const float u2		  = in.RND[0] * SPLIT_F - int(in.RND[0] * SPLIT_F);
 
-		// Sample microfacet normal
-		const float m1 = adaptR(mRoughnessX->eval(in.ShadingContext));
-		float pdf	   = 1;
-		Vector3f H;
-		if constexpr (HasAnisoRoughness) {
-			const float m2 = adaptR(mRoughnessY->eval(in.ShadingContext));
-			if (m1 > PR_EPSILON && m2 > PR_EPSILON)
-				H = Microfacet::sample_ndf_ggx(u2, in.RND[1], m1, m2, pdf);
-			else
-				H = Vector3f(0, 0, 1);
-		} else {
-			if (m1 > PR_EPSILON)
-				H = Microfacet::sample_ndf_ggx(u2, in.RND[1], m1, pdf);
-			else
-				H = Vector3f(0, 0, 1);
-		}
+		const bool flip		  = in.Context.V.cosTheta() < 0;
+		const ShadingVector V = flip ? -in.Context.V : in.Context.V;
 
-		const float HdotV = std::abs(H.dot((Vector3f)in.Context.V));
-		if (HdotV <= PR_EPSILON) { // Giveup if V in respect to H is too close to the negative hemisphere
-			out = MaterialSampleOutput::Reject(MST_SpecularReflection);
+		// Sample microfacet normal
+		float pdf;
+		bool delta;
+		const Vector3f H = mRoughness.sample(Vector2f(u2, in.RND[1]), V, in.ShadingContext, pdf, delta);
+		out.PDF_S		 = pdf;
+
+		// Set flags
+		if constexpr (SpectralVarying)
+			out.Flags = (delta ? MSF_DeltaDistribution : 0) | MSF_SpectralVarying;
+		else
+			out.Flags = (delta ? MSF_DeltaDistribution : 0);
+
+		// Check correct side
+		const float HdotV = H.dot((Vector3f)V);
+		if (HdotV <= PR_EPSILON) {
+			out = MaterialSampleOutput::Reject(MST_SpecularReflection, out.Flags);
 			return;
 		}
 
@@ -294,51 +247,63 @@ public:
 		const float F			   = fresnelTermHero(HdotV, in.ShadingContext, eta, HdotT);
 		const bool totalReflection = HdotT < 0;
 
-		// Breach out for two cases
+		// Breach out into two cases
 		if (totalReflection || u1 <= F) {
 			out.Type = MST_SpecularReflection;
-			out.L	 = Scattering::reflect(in.Context.V, H);
+			out.L	 = Scattering::reflect(in.Context.V, H); // No need to use the (possibly) flipped V
 
 			if (!in.Context.V.sameHemisphere(out.L)) { // Side check
-				out = MaterialSampleOutput::Reject(MST_SpecularReflection);
+				out = MaterialSampleOutput::Reject(MST_SpecularReflection, out.Flags);
 				return;
 			}
 
-			const float prob	 = totalReflection ? 1 : F;
-			const float jacobian = 1 / (4 * HdotV * HdotV);
+			out.Weight = mSpecularity->eval(in.ShadingContext);
 
-			// Evaluate D*G*(V.H*L.H)/(V.N) but ignore pdf
-			float _pdf;
-			const float gd = evalGD(H, in.Context.V, out.L, in.ShadingContext, _pdf);
-
-			out.Weight = mSpecularity->eval(in.ShadingContext) * prob * gd * jacobian;
-			out.PDF_S  = prob * pdf * jacobian;
+			if (delta) {
+				// Evaluate D*G*(V.H*L.H)/(V.N) but ignore pdf
+				float _pdf;
+				const float gd		 = mRoughness.eval(H, in.Context.V, out.L, in.ShadingContext, _pdf);
+				const float jacobian = reflectiveJacobian(HdotV);
+				out.Weight *= F * gd * jacobian;
+				out.PDF_S *= F * jacobian;
+			}
 		} else {
 			out.Type = MST_SpecularTransmission;
-			out.L	 = Scattering::refract(eta, HdotT, HdotV, in.Context.V, H);
+			out.L	 = Scattering::refract(eta, HdotT, HdotV, V, H);
 
 			// Side check: As we have a refraction case, both vectors should not be on the same side!
 			if (in.Context.V.sameHemisphere(out.L)) {
-				out = MaterialSampleOutput::Reject(MST_SpecularTransmission);
+				out = MaterialSampleOutput::Reject(MST_SpecularTransmission, out.Flags);
 				return;
 			}
 
-			const float HdotL = -HdotT; //out.L.dot(H);
-			PR_ASSERT(HdotL <= 0, "HdotL must be negative");
-			const float denom	 = HdotL + eta * HdotV; // Unsigned length of (unnormalized) H divided by n2
-			const float jacobian = 1 / (denom * denom);
-			const float factor	 = 1 / eta;
+			out.Weight = mTransmission->eval(in.ShadingContext);
 
-			// Evaluate D*G*(V.H*L.H)/(V.N) but ignore pdf
-			float _pdf;
-			const float gd = evalGD(H, in.Context.V, out.L, in.ShadingContext, _pdf);
+			if (!delta) {
+				// The refractive H vector does not have the good property of HdotV == HdotL as in the reflective case:
+				const float HdotL = H.dot((Vector3f)out.L);
 
-			out.Weight = mTransmission->eval(in.ShadingContext) * (1 - F) * gd * jacobian * factor * factor;
-			out.PDF_S  = (1 - F) * pdf * jacobian;
+				PR_ASSERT(HdotV * HdotL < 0, "V & L have to be on different sides by construction");
+
+				float _pdf; // Ignore
+				const float gd		 = mRoughness.eval(H, V, out.L, in.ShadingContext, _pdf);
+				const float jacobian = refractiveJacobian(HdotV, -HdotL, 1 / eta);
+
+				out.Weight *= (1 - F) * gd * jacobian;
+				out.PDF_S *= (1 - F) * jacobian;
+
+				PR_ASSERT(out.Weight[0]/out.PDF_S[0] <= 1, "Expected correct weights");
+			}
+
+			if (flip)
+				out.L = -out.L;
+
+			// Only rays from lights are weighted by this factor
+			// as radiance flows in the opposite direction
+			// Note that some implementations use 1/eta as eta
+			if ((in.Context.RayFlags & RF_Light))
+				out.Weight /= eta * eta;
 		}
-
-		if constexpr (SpectralVarying)
-			out.Flags = MSF_SpectralVarying;
 	}
 
 	std::string dumpInformation() const override
@@ -350,8 +315,8 @@ public:
 			   << "    Specularity:  " << mSpecularity->dumpInformation() << std::endl
 			   << "    Transmission: " << mTransmission->dumpInformation() << std::endl
 			   << "    IOR:          " << mIOR->dumpInformation() << std::endl
-			   << "    RoughnessX:   " << mRoughnessX->dumpInformation() << std::endl
-			   << "    RoughnessY:   " << mRoughnessY->dumpInformation() << std::endl;
+			   << "    RoughnessX:   " << mRoughness.roughnessX()->dumpInformation() << std::endl
+			   << "    RoughnessY:   " << mRoughness.roughnessY()->dumpInformation() << std::endl;
 
 		return stream.str();
 	}
@@ -360,12 +325,11 @@ private:
 	const std::shared_ptr<FloatSpectralNode> mSpecularity;
 	const std::shared_ptr<FloatSpectralNode> mTransmission;
 	const std::shared_ptr<FloatSpectralNode> mIOR;
-	const std::shared_ptr<FloatScalarNode> mRoughnessX;
-	const std::shared_ptr<FloatScalarNode> mRoughnessY;
+	const Roughness<IsAnisotropic, UseVNDF, false> mRoughness;
 };
 
 // System of function which probably could be simplified with template meta programming
-template <bool SpectralVarying, bool HasAnisoRoughness>
+template <bool SpectralVarying, bool UseVNDF>
 static std::shared_ptr<IMaterial> createMaterial1(const SceneLoadContext& ctx)
 {
 	std::shared_ptr<FloatScalarNode> rx;
@@ -376,7 +340,7 @@ static std::shared_ptr<IMaterial> createMaterial1(const SceneLoadContext& ctx)
 	else
 		rx = ctx.lookupScalarNode("roughness", 0);
 
-	if constexpr (HasAnisoRoughness)
+	if (ctx.parameters().hasParameter("roughness_y"))
 		ry = ctx.lookupScalarNode("roughness_y", 0);
 	else
 		ry = rx;
@@ -386,20 +350,24 @@ static std::shared_ptr<IMaterial> createMaterial1(const SceneLoadContext& ctx)
 	if (ctx.parameters().hasParameter("transmission"))
 		trans = ctx.lookupSpectralNode("transmission", 1);
 
-	return std::make_shared<RoughDielectricMaterial<SpectralVarying, HasAnisoRoughness>>(
-		spec, trans,
-		ctx.lookupSpectralNode("index", 1.55f),
-		rx, ry);
+	const auto index = ctx.lookupSpectralNode({ "eta", "index", "ior" }, 1.55f);
+
+	if (rx == ry)
+		return std::make_shared<RoughDielectricMaterial<SpectralVarying, UseVNDF, false>>(spec, trans, index, rx, ry);
+	else
+		return std::make_shared<RoughDielectricMaterial<SpectralVarying, UseVNDF, true>>(spec, trans, index, rx, ry);
 }
 
 template <bool SpectralVarying>
 static std::shared_ptr<IMaterial> createMaterial2(const SceneLoadContext& ctx)
 {
-	const bool roughness_y = ctx.parameters().hasParameter("roughness_y");
-	if (roughness_y)
+	// TODO: Fix VNDF and make it default again
+	const bool use_vndf = ctx.parameters().getBool("vndf", false);
+
+	if (use_vndf)
 		return createMaterial1<SpectralVarying, true>(ctx);
 	else
-		return createMaterial1<SpectralVarying, false>(ctx);
+		return createMaterial1<SpectralVarying, true>(ctx);
 }
 
 static std::shared_ptr<IMaterial> createMaterial3(const SceneLoadContext& ctx)
@@ -415,7 +383,6 @@ class RoughDielectricMaterialPlugin : public IMaterialPlugin {
 public:
 	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx)
 	{
-		// TODO: If no roughness is given -> yield to glass material
 		return createMaterial3(ctx);
 	}
 

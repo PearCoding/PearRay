@@ -119,7 +119,6 @@ public:
 		out.PDF_S				   = pdf;
 
 		if (delta) {
-			out.Weight *= out.L.absCosTheta();
 			out.Flags = MSF_DeltaDistribution;
 		} else {
 			// Evaluate D*G*(V.H*L.H)/(V.N) but ignore pdf
@@ -170,8 +169,8 @@ public:
 		else
 			ry = rx;
 
-		const auto eta	= ctx.lookupSpectralNode("eta", 1.2f);
-		const auto k	= ctx.lookupSpectralNode("k", 2.605f);
+		const auto eta	= ctx.lookupSpectralNode({ "eta", "index", "ior" }, 1.2f);
+		const auto k	= ctx.lookupSpectralNode({ "k", "kappa" }, 2.605f);
 		const auto spec = ctx.lookupSpectralNode("specularity", 1);
 
 		// TODO: Fix VNDF and make it default again

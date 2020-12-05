@@ -110,10 +110,10 @@ public:
 			out.Weight = mSpecularity->eval(in.ShadingContext);
 		}
 
-		// Only rays from the camera are weighted by this factor
+		// Only rays from lights are weighted by this factor
 		// as radiance flows in the opposite direction
 		// Note that some implementations use 1/eta as eta
-		if ((in.Context.RayFlags & RF_Camera) && out.Type == MST_SpecularTransmission)
+		if ((in.Context.RayFlags & RF_Light) && out.Type == MST_SpecularTransmission)
 			out.Weight /= eta * eta;
 
 		if constexpr (SpectralVarying)
@@ -128,16 +128,11 @@ public:
 
 		stream << std::boolalpha << IMaterial::dumpInformation()
 			   << "  <DielectricMaterial>:" << std::endl
-			   << "    Specularity:     " << mSpecularity->dumpInformation() << std::endl;
-
-		if constexpr (HasTransmissionColor)
-			stream << "    Transmission:     " << mTransmission->dumpInformation() << std::endl;
-
-		stream << "    IOR:             " << mIOR->dumpInformation() << std::endl;
-		if constexpr (IsThin)
-			stream << "    IsThin:          true" << std::endl;
-		if constexpr (SpectralVarying)
-			stream << "    SpectralVarying: true" << std::endl;
+			   << "    Specularity:     " << mSpecularity->dumpInformation() << std::endl
+			   << "    Transmission:    " << mTransmission->dumpInformation() << std::endl
+			   << "    IOR:             " << mIOR->dumpInformation() << std::endl
+			   << "    IsThin:          " << (IsThin ? "true" : "false") << std::endl
+			   << "    SpectralVarying: " << (SpectralVarying ? "true" : "false") << std::endl;
 		return stream.str();
 	}
 
@@ -191,10 +186,10 @@ public:
 	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx)
 	{
 		// Construct rough dielectric instead
-		/*if (ctx.parameters().hasParameter("roughness")
+		if (ctx.parameters().hasParameter("roughness")
 			|| ctx.parameters().hasParameter("roughness_x")
 			|| ctx.parameters().hasParameter("roughness_y"))
-			return ctx.yieldToMaterial(id, "roughdielectric", ctx.parameters());*/
+			return ctx.loadMaterial("roughdielectric", ctx.parameters());
 
 		return createMaterial4(ctx);
 	}

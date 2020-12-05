@@ -2,6 +2,7 @@
 #include "Logger.h"
 #include "SceneLoadContext.h"
 #include "math/Scattering.h"
+#include "shader/ConstNode.h"
 #include "shader/INodePlugin.h"
 
 namespace PR {
@@ -208,6 +209,11 @@ private:
 	const T mC2;
 };
 
+inline std::shared_ptr<ConstSpectralNode> create_const_index(float a)
+{
+	return std::make_shared<ConstSpectralNode>(SpectralBlob(a));
+}
+
 // https://refractiveindex.info/?shelf=glass&book=BK7&page=SCHOTT
 static const auto BK7 = create_sellmeier_index<float, 3>({ 1.03961212f, 0.231792344f, 1.01046945f }, { 0.00600069867f, 0.0200179144f, 103.560653f });
 // https://refractiveindex.info/?shelf=main&book=H2O&page=Daimon-20.0C
@@ -215,6 +221,9 @@ static const auto H2O = create_sellmeier_index<float, 4>({ 5.684027565e-1f, 1.72
 														 { 5.101829712e-3f, 1.821153936e-2f, 2.620722293e-2f, 1.069792721e1f });
 // https://refractiveindex.info/?shelf=main&book=C&page=Peter
 static const auto DIA = create_sellmeier_index<float, 2>({ 0.3306f, 4.3356f }, { 0.030625f, 0.011236f });
+
+static const auto VACUUM = create_const_index(1.0f);
+static const auto AIR	 = create_const_index(1.000277f);
 static struct {
 	const char* Name;
 	std::shared_ptr<FloatSpectralNode> Node;
@@ -224,6 +233,9 @@ static struct {
 	{ "h2o", H2O },
 	{ "water", H2O },
 	{ "diamond", DIA },
+	{ "vacuum", VACUUM },
+	{ "none", VACUUM },
+	{ "air", AIR },
 	{ nullptr, nullptr }
 };
 

@@ -74,8 +74,8 @@ public:
 	{
 		const auto op1	  = ctx.lookupSpectralNode(ctx.parameters().getParameter(0), 1);
 		const auto op2	  = ctx.lookupSpectralNode(ctx.parameters().getParameter(1), 0);
-		const auto scaleU = ctx.lookupScalarNode(ctx.parameters().getParameter(2), 1);
-		const auto scaleV = ctx.lookupScalarNode(ctx.parameters().getParameter(3), 1);
+		const auto scaleU = ctx.lookupScalarNode(ctx.parameters().getParameter(2), 5);
+		const auto scaleV = ctx.lookupScalarNode(ctx.parameters().getParameter(3), 5);
 
 		if (ctx.parameters().positionalParameterCount() == 2)
 			return std::make_shared<CheckerboardNode<ST_None>>(op1, op2, scaleU, scaleU);

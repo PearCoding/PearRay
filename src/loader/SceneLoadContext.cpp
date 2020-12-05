@@ -290,7 +290,7 @@ std::shared_ptr<INode> SceneLoadContext::lookupRawNode(const std::initializer_li
 		if (mParameters.hasParameter(p))
 			return lookupRawNode(mParameters.getParameter(p));
 	}
-	return lookupRawNode(mParameters.getParameter(*parameters.end()));
+	return lookupRawNode(mParameters.getParameter(*parameters.begin()));
 }
 
 std::shared_ptr<FloatSpectralNode> SceneLoadContext::lookupSpectralNode(const std::initializer_list<std::string>& parameters, float def) const
@@ -300,7 +300,7 @@ std::shared_ptr<FloatSpectralNode> SceneLoadContext::lookupSpectralNode(const st
 		if (mParameters.hasParameter(p))
 			return lookupSpectralNode(mParameters.getParameter(p), def);
 	}
-	return lookupSpectralNode(mParameters.getParameter(*parameters.end()), def);
+	return lookupSpectralNode(mParameters.getParameter(*parameters.begin()), def);
 }
 
 std::shared_ptr<FloatSpectralNode> SceneLoadContext::lookupSpectralNode(const std::initializer_list<std::string>& parameters, const SpectralBlob& def) const
@@ -310,7 +310,7 @@ std::shared_ptr<FloatSpectralNode> SceneLoadContext::lookupSpectralNode(const st
 		if (mParameters.hasParameter(p))
 			return lookupSpectralNode(mParameters.getParameter(p), def);
 	}
-	return lookupSpectralNode(mParameters.getParameter(*parameters.end()), def);
+	return lookupSpectralNode(mParameters.getParameter(*parameters.begin()), def);
 }
 
 std::shared_ptr<FloatScalarNode> SceneLoadContext::lookupScalarNode(const std::initializer_list<std::string>& parameters, float def) const
@@ -320,7 +320,7 @@ std::shared_ptr<FloatScalarNode> SceneLoadContext::lookupScalarNode(const std::i
 		if (mParameters.hasParameter(p))
 			return lookupScalarNode(mParameters.getParameter(p), def);
 	}
-	return lookupScalarNode(mParameters.getParameter(*parameters.end()), def);
+	return lookupScalarNode(mParameters.getParameter(*parameters.begin()), def);
 }
 
 std::shared_ptr<IIntegratorFactory> SceneLoadContext::loadIntegratorFactory(const std::string& type, const ParameterGroup& params) const

@@ -62,8 +62,9 @@ public:
 			G = Microfacet::g_1_smith(V, m1, m2) * Microfacet::g_1_smith(L, m1, m2);
 		}
 
-		const float HdotV  = H.dot(V);				   // By definition this is also HdotL
-		const float factor = HdotV * HdotV / absNdotV; // NdotL multiplied out
+		const float HdotV  = H.dot(V); // By definition this is also HdotL only if this is based on a reflection
+		const float HdotL  = H.dot(L);
+		const float factor = std::abs(HdotV * HdotL) / absNdotV; // NdotL multiplied out
 		pdf				   = std::abs(D * absNdotH);
 		return G * D * factor;
 	}
