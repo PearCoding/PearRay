@@ -77,17 +77,20 @@ public:
 		const float HdotV	  = H.dot(in.Context.V);
 		PR_ASSERT(HdotV >= 0.0f, "HdotV must be positive");
 
-		const auto closure		   = mRoughness.closure(in.ShadingContext);
-		const float GNorm		   = closure.GNorm(H, in.Context.V, in.Context.L);
+		const auto closure = mRoughness.closure(in.ShadingContext);
+		if (closure.isDelta()) { // Reject
+			out.Weight = 0;
+			out.PDF_S  = 0;
+			return;
+		}
+
+		const float DGNorm		   = closure.DGNorm(H, in.Context.V, in.Context.L);
 		const float pdf			   = closure.pdf(H, in.Context.V);
 		const float jacobian	   = Scattering::reflective_jacobian(HdotV);
 		const SpectralBlob fresnel = fresnelTerm(HdotV, in.ShadingContext);
 
-		out.Weight = evalDiff(in.ShadingContext) * in.Context.L.absCosTheta() + evalSpec(fresnel, in.ShadingContext) * (GNorm * jacobian);
+		out.Weight = evalDiff(in.ShadingContext) * in.Context.L.absCosTheta() + evalSpec(fresnel, in.ShadingContext) * (DGNorm * jacobian);
 		out.PDF_S  = pdf * jacobian;
-
-		// Specular + Albedo might be greater than 1, clamp it
-		out.Weight = out.Weight.cwiseMin(1.0f);
 	}
 
 	void pdf(const MaterialEvalInput& in, MaterialPDFOutput& out,
@@ -104,7 +107,12 @@ public:
 		const float HdotV	  = H.dot(in.Context.V);
 		PR_ASSERT(HdotV >= 0.0f, "HdotV must be positive");
 
-		const auto closure	 = mRoughness.closure(in.ShadingContext);
+		const auto closure = mRoughness.closure(in.ShadingContext);
+		if (closure.isDelta()) { // Reject
+			out.PDF_S = 0;
+			return;
+		}
+
 		const float pdf		 = closure.pdf(H, in.Context.V);
 		const float jacobian = Scattering::reflective_jacobian(HdotV);
 		out.PDF_S			 = pdf * jacobian;
@@ -139,20 +147,17 @@ public:
 		out.PDF_S = pdf;
 
 		if (closure.isDelta()) {
-			out.Weight = evalSpec(fresnel, in.ShadingContext) * out.L.absCosTheta();
+			out.Weight = evalSpec(fresnel, in.ShadingContext);
 			out.Flags  = MSF_DeltaDistribution;
 		} else {
-			const float GNorm	 = closure.GNorm(H, in.Context.V, out.L);
+			const float DGNorm	 = closure.DGNorm(H, in.Context.V, out.L);
 			const float jacobian = Scattering::reflective_jacobian(HdotV);
-			out.Weight			 = evalSpec(fresnel, in.ShadingContext) * (GNorm * jacobian);
+			out.Weight			 = evalSpec(fresnel, in.ShadingContext) * (DGNorm * jacobian);
 			out.PDF_S *= jacobian;
 		}
 
 		// Add diffuse term
 		out.Weight += evalDiff(in.ShadingContext) * out.L.absCosTheta();
-
-		// Specular + Albedo might be greater than 1, clamp it
-		out.Weight = out.Weight.cwiseMin(1.0f);
 	}
 
 	std::string dumpInformation() const override

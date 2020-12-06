@@ -197,6 +197,8 @@ public:
 			out.PDF_S = Microfacet::pdf_ggx_vndf(in.Context.V, H, ax, ay);
 		else
 			out.PDF_S = Microfacet::pdf_ggx(H, ax, ay);
+		out.PDF_S *= Scattering::reflective_jacobian(std::abs(H.dot((Vector3f)in.Context.V)));
+
 		PR_ASSERT(out.PDF_S[0] >= 0.0f, "PDF has to be positive");
 
 		if (roughness < 0.5f)
@@ -214,9 +216,8 @@ public:
 			return;
 		}
 
-		const auto& sctx  = in.ShadingContext;
-		float anisotropic = mAnisotropic->eval(sctx);
-		float roughness	  = std::max(0.01f, mRoughness->eval(sctx));
+		float anisotropic = mAnisotropic->eval(in.ShadingContext);
+		float roughness	  = std::max(0.01f, mRoughness->eval(in.ShadingContext));
 
 		const Vector3f H = Scattering::halfway_reflection(in.Context.V, in.Context.L);
 
@@ -227,6 +228,8 @@ public:
 			out.PDF_S = Microfacet::pdf_ggx_vndf(in.Context.V, H, ax, ay);
 		else
 			out.PDF_S = Microfacet::pdf_ggx(H, ax, ay);
+		out.PDF_S *= Scattering::reflective_jacobian(std::abs(H.dot((Vector3f)in.Context.V)));
+
 		PR_ASSERT(out.PDF_S[0] >= 0.0f, "PDF has to be positive");
 	}
 
@@ -244,11 +247,7 @@ public:
 			out.PDF_S = Microfacet::pdf_ggx(out.L, ax, ay);
 		}
 
-		const float refInvPdf = 2 * std::max(0.0f, out.L.dot(in.Context.V));
-		if (refInvPdf > PR_EPSILON && out.L[2] > PR_EPSILON)
-			out.PDF_S /= refInvPdf;
-		else // Drop sample
-			out.PDF_S = 0.0f;
+		out.PDF_S *= Scattering::reflective_jacobian(std::abs(out.L.dot(in.Context.V)));
 
 		// Reflect incoming ray by the calculated half vector
 		out.L = Scattering::reflect(in.Context.V, out.L).normalized();
@@ -273,7 +272,7 @@ public:
 		float clearcoat		 = mClearcoat->eval(sctx);
 		float clearcoatGloss = mClearcoatGloss->eval(sctx);
 
-		sampleSpecularPath(in, in.RND[0] /* / weight*/, in.RND[1], out, roughness, anisotropic);
+		sampleSpecularPath(in, in.RND[0], in.RND[1], out, roughness, anisotropic);
 		if (!in.Context.V.sameHemisphere(out.L)) { // Side check
 			out = MaterialSampleOutput::Reject(MST_SpecularReflection);
 			return;

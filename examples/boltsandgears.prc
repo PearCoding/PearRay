@@ -73,8 +73,10 @@
 	)
 	(material
 		:name 'Floor'
-		:type 'diffuse'
+		:type 'substrate'
 		:albedo (checkerboard (refl 0.8 0.8 0.8) (refl 0.4 0.4 0.4) 10 10)
+		:specularity 0.36
+		:roughness 0.024
 	)
 	(material
 		:name 'GearMetal'

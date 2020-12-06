@@ -59,8 +59,13 @@ public:
 
 		const ShadingVector H	   = Scattering::halfway_reflection(in.Context.V, in.Context.L);
 		const float HdotV		   = H.dot(in.Context.V);
-		const SpectralBlob fresnel = fresnelTerm(in.Context.V.absCosTheta(), in.ShadingContext);
+		const SpectralBlob fresnel = fresnelTerm(std::abs(HdotV), in.ShadingContext);
 		const auto closure		   = mRoughness.closure(in.ShadingContext);
+		if (closure.isDelta()) { // Reject
+			out.Weight = 0;
+			out.PDF_S  = 0;
+			return;
+		}
 
 		const float DGNorm	 = closure.DGNorm(H, in.Context.V, in.Context.L);
 		const float jacobian = Scattering::reflective_jacobian(HdotV);
@@ -83,9 +88,14 @@ public:
 		const ShadingVector H = Scattering::halfway_reflection(in.Context.V, in.Context.L);
 		const float HdotV	  = H.dot(in.Context.V);
 		const auto closure	  = mRoughness.closure(in.ShadingContext);
-		const float jacobian  = Scattering::reflective_jacobian(HdotV);
-		const float pdf		  = closure.pdf(H, in.Context.V);
-		out.PDF_S			  = pdf * jacobian;
+		if (closure.isDelta()) { // Reject
+			out.PDF_S = 0;
+			return;
+		}
+
+		const float jacobian = Scattering::reflective_jacobian(HdotV);
+		const float pdf		 = closure.pdf(H, in.Context.V);
+		out.PDF_S			 = pdf * jacobian;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -117,7 +127,7 @@ public:
 			return;
 		}
 
-		const SpectralBlob fresnel = fresnelTerm(in.Context.V.absCosTheta(), in.ShadingContext);
+		const SpectralBlob fresnel = fresnelTerm(HdotV, in.ShadingContext);
 		out.Weight				   = fresnel * mSpecularity->eval(in.ShadingContext);
 		out.Type				   = MST_SpecularReflection;
 		out.PDF_S				   = closure.pdf(H, in.Context.V);

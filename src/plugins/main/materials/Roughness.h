@@ -126,6 +126,12 @@ public:
 		return Closure(m1, m2);
 	}
 
+	inline static Closure createClosure(float m1, float m2)
+	{
+		PR_ASSERT(IsAnisotropic || m1 == m2, "If isotropic, both nodes have to be the same");
+		return Closure(m1, m2);
+	}
+
 	inline std::shared_ptr<FloatScalarNode> roughnessX() const { return mRoughnessX; }
 	inline std::shared_ptr<FloatScalarNode> roughnessY() const { return mRoughnessY; }
 
