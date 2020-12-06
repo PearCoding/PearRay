@@ -102,7 +102,7 @@ private:
 	inline void getNode(const std::string& name, std::shared_ptr<FloatSpectralNode>& node) const;
 	inline void getNode(const std::string& name, std::shared_ptr<FloatVectorNode>& node) const;
 
-	void loadPlugins(const std::filesystem::path& basedir);
+	void initPlugins(const std::filesystem::path& pluginDir);
 
 	std::filesystem::path mWorkingDir;
 	RenderSettings mRenderSettings;

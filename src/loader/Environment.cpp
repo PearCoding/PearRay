@@ -37,7 +37,6 @@
 #include <OpenImageIO/texture.h>
 
 #include <filesystem>
-#include <regex>
 #include <typeinfo>
 
 namespace PR {
@@ -48,7 +47,7 @@ Environment::Environment(const std::filesystem::path& workdir,
 	, mQueryMode(workdir.empty())
 	, mServiceObserver(std::make_shared<ServiceObserver>())
 	, mSceneDatabase(std::make_shared<SceneDatabase>())
-	, mPluginManager(std::make_shared<PluginManager>(plugdir))
+	, mPluginManager(std::make_shared<PluginManager>())
 	, mCameraManager(std::make_shared<CameraManager>())
 	, mEmissionManager(std::make_shared<EmissionManager>())
 	, mEntityManager(std::make_shared<EntityManager>())
@@ -66,13 +65,7 @@ Environment::Environment(const std::filesystem::path& workdir,
 	, mOutputSpecification(workdir)
 {
 	try {
-		// First load possible embedded plugins
-		mPluginManager->loadEmbeddedPlugins();
-		// Second load plugins from plugin directory
-		loadPlugins(plugdir);
-		// Third load plugins from working directory
-		if (!mQueryMode)
-			loadPlugins(workdir);
+		initPlugins(plugdir);
 	} catch (const std::exception& e) {
 		PR_LOG(L_ERROR) << "Error while loading plugins: " << e.what() << std::endl;
 	}
@@ -197,40 +190,9 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory()
 	return fct;
 }
 
-void Environment::loadPlugins(const std::filesystem::path& basedir)
+void Environment::initPlugins(const std::filesystem::path& pluginDir)
 {
-	try {
-#ifdef PR_DEBUG
-		static const std::wregex e(L"(lib)?pr_pl_([\\w_]+)_d");
-#else
-		static const std::wregex e(L"(lib)?pr_pl_([\\w_]+)");
-#endif
-
-		// Load dlls
-		for (auto& entry : std::filesystem::directory_iterator(basedir)) {
-			if (!std::filesystem::is_regular_file(entry))
-				continue;
-
-			const std::wstring filename = entry.path().stem().generic_wstring();
-			const std::wstring ext		= entry.path().extension().generic_wstring();
-
-			if (ext != L".so" && ext != L".dll")
-				continue;
-
-			std::wsmatch what;
-			if (std::regex_match(filename, what, e)) {
-#ifndef PR_DEBUG
-				// Ignore debug builds
-				if (filename.substr(filename.size() - 2, 2) == L"_d")
-					continue;
-#endif
-
-				mPluginManager->load(entry.path());
-			}
-		}
-	} catch (const std::exception& e) {
-		PR_LOG(L_ERROR) << "Could not load external plugins: " << e.what() << std::endl;
-	}
+	mPluginManager->initPlugins(mWorkingDir, pluginDir);
 
 	// Load into respective managers
 	for (auto plugin : mPluginManager->plugins()) {

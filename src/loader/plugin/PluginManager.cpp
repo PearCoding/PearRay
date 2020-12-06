@@ -1,16 +1,70 @@
 #include "PluginManager.h"
 #include "Logger.h"
 
+#include <regex>
+
 namespace PR {
 constexpr static const char* PR_PLUGIN_ENV_VAR	  = "PR_PLUGIN_PATH";
 constexpr static char PR_PLUGIN_ENV_VAR_SEPERATOR = ':';
 
-PluginManager::PluginManager(const std::filesystem::path& pluginDir)
-	: mPluginDir(pluginDir)
+PluginManager::PluginManager()
 {
 }
 
-bool PluginManager::tryLoad(const std::filesystem::path& path, bool useFallbacks)
+void PluginManager::initPlugins(const std::filesystem::path& workingDir, const std::filesystem::path& pluginDir)
+{
+	loadEmbeddedPlugins();
+	if (!pluginDir.empty())
+		loadFromDirectory(pluginDir);
+	if (!workingDir.empty() && workingDir != pluginDir)
+		loadFromDirectory(workingDir);
+
+	char const* plugin_paths = std::getenv(PR_PLUGIN_ENV_VAR);
+	if (plugin_paths) {
+		std::istringstream stream(plugin_paths);
+		std::string current_path;
+		while (std::getline(stream, current_path, PR_PLUGIN_ENV_VAR_SEPERATOR))
+			loadFromDirectory(current_path);
+	}
+}
+
+void PluginManager::loadFromDirectory(const std::filesystem::path& path)
+{
+	try {
+#ifdef PR_DEBUG
+		static const std::wregex e(L"(lib)?pr_pl_([\\w_]+)_d");
+#else
+		static const std::wregex e(L"(lib)?pr_pl_([\\w_]+)");
+#endif
+
+		// Load dlls
+		for (auto& entry : std::filesystem::directory_iterator(path)) {
+			if (!std::filesystem::is_regular_file(entry))
+				continue;
+
+			const std::wstring filename = entry.path().stem().generic_wstring();
+			const std::wstring ext		= entry.path().extension().generic_wstring();
+
+			if (ext != L".so" && ext != L".dll")
+				continue;
+
+			std::wsmatch what;
+			if (std::regex_match(filename, what, e)) {
+#ifndef PR_DEBUG
+				// Ignore debug builds
+				if (filename.substr(filename.size() - 2, 2) == L"_d")
+					continue;
+#endif
+
+				load(entry.path());
+			}
+		}
+	} catch (const std::exception& e) {
+		PR_LOG(L_ERROR) << "Could not load external plugins: " << e.what() << std::endl;
+	}
+}
+
+bool PluginManager::tryLoad(const std::filesystem::path& path)
 {
 	auto load = [](const std::filesystem::path& p) -> SharedLibrary {
 		try {
@@ -22,40 +76,20 @@ bool PluginManager::tryLoad(const std::filesystem::path& path, bool useFallbacks
 		}
 	};
 
-	const std::filesystem::path op = path;
-	auto lib					   = load(op);
-
-	// 1 Fallback -> Use plugin directory for parent directory
-	if (!lib && !op.is_absolute() && useFallbacks && !mPluginDir.empty()) {
-		lib = load(mPluginDir / op);
-	}
-
-	// 2 Fallback -> Use environment variables
-	if (!lib && !op.is_absolute() && useFallbacks) {
-		char const* plugin_paths = std::getenv(PR_PLUGIN_ENV_VAR);
-		if (plugin_paths) {
-			std::istringstream stream(plugin_paths);
-			std::string current_path;
-			while (std::getline(stream, current_path, PR_PLUGIN_ENV_VAR_SEPERATOR)) {
-				lib = load(current_path / op);
-				if (lib)
-					break;
-			}
-		}
-	}
+	auto lib = load(path);
 
 	if (!lib) {
-		PR_LOG(L_ERROR) << "Could not load plugin " << op << std::endl;
+		PR_LOG(L_ERROR) << "Could not load plugin " << path << std::endl;
 		return false;
 	}
 
 	PluginInterface* ptr = reinterpret_cast<PluginInterface*>(lib.symbol(PR_DOUBLEQUOTE(PR_PLUGIN_API_INTERFACE_NAME_CORE)));
 	if (!ptr) {
-		PR_LOG(L_ERROR) << "Could not find plugin interface for " << op << std::endl;
+		PR_LOG(L_ERROR) << "Could not find plugin interface for " << path << std::endl;
 		return false;
 	}
 
-	if (!loadInterface(op.generic_string(), ptr))
+	if (!loadInterface(path.generic_string(), ptr))
 		return false;
 
 	auto plugin = std::shared_ptr<IPlugin>(ptr->InitFunction());
@@ -66,11 +100,11 @@ bool PluginManager::tryLoad(const std::filesystem::path& path, bool useFallbacks
 	return true;
 }
 
-std::shared_ptr<IPlugin> PluginManager::load(const std::filesystem::path& path, bool useFallbacks)
+std::shared_ptr<IPlugin> PluginManager::load(const std::filesystem::path& path)
 {
 #ifdef PR_DEBUG
 	std::filesystem::path p = path;
-	if (!tryLoad(path, useFallbacks)) {
+	if (!tryLoad(path)) {
 		std::wstring rel_name = p.stem().generic_wstring();
 		size_t pos			  = rel_name.find_last_of(L"_d");
 		if (pos == std::wstring::npos)
@@ -79,7 +113,7 @@ std::shared_ptr<IPlugin> PluginManager::load(const std::filesystem::path& path, 
 		rel_name.erase(pos, 2);
 
 		std::filesystem::path release_path = p.parent_path() / (rel_name + p.extension().generic_wstring());
-		if (!tryLoad(release_path.generic_wstring(), useFallbacks)) {
+		if (!tryLoad(release_path.generic_wstring())) {
 			return nullptr;
 		} else {
 			return getFromPath(path);
@@ -88,7 +122,7 @@ std::shared_ptr<IPlugin> PluginManager::load(const std::filesystem::path& path, 
 		return getFromPath(path);
 	}
 #else
-	if (!tryLoad(path, useFallbacks))
+	if (!tryLoad(path))
 		return nullptr;
 	else
 		return getFromPath(path);

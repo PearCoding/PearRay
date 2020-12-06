@@ -11,11 +11,14 @@ namespace PR {
 
 class PR_LIB_LOADER PluginManager {
 public:
-	explicit PluginManager(const std::filesystem::path& pluginDir);
+	explicit PluginManager();
+
+	void initPlugins(const std::filesystem::path& workingDir, const std::filesystem::path& pluginDir);
 
 	void loadEmbeddedPlugins();
-	std::shared_ptr<IPlugin> load(const std::filesystem::path& path,
-								  bool useFallbacks = true);
+	void loadFromDirectory(const std::filesystem::path& path);
+
+	std::shared_ptr<IPlugin> load(const std::filesystem::path& path);
 
 	std::shared_ptr<IPlugin> get(const std::string& name) const;
 	std::shared_ptr<IPlugin> getFromPath(const std::filesystem::path& path) const;
@@ -29,7 +32,7 @@ public:
 	std::vector<std::shared_ptr<IPlugin>> plugins() const;
 
 private:
-	bool tryLoad(const std::filesystem::path& path, bool useFallbacks);
+	bool tryLoad(const std::filesystem::path& path);
 	bool loadInterface(const std::string& name, struct PluginInterface* interface);
 
 	struct PluginLibPair {
@@ -45,6 +48,5 @@ private:
 		}
 	};
 	std::unordered_map<std::string, PluginLibPair> mLibraries;
-	std::filesystem::path mPluginDir;
 };
 } // namespace PR
