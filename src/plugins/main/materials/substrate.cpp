@@ -77,12 +77,13 @@ public:
 		const float HdotV	  = H.dot(in.Context.V);
 		PR_ASSERT(HdotV >= 0.0f, "HdotV must be positive");
 
-		float pdf;
-		const float gd			   = mRoughness.eval(H, in.Context.V, in.Context.L, in.ShadingContext, pdf);
-		const float jacobian	   = 1 / (4 * HdotV * HdotV);
+		const auto closure		   = mRoughness.closure(in.ShadingContext);
+		const float GNorm		   = closure.GNorm(H, in.Context.V, in.Context.L);
+		const float pdf			   = closure.pdf(H, in.Context.V);
+		const float jacobian	   = Scattering::reflective_jacobian(HdotV);
 		const SpectralBlob fresnel = fresnelTerm(HdotV, in.ShadingContext);
 
-		out.Weight = evalDiff(in.ShadingContext) * in.Context.L.absCosTheta() + evalSpec(fresnel, in.ShadingContext) * (gd * jacobian);
+		out.Weight = evalDiff(in.ShadingContext) * in.Context.L.absCosTheta() + evalSpec(fresnel, in.ShadingContext) * (GNorm * jacobian);
 		out.PDF_S  = pdf * jacobian;
 
 		// Specular + Albedo might be greater than 1, clamp it
@@ -103,8 +104,9 @@ public:
 		const float HdotV	  = H.dot(in.Context.V);
 		PR_ASSERT(HdotV >= 0.0f, "HdotV must be positive");
 
-		const float jacobian = 1 / (4 * HdotV * HdotV);
-		const float pdf		 = mRoughness.pdf(H, in.Context.V, in.ShadingContext);
+		const auto closure	 = mRoughness.closure(in.ShadingContext);
+		const float pdf		 = closure.pdf(H, in.Context.V);
+		const float jacobian = Scattering::reflective_jacobian(HdotV);
 		out.PDF_S			 = pdf * jacobian;
 	}
 
@@ -114,9 +116,9 @@ public:
 		PR_PROFILE_THIS;
 
 		// Sample microfacet normal
-		float pdf;
-		bool delta;
-		const Vector3f H = mRoughness.sample(in.RND, in.Context.V, in.ShadingContext, pdf, delta);
+		const auto closure = mRoughness.closure(in.ShadingContext);
+		const Vector3f H   = closure.sample(in.RND, in.Context.V);
+		const float pdf	   = closure.pdf(H, in.Context.V);
 
 		const float HdotV = std::abs(H.dot((Vector3f)in.Context.V));
 		if (HdotV <= PR_EPSILON) {
@@ -136,15 +138,13 @@ public:
 		out.Type  = MST_SpecularReflection;
 		out.PDF_S = pdf;
 
-		if (delta) {
+		if (closure.isDelta()) {
 			out.Weight = evalSpec(fresnel, in.ShadingContext) * out.L.absCosTheta();
 			out.Flags  = MSF_DeltaDistribution;
 		} else {
-			// Evaluate D*G*(V.H*L.H)/(V.N) but ignore pdf
-			float _pdf;
-			const float gd		 = mRoughness.eval(H, in.Context.V, out.L, in.ShadingContext, _pdf);
-			const float jacobian = 1 / (4 * HdotV * HdotV);
-			out.Weight			 = evalSpec(fresnel, in.ShadingContext) * (gd * jacobian);
+			const float GNorm	 = closure.GNorm(H, in.Context.V, out.L);
+			const float jacobian = Scattering::reflective_jacobian(HdotV);
+			out.Weight			 = evalSpec(fresnel, in.ShadingContext) * (GNorm * jacobian);
 			out.PDF_S *= jacobian;
 		}
 

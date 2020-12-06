@@ -4,11 +4,98 @@
 namespace PR {
 
 /// Helping class for GGX based microfacets
-// CHECK: The use of the jacobian for non VNDF is correct, but for VNDF?
+/// As this is as generic as possible the reflection or refraction jacobian has to be applied
 // TODO: VNDF does not work
 template <bool IsAnisotropic, bool UseVNDF, bool SquareRoughness = true>
 class Roughness {
 public:
+	/// Closure environment in which roughness is already evaluated
+	struct Closure {
+		const float M1;
+		const float M2;
+
+		inline Closure(float m1, float m2)
+			: M1(m1)
+			, M2(m2)
+		{
+		}
+
+		inline bool isDelta() const { return M1 <= PR_EPSILON || M2 <= PR_EPSILON; }
+
+		inline float G(const ShadingVector& V, const ShadingVector& L) const
+		{
+			if constexpr (!IsAnisotropic)
+				return Microfacet::g_1_smith(V, M1) * Microfacet::g_1_smith(L, M1);
+			else
+				return Microfacet::g_1_smith(V, M1, M2) * Microfacet::g_1_smith(L, M1, M2);
+		}
+
+		inline float D(const ShadingVector& H) const
+		{
+			if constexpr (!IsAnisotropic)
+				return Microfacet::ndf_ggx(H.absCosTheta(), M1);
+			else
+				return Microfacet::ndf_ggx(H, M1, M2);
+		}
+
+		/// Calculate jacobian for mapping from H to N, in which the cosine term is already applied
+		inline float Norm(const ShadingVector& H, const ShadingVector& V) const
+		{
+			const float denom = V.absCosTheta();
+			if (denom <= PR_EPSILON)
+				return 0;
+
+			const float HdotV = H.dot(V); // By definition this is also HdotL only if this is based on a reflection
+			return std::abs(HdotV) / denom;
+		}
+
+		inline float GNorm(const ShadingVector& H, const ShadingVector& V, const ShadingVector& L) const
+		{
+			return G(V, L) * Norm(H, V);
+		}
+
+		inline float DGNorm(const ShadingVector& H, const ShadingVector& V, const ShadingVector& L) const
+		{
+			return D(H) * G(V, L) * Norm(H, V);
+		}
+
+		inline float DG(const ShadingVector& H, const ShadingVector& V, const ShadingVector& L) const
+		{
+			return D(H) * G(V, L);
+		}
+
+		inline float pdf(const ShadingVector& H, const ShadingVector& V) const
+		{
+			if (isDelta())
+				return 1.0f;
+
+			if constexpr (UseVNDF) {
+				return Microfacet::pdf_ggx_vndf(V, H, M1, M2);
+			} else {
+				if constexpr (!IsAnisotropic)
+					return Microfacet::pdf_ggx(H.absCosTheta(), M1);
+				else
+					return Microfacet::pdf_ggx(H, M1, M2);
+			}
+		}
+
+		inline Vector3f sample(const Vector2f& rnd, const ShadingVector& V) const
+		{
+			if (isDelta())
+				return Vector3f(0, 0, 1);
+
+			if constexpr (UseVNDF) {
+				return Microfacet::sample_vndf_ggx(rnd[0], rnd[1], V, M1, M2);
+			} else {
+				if constexpr (IsAnisotropic) {
+					return Microfacet::sample_ndf_ggx(rnd[0], rnd[1], M1, M2);
+				} else {
+					return Microfacet::sample_ndf_ggx(rnd[0], rnd[1], M1);
+				}
+			}
+		}
+	};
+
 	Roughness(const std::shared_ptr<FloatScalarNode>& roughnessX, const std::shared_ptr<FloatScalarNode>& roughnessY)
 		: mRoughnessX(roughnessX)
 		, mRoughnessY(roughnessY)
@@ -33,84 +120,10 @@ public:
 			return { m1, m1 };
 	}
 
-	inline float eval(const ShadingVector& H, const ShadingVector& V, const ShadingVector& L, const ShadingContext& sctx, float& pdf) const
+	inline Closure closure(const ShadingContext& sctx) const
 	{
-		const float absNdotH = H.absCosTheta();
-		const float absNdotV = V.absCosTheta();
-
-		//PR_ASSERT(absNdotV >= 0, "By definition N.V has to be positive");
-		if (absNdotH <= PR_EPSILON
-			|| absNdotV <= PR_EPSILON) {
-			pdf = 0;
-			return 0.0f;
-		}
-
 		const auto [m1, m2] = evalRoughness(sctx);
-		// Check for delta
-		if (m1 <= PR_EPSILON || m2 <= PR_EPSILON) {
-			pdf = 0.0f;
-			return 0.0f;
-		}
-
-		float G;
-		float D;
-		if constexpr (!IsAnisotropic) {
-			D = Microfacet::ndf_ggx(absNdotH, m1);
-			G = Microfacet::g_1_smith(V, m1) * Microfacet::g_1_smith(L, m1);
-		} else {
-			D = Microfacet::ndf_ggx(H, m1, m2);
-			G = Microfacet::g_1_smith(V, m1, m2) * Microfacet::g_1_smith(L, m1, m2);
-		}
-
-		const float HdotV  = H.dot(V); // By definition this is also HdotL only if this is based on a reflection
-		const float HdotL  = H.dot(L);
-		const float factor = std::abs(HdotV * HdotL) / absNdotV; // NdotL multiplied out
-		pdf				   = std::abs(D * absNdotH);
-		return G * D * factor;
-	}
-
-	inline float pdf(const ShadingVector& H, const ShadingVector& V, const ShadingContext& sctx) const
-	{
-		const float absNdotH = H.absCosTheta();
-		const float absNdotV = V.absCosTheta();
-
-		//PR_ASSERT(absNdotV >= 0, "By definition N.V has to be positive");
-		if (absNdotH <= PR_EPSILON
-			|| absNdotV <= PR_EPSILON)
-			return 0.0f;
-
-		const auto [m1, m2] = evalRoughness(sctx);
-		// Check for delta
-		if (m1 <= PR_EPSILON || m2 <= PR_EPSILON)
-			return 0.0f;
-
-		if constexpr (UseVNDF) {
-			return Microfacet::pdf_ggx_vndf(V, H, m1, m2);
-		} else {
-			if constexpr (!IsAnisotropic)
-				return Microfacet::pdf_ggx(absNdotH, m1);
-			else
-				return Microfacet::pdf_ggx(H, m1, m2);
-		}
-	}
-
-	inline ShadingVector sample(const Vector2f& rnd, const ShadingVector& V, const ShadingContext& sctx, float& pdf, bool& delta) const
-	{
-		pdf = 1;
-
-		const auto [m1, m2] = evalRoughness(sctx);
-		delta				= m1 <= PR_EPSILON || m2 <= PR_EPSILON;
-		if (delta)
-			return Vector3f(0, 0, 1);
-
-		if constexpr (UseVNDF) {
-			return Microfacet::sample_vndf_ggx(rnd[0], rnd[1], V, m1, m2, pdf);
-		} else {
-			if constexpr (IsAnisotropic)
-				return Microfacet::sample_ndf_ggx(rnd[0], rnd[1], m1, m2, pdf);
-			else
-				return Microfacet::sample_ndf_ggx(rnd[0], rnd[1], m1, pdf);
-		}
+		return Closure(m1, m2);
 	}
 
 	inline std::shared_ptr<FloatScalarNode> roughnessX() const { return mRoughnessX; }

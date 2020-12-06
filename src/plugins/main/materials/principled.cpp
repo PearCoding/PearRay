@@ -236,13 +236,13 @@ public:
 		float ax	 = std::max(0.001f, roughness * roughness / aspect);
 		float ay	 = std::max(0.001f, roughness * roughness * aspect);
 
-		float pdf_s;
-		if constexpr (UseVNDF)
-			out.L = Microfacet::sample_vndf_ggx(u, v, in.Context.V, ax, ay, pdf_s);
-		else
-			out.L = Microfacet::sample_ndf_ggx(u, v, ax, ay, pdf_s);
-		//out.Outgoing = Microfacet::sample_ndf_ggx(u, v, ax, ay, pdf_s);
-		out.PDF_S = pdf_s;
+		if constexpr (UseVNDF) {
+			out.L	  = Microfacet::sample_vndf_ggx(u, v, in.Context.V, ax, ay);
+			out.PDF_S = Microfacet::pdf_ggx_vndf(in.Context.V, out.L, ax, ay);
+		} else {
+			out.L	  = Microfacet::sample_ndf_ggx(u, v, ax, ay);
+			out.PDF_S = Microfacet::pdf_ggx(out.L, ax, ay);
+		}
 
 		const float refInvPdf = 2 * std::max(0.0f, out.L.dot(in.Context.V));
 		if (refInvPdf > PR_EPSILON && out.L[2] > PR_EPSILON)

@@ -83,14 +83,14 @@
 		:type 'conductor'
 		:eta 1.2500
 		:k 0.87000
-		:specularity (refl 0.854901961 0.647058824 0.125490196)
-		:roughness 0.005
+		:specularity (refl 1 0.784313725 0.349019608)
+		:roughness 0.004
 	)
 	(material
 		:name 'Glass'
 		:type 'glass'
 		:index (lookup_index "bk7")
-		:roughness 1;0.394
+		:roughness 0.012
 	)
 	; Primitives
 	(include 'meshes/Floor.prc')

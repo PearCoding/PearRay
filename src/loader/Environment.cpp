@@ -66,7 +66,13 @@ Environment::Environment(const std::filesystem::path& workdir,
 	, mOutputSpecification(workdir)
 {
 	try {
+		// First load possible embedded plugins
+		mPluginManager->loadEmbeddedPlugins();
+		// Second load plugins from plugin directory
 		loadPlugins(plugdir);
+		// Third load plugins from working directory
+		if (!mQueryMode)
+			loadPlugins(workdir);
 	} catch (const std::exception& e) {
 		PR_LOG(L_ERROR) << "Error while loading plugins: " << e.what() << std::endl;
 	}
@@ -193,9 +199,6 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory()
 
 void Environment::loadPlugins(const std::filesystem::path& basedir)
 {
-	// First load possible embedded plugins
-	mPluginManager->loadEmbeddedPlugins();
-
 	try {
 #ifdef PR_DEBUG
 		static const std::wregex e(L"(lib)?pr_pl_([\\w_]+)_d");

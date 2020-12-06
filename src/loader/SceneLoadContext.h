@@ -35,12 +35,20 @@ public:
 
 	inline std::filesystem::path escapePath(const std::filesystem::path& path) const
 	{
+		// If empty, do not bother any further
+		if (path.empty())
+			return path;
+
 		// If absolute, nothing to escape
 		if (path.is_absolute())
 			return path;
 
 		// If visible from the current working directory, use it
 		if (std::filesystem::exists(path))
+			return path;
+
+		// If no file was used in this loading process, just return the path
+		if (currentFile().empty())
 			return path;
 
 		// Combine current file directory with given path

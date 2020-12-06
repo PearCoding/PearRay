@@ -170,19 +170,38 @@ inline Vector3f refract(float eta, const Vector3f& V)
 
 /////////////////////////////////////////////
 
+/// Calculate halfway vector for reflection
 inline Vector3f halfway_reflection(const Vector3f& V, const Vector3f& L)
 {
 	return (V + L).normalized();
 }
 
-inline Vector3f halfway_transmission(float inv_eta, const Vector3f& V, const Vector3f& L)
+/// Calculate halfway vector for refraction with eta=n1/n2
+inline Vector3f halfway_refractive(float eta, const Vector3f& V, const Vector3f& L)
 {
-	return -(V + inv_eta * L).normalized();
+	return -(eta * V + L).normalized();
 }
 
-inline Vector3f halfway_transmission(float n1, const Vector3f& V, float n2, const Vector3f& L)
+/// Calculate halfway vector for refraction
+inline Vector3f halfway_refractive(float n1, const Vector3f& V, float n2, const Vector3f& L)
 {
-	return halfway_transmission(n2 / n1, V, L);
+	return halfway_refractive(n1 / n2, V, L);
+}
+
+/// Calculate halfway vector for reflection
+inline static float reflective_jacobian(float HdotV)
+{
+	return 1 / (4 * std::abs(HdotV));
+}
+
+/// Calculate refraction jacobian with eta=n1/n2
+inline static float refractive_jacobian(float HdotV, float HdotL, float eta)
+{
+	PR_ASSERT(HdotV >= 0.0f, "HdotV must be positive!");
+	PR_ASSERT(HdotL >= 0.0f, "HdotL must be positive!");
+
+	const float denom = HdotL + eta * HdotV; // Unsigned length of (unnormalized) refractive H
+	return HdotL / (denom * denom);
 }
 
 /////////////////////////////////////////////

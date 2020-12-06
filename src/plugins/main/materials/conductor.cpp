@@ -13,6 +13,7 @@
 
 namespace PR {
 
+template <bool SpectralVarying>
 class ConductorMaterial : public IMaterial {
 public:
 	ConductorMaterial(const std::shared_ptr<FloatSpectralNode>& eta, const std::shared_ptr<FloatSpectralNode>& k,
@@ -67,7 +68,11 @@ public:
 		out.Type   = MST_SpecularReflection;
 		out.PDF_S  = 1;
 		out.L	   = Scattering::reflect(in.Context.V);
-		out.Flags  = MSF_DeltaDistribution;
+
+		if constexpr (SpectralVarying)
+			out.Flags = MSF_DeltaDistribution | MSF_SpectralVarying;
+		else
+			out.Flags = MSF_DeltaDistribution;
 	}
 
 	std::string dumpInformation() const override
@@ -76,9 +81,10 @@ public:
 
 		stream << std::boolalpha << IMaterial::dumpInformation()
 			   << "  <ConductorMaterial>:" << std::endl
-			   << "    Eta:         " << mEta->dumpInformation() << std::endl
-			   << "    K:           " << mK->dumpInformation() << std::endl
-			   << "    Specularity: " << mSpecularity->dumpInformation() << std::endl;
+			   << "    Eta:             " << mEta->dumpInformation() << std::endl
+			   << "    K:               " << mK->dumpInformation() << std::endl
+			   << "    Specularity:     " << mSpecularity->dumpInformation() << std::endl
+			   << "    SpectralVarying: " << (SpectralVarying ? "true" : "false") << std::endl;
 
 		return stream.str();
 	}
@@ -99,11 +105,17 @@ public:
 			|| ctx.parameters().hasParameter("roughness_y"))
 			return ctx.loadMaterial("roughconductor", ctx.parameters());
 
-		const auto eta	= ctx.lookupSpectralNode("eta", 1.2f);
-		const auto k	= ctx.lookupSpectralNode("k", 2.605f);
+		const auto eta	= ctx.lookupSpectralNode({ "eta", "index", "ior" }, 1.2f);
+		const auto k	= ctx.lookupSpectralNode({ "k", "kappa" }, 2.605f);
 		const auto spec = ctx.lookupSpectralNode("specularity", 1);
 
-		return std::make_shared<ConductorMaterial>(eta, k, spec);
+		// Contrary to the dielectric interface, conductors are not spectral varying per default
+		// as it is quite uncommon to use ior functions
+		const bool spectralVarying = ctx.parameters().getBool("spectral_varying", false);
+		if (spectralVarying)
+			return std::make_shared<ConductorMaterial<true>>(eta, k, spec);
+		else
+			return std::make_shared<ConductorMaterial<false>>(eta, k, spec);
 	}
 
 	const std::vector<std::string>& getNames() const

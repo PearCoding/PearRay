@@ -127,44 +127,48 @@ private:
 		int LINE;
 	};
 
-	std::list<Entry> mErrors;
-	int mCount;
+	std::list<Entry> mMessages;
+	int mChecks;
+	int mErrors;
 	std::string mName;
 
 public:
 	inline explicit Test(const std::string& name)
-		: mName(name)
+		: mChecks(0)
+		, mErrors(0)
+		, mName(name)
 	{
-		mCount = 0;
 	}
 
 	inline void check(bool cond, const std::string& msg, const std::string& func, int line)
 	{
-		if (!cond)
-			add_error(msg, func, line);
-		mCount++;
+		if (!cond) {
+			addMessage(msg, func, line);
+			mErrors++;
+		}
+		mChecks++;
+	}
+
+	inline void addMessage(const std::string& msg, const std::string& func, int line)
+	{
+		mMessages.push_back({ msg, func, line });
 	}
 
 	inline bool end() const
 	{
 		std::cout << "Test '" << mName << "':" << std::endl;
 		int i = 1;
-		for (Entry e : mErrors) {
-			std::cout << "  #" << i << " (" << e.FUNCTION << ": " << e.LINE << ")" << std::endl
-					  << "    " << e.MSG << std::endl;
+		for (Entry e : mMessages) {
+			std::cout << "  #" << i << " (" << e.FUNCTION << ": " << e.LINE << ")> " << e.MSG << std::endl;
 			i++;
 		}
 		std::cout << "----------------------" << std::endl;
-		std::cout << "  " << (mCount - mErrors.size()) << "/" << mCount << " checks successful." << std::endl;
+		std::cout << "  " << (mChecks - mErrors) << "/" << mChecks << " checks successful." << std::endl;
 
-		return mErrors.size() == 0;
+		return mErrors == 0;
 	}
 
 private:
-	inline void add_error(const std::string& msg, const std::string& func, int line)
-	{
-		mErrors.push_back({ msg, func, line });
-	}
 };
 
 class TestCase {
@@ -230,6 +234,11 @@ private:
 	if (_test)                \
 		_testcase.end(_test); \
 	_test = _testcase.begin(name);
+
+#define PR_MESSAGE(msg)                                       \
+	do {                                                      \
+		_test->addMessage((msg), PR_FUNCTION_NAME, __LINE__); \
+	} while (false)
 
 #define PR_CHECK_EQ(value, expected)                                                                        \
 	do {                                                                                                    \

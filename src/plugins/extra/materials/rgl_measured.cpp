@@ -7,6 +7,8 @@
 #include "renderer/RenderContext.h"
 #include "spectral/OrderedSpectrum.h"
 
+#include "Logger.h"
+
 #include <sstream>
 
 // This is nasty and only a workaround to fix a ISO C++ pedantic warning which is traited as error in -Werror
@@ -115,8 +117,13 @@ public:
 	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx)
 	{
 		const ParameterGroup& params = ctx.parameters();
-		return std::make_shared<RGLMeasuredMaterial>(ctx.escapePath(params.getString("filename", "")),
-													 ctx.lookupSpectralNode("tint", 1));
+		const auto path				 = ctx.escapePath(params.getString("filename", ""));
+		if (path.empty()) {
+			PR_LOG(L_ERROR) << "Could not create measured material as filename was empty" << std::endl;
+			return nullptr;
+		}
+
+		return std::make_shared<RGLMeasuredMaterial>(path, ctx.lookupSpectralNode("tint", 1));
 	}
 
 	const std::vector<std::string>& getNames() const

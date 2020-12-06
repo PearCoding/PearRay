@@ -38,8 +38,7 @@ void produce_vndf_image(const std::string& path, const Vector3f& V, float alpha_
 			float u = x * du;
 			float v = y * du;
 
-			float pdf;
-			Vector3f Nh = Microfacet::sample_vndf_ggx(u, v, V, alpha_x, alpha_y, pdf);
+			Vector3f Nh = Microfacet::sample_vndf_ggx(u, v, V, alpha_x, alpha_y);
 
 			// Slope space
 			Vector2f slope = toSlopeSpace(Nh);
@@ -53,7 +52,7 @@ void produce_vndf_image(const std::string& path, const Vector3f& V, float alpha_
 			data[py * IRES + px] += 1.0f;
 
 			// Pdf
-			pdfs[y * IRES + x] = pdf;
+			pdfs[y * IRES + x] = Microfacet::pdf_ggx_vndf(V, Nh, alpha_x, alpha_y);
 
 			// Nh dot V
 			dots[y * IRES + x] = Nh.dot(V);

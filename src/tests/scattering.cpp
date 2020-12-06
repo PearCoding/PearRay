@@ -22,7 +22,7 @@ PR_TEST("Halfway Transmission")
 	Vector3f V = Vector3f(1, 1, 1).normalized();
 	Vector3f L = Vector3f(-1, 0, -1).normalized();
 
-	Vector3f H = Scattering::halfway_transmission(n1, V, n2, L);
+	Vector3f H = Scattering::halfway_refractive(n1, V, n2, L);
 
 	float refA = Scattering::refraction_angle(H.dot(V), eta);
 	PR_CHECK_NEARLY_EQ(refA, -H.dot(L));
