@@ -83,7 +83,7 @@ inline void checkEvalPdf(PRT::Test* _test, const IntersectionPoint& ip, const Ve
 	}
 }
 
-inline void checkSampleEval(PRT::Test* _test, const IntersectionPoint& ip, const Vector2f& rnd)
+inline void checkSampleEval(PRT::Test* _test, const IntersectionPoint& ip)
 {
 	// Maybe will only work for embedded plugins?
 	const auto env	 = Environment::createQueryEnvironment("./");
@@ -94,6 +94,7 @@ inline void checkSampleEval(PRT::Test* _test, const IntersectionPoint& ip, const
 		plugins.insert(fac.second);
 
 	SceneLoadContext ctx(env.get());
+	Random rnd(42);
 
 	RenderTileSession session;
 	for (const auto& fac : plugins) {
@@ -105,11 +106,7 @@ inline void checkSampleEval(PRT::Test* _test, const IntersectionPoint& ip, const
 		if (!material)
 			continue;
 
-		MaterialSampleInput min;
-		min.Context		   = MaterialSampleContext::fromIP(ip);
-		min.ShadingContext = ShadingContext::fromIP(0, ip);
-		min.RND			   = rnd;
-
+		MaterialSampleInput min(ip, 0, rnd);
 		MaterialSampleOutput mout;
 		material->sample(min, mout, session);
 
@@ -149,8 +146,7 @@ PR_TEST("[Front] Eval = PDF")
 PR_TEST("[Front] Eval = Sample")
 {
 	const IntersectionPoint ip = constructTestIP(false);
-	const Vector2f rnd		   = Vector2f(0.15789f, 0.424242f);
-	checkSampleEval(_test, ip, rnd);
+	checkSampleEval(_test, ip);
 }
 
 PR_TEST("[Back] Eval = PDF")
@@ -163,8 +159,7 @@ PR_TEST("[Back] Eval = PDF")
 PR_TEST("[Back] Eval = Sample")
 {
 	const IntersectionPoint ip = constructTestIP(true);
-	const Vector2f rnd		   = Vector2f(0.15789f, 0.424242f);
-	checkSampleEval(_test, ip, rnd);
+	checkSampleEval(_test, ip);
 }
 
 PR_END_TESTCASE()

@@ -155,7 +155,7 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		out.L			 = Sampling::cos_hemi(in.RND[0], in.RND[1]);
+		out.L			 = Sampling::cos_hemi(in.RND.getFloat(), in.RND.getFloat());
 		const Vector3f H = Scattering::halfway_reflection(in.Context.V, out.L);
 
 		out.Weight = mTint->eval(in.ShadingContext) * mMeasurement.eval(H, out.L, in.Context.WavelengthNM);

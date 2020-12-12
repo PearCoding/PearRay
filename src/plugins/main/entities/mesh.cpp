@@ -216,9 +216,10 @@ public:
 		const std::vector<uint32> materials = ctx.lookupMaterialIDArray(params.getParameter("materials"));
 		const uint32 emsID = ctx.lookupEmissionID(params.getParameter("emission"));
 
-		if (!ctx.hasMesh(mesh_name))
+		if (!ctx.hasMesh(mesh_name)) {
+			PR_LOG(L_ERROR) << "Could not find a mesh named " << mesh_name << std::endl;
 			return nullptr;
-		else {
+		} else {
 			auto mesh = ctx.getMesh(mesh_name);
 			std::shared_ptr<Mesh> mesh_p;
 			if (mOriginalMesh.count(mesh.get()) > 0) {

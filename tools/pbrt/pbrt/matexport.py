@@ -117,15 +117,15 @@ def export(operator, op, isNamed):
     elif mat_type == "substrate":
         operator.w.write("(material")
         operator.w.goIn()
-        operator.w.write(":type 'substrate'")
+        operator.w.write(":type 'principled'")
         operator.w.write(":name '%s'" % name)
-        operator.w.write(":albedo %s" % getRefl(operator, op, 'Kd', [0.5, 0.5, 0.5]))
-        operator.w.write(":specularity %s" % getRefl(operator, op, 'Ks', [0.5, 0.5, 0.5]))
+        operator.w.write(":base %s" % getRefl(operator, op, 'Kd', [0.5, 0.5, 0.5]))#TODO
+        #operator.w.write(":specular %s" % getScal(operator, op, 'Ks', 0.5))
         operator.w.write(":index %s" % getIOR(operator, op, 'eta', 'bk7'))
 
         roughness = getRoughness(operator, op)
         if roughness is not None:
-            if roughness[0] != roughness[1]:
+            if roughness[0] != roughness[1]: #TODO
                 operator.w.write(":roughness_x %s" % roughness[0])
                 operator.w.write(":roughness_y %s" % roughness[1])
             else:

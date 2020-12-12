@@ -67,7 +67,7 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		powitacq::Vector2f u  = powitacq::Vector2f(in.RND(0), in.RND(1));
+		powitacq::Vector2f u  = powitacq::Vector2f(in.RND.getFloat(), in.RND.getFloat());
 		powitacq::Vector3f wi = powitacq::Vector3f(in.Context.V(0), in.Context.V(1), in.Context.V(2));
 		powitacq::Vector3f wo;
 		float pdf;

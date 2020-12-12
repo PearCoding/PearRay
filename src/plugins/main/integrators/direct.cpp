@@ -166,10 +166,9 @@ private:
 			return {};
 
 		// Sample Material
-		MaterialSampleInput sin;
+		MaterialSampleInput sin(rnd);
 		sin.Context		   = MaterialSampleContext::fromIP(ip);
 		sin.ShadingContext = ShadingContext::fromIP(session.threadID(), ip);
-		sin.RND			   = rnd.get2D();
 
 		MaterialSampleOutput sout;
 		material->sample(sin, sout, session);
@@ -183,7 +182,7 @@ private:
 		const float pdf_s = sout.PDF_S[0] * scatProb;
 		current.LastPDF_S = pdf_s;
 
-		if (pdf_s <= PR_EPSILON) // Catch this case, or everything will explode
+		if (pdf_s <= PDF_EPS) // Catch this case, or everything will explode
 			return {};
 
 		// Update throughput
@@ -240,6 +239,10 @@ private:
 		MaterialEvalOutput mout;
 		cameraMaterial->eval(min, mout, session);
 
+		const float bsdfWvlPdfS = (cameraIP.Ray.Flags & RF_Monochrome) ? mout.PDF_S[0] : mout.PDF_S.sum(); // Each wavelength could have generated the path
+		if (bsdfWvlPdfS <= PDF_EPS)																		   // Its impossible to sample the bsdf, so skip it
+			return;
+
 		// Check if a check between point and light is necessary
 		const SpectralBlob connectionW = lsout.Radiance * mout.Weight;
 		const bool worthACheck		   = front && !connectionW.isZero();
@@ -258,7 +261,7 @@ private:
 					lightPdfS = IS::toSolidAngle(lightPdfS, sqrD, cosL);
 			}
 			lightPdfS *= lsample.second;
-			if (lightPdfS <= PR_EPSILON)
+			if (lightPdfS <= PDF_EPS)
 				return;
 		}
 
@@ -266,13 +269,10 @@ private:
 		const uint32 cameraPathLength = cameraIP.Ray.IterationDepth + 1;
 		const float cameraRoulette	  = mCameraRR.probability(cameraPathLength);
 
-		const float bsdfWvlPdfS = (cameraIP.Ray.Flags & RF_Monochrome) ? mout.PDF_S[0] : mout.PDF_S.sum(); // Each wavelength could have generated the path
-		if(bsdfWvlPdfS <= PR_EPSILON) // Its impossible to sample the bsdf, so skip it
-			return;
-		const float bsdfPdfS	= bsdfWvlPdfS * cameraRoulette;
-		const float mis			= light->hasDeltaDistribution() ? 1 : 1 / (1 + VCM::mis_term<MISMode>(bsdfPdfS / lightPdfS));
+		const float bsdfPdfS = bsdfWvlPdfS * cameraRoulette;
+		const float mis		 = light->hasDeltaDistribution() ? 1 : 1 / (1 + VCM::mis_term<MISMode>(bsdfPdfS / lightPdfS));
 
-		if (mis <= PR_EPSILON)
+		if (mis <= MIS_EPS)
 			return;
 
 		PR_ASSERT(mis <= 1.0f, "MIS must be between 0 and 1");
@@ -350,7 +350,7 @@ private:
 		const float mis = 1 / (1 + VCM::mis_term<MISMode>(posPDF_S / current.LastPDF_S));
 
 		// Note: No need to check LastPDF_S as handleScattering checks it already
-		if (mis <= PR_EPSILON)
+		if (mis <= MIS_EPS)
 			return;
 
 		PR_ASSERT(mis <= 1.0f, "MIS must be between 0 and 1");
@@ -395,7 +395,7 @@ private:
 		// Calculate MIS
 		const float mis = 1 / (1 + denom_mis);
 
-		if (mis <= PR_EPSILON)
+		if (mis <= MIS_EPS)
 			return;
 
 		PR_ASSERT(mis <= 1.0f, "MIS must be between 0 and 1");

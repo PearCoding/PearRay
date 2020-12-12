@@ -236,14 +236,16 @@ static inline bool isAllowedVertIndType(const std::string& str)
 void PlyLoader::load(const std::filesystem::path& file, SceneLoadContext& ctx)
 {
 	std::fstream stream(file.c_str(), std::ios::in | std::ios::binary);
-	if (!stream)
+	if (!stream) {
+		PR_LOG(L_ERROR) << "Could not open ply file " << file << std::endl;
 		return;
+	}
 
 	// Header
 	std::string magic;
 	stream >> magic;
 	if (magic != "ply") {
-		PR_LOG(L_WARNING) << "Given file is not a ply file." << std::endl;
+		PR_LOG(L_WARNING) << "Given file " << file << " is not a ply file." << std::endl;
 		return;
 	}
 

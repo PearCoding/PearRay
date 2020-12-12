@@ -62,7 +62,7 @@ public:
 			}
 		}
 
-		out.L = Sampling::cos_hemi(in.RND[0], in.RND[1]);
+		out.L = Sampling::cos_hemi(in.RND.getFloat(), in.RND.getFloat());
 
 		out.Weight = mAlbedo->eval(in.ShadingContext) * out.L(2) * PR_INV_PI;
 		out.PDF_S  = Sampling::cos_hemi_pdf(out.L(2));

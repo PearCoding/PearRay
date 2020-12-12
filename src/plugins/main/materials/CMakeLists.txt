@@ -11,6 +11,7 @@ PR_ADD_PLUGIN(mat_orennayar CPP orennayar.cpp)
 PR_ADD_PLUGIN(mat_principled CPP principled.cpp)
 PR_ADD_PLUGIN(mat_roughconductor CPP roughconductor.cpp)
 PR_ADD_PLUGIN(mat_roughdielectric CPP roughdielectric.cpp)
-PR_ADD_PLUGIN(mat_substrate CPP substrate.cpp)
 PR_ADD_PLUGIN(mat_viewblend CPP viewblend.cpp)
 PR_ADD_PLUGIN(mat_ward CPP ward.cpp)
+
+PR_ADD_PLUGIN(mat_detector CPP detector.cpp)

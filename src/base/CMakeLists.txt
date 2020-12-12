@@ -50,9 +50,12 @@ set(PR_Src
   math/Hash.h
   math/ImportanceSampling.h
   math/Microfacet.h
+  math/MicrofacetReflection.h
+  math/MicrofacetTransmission.h
   math/Normal.h
   math/Projection.h
   math/ProjectionMap.h
+  math/RoughDistribution.h
   math/Sampling.h
   math/Scattering.h
   math/ShadingVector.h

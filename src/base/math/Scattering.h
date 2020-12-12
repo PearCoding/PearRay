@@ -4,26 +4,6 @@
 
 namespace PR {
 namespace Scattering {
-// Every function with a _global suffix is only useable in global space where the view vector is incident,
-// as opposed to the outgoing view vector in shading space!
-
-/**
-* @param gNdotV dot product between normal and incident view vector (global space)
-*/
-inline bool is_inside_global(float gNdotV)
-{
-	return gNdotV > PR_EPSILON;
-}
-
-/**
-* @param gNdotV dot product between normal and incident view vector
-* @param N Normal of the surface point.
-*/
-inline Vector3f faceforward_global(float gNdotV, const Vector3f& N)
-{
-	return is_inside_global(gNdotV) ? -N : N;
-}
-
 /////////////////////////////////////////////
 /**
 * @brief Returns simple correction factor between shading and geometry normal
@@ -31,7 +11,7 @@ inline Vector3f faceforward_global(float gNdotV, const Vector3f& N)
 * @todo Make use of this!
 * @param Ng Surface geometry normal
 * @param Ns Surface shading normal
-* @param V Unit vector pointing FROM or TO the surface point in shading space.
+* @param wIn Unit vector pointing FROM or TO the surface point in shading space.
 * @return Factor between [0, 1] correcting the loss of energy by changing from geometry to shading
 */
 inline float normal_correction_factor_global(const Vector3f& Ng, const Vector3f& Ns, const Vector3f& V)
@@ -62,13 +42,16 @@ inline Vector3f faceforward(const Vector3f& V)
 /**
 * @brief Returns angle between normal and refracted ray based on the Snell's law.
 *
-* @param eta Index ratio (n1/n2) between the two mediums.
-* @param NdotV Angle between N and V
-* @return NdotT Angle between N and the (virtual) refracted ray. -1 if total reflection!
+* @param eta Index ratio (n_in/n_out) between the two mediums.
+* @param cosI Angle between N and light
+* @return cosT Angle between N and the (virtual) refracted ray. -1 if total reflection!
 */
-inline float refraction_angle(float NdotV, float eta)
+inline float refraction_angle(float cosI, float eta)
 {
-	const float k = 1 - (eta * eta) * (1 - NdotV * NdotV);
+	if (std::signbit(cosI)) // Negative hemisphere
+		return refraction_angle(-cosI, 1 / eta);
+
+	const float k = 1 - (eta * eta) * (1 - cosI * cosI);
 	if (k < 0)
 		return -1;
 	else
@@ -102,106 +85,101 @@ inline Vector3f reflect(const Vector3f& V, const Vector3f& N)
 }
 
 /**
-* @brief Refracts the ray based on the eta parameter (eta = n1/n2) and previously calculated NdotT (Angle between a custom normal and refracted ray)
+* @brief Refracts the ray based on the eta parameter (eta = n_in/n_out) and stops when total reflection.
 *
-* @param eta Index ratio (n1/n2) between the two mediums.
-* @param NdotT Angle between N and the result of this function
-* @param NdotV Angle between N and V
-* @param V Unit vector pointing FROM the surface point in shading space.
-* @param N Unit vector pointing FROM the surface point in shading space corresponding to a custom normal.
-* @return Unit vector pointing FROM the surface point outwards in shading space.
+* @param eta Index ratio (n_in/n_out) between the two mediums.
+* @param wIn Unit vector pointing FROM the surface point in shading space.
+* @return wOut Unit vector pointing FROM the surface point outwards in shading space.
 */
-inline Vector3f refract(float eta, float NdotT, float NdotV,
-						const Vector3f& V, const Vector3f& N)
+inline Vector3f refract(float eta, const Vector3f& wIn)
 {
-	return (-V * eta + (eta * NdotV - NdotT) * N).normalized();
+	if (std::signbit(wIn(2))) // Negative hemisphere
+		return -refract(1 / eta, -wIn);
+
+	const float cosT = refraction_angle(wIn(2), eta);
+
+	if (cosT < 0.0f) //TOTAL REFLECTION
+		return reflect(wIn);
+	else
+		return Vector3f(-wIn(0) * eta, -wIn(1) * eta, -cosT).normalized();
 }
 
 /**
-* @brief Refracts the ray based on the eta parameter (eta = n1/n2) and previously calculated NdotT (Angle between Normal and refracted ray)
+* @brief Refracts the ray based on the eta parameter (eta = n_in/n_out)
 *
-* @param eta Index ratio (n1/n2) between the two mediums.
-* @param NdotT Positive angle between N and the result of this function
-* @param V Unit vector pointing FROM the surface point in shading space.
+* @param eta Index ratio (n_in/n_out) between the two mediums.
+* @param wIn Unit vector pointing FROM the surface point in shading space.
+* @param N Unit vector pointing FROM the surface point in shading space. Should be the normal giving the orientation of the surface
+* @param total True if total reflection occured
 * @return Unit vector pointing FROM the surface point outwards in shading space.
 */
-inline Vector3f refract(float eta, float NdotT,
-						const Vector3f& V)
+inline Vector3f refract(float eta, const Vector3f& wIn, const Vector3f& N, bool& total)
 {
-	// In case the view vector hits from below, flip the normal, which results into a flip in sign
-	const float k = V(2) < 0 ? NdotT : -NdotT;
-	return Vector3f(-V(0) * eta, -V(1) * eta, k).normalized();
-}
+	const float cosI = wIn.dot(N);
 
-/**
-* @brief Refracts the ray based on the eta parameter (eta = n1/n2) and stops when total reflection.
-*
-* @param eta Index ratio (n1/n2) between the two mediums.
-* @param V Unit vector pointing FROM the surface point in shading space.
-* @return Unit vector pointing FROM the surface point outwards in shading space.
-*/
-inline Vector3f refract(float eta, const Vector3f& V, bool& total)
-{
-	const float NdotT = refraction_angle(V(2), eta);
+	if (std::signbit(cosI)) // Negative hemisphere
+		return -refract(1 / eta, -wIn, N, total);
 
-	total = NdotT < 0.0f;
+	const float cosT = refraction_angle(cosI, eta);
+	total			 = cosT < 0.0f;
+
 	if (total) //TOTAL REFLECTION
-		return Vector3f(0, 0, 0);
+		return reflect(wIn, N);
 	else
-		return refract(eta, NdotT, V);
+		return (-wIn * eta + (eta * cosI - cosT) * N).normalized();
 }
 
 /**
-* @brief Refracts the ray based on the eta parameter (eta = n1/n2)
+* @brief Refracts the ray based on the eta parameter (eta = n_in/n_out)
 *
-* @param eta Index ratio (n1/n2) between the two mediums.
-* @param V Unit vector pointing FROM the surface point in shading space.
+* @param eta Index ratio (n_in/n_out) between the two mediums.
+* @param wIn Unit vector pointing FROM the surface point in shading space.
+* @param N Unit vector pointing FROM the surface point in shading space. Should be the normal giving the orientation of the surface
 * @return Unit vector pointing FROM the surface point outwards in shading space.
 */
-inline Vector3f refract(float eta, const Vector3f& V)
+inline Vector3f refract(float eta, const Vector3f& wIn, const Vector3f& N)
 {
-	const float NdotT = refraction_angle(V(2), eta);
-
-	if (NdotT < 0.0f) //TOTAL REFLECTION
-		return reflect(V);
-	else
-		return refract(eta, NdotT, V);
+	bool _ignore;
+	return refract(eta, wIn, N, _ignore);
 }
 
 /////////////////////////////////////////////
 
 /// Calculate halfway vector for reflection
-inline Vector3f halfway_reflection(const Vector3f& V, const Vector3f& L)
+inline Vector3f halfway_reflection(const Vector3f& wIn, const Vector3f& wOut)
 {
-	return (V + L).normalized();
-}
-
-/// Calculate halfway vector for refraction with eta=n1/n2
-inline Vector3f halfway_refractive(float eta, const Vector3f& V, const Vector3f& L)
-{
-	return -(eta * V + L).normalized();
+	// No need to check if zero. Eigen3 will handle it
+	return (wIn + wOut).normalized();
 }
 
 /// Calculate halfway vector for refraction
-inline Vector3f halfway_refractive(float n1, const Vector3f& V, float n2, const Vector3f& L)
+inline Vector3f halfway_refractive(float eta, const Vector3f& wIn, const Vector3f& wOut)
 {
-	return halfway_refractive(n1 / n2, V, L);
+	// No need to check if zero. Eigen3 will handle it
+	return -(eta * wIn + wOut).normalized();
+}
+
+/// Calculate halfway vector for refraction
+inline Vector3f halfway_refractive(float n_in, const Vector3f& wIn, float n_out, const Vector3f& wOut)
+{
+	// No need to check if zero. Eigen3 will handle it
+	return -(n_in * wIn + n_out * wOut).normalized();
 }
 
 /// Calculate halfway vector for reflection
-inline static float reflective_jacobian(float HdotV)
+inline static float reflective_jacobian(float cosO)
 {
-	return 1 / (4 * std::abs(HdotV));
+	const float denom = 4 * std::abs(cosO);
+	return denom <= PR_EPSILON ? 0.0f : 1 / denom;
 }
 
-/// Calculate refraction jacobian with eta=n1/n2
-inline static float refractive_jacobian(float HdotV, float HdotL, float eta)
+/// Calculate refraction jacobian
+/// @param eta Index ratio (n_in/n_out) between the two mediums.
+inline static float refractive_jacobian(float eta, float cosI, float cosO)
 {
-	PR_ASSERT(HdotV >= 0.0f, "HdotV must be positive!");
-	PR_ASSERT(HdotL >= 0.0f, "HdotL must be positive!");
-
-	const float denom = HdotL + eta * HdotV; // Unsigned length of (unnormalized) refractive H
-	return HdotL / (denom * denom);
+	const float denom  = eta * cosI + cosO; // Unsigned length of (unnormalized) refractive H
+	const float denom2 = denom * denom;
+	return denom2 <= PR_EPSILON ? 0.0f : std::abs(cosO) / denom2;
 }
 
 /////////////////////////////////////////////

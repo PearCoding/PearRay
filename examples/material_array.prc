@@ -6,7 +6,7 @@
 	(sampler 
 	  :slot 'aa'
 	  :type 'hammersley'
-	  :sample_count 1024
+	  :sample_count 4096
 	)
 	(filter 
 	  :slot 'pixel'
@@ -14,7 +14,7 @@
 	  :radius 1
 	)
 	(integrator 
-	  :type 'bidirect'
+	  :type 'direct'
 	  ;:max_ray_depth 64
 	  :gather_mode 'sphere'
 	)
@@ -22,6 +22,7 @@
 	(output
 		:name 'image'
 		(channel :type 'color' :color 'srgb' )
+		(channel :type 'n')
 	)
 	; Camera
 	(camera
@@ -52,11 +53,13 @@
 	; Materials
 	(material
 		:name 'Material1'
-		;:type 'roughglass'
 		:type 'glass'
-		:roughness 0.0
+		:front_reflection (refl 1 0 0)
+		:back_reflection (refl 0 1 0)
+		:front_transmission (refl 0 0 1)
+		:back_transmission (refl 0 0 1)
+		:roughness 0.04
 		:specularity 1
-		:transmission 1
 		:spectral_varying false
 		:index (lookup_index "bk7")
 	)
@@ -64,14 +67,17 @@
 		:name 'Material2'
 		:type 'glass'
 		:specularity 1
-		:transmission 1
 		:spectral_varying false
 		:index (lookup_index "bk7")
 	)
 	(material
 		:name 'Material3'
-		:type 'glass'
-		:index (lookup_index "diamond")
+		:type 'conductor'
+		:roughness 0.1
+		;:vndf true
+		; Silver
+		:index 0.051585
+		:kappa 3.9046
 	)
 	(material
 		:name 'Ground'

@@ -123,10 +123,9 @@ private:
 				}
 
 				// Continue
-				MaterialSampleInput sin;
+				MaterialSampleInput sin(rnd);
 				sin.Context		   = MaterialSampleContext::fromIP(ip);
 				sin.ShadingContext = ShadingContext::fromIP(session.threadID(), ip);
-				sin.RND			   = rnd.get2D();
 
 				MaterialSampleOutput sout;
 				material->sample(sin, sout, session);

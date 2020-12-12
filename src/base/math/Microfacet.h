@@ -78,12 +78,28 @@ inline float g_1_smith(const ShadingVector& K, float roughness)
 
 inline float g_1_smith(const ShadingVector& K, float roughnessX, float roughnessY)
 {
-	const float ax2 = K.sin2Phi() * roughnessX * roughnessX;
-	const float ay2 = K.cos2Phi() * roughnessY * roughnessY;
+	const float ax2 = K.cos2Phi() * roughnessX * roughnessX;
+	const float ay2 = K.sin2Phi() * roughnessY * roughnessY;
 	const float b	= K.tan2Theta();
 
 	const float denom = 1 + std::sqrt(1 + (ax2 + ay2) * b);
 	return (denom <= PR_EPSILON) ? 0.0f : 2.0f / denom;
+}
+
+inline float g_1_smith_lambda(const ShadingVector& K, float roughness)
+{
+	const float a = roughness * roughness;
+	const float b = K.tan2Theta();
+	return (std::sqrt(1 + a * b) - 1) / 2;
+}
+
+inline float g_1_smith_lambda(const ShadingVector& K, float roughnessX, float roughnessY)
+{
+	const float ax2 = K.cos2Phi() * roughnessX * roughnessX;
+	const float ay2 = K.sin2Phi() * roughnessY * roughnessY;
+	const float b	= K.tan2Theta();
+
+	return (std::sqrt(1 + (ax2 + ay2) * b) - 1) / 2;
 }
 
 /////////////////////////////////
@@ -103,20 +119,42 @@ inline float ndf_blinn(float NdotH, float roughness)
 	return std::pow(NdotH, 2.0f * alpha2 - 2.0f) * alpha2 * PR_INV_PI;
 }
 
-inline float ndf_ggx(float NdotH, float roughness)
+inline float ndf_ggx(const ShadingVector& H, float roughness)
 {
+	const float sin2 = H.sin2Theta();
+	const float cos2 = H.cos2Theta();
+	if (cos2 <= PR_EPSILON)
+		return 0.0f;
+
+	const float tan2   = sin2 / cos2;
+	const float cos4   = cos2 * cos2;
 	const float alpha2 = roughness * roughness;
-	const float t	   = 1.0f / alpha2 + NdotH * NdotH;
-	const float denom  = alpha2 * t * t;
+	if (alpha2 <= PR_EPSILON)
+		return 0.0f;
+
+	const float e	  = tan2 / alpha2;
+	const float denom = alpha2 * cos4 * (1 + e) * (1 + e);
+
 	return (denom <= PR_EPSILON) ? 0.0f : PR_INV_PI / denom;
 }
 
 inline float ndf_ggx(const ShadingVector& H, float roughnessX, float roughnessY)
 {
-	const float t = H.sin2Phi() / (roughnessX * roughnessX)
-					+ H.cos2Phi() / (roughnessY * roughnessY)
-					+ H.cos2Theta();
-	const float denom = roughnessX * roughnessY * t * t;
+	const float sin2 = H.sin2Theta();
+	const float cos2 = H.cos2Theta();
+	if (cos2 <= PR_EPSILON)
+		return 0.0f;
+
+	const float tan2	= sin2 / cos2;
+	const float cos4	= cos2 * cos2;
+	const float alphaX2 = roughnessX * roughnessX;
+	const float alphaY2 = roughnessY * roughnessY;
+	if (alphaX2 <= PR_EPSILON || alphaY2 <= PR_EPSILON)
+		return 0.0f;
+
+	const float t	  = H.sin2Phi() / alphaX2 + H.cos2Phi() / alphaY2;
+	const float e	  = tan2 * t;
+	const float denom = roughnessX * roughnessY * cos4 * (1 + e) * (1 + e);
 	return (denom <= PR_EPSILON) ? 0.0f : PR_INV_PI / denom;
 }
 
@@ -172,9 +210,9 @@ inline float pdf_blinn(float NdotH, float roughness)
 	return 4 * PR_PI * roughness * roughness / NdotH;
 }
 
-inline float pdf_ggx(float NdotH, float roughness)
+inline float pdf_ggx(const ShadingVector& H, float roughness)
 {
-	return ndf_ggx(NdotH, roughness) * NdotH;
+	return ndf_ggx(H, roughness) * H.absCosTheta();
 }
 
 inline float pdf_ggx(const ShadingVector& H, float roughnessX, float roughnessY)
@@ -189,7 +227,7 @@ inline Vector3f sample_ndf_ggx(float u0, float u1, float roughness)
 
 	const float alpha2 = roughness * roughness;
 	const float t2	   = alpha2 * u1 / (1 - u1);
-	cosTheta		   = std::max(0.001f, 1.0f / std::sqrt(1 + t2));
+	cosTheta		   = alpha2 <= PR_EPSILON ? 1.0f : std::max(0.001f, 1.0f / std::sqrt(1 + t2));
 	sinTheta		   = std::sqrt(1 - cosTheta * cosTheta);
 	sinPhi			   = std::sin(2 * PR_PI * u0);
 	cosPhi			   = std::cos(2 * PR_PI * u0);

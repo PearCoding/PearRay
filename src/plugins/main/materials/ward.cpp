@@ -101,7 +101,7 @@ public:
 
 	void sampleDiffusePath(const MaterialSampleInput& in, const ShadingContext& sctx, MaterialSampleOutput& out) const
 	{
-		out.L	   = Sampling::cos_hemi(in.RND[0], in.RND[1]);
+		out.L	   = Sampling::cos_hemi(in.RND.getFloat(), in.RND.getFloat());
 		out.PDF_S  = Sampling::cos_hemi_pdf(out.L(2));
 		out.Weight = mAlbedo->eval(sctx) * out.L[2];
 		out.Type   = MST_DiffuseReflection;
@@ -111,19 +111,21 @@ public:
 	{
 		const float m1 = mRoughnessX->eval(sctx);
 		const float m2 = mRoughnessY->eval(sctx);
+		const float u0 = in.RND.getFloat();
+		const float u1 = in.RND.getFloat();
 
 		float cosTheta, sinTheta;			 // V samples
 		float cosPhi, sinPhi;				 // U samples
 		if (std::abs(m1 - m2) <= PR_EPSILON) // Isotropic
 		{
-			sinPhi = std::sin(2 * PR_PI * in.RND[0]);
-			cosPhi = std::cos(2 * PR_PI * in.RND[0]);
+			sinPhi = std::sin(2 * PR_PI * u0);
+			cosPhi = std::cos(2 * PR_PI * u0);
 
-			const float f = -std::log(std::max(0.00001f, in.RND[1])) * m1 * m1;
+			const float f = -std::log(std::max(0.00001f, u1)) * m1 * m1;
 			cosTheta	  = 1 / (1 + f);
 			sinTheta	  = std::sqrt(f) * cosTheta;
 
-			const float t = 4 * PR_PI * m1 * m1 * cosTheta * cosTheta * cosTheta * in.RND[1];
+			const float t = 4 * PR_PI * m1 * m1 * cosTheta * cosTheta * cosTheta * u1;
 			if (t <= PR_EPSILON)
 				out.PDF_S = 1;
 			else
@@ -132,13 +134,13 @@ public:
 			const float pm1 = m1 * m1;
 			const float pm2 = m2 * m2;
 
-			const float f1 = (m2 / m1) * std::tan(2 * PR_PI * in.RND[0]);
+			const float f1 = (m2 / m1) * std::tan(2 * PR_PI * u0);
 			cosPhi		   = 1 / std::sqrt(1 + f1 * f1);
 			sinPhi		   = f1 * cosPhi;
 
 			const float cosPhi2 = cosPhi * cosPhi;
 			const float tz		= (cosPhi2 / pm1 + sinPhi * sinPhi / pm2);
-			const float f2		= -std::log(std::max(0.000001f, in.RND[1])) / tz;
+			const float f2		= -std::log(std::max(0.000001f, u1)) / tz;
 			cosTheta			= 1 / (1 + f2);
 			sinTheta			= std::sqrt(f2) * cosTheta;
 
@@ -162,7 +164,7 @@ public:
 		const auto& sctx = in.ShadingContext;
 		const float refl = mReflectivity->eval(sctx);
 
-		if (in.RND[0] <= refl) {
+		if (in.RND.getFloat() <= refl) {
 			sampleSpecularPath(in, sctx, out);
 			out.PDF_S /= refl;
 		} else {

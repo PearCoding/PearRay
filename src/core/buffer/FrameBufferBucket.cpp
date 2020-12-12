@@ -131,7 +131,7 @@ void FrameBufferBucket::commitSpectrals2(StreamPipeline* pipeline, const OutputS
 		// Check for valid samples
 		const bool isInf	 = contrib.isInf().any();
 		const bool isNaN	 = contrib.isNaN().any();
-		const bool isNeg	 = (contrib < 0.0f).any();
+		const bool isNeg	 = (contrib < -PR_EPSILON).any();
 		const bool isInvalid = isInf | isNaN | isNeg;
 		if (PR_UNLIKELY(isInvalid)) {
 			const uint32 feedback = (isNaN ? OF_NaN : 0)

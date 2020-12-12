@@ -780,10 +780,9 @@ void SceneLoader::addSubGraph(const DL::DataGroup& group, SceneLoadContext& ctx)
 	DL::Data loaderD = group.getFromKey("loader");
 	DL::Data fileD	 = group.getFromKey("file");
 
-	std::wstring file;
+	std::filesystem::path file;
 	if (fileD.type() == DL::DT_String) {
-		std::string f = fileD.getString();
-		file		  = std::wstring(f.begin(), f.end());
+		file = ctx.escapePath(fileD.getString());
 	} else {
 		PR_LOG(L_ERROR) << "[Loader] Could not get file for subgraph entry." << std::endl;
 		return;
@@ -853,11 +852,15 @@ void SceneLoader::include(const std::string& path, SceneLoadContext& ctx)
 	std::filesystem::path real_path = ctx.escapePath(path);
 	PR_LOG(L_DEBUG) << "[Loader] Including " << real_path << std::endl;
 	if (ctx.hasFile(real_path)) {
-		PR_LOG(L_ERROR) << "[Loader] Include file " << real_path << " already included! " << std::endl;
+		PR_LOG(L_ERROR) << "[Loader] Include file " << real_path << " already included!" << std::endl;
 		return;
 	}
 
 	std::ifstream stream(real_path.c_str());
+	if (!stream) {
+		PR_LOG(L_ERROR) << "[Loader] Include file " << real_path << " can not be opened. Maybe it does not exists?" << std::endl;
+		return;
+	}
 	DL::SourceLogger logger;
 	DL::DataLisp dataLisp(&logger);
 	DL::DataContainer container;
@@ -866,7 +869,7 @@ void SceneLoader::include(const std::string& path, SceneLoadContext& ctx)
 	dataLisp.build(container);
 
 	if (container.getTopGroups().empty()) {
-		PR_LOG(L_WARNING) << "[Loader] Include file " << real_path << " is empty! " << std::endl;
+		PR_LOG(L_WARNING) << "[Loader] Include file " << real_path << " is empty!" << std::endl;
 		return;
 	}
 

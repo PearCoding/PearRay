@@ -10,6 +10,7 @@
 		:max_ray_depth 16
 		:max_camera_ray_depth 4
 		:max_light_ray_depth 4
+		:mis 'power'
 		:contract_ratio 0.2
 		:max_light_ray_depth 16
 		:soft_max_light_ray_depth 6
@@ -82,40 +83,16 @@
 		:type 'diffuse'
 		:albedo (refl 0.140000 0.450000 0.091000)
 	)
-	(texture
-		:name 'Metal-specularity'
-		:filename 'textures/MetalPlates006_Metalness.png'
-		:type 'color'
-	)
-	(texture
-		:name 'Metal-roughness'
-		:filename 'textures/MetalPlates006_Roughness.png'
-		:type 'scalar'
-	)
 	(material
 		:name 'shortBox'
-		:type 'conductor'
-		:specularity 'Metal-albedo'
-		:roughness 'Metal-roughness'
-		:eta 2.8735
-		:k 3.3590
-	)
-	(texture
-		:name 'Wood-albedo'
-		:filename 'textures/Wood047_Color.png'
-		:type 'color'
-	)
-	(texture
-		:name 'Wood-roughness'
-		:filename 'textures/Wood047_Roughness.png'
-		:type 'scalar'
+		:type 'glass'
+		:index (lookup_index "bk7")
+		:roughness 0.02
 	)
 	(material
 		:name 'tallBox'
-		:type 'principled'
-		:base 'Wood-albedo'
-		:roughness 0.04 ;'Wood-roughness'
-		; Explodes at roughness < 0.04
+		:type 'glass'
+		:index (lookup_index "bk7")
 	)
 
 	; Meshes

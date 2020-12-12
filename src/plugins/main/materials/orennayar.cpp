@@ -71,7 +71,7 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		out.L = Sampling::cos_hemi(in.RND[0], in.RND[1]);
+		out.L = Sampling::cos_hemi(in.RND.getFloat(), in.RND.getFloat());
 
 		float NdotL = std::max(0.0f, out.L(2));
 		out.Weight	= calc(out.L, NdotL, in.Context, in.ShadingContext);

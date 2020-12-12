@@ -4,43 +4,57 @@
 
 namespace PR {
 namespace Fresnel {
-/* V is outgoing! -> NdotV is positive! */
-inline float dielectric(float NdotV, float NdotT, float n1, float n2)
+
+/* V is outgoing! -> cosI is positive! */
+inline float dielectric(float cosI, float cosO, float n_in, float n_out)
 {
-	/*if(NdotV*NdotT <= PR_EPSILON)
-			return 1;*/
+	PR_ASSERT(cosI >= 0, "cosI must be positive!");
+	
+	const float perp = diffProd(n_in, cosI, n_out, cosO) / sumProd(n_in, cosI, n_out, cosO);
+	const float para = diffProd(n_out, cosI, n_in, cosO) / sumProd(n_out, cosI, n_in, cosO);
 
-	const float para = diffProd(n1, NdotV, n2, NdotT) / sumProd(n1, NdotV, n2, NdotT);
-	const float perp = diffProd(n1, NdotT, n2, NdotV) / sumProd(n1, NdotT, n2, NdotV);
-
-	return sumProd(para, para, perp, perp) / 2.0f;
+	return std::min(std::max(sumProd(para, para, perp, perp) / 2.0f, 0.0f), 1.0f);
 }
 
-inline float dielectric(float NdotV, float n1, float n2)
+inline float dielectric(float cosI, float n_in, float n_out)
 {
+	if (std::signbit(cosI)) // Negative hemisphere
+		return dielectric(-cosI, n_out, n_in);
+
 	// Snells Law
-	const float NdotT = Scattering::refraction_angle(NdotV, n1 / n2);
+	const float cosT = Scattering::refraction_angle(cosI, n_in / n_out);
 
-	if (NdotT < 0)
+	if (cosT < 0)
 		return 1;
 
-	return dielectric(NdotV, NdotT, n1, n2);
+	return dielectric(cosI, cosT, n_in, n_out);
 }
 
-inline float conductor(float dot, float n, float k)
+inline float conductor(float cosI, float n_in, float n_out, float k)
 {
-	if (dot <= PR_EPSILON)
-		return 1;
+	if(cosI < 0)
+		cosI = -cosI;
+		
+	const float eta	  = n_out / n_in;
+	const float kappa = k / n_in;
 
-	const float dot2 = dot * dot;
-	const float f	 = sumProd(n, n, k, k);
-	const float d1	 = f * dot2;
-	const float d2	 = 2 * n * dot;
+	const float cosI2  = cosI * cosI;
+	const float sinI2  = 1 - cosI2;
+	const float eta2   = eta * eta;
+	const float kappa2 = kappa * kappa;
 
-	const float para = (d1 - d2) / (d1 + d2);
-	const float perp = (f - d2 + dot2) / (f + d2 + dot2);
+	const float t0	  = eta2 - kappa2 - sinI2;
+	const float ap	  = std::sqrt(sumProd(t0, t0, 4 * eta2, kappa2));
+	const float t1	  = ap + cosI2;
+	const float a	  = std::sqrt((ap + t0) / 2);
+	const float t2	  = 2 * cosI * a;
+	const float perp2 = (t1 - t2) / (t1 + t2);
 
-	const float R = sumProd(para, para, perp, perp) / 2;
+	const float t3	  = sumProd(cosI2, ap, sinI2, sinI2);
+	const float t4	  = t2 * sinI2;
+	const float para2 = perp2 * (t3 - t4) / (t3 + t4);
+
+	const float R = (para2 + perp2) / 2;
 	return std::min(std::max(R, 0.0f), 1.0f);
 }
 

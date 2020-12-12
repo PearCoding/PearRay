@@ -180,7 +180,7 @@ public:
 			} break;
 			case VFM_Inside:
 				radiance = SpectralUpsampler::compute(
-					Scattering::is_inside_global(spt.Surface.NdotV) ? mParametric.True : mParametric.False,
+					!std::signbit(spt.Surface.NdotV) ? mParametric.True : mParametric.False,
 					spt.Ray.WavelengthNM);
 				if (mApplyDot)
 					radiance *= weight;
@@ -198,7 +198,7 @@ public:
 			case VFM_ValidateMaterial: {
 				IMaterial* mat = session.getMaterial(spt.Surface.Geometry.MaterialID);
 				if (mat) {
-					MaterialSampleInput samp_in{ MaterialSampleContext::fromIP(spt), ShadingContext::fromIP(session.threadID(), spt), random.get2D() };
+					MaterialSampleInput samp_in(spt, session.threadID(), random);
 					MaterialSampleOutput samp_out;
 					mat->sample(samp_in, samp_out, session);
 

@@ -33,7 +33,8 @@ void WavefrontLoader::load(const std::filesystem::path& file, SceneLoadContext& 
 	std::ifstream stream;
 	stream.open(file.c_str(), std::ios::in);
 	if (!stream) {
-		PR_LOG(L_ERROR) << "Wavefront file: Could not open file" << std::endl;
+		PR_LOG(L_ERROR) << "Wavefront file: Could not open file " << file << std::endl;
+		return;
 	}
 
 	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, &stream)) {

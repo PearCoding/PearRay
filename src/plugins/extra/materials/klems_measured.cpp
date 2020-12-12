@@ -668,9 +668,9 @@ public:
 		float weight;
 
 		if constexpr (SwapSide)
-			out.L = (Vector3f)-mMeasurement.sample(in.RND, -in.Context.V, pdf, weight);
+			out.L = (Vector3f)-mMeasurement.sample(in.RND.get2D(), -in.Context.V, pdf, weight);
 		else
-			out.L = mMeasurement.sample(in.RND, in.Context.V, pdf, weight);
+			out.L = mMeasurement.sample(in.RND.get2D(), in.Context.V, pdf, weight);
 
 		const bool refraction = !in.Context.V.sameHemisphere(out.L);
 		out.Weight			  = weight /* std::abs(ectx.NdotL())*/;

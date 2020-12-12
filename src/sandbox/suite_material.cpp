@@ -87,9 +87,11 @@ static void handle_material_sample_case(const std::string& name,
 	std::vector<float> rgb(WIDTH * HEIGHT * 3);
 	std::vector<float> fpdf(WIDTH * HEIGHT * 3);
 	std::vector<float> dir(WIDTH * HEIGHT);
+
+	Random random(42);
 	for (size_t y = 0; y < HEIGHT; ++y) {
 		for (size_t x = 0; x < WIDTH; ++x) {
-			MaterialSampleInput in{ MaterialSampleContext::fromIP(spt), ShadingContext::fromIP(0, spt), Vector2f(x / (float)WIDTH, y / (float)HEIGHT) };
+			MaterialSampleInput in(spt, 0, random);
 			MaterialSampleOutput out;
 			material->sample(in, out, RenderTileSession());
 
@@ -131,8 +133,8 @@ static void mat_lambert(Environment* env)
 {
 	SceneLoadContext ctx(env);
 
-	auto manag		= env->materialManager();
-	auto fac		= manag->getFactory("lambert");
+	auto manag = env->materialManager();
+	auto fac   = manag->getFactory("lambert");
 
 	ParameterGroup params;
 	params.addParameter("albedo", Parameter::fromString("white"));
@@ -149,8 +151,8 @@ static void mat_orennayar(Environment* env)
 {
 	SceneLoadContext ctx(env);
 
-	auto manag		= env->materialManager();
-	auto fac		= manag->getFactory("orennayar");
+	auto manag = env->materialManager();
+	auto fac   = manag->getFactory("orennayar");
 
 	ParameterGroup params;
 	ctx.parameters() = params;
@@ -188,8 +190,8 @@ static void mat_principled_p(Environment* env, float roughness, float specular)
 {
 	SceneLoadContext ctx(env);
 
-	auto manag		= env->materialManager();
-	auto fac		= manag->getFactory("principled");
+	auto manag = env->materialManager();
+	auto fac   = manag->getFactory("principled");
 
 	ParameterGroup params;
 	ctx.parameters() = params;

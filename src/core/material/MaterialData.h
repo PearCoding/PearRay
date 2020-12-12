@@ -2,6 +2,7 @@
 
 #include "MaterialContext.h"
 #include "MaterialType.h"
+#include "Random.h"
 #include "shader/ShadingContext.h"
 
 namespace PR {
@@ -25,7 +26,19 @@ struct PR_LIB_CORE MaterialEvalOutput : public MaterialPDFOutput {
 struct PR_LIB_CORE MaterialSampleInput {
 	MaterialSampleContext Context;
 	PR::ShadingContext ShadingContext;
-	Vector2f RND;
+	Random& RND;
+
+	inline MaterialSampleInput(Random& rnd)
+		: RND(rnd)
+	{
+	}
+
+	inline MaterialSampleInput(const IntersectionPoint& ip, uint32 thread_index, Random& rnd)
+		: Context(MaterialSampleContext::fromIP(ip))
+		, ShadingContext(ShadingContext::fromIP(thread_index, ip))
+		, RND(rnd)
+	{
+	}
 };
 
 enum MaterialScatterFlags {
@@ -54,7 +67,7 @@ struct PR_LIB_CORE MaterialSampleOutput {
 		return MaterialSampleOutput{ ShadingVector(Vector3f::Zero()),
 									 SpectralBlob::Zero(),
 									 SpectralBlob::Zero(),
-									 type, flags};
+									 type, flags };
 	}
 };
 } // namespace PR

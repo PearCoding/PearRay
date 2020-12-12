@@ -132,7 +132,6 @@ public:
 		PR_PROFILE_THIS;
 
 		pt.N = (query.Position - transform() * Vector3f(0, 0, 0)).normalized();
-		pt.N.normalize();
 
 		Tangent::frame(pt.N, pt.Nx, pt.Ny);
 

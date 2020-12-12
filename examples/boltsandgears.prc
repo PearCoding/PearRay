@@ -69,12 +69,13 @@
 		:eta 1.3400
 		:k 1.0300
 		:specularity (refl 0.926298157 0.894117647 0.88627451)
-		:roughness 0.04
+		:roughness_x 0.04
+		:roughness_y 0.12
 	)
 	(material
 		:name 'Floor'
-		:type 'substrate'
-		:albedo (checkerboard (refl 0.8 0.8 0.8) (refl 0.4 0.4 0.4) 10 10)
+		:type 'diffuse'
+		:albedo (checkerboard (refl 0.8 0.6 0.4) (refl 0.0 0.2 0.4) 40 40)
 		:specularity 0.36
 		:roughness 0.024
 	)
@@ -92,24 +93,36 @@
 		:name 'Glass'
 		:type 'glass'
 		:index (lookup_index "bk7")
-		:roughness 0.012
+		:roughness 0.02
 	)
 	; Primitives
 	(include 'meshes/Floor.prc')
 	(entity
 		:name 'Floor'
-		:type 'mesh'
-		:materials 'Floor'
-		:mesh 'Floor'
+		:type 'plane'
+		:material 'Floor'
+		:width 15
+		:height 15
+		:centering true
 		:transform [4.800000190734863,0.0,0.0,0.0,0.0,4.800000190734863,0.0,0.0,0.0,0.0,4.800000190734863,0.0,0.0,0.0,0.0,1.0]
 	)
-	(include 'meshes/GlassPlane.prc')
 	(entity
-		:name 'GlassPlane'
-		:type 'mesh'
-		:materials 'Glass'
-		:mesh 'GlassPlane'
+		:name 'GlassPlane1'
+		:type 'plane'
+		:material 'Glass'
+		:width 2
+		:height 2
+		:centering true
 		:transform [0.48812252283096313,0.7071067690849304,0.5116018056869507,1.9197214841842651,-0.48812249302864075,0.7071067690849304,-0.5116018056869507,-1.6557358503341675,-0.723514199256897,2.9802320611338473e-08,0.690309464931488,1.5923221111297607,0.0,0.0,0.0,1.0]
+	)
+	(entity
+		:name 'GlassPlane2'
+		:type 'plane'
+		:material 'Glass'
+		:width 2
+		:height -2
+		:centering true
+		:transform [0.48812252283096313,0.7071067690849304,0.5116018056869507,2.9197214841842651,-0.48812249302864075,0.7071067690849304,-0.5116018056869507,-2.1557358503341675,-0.723514199256897,2.9802320611338473e-08,0.690309464931488,1.1923221111297607,0.0,0.0,0.0,1.0]
 	)
 	(include 'meshes/Bolt.prc')
 	(entity

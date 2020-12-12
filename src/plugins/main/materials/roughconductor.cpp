@@ -5,12 +5,10 @@
 #include "material/IMaterialPlugin.h"
 #include "math/Fresnel.h"
 #include "math/Microfacet.h"
+#include "math/MicrofacetReflection.h"
 #include "math/Projection.h"
 #include "math/Scattering.h"
-
 #include "renderer/RenderContext.h"
-
-#include "Roughness.h"
 
 #include <sstream>
 
@@ -26,23 +24,16 @@ public:
 		, mEta(eta)
 		, mK(k)
 		, mSpecularity(spec)
-		, mRoughness(roughnessX, roughnessY)
+		, mRoughnessX(roughnessX)
+		, mRoughnessY(roughnessY)
 	{
 	}
 
 	virtual ~RoughConductorMaterial() = default;
 
-	inline SpectralBlob fresnelTerm(float dot, const ShadingContext& sctx) const
+	inline RoughDistribution<IsAnisotropic, UseVNDF> roughness(const ShadingContext& sctx) const
 	{
-		const SpectralBlob eta = mEta->eval(sctx);
-		const SpectralBlob k   = mK->eval(sctx);
-
-		SpectralBlob fresnel;
-		PR_UNROLL_LOOP(PR_SPECTRAL_BLOB_SIZE)
-		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-			fresnel[i] = Fresnel::conductor(dot, eta[i], k[i]);
-
-		return fresnel;
+		return RoughDistribution<IsAnisotropic, UseVNDF>(mRoughnessX->eval(sctx), mRoughnessY->eval(sctx));
 	}
 
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
@@ -51,28 +42,22 @@ public:
 		PR_PROFILE_THIS;
 		out.Type = MST_SpecularReflection;
 
-		if (!in.Context.V.sameHemisphere(in.Context.L)) {
+		const auto closure = MicrofacetReflection(roughness(in.ShadingContext));
+		if (closure.isDelta()) { // Reject
 			out.PDF_S  = 0.0f;
 			out.Weight = SpectralBlob::Zero();
 			return;
 		}
 
-		const ShadingVector H	   = Scattering::halfway_reflection(in.Context.V, in.Context.L);
-		const float HdotV		   = H.dot(in.Context.V);
-		const SpectralBlob fresnel = fresnelTerm(std::abs(HdotV), in.ShadingContext);
-		const auto closure		   = mRoughness.closure(in.ShadingContext);
-		if (closure.isDelta()) { // Reject
-			out.Weight = 0;
-			out.PDF_S  = 0;
-			return;
-		}
+		const SpectralBlob eta = mEta->eval(in.ShadingContext);
+		const SpectralBlob k   = mK->eval(in.ShadingContext);
+		SpectralBlob factor;
+		PR_UNROLL_LOOP(PR_SPECTRAL_BLOB_SIZE)
+		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
+			factor[i] = closure.evalConductor(in.Context.L, in.Context.V, eta[i], k[i]);
 
-		const float DGNorm	 = closure.DGNorm(H, in.Context.V, in.Context.L);
-		const float jacobian = Scattering::reflective_jacobian(HdotV);
-		const float pdf		 = closure.pdf(H, in.Context.V);
-
-		out.Weight = fresnel * mSpecularity->eval(in.ShadingContext) * (DGNorm * jacobian);
-		out.PDF_S  = pdf * jacobian;
+		out.Weight = mSpecularity->eval(in.ShadingContext) * factor;
+		out.PDF_S  = closure.pdf(in.Context.L, in.Context.V);
 	}
 
 	void pdf(const MaterialEvalInput& in, MaterialPDFOutput& out,
@@ -80,22 +65,12 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		if (!in.Context.V.sameHemisphere(in.Context.L)) {
-			out.PDF_S = 0;
+		const auto closure = MicrofacetReflection(roughness(in.ShadingContext));
+		if (closure.isDelta()) {
+			out.PDF_S = 0.0f;
 			return;
 		}
-
-		const ShadingVector H = Scattering::halfway_reflection(in.Context.V, in.Context.L);
-		const float HdotV	  = H.dot(in.Context.V);
-		const auto closure	  = mRoughness.closure(in.ShadingContext);
-		if (closure.isDelta()) { // Reject
-			out.PDF_S = 0;
-			return;
-		}
-
-		const float jacobian = Scattering::reflective_jacobian(HdotV);
-		const float pdf		 = closure.pdf(H, in.Context.V);
-		out.PDF_S			 = pdf * jacobian;
+		out.PDF_S = closure.pdf(in.Context.L, in.Context.V);
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -103,9 +78,8 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		// Sample microfacet normal
-		const auto closure = mRoughness.closure(in.ShadingContext);
-		const Vector3f H   = closure.sample(in.RND, in.Context.V);
+		const auto closure = MicrofacetReflection(roughness(in.ShadingContext));
+		out.L			   = closure.sample(in.RND.get2D(), in.Context.V);
 
 		// Set flags
 		if constexpr (SpectralVarying)
@@ -113,31 +87,21 @@ public:
 		else
 			out.Flags = (closure.isDelta() ? MSF_DeltaDistribution : 0);
 
-		const float HdotV = std::abs(H.dot((Vector3f)in.Context.V));
-		if (HdotV <= PR_EPSILON) {
+		if (!in.Context.V.sameHemisphere(out.L)) { // No transmission
 			out = MaterialSampleOutput::Reject(MST_SpecularReflection, out.Flags);
 			return;
 		}
+		
+		const SpectralBlob eta = mEta->eval(in.ShadingContext);
+		const SpectralBlob k   = mK->eval(in.ShadingContext);
+		SpectralBlob factor;
+		PR_UNROLL_LOOP(PR_SPECTRAL_BLOB_SIZE)
+		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
+			factor[i] = closure.evalConductor(out.L, in.Context.V, eta[i], k[i]);
 
-		// Calculate Fresnel term
-		out.L = Scattering::reflect(in.Context.V, H);
-
-		if (!in.Context.V.sameHemisphere(out.L)) { // Side check
-			out = MaterialSampleOutput::Reject(MST_SpecularReflection, out.Flags);
-			return;
-		}
-
-		const SpectralBlob fresnel = fresnelTerm(HdotV, in.ShadingContext);
-		out.Weight				   = fresnel * mSpecularity->eval(in.ShadingContext);
-		out.Type				   = MST_SpecularReflection;
-		out.PDF_S				   = closure.pdf(H, in.Context.V);
-
-		if (!closure.isDelta()) {
-			const float DGNorm	 = closure.DGNorm(H, in.Context.V, out.L);
-			const float jacobian = Scattering::reflective_jacobian(HdotV);
-			out.Weight *= DGNorm * jacobian;
-			out.PDF_S *= jacobian;
-		}
+		out.Weight = mSpecularity->eval(in.ShadingContext) * factor;
+		out.Type   = MST_SpecularReflection;
+		out.PDF_S  = closure.pdf(out.L, in.Context.V);
 	}
 
 	std::string dumpInformation() const override
@@ -149,9 +113,10 @@ public:
 			   << "    Eta:             " << mEta->dumpInformation() << std::endl
 			   << "    K:               " << mK->dumpInformation() << std::endl
 			   << "    Specularity:     " << mSpecularity->dumpInformation() << std::endl
-			   << "    RoughnessX:      " << mRoughness.roughnessX()->dumpInformation() << std::endl
-			   << "    RoughnessY:      " << mRoughness.roughnessY()->dumpInformation() << std::endl
-			   << "    SpectralVarying: " << (SpectralVarying ? "true" : "false") << std::endl;
+			   << "    RoughnessX:      " << mRoughnessX->dumpInformation() << std::endl
+			   << "    RoughnessY:      " << mRoughnessY->dumpInformation() << std::endl
+			   << "    SpectralVarying: " << (SpectralVarying ? "true" : "false") << std::endl
+			   << "    VNDF:            " << (UseVNDF ? "true" : "false") << std::endl;
 
 		return stream.str();
 	}
@@ -160,7 +125,8 @@ private:
 	const std::shared_ptr<FloatSpectralNode> mEta;
 	const std::shared_ptr<FloatSpectralNode> mK;
 	const std::shared_ptr<FloatSpectralNode> mSpecularity;
-	const Roughness<IsAnisotropic, UseVNDF, false> mRoughness;
+	const std::shared_ptr<FloatScalarNode> mRoughnessX;
+	const std::shared_ptr<FloatScalarNode> mRoughnessY;
 };
 
 // System of function which probably could be simplified with template meta programming

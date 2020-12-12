@@ -94,18 +94,14 @@ public:
 		PR_PROFILE_THIS;
 		constexpr float PROB = 0.5f;
 
-		if (in.RND[0] < PROB) {
-			MaterialSampleInput in1 = in;
-			in1.RND[0] /= PROB;
-			mMaterials[0]->sample(in1, out, session);
+		if (in.RND.getFloat() < PROB) {
+			mMaterials[0]->sample(in, out, session);
 
 			// We are adding them together, so no need to weight them down
 			//out.Weight *= PROB;
 			out.PDF_S *= PROB;
 		} else {
-			MaterialSampleInput in2 = in;
-			in2.RND[0] /= PROB;
-			mMaterials[1]->sample(in2, out, session);
+			mMaterials[1]->sample(in, out, session);
 
 			//out.Weight *= PROB;
 			out.PDF_S *= PROB;

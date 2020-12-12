@@ -4,6 +4,22 @@
 using namespace PR;
 
 PR_BEGIN_TESTCASE(Scattering)
+PR_TEST("Reflection")
+{
+	Vector3f V = Vector3f(1, 1, 1).normalized();
+	Vector3f L1 = Scattering::reflect(V);
+	Vector3f L2 = Scattering::reflect(V, Vector3f(0,0,1));
+
+	PR_CHECK_NEARLY_EQ(L1, L2);
+}
+PR_TEST("Refraction")
+{
+	Vector3f V = Vector3f(1, 1, 1).normalized();
+	Vector3f L1 = Scattering::refract(0.85f, V);
+	Vector3f L2 = Scattering::refract(0.85f, V, Vector3f(0,0,1));
+
+	PR_CHECK_NEARLY_EQ(L1, L2);
+}
 PR_TEST("Halfway Reflection")
 {
 	Vector3f V = Vector3f(1, 1, 1).normalized();
@@ -12,7 +28,6 @@ PR_TEST("Halfway Reflection")
 
 	PR_CHECK_NEARLY_EQ(H.dot(V), H.dot(L));
 }
-
 PR_TEST("Halfway Transmission")
 {
 	float n1  = 1;
@@ -24,10 +39,7 @@ PR_TEST("Halfway Transmission")
 
 	Vector3f H = Scattering::halfway_refractive(n1, V, n2, L);
 
-	float refA = Scattering::refraction_angle(H.dot(V), eta);
-	PR_CHECK_NEARLY_EQ(refA, -H.dot(L));
-
-	Vector3f L2 = Scattering::refract(eta, refA, H.dot(V), V, H);
+	Vector3f L2 = Scattering::refract(eta, V, H);
 	PR_CHECK_NEARLY_EQ(L2, L);
 }
 

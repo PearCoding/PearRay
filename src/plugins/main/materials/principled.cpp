@@ -6,8 +6,13 @@
 #include "math/Fresnel.h"
 #include "math/Microfacet.h"
 #include "math/Projection.h"
+#include "math/Sampling.h"
 #include "math/Scattering.h"
 #include "math/Spherical.h"
+#include "spectral/CIE.h"
+
+#include "math/MicrofacetReflection.h"
+#include "math/MicrofacetTransmission.h"
 
 #include "renderer/RenderContext.h"
 
@@ -19,19 +24,435 @@ namespace PR {
 	BURLEY, Brent; STUDIOS, Walt Disney Animation. Physically-based shading at disney. In: ACM SIGGRAPH. 2012. S. 1-7.
 	and code:
 	https://github.com/wdas/brdf/blob/master/src/brdfs/disney.brdf
+  And based on the follow-up paper:
+    BURLEY, Brent; STUDIOS, Walt Disney Animation. Extending the Disney BRDF to a BSDF with Integrated Subsurface Scattering. (2015).
+	https://blog.selfshadow.com/publications/s2015-shading-course/#course_content
 */
 
-// If UseVNDF is true, Visible Normals sampling will be used
+constexpr float EVAL_EPS = 1e-4f;
+constexpr float AIR		 = 1.0002926f;
+template <bool UseVNDF, bool Thin, bool HasTransmission>
+struct PrincipledClosure {
+	using RoughnessFunction = RoughDistribution<true, UseVNDF>;
 
-template <bool UseVNDF>
+	template <typename T>
+	static inline T mix(const T& v0, const T& v1, float t)
+	{
+		return (1 - t) * v0 + t * v1;
+	}
+
+	inline static float schlickR0(float eta)
+	{
+		const float factor = (eta - 1.0f) / (eta + 1.0f);
+		return factor * factor;
+	}
+
+	const SpectralBlob Base;
+	const SpectralBlob IOR;
+	const float DiffuseTransmission;
+	const float Roughness;
+	const float Anisotropic;
+	const float SpecularTransmission;
+	const float SpecularTint;
+	const float Flatness;
+	const float Metallic;
+	const float Sheen;
+	const float SheenTint;
+	const float Clearcoat;
+	const float ClearcoatGloss;
+
+	PrincipledClosure(const SpectralBlob& base, const SpectralBlob& ior,
+					  float diffuseTransmission, float roughness, float anisotropic,
+					  float specularTransmission, float specularTint,
+					  float flatness, float metallic,
+					  float sheen, float sheenTint,
+					  float clearcoat, float clearcoatGloss)
+		: Base(base)
+		, IOR(ior)
+		, DiffuseTransmission(HasTransmission ? diffuseTransmission : 0.0f)
+		, Roughness(roughness)
+		, Anisotropic(anisotropic)
+		, SpecularTransmission(HasTransmission ? specularTransmission : 0.0f)
+		, SpecularTint(specularTint)
+		, Flatness(flatness)
+		, Metallic(metallic)
+		, Sheen(sheen)
+		, SheenTint(sheenTint)
+		, Clearcoat(clearcoat)
+		, ClearcoatGloss(clearcoatGloss)
+	{
+	}
+
+	inline float thinTransmissionRoughness() const
+	{
+		return std::max(0.0f, std::min(1.0f, (0.65f * IOR.mean() - 0.35f) * Roughness));
+	}
+
+	inline RoughnessFunction roughnessClosure(float r) const
+	{
+		const float aspect = std::sqrt(1 - Anisotropic * 0.9f);
+		const float ax	   = std::max(0.001f, r * r / aspect);
+		const float ay	   = std::max(0.001f, r * r * aspect);
+		return RoughnessFunction(ax, ay);
+	}
+
+	inline bool isDelta() const
+	{
+		return roughnessClosure(Roughness).isDelta();
+	}
+
+	struct LobeDistribution {
+		float DiffuseReflection;
+		float DiffuseTransmission;
+		float SpecularReflection;
+		float SpecularTransmission;
+	};
+
+	inline LobeDistribution calculateLobeDistribution() const
+	{
+		LobeDistribution distribution;
+
+		distribution.DiffuseReflection	= Roughness * Roughness * (1.0f - Metallic) * (1.0f - SpecularTransmission);
+		distribution.SpecularReflection = 1;
+
+		if constexpr (HasTransmission) {
+			distribution.DiffuseTransmission  = DiffuseTransmission * distribution.DiffuseReflection;
+			distribution.SpecularTransmission = (1.0f - Metallic) * SpecularTransmission;
+		} else {
+			distribution.DiffuseTransmission  = 0;
+			distribution.SpecularTransmission = 0;
+		}
+
+		const float norm = distribution.DiffuseReflection + distribution.SpecularReflection + distribution.DiffuseTransmission + distribution.SpecularTransmission;
+		if (norm <= PR_EPSILON)
+			return LobeDistribution{ 1.0f, 0.0f, 0.0f, 0.0f };
+
+		distribution.DiffuseReflection /= norm;
+		distribution.SpecularReflection /= norm;
+		distribution.DiffuseTransmission /= norm;
+		distribution.SpecularTransmission /= norm;
+
+		return distribution;
+	}
+
+	inline SpectralBlob calculateEta(float dot) const
+	{
+		return (dot < 0) ? IOR : 1 / IOR; // Note: In paper eta is given as n2/n1
+	}
+
+	inline float fresnelTermComponent(float dot, size_t i) const
+	{
+		return (dot < 0) ? Fresnel::dielectric(-dot, IOR[i], 1)
+						 : Fresnel::dielectric(dot, 1, IOR[i]);
+	}
+
+	inline SpectralBlob fresnelTerm(float dot) const
+	{
+		SpectralBlob res;
+		PR_UNROLL_LOOP(PR_SPECTRAL_BLOB_SIZE)
+		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
+			res[i] = fresnelTermComponent(dot, i);
+
+		return res;
+	}
+
+	inline SpectralBlob disneyFresnelTerm(float HdotV, float HdotL, const SpectralBlob& wvl) const
+	{
+		if (Metallic <= EVAL_EPS)
+			return fresnelTerm(HdotV);
+
+		const SpectralBlob color = tintColor(wvl);
+
+		SpectralBlob n1 = SpectralBlob::Ones();
+		SpectralBlob n2 = IOR;
+
+		if (HdotV < 0)
+			std::swap(n1, n2);
+
+		const SpectralBlob eta = n1 / n2;
+
+		SpectralBlob res;
+		PR_UNROLL_LOOP(PR_SPECTRAL_BLOB_SIZE)
+		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
+			const float r0 = mix(schlickR0(eta[i]) * mix(1.0f, color[i], SpecularTint), Base[i], Metallic);
+			const float f1 = Fresnel::dielectric(std::abs(HdotV), n1[i], n2[i]);
+			const float f2 = Fresnel::schlick(std::abs(HdotL), r0);
+
+			res[i] = mix<float>(f1, f2, Metallic);
+		}
+		return res;
+	}
+
+	inline SpectralBlob tintColor(const SpectralBlob& wvl) const
+	{
+		float lum = 0;
+		PR_UNROLL_LOOP(PR_SPECTRAL_BLOB_SIZE)
+		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
+			lum = std::max(lum, Base[i] * CIE::eval_y(wvl[i]));
+
+		return lum > PR_EPSILON ? SpectralBlob(Base / lum) : SpectralBlob::Ones();
+	}
+
+	inline SpectralBlob sheenTintColor(const SpectralBlob& wvl) const
+	{
+		return mix<SpectralBlob>(SpectralBlob::Ones(), tintColor(wvl), SheenTint);
+	}
+
+	inline float retroDiffuseTerm(const MaterialEvalContext& ctx, float HdotL) const
+	{
+		const float alpha2 = Roughness * Roughness;
+		const float fd90   = 0.5f + 2 * HdotL * HdotL * alpha2;
+		const float lk	   = Fresnel::schlick_term(ctx.L.absCosTheta());
+		const float vk	   = Fresnel::schlick_term(ctx.V.absCosTheta());
+
+		return PR_INV_PI * fd90 * (lk + vk + lk * vk * (fd90 - 1.0f));
+	}
+
+	inline float subsurfaceTerm(const MaterialEvalContext& ctx, float HdotL) const
+	{
+		const float alpha2 = Roughness * Roughness;
+		const float fss90  = HdotL * HdotL * alpha2;
+		const float lk	   = Fresnel::schlick_term(ctx.L.absCosTheta());
+		const float vk	   = Fresnel::schlick_term(ctx.V.absCosTheta());
+
+		const float fss = mix(1.0f, fss90, lk) * mix(1.0f, fss90, vk);
+
+		const float f = ctx.L.absCosTheta() + ctx.V.absCosTheta();
+		if (std::abs(f) < PR_EPSILON)
+			return 0.0f;
+		else
+			return 1.25f * (fss * (1.0f / f - 0.5f) + 0.5f);
+	}
+
+	/// Calculate diffuse term which lambert reflection or drop-in replacement of approx subsurface scattering
+	inline float diffuseTerm(const MaterialEvalContext& ctx, float HdotL) const
+	{
+		PR_UNUSED(HdotL); // Necessary to prevent a compiler warning
+
+		const float lk = Fresnel::schlick_term(ctx.L.absCosTheta());
+		const float vk = Fresnel::schlick_term(ctx.V.absCosTheta());
+
+		float diffuse = 1;
+		if constexpr (Thin)
+			diffuse = mix(1.0f, subsurfaceTerm(ctx, HdotL), Flatness);
+
+		return PR_INV_PI * diffuse * (1 - 0.5f * lk) * (1 - 0.5f * vk);
+	}
+
+	inline SpectralBlob specularReflectionTerm(const MaterialEvalContext& ctx, const ShadingVector& H) const
+	{
+		const auto micro = MicrofacetReflection(roughnessClosure(Roughness));
+
+		const float HdotV	 = ctx.V.dot(H);
+		const float HdotL	 = ctx.L.dot(H);
+		const SpectralBlob F = disneyFresnelTerm(HdotV, HdotL, ctx.WavelengthNM);
+
+		return F * micro.eval(ctx.V, ctx.L);
+	}
+
+	inline float specularRefractionTermComponent(size_t i, const MaterialEvalContext& ctx) const
+	{
+		const float scaledR = Thin ? thinTransmissionRoughness() : Roughness;
+		const auto micro	= MicrofacetTransmission(roughnessClosure(scaledR), IOR[i], AIR);
+		const float R		= micro.evalDielectric(ctx.V, ctx.L);
+
+		if constexpr (Thin)
+			return std::sqrt(Base[i]) * R;
+		else
+			return Base[i] * R;
+	}
+
+	inline float clearcoatTerm(const MaterialEvalContext& ctx, const ShadingVector& H) const
+	{
+		// This is fixed by definition
+		static float F0 = 0.04f; // IOR 1.5
+		static float R	= 0.25f;
+
+		const float D  = Microfacet::ndf_ggx(H, mix(0.1f, 0.001f, ClearcoatGloss));
+		const float hk = Fresnel::schlick_term(std::abs(H.dot(ctx.L)));
+		const float F  = mix(F0, 1.0f, hk);
+		const float G  = Microfacet::g_1_smith_opt(ctx.L.absCosTheta(), R) * Microfacet::g_1_smith_opt(ctx.V.absCosTheta(), R);
+
+		// 1/(4*NdotV*NdotL) already multiplied out
+		return R * D * F * G;
+	}
+
+	inline SpectralBlob sheenTerm(float HdotL, const SpectralBlob& wvl) const
+	{
+		if (Sheen <= EVAL_EPS)
+			return SpectralBlob::Zero();
+
+		const SpectralBlob sheenColor = sheenTintColor(wvl);
+		return Sheen * sheenColor * Fresnel::schlick_term(std::abs(HdotL));
+	}
+
+	inline SpectralBlob eval(const MaterialEvalContext& ctx) const
+	{
+		if (PR_UNLIKELY(ctx.V.absCosTheta() <= PR_EPSILON || ctx.L.absCosTheta() <= PR_EPSILON))
+			return SpectralBlob::Zero();
+
+		const float diffuseWeight = (1.0f - Metallic) * (1.0f - SpecularTransmission);
+
+		const bool isTransmission  = !ctx.V.sameHemisphere(ctx.L);
+		const bool upperHemisphere = ctx.V.cosTheta() >= 0.0f && !isTransmission;
+
+		if constexpr (!HasTransmission) {
+			if (isTransmission)
+				return SpectralBlob::Zero();
+		}
+
+		const Vector3f rH = Scattering::halfway_reflection(ctx.V, ctx.L);
+		const float HdotL = rH.dot((Vector3f)ctx.V);
+
+		SpectralBlob value = SpectralBlob::Zero();
+
+		if (diffuseWeight > EVAL_EPS) {
+			// Retro + Sheen
+			if (!isTransmission) {
+				const float retro		 = retroDiffuseTerm(ctx, HdotL) * diffuseWeight;
+				const SpectralBlob sheen = sheenTerm(HdotL, ctx.WavelengthNM) * diffuseWeight;
+				value += (retro * Base + sheen) * ctx.L.absCosTheta();
+			}
+
+			// Diffuse Reflection
+			if (!isTransmission) {
+				const float diff = diffuseTerm(ctx, HdotL) * (Thin ? 1 - DiffuseTransmission : diffuseWeight);
+				value += Base * (diff * ctx.L.absCosTheta());
+			}
+
+			// Diffuse Transmission
+			if constexpr (HasTransmission && Thin) {
+				if (isTransmission) {
+					const float diff = diffuseTerm(ctx, HdotL) * DiffuseTransmission;
+					value += Base * (diff * ctx.L.absCosTheta());
+				}
+			}
+		}
+
+		// Specular Reflection
+		value += specularReflectionTerm(ctx, rH);
+
+		// Specular Refraction
+		if constexpr (HasTransmission) {
+			const float transmissionWeight = (1.0f - Metallic) * SpecularTransmission;
+			if (transmissionWeight > EVAL_EPS) {
+				SpectralBlob weight;
+				for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
+					weight[i] = specularRefractionTermComponent(i, ctx);
+
+				// Only rays from lights are weighted by this factor
+				// as radiance flows in the opposite direction
+				// Note that some implementations use 1/eta as eta
+				if (ctx.RayFlags & RF_Light) {
+					const SpectralBlob eta = calculateEta(ctx.V.cosTheta());
+					weight *= eta * eta;
+				}
+
+				value += transmissionWeight * weight;
+			}
+		}
+
+		// Clearcoat
+		if (upperHemisphere && Clearcoat > EVAL_EPS)
+			value += SpectralBlob(clearcoatTerm(ctx, rH));
+
+		return value;
+	}
+
+	inline SpectralBlob pdfDiffuse(const MaterialEvalContext& ctx) const
+	{
+		return SpectralBlob(Sampling::cos_hemi_pdf(ctx.L.absCosTheta()));
+	}
+
+	inline SpectralBlob pdfReflection(const MaterialEvalContext& ctx) const
+	{
+		const MicrofacetReflection refl = MicrofacetReflection(roughnessClosure(Roughness));
+		return SpectralBlob(refl.pdf(ctx.V, ctx.L));
+	}
+
+	inline SpectralBlob pdfRefractive(const MaterialEvalContext& ctx) const
+	{
+		const auto roughness = roughnessClosure(Roughness);
+
+		SpectralBlob pdf;
+		PR_UNROLL_LOOP(PR_SPECTRAL_BLOB_SIZE)
+		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
+			const MicrofacetTransmission refr = MicrofacetTransmission(roughness, IOR[i], AIR);
+			pdf[i]							  = refr.pdf(ctx.V, ctx.L);
+		}
+		return pdf;
+	}
+
+	inline SpectralBlob pdf(const MaterialEvalContext& ctx) const
+	{
+		if (PR_UNLIKELY(ctx.V.absCosTheta() <= PR_EPSILON || ctx.L.absCosTheta() <= PR_EPSILON))
+			return SpectralBlob::Zero();
+
+		const LobeDistribution distr = calculateLobeDistribution();
+
+		SpectralBlob pdfV = (distr.DiffuseReflection + distr.DiffuseTransmission) * pdfDiffuse(ctx);
+
+		if constexpr (HasTransmission)
+			pdfV += distr.SpecularTransmission * pdfRefractive(ctx);
+
+		if (distr.SpecularReflection > EVAL_EPS)
+			pdfV += distr.SpecularReflection * pdfReflection(ctx);
+
+		return pdfV;
+	}
+
+	inline Vector3f sampleDiffuse(Random& rnd, const MaterialSampleContext& ctx) const
+	{
+		const bool flip	 = ctx.V.cosTheta() < 0;
+		const Vector3f L = Sampling::cos_hemi(rnd.getFloat(), rnd.getFloat());
+		return flip ? -L : L;
+	}
+
+	inline Vector3f sampleReflection(Random& rnd, const MaterialSampleContext& ctx) const
+	{
+		const MicrofacetReflection refl = MicrofacetReflection(roughnessClosure(Roughness));
+		return refl.sample(rnd.get2D(), ctx.V);
+	}
+
+	inline Vector3f sampleRefractive(Random& rnd, const MaterialSampleContext& ctx) const
+	{
+		const MicrofacetTransmission refr = MicrofacetTransmission(roughnessClosure(Roughness), IOR[0] /* Hero wavelength */, AIR);
+		return refr.sample(rnd.get2D(), ctx.V);
+	}
+
+	inline Vector3f sample(Random& rnd, const MaterialSampleContext& ctx) const
+	{
+		if (PR_UNLIKELY(ctx.V.absCosTheta() <= PR_EPSILON))
+			return Vector3f::Zero();
+
+		const LobeDistribution distr = calculateLobeDistribution();
+
+		const float u0 = rnd.getFloat();
+
+		if (u0 < distr.DiffuseReflection)
+			return sampleDiffuse(rnd, ctx);
+		else if (u0 < distr.DiffuseReflection + distr.DiffuseTransmission)
+			return -sampleDiffuse(rnd, ctx);
+		else if (u0 < distr.DiffuseReflection + distr.DiffuseTransmission + distr.SpecularTransmission)
+			return sampleRefractive(rnd, ctx);
+		else
+			return sampleReflection(rnd, ctx);
+	}
+};
+
+template <bool UseVNDF, bool Thin, bool SpectralVarying, bool HasTransmission>
 class PrincipledMaterial : public IMaterial {
 public:
+	using EvalClosure = PrincipledClosure<UseVNDF, Thin, HasTransmission>;
+
 	PrincipledMaterial(const std::shared_ptr<FloatSpectralNode>& baseColor,
-					   const std::shared_ptr<FloatScalarNode>& spec,
-					   const std::shared_ptr<FloatScalarNode>& specTint,
+					   const std::shared_ptr<FloatSpectralNode>& ior,
+					   const std::shared_ptr<FloatScalarNode>& diffTrans,
 					   const std::shared_ptr<FloatScalarNode>& roughness,
 					   const std::shared_ptr<FloatScalarNode>& anisotropic,
-					   const std::shared_ptr<FloatScalarNode>& subsurface,
+					   const std::shared_ptr<FloatScalarNode>& specTrans,
+					   const std::shared_ptr<FloatScalarNode>& specTint,
+					   const std::shared_ptr<FloatScalarNode>& flatness,
 					   const std::shared_ptr<FloatScalarNode>& metallic,
 					   const std::shared_ptr<FloatScalarNode>& sheen,
 					   const std::shared_ptr<FloatScalarNode>& sheenTint,
@@ -39,11 +460,13 @@ public:
 					   const std::shared_ptr<FloatScalarNode>& clearcoatGloss)
 		: IMaterial()
 		, mBaseColor(baseColor)
-		, mSpecular(spec)
-		, mSpecularTint(specTint)
+		, mIOR(ior)
+		, mDiffuseTransmission(diffTrans)
 		, mRoughness(roughness)
 		, mAnisotropic(anisotropic)
-		, mSubsurface(subsurface)
+		, mSpecularTransmission(specTrans)
+		, mSpecularTint(specTint)
+		, mFlatness(flatness)
 		, mMetallic(metallic)
 		, mSheen(sheen)
 		, mSheenTint(sheenTint)
@@ -54,203 +477,75 @@ public:
 
 	virtual ~PrincipledMaterial() = default;
 
-	template <typename T>
-	static inline T mix(const T& v0, const T& v1, float t)
+	inline EvalClosure createClosure(const ShadingContext& sctx) const
 	{
-		return (1 - t) * v0 + t * v1;
-	}
+		const SpectralBlob base			 = mBaseColor->eval(sctx);
+		const SpectralBlob ior			 = mIOR->eval(sctx);
+		const float diffTrans			 = mDiffuseTransmission->eval(sctx);
+		const float roughness			 = mRoughness->eval(sctx);
+		const float anisotropic			 = mAnisotropic->eval(sctx);
+		const float flatness			 = mFlatness->eval(sctx);
+		const float metallic			 = mMetallic->eval(sctx);
+		const float specularTransmission = mSpecularTransmission->eval(sctx);
+		const float specularTint		 = mSpecularTint->eval(sctx);
+		const float sheen				 = mSheen->eval(sctx);
+		const float sheenTint			 = mSheenTint->eval(sctx);
+		const float clearcoat			 = mClearcoat->eval(sctx);
+		const float clearcoatGloss		 = mClearcoatGloss->eval(sctx);
 
-	inline float diffuseTerm(const MaterialEvalContext& ctx, float HdotL, float roughness) const
-	{
-		float fd90 = 0.5f + 2 * HdotL * HdotL * roughness;
-		float lk   = Fresnel::schlick_term(ctx.NdotL());
-		float vk   = Fresnel::schlick_term(ctx.NdotV());
-
-		return mix(1.0f, fd90, lk) * mix(1.0f, fd90, vk);
-	}
-
-	// Based on Hanrahan-Krueger brdf approximation of isotropic bssrdf
-	inline float subsurfaceTerm(const MaterialEvalContext& ctx, float HdotL, float roughness) const
-	{
-		float fss90 = HdotL * HdotL * roughness;
-		float lk	= Fresnel::schlick_term(ctx.NdotL());
-		float vk	= Fresnel::schlick_term(ctx.NdotV());
-
-		float fss = mix(1.0f, fss90, lk) * mix(1.0f, fss90, vk);
-
-		const float f = ctx.NdotL() + ctx.NdotV();
-		if (std::abs(f) < PR_EPSILON)
-			return 0.0f;
-		else
-			return 1.25f * (fss * (1.0f / f - 0.5f) + 0.5f);
-	}
-
-	inline SpectralBlob specularTerm(const MaterialEvalContext& ctx, const ShadingVector& H, const SpectralBlob& spec,
-									 float roughness, float aniso) const
-	{
-		float aspect = std::sqrt(1 - aniso * 0.9f);
-		float ax	 = std::max(0.001f, roughness * roughness / aspect);
-		float ay	 = std::max(0.001f, roughness * roughness * aspect);
-
-		float D		   = Microfacet::ndf_ggx(H, ax, ay);
-		float hk	   = Fresnel::schlick_term(H.dot(ctx.L));
-		SpectralBlob F = mix<SpectralBlob>(spec, SpectralBlob::Ones(), hk);
-		float G		   = Microfacet::g_1_smith_opt(ctx.NdotL(), ctx.XdotL(), ctx.YdotL(), ax, ay)
-				  * Microfacet::g_1_smith_opt(ctx.NdotV(), ctx.XdotV(), ctx.YdotV(), ax, ay);
-
-		// 1/(4*NdotV*NdotL) already multiplied out
-		return D * F * G;
-	}
-
-	inline float clearcoatTerm(const MaterialEvalContext& ctx, const ShadingVector& H, float gloss) const
-	{
-		// This is fixed by definition
-		static float F0 = 0.04f; // IOR 1.5
-		static float R	= 0.25f;
-
-		float D	 = Microfacet::ndf_ggx(H.cosTheta(), mix(0.1f, 0.001f, gloss));
-		float hk = Fresnel::schlick_term(H.dot(ctx.L));
-		float F	 = mix(F0, 1.0f, hk);
-		float G	 = Microfacet::g_1_smith_opt(ctx.NdotL(), R) * Microfacet::g_1_smith_opt(ctx.NdotV(), R);
-
-		// 1/(4*NdotV*NdotL) already multiplied out
-		return R * D * F * G;
-	}
-
-	inline SpectralBlob sheenTerm(const SpectralBlob& sheen, float HdotL) const
-	{
-		float hk = Fresnel::schlick_term(HdotL);
-		return hk * sheen;
-	}
-
-	SpectralBlob evalBRDF(const MaterialEvalContext& ctx,
-						  const ShadingVector& H,
-						  const SpectralBlob& base,
-						  float lum,
-						  float subsurface,
-						  float anisotropic,
-						  float roughness,
-						  float metallic,
-						  float spec,
-						  float specTint,
-						  float sheen,
-						  float sheenTint,
-						  float clearcoat,
-						  float clearcoatGloss) const
-	{
-		const SpectralBlob tint = lum > PR_EPSILON
-									  ? SpectralBlob(base / lum)
-									  : SpectralBlob::Zero();
-		const SpectralBlob cspec = mix<SpectralBlob>(
-			spec * 0.08f * mix<SpectralBlob>(SpectralBlob::Ones(), tint, specTint),
-			base,
-			metallic);
-		const SpectralBlob csheen = mix<SpectralBlob>(SpectralBlob::Ones(), tint, sheenTint);
-
-		const float HdotL	  = H.dot(ctx.L);
-		float diffTerm		  = diffuseTerm(ctx, HdotL, roughness);
-		float ssTerm		  = subsurface > PR_EPSILON ? subsurfaceTerm(ctx, HdotL, roughness) : 0.0f;
-		SpectralBlob specTerm = specularTerm(ctx, H, cspec, roughness, anisotropic);
-		float ccTerm		  = clearcoat > PR_EPSILON ? clearcoatTerm(ctx, H, clearcoatGloss) : 0.0f;
-		SpectralBlob shTerm	  = sheenTerm(sheen * csheen, HdotL);
-
-		return (PR_INV_PI * mix(diffTerm, ssTerm, subsurface) * base + shTerm) * (1 - metallic)
-			   + specTerm
-			   + SpectralBlob(ccTerm) * clearcoat;
+		return EvalClosure(base, ior, diffTrans, roughness, anisotropic,
+						   specularTransmission, specularTint,
+						   flatness, metallic,
+						   sheen, sheenTint,
+						   clearcoat, clearcoatGloss);
 	}
 
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
 			  const RenderTileSession&) const override
 	{
 		PR_PROFILE_THIS;
-		if (!in.Context.V.sameHemisphere(in.Context.L)) {
-			out.Weight = SpectralBlob::Zero();
+
+		const auto closure = createClosure(in.ShadingContext);
+		if (closure.isDelta()) { // Reject
+			out.Weight = 0;
 			out.PDF_S  = 0;
-			out.Type   = MST_SpecularReflection;
 			return;
 		}
 
-		const auto& sctx	 = in.ShadingContext;
-		SpectralBlob base	 = mBaseColor->eval(sctx);
-		float lum			 = base.maxCoeff();
-		float subsurface	 = mSubsurface->eval(sctx);
-		float anisotropic	 = mAnisotropic->eval(sctx);
-		float roughness		 = std::max(0.01f, mRoughness->eval(sctx));
-		float metallic		 = mMetallic->eval(sctx);
-		float spec			 = mSpecular->eval(sctx);
-		float specTint		 = mSpecularTint->eval(sctx);
-		float sheen			 = mSheen->eval(sctx);
-		float sheenTint		 = mSheenTint->eval(sctx);
-		float clearcoat		 = mClearcoat->eval(sctx);
-		float clearcoatGloss = mClearcoatGloss->eval(sctx);
+		// Set type based on sampling result
+		if (in.Context.V.sameHemisphere(in.Context.L)) {
+			if (closure.Roughness < 0.5f)
+				out.Type = MST_SpecularReflection;
+			else
+				out.Type = MST_DiffuseReflection;
+		} else {
+			if (closure.Roughness < 0.5f)
+				out.Type = MST_SpecularTransmission;
+			else
+				out.Type = MST_DiffuseTransmission;
+		}
 
-		const Vector3f H = Scattering::halfway_reflection(in.Context.V, in.Context.L);
-		out.Weight		 = evalBRDF(in.Context, H,
-								base, lum, subsurface, anisotropic, roughness, metallic, spec, specTint,
-								sheen, sheenTint, clearcoat, clearcoatGloss)
-					 * std::abs(in.Context.NdotL());
-
-		float aspect = std::sqrt(1 - anisotropic * 0.9f);
-		float ax	 = std::max(0.001f, roughness * roughness / aspect);
-		float ay	 = std::max(0.001f, roughness * roughness * aspect);
-		if constexpr (UseVNDF)
-			out.PDF_S = Microfacet::pdf_ggx_vndf(in.Context.V, H, ax, ay);
-		else
-			out.PDF_S = Microfacet::pdf_ggx(H, ax, ay);
-		out.PDF_S *= Scattering::reflective_jacobian(std::abs(H.dot((Vector3f)in.Context.V)));
+		out.Weight = closure.eval(in.Context);
+		out.PDF_S  = closure.pdf(in.Context);
 
 		PR_ASSERT(out.PDF_S[0] >= 0.0f, "PDF has to be positive");
-
-		if (roughness < 0.5f)
-			out.Type = MST_DiffuseReflection;
-		else
-			out.Type = MST_SpecularReflection;
 	}
 
 	void pdf(const MaterialEvalInput& in, MaterialPDFOutput& out,
 			 const RenderTileSession&) const override
 	{
 		PR_PROFILE_THIS;
-		if (!in.Context.V.sameHemisphere(in.Context.L)) {
+
+		// Quite costly, as most stuff is not really needed
+		const auto closure = createClosure(in.ShadingContext);
+		if (closure.isDelta()) { // Reject
 			out.PDF_S = 0;
 			return;
 		}
 
-		float anisotropic = mAnisotropic->eval(in.ShadingContext);
-		float roughness	  = std::max(0.01f, mRoughness->eval(in.ShadingContext));
-
-		const Vector3f H = Scattering::halfway_reflection(in.Context.V, in.Context.L);
-
-		float aspect = std::sqrt(1 - anisotropic * 0.9f);
-		float ax	 = std::max(0.001f, roughness * roughness / aspect);
-		float ay	 = std::max(0.001f, roughness * roughness * aspect);
-		if constexpr (UseVNDF)
-			out.PDF_S = Microfacet::pdf_ggx_vndf(in.Context.V, H, ax, ay);
-		else
-			out.PDF_S = Microfacet::pdf_ggx(H, ax, ay);
-		out.PDF_S *= Scattering::reflective_jacobian(std::abs(H.dot((Vector3f)in.Context.V)));
+		out.PDF_S = closure.pdf(in.Context);
 
 		PR_ASSERT(out.PDF_S[0] >= 0.0f, "PDF has to be positive");
-	}
-
-	void sampleSpecularPath(const MaterialSampleInput& in, float u, float v, MaterialSampleOutput& out, float roughness, float aniso) const
-	{
-		float aspect = std::sqrt(1 - aniso * 0.9f);
-		float ax	 = std::max(0.001f, roughness * roughness / aspect);
-		float ay	 = std::max(0.001f, roughness * roughness * aspect);
-
-		if constexpr (UseVNDF) {
-			out.L	  = Microfacet::sample_vndf_ggx(u, v, in.Context.V, ax, ay);
-			out.PDF_S = Microfacet::pdf_ggx_vndf(in.Context.V, out.L, ax, ay);
-		} else {
-			out.L	  = Microfacet::sample_ndf_ggx(u, v, ax, ay);
-			out.PDF_S = Microfacet::pdf_ggx(out.L, ax, ay);
-		}
-
-		out.PDF_S *= Scattering::reflective_jacobian(std::abs(out.L.dot(in.Context.V)));
-
-		// Reflect incoming ray by the calculated half vector
-		out.L = Scattering::reflect(in.Context.V, out.L).normalized();
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -258,36 +553,37 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		const auto& sctx	 = in.ShadingContext;
-		SpectralBlob base	 = mBaseColor->eval(sctx);
-		float lum			 = base.maxCoeff();
-		float subsurface	 = mSubsurface->eval(sctx);
-		float anisotropic	 = mAnisotropic->eval(sctx);
-		float roughness		 = mRoughness->eval(sctx);
-		float metallic		 = mMetallic->eval(sctx);
-		float spec			 = mSpecular->eval(sctx);
-		float specTint		 = mSpecularTint->eval(sctx);
-		float sheen			 = mSheen->eval(sctx);
-		float sheenTint		 = mSheenTint->eval(sctx);
-		float clearcoat		 = mClearcoat->eval(sctx);
-		float clearcoatGloss = mClearcoatGloss->eval(sctx);
+		const auto closure = createClosure(in.ShadingContext);
+		out.L			   = closure.sample(in.RND, in.Context);
 
-		sampleSpecularPath(in, in.RND[0], in.RND[1], out, roughness, anisotropic);
-		if (!in.Context.V.sameHemisphere(out.L)) { // Side check
-			out = MaterialSampleOutput::Reject(MST_SpecularReflection);
+		// Set flags
+		// SpectralVarying is only accounted for if transmission is available
+		if constexpr (SpectralVarying && HasTransmission)
+			out.Flags = (closure.isDelta() ? MSF_DeltaDistribution : 0) | MSF_SpectralVarying;
+		else
+			out.Flags = (closure.isDelta() ? MSF_DeltaDistribution : 0);
+
+		if (PR_UNLIKELY(Vector3f(out.L).isZero())) {
+			out = MaterialSampleOutput::Reject(MST_DiffuseReflection, out.Flags);
 			return;
 		}
 
-		if (roughness < in.RND[0])
-			out.Type = MST_DiffuseReflection;
-		else
-			out.Type = MST_SpecularReflection;
+		// Set type based on sampling result (TODO)
+		if (in.Context.V.sameHemisphere(out.L)) {
+			if (closure.Roughness < 0.5f)
+				out.Type = MST_SpecularReflection;
+			else
+				out.Type = MST_DiffuseReflection;
+		} else {
+			if (closure.Roughness < 0.5f)
+				out.Type = MST_SpecularTransmission;
+			else
+				out.Type = MST_DiffuseTransmission;
+		}
 
-		out.Weight = evalBRDF(in.Context.expand(out.L),
-							  Scattering::halfway_reflection(in.Context.V, out.L),
-							  base, lum, subsurface, anisotropic, roughness, metallic, spec, specTint,
-							  sheen, sheenTint, clearcoat, clearcoatGloss)
-					 * out.L.absCosTheta();
+		const auto ectx = in.Context.expand(out.L);
+		out.Weight		= closure.eval(ectx);
+		out.PDF_S		= closure.pdf(ectx);
 
 		PR_ASSERT(out.PDF_S[0] >= 0.0f, "PDF has to be positive");
 	}
@@ -298,29 +594,35 @@ public:
 
 		stream << std::boolalpha << IMaterial::dumpInformation()
 			   << "  <PrincipledMaterial>:" << std::endl
-			   << "    BaseColor:      " << mBaseColor->dumpInformation() << std::endl
-			   << "    Specular:       " << mSpecular->dumpInformation() << std::endl
-			   << "    SpecularTint:   " << mSpecularTint->dumpInformation() << std::endl
-			   << "    Roughness:      " << mRoughness->dumpInformation() << std::endl
-			   << "    Anisotropic:    " << mAnisotropic->dumpInformation() << std::endl
-			   << "    Subsurface:     " << mSubsurface->dumpInformation() << std::endl
-			   << "    Metallic:       " << mMetallic->dumpInformation() << std::endl
-			   << "    Sheen:          " << mSheen->dumpInformation() << std::endl
-			   << "    SheenTint:      " << mSheenTint->dumpInformation() << std::endl
-			   << "    Clearcoat:      " << mClearcoat->dumpInformation() << std::endl
-			   << "    ClearcoatGloss: " << mClearcoatGloss->dumpInformation() << std::endl
-			   << "    VNDF:           " << (UseVNDF ? "true" : "false") << std::endl;
+			   << "    BaseColor:            " << mBaseColor->dumpInformation() << std::endl
+			   << "    IOR:                  " << mIOR->dumpInformation() << std::endl
+			   << "    DiffuseTransmission:  " << mDiffuseTransmission->dumpInformation() << std::endl
+			   << "    SpecularTransmission: " << mSpecularTransmission->dumpInformation() << std::endl
+			   << "    SpecularTint:         " << mSpecularTint->dumpInformation() << std::endl
+			   << "    Roughness:            " << mRoughness->dumpInformation() << std::endl
+			   << "    Anisotropic:          " << mAnisotropic->dumpInformation() << std::endl
+			   << "    Flatness:             " << mFlatness->dumpInformation() << std::endl
+			   << "    Metallic:             " << mMetallic->dumpInformation() << std::endl
+			   << "    Sheen:                " << mSheen->dumpInformation() << std::endl
+			   << "    SheenTint:            " << mSheenTint->dumpInformation() << std::endl
+			   << "    Clearcoat:            " << mClearcoat->dumpInformation() << std::endl
+			   << "    ClearcoatGloss:       " << mClearcoatGloss->dumpInformation() << std::endl
+			   << "    Thin:                 " << (Thin ? "true" : "false") << std::endl
+			   << "    SpectralVarying:      " << ((SpectralVarying && HasTransmission) ? "true" : "false") << std::endl
+			   << "    VNDF:                 " << (UseVNDF ? "true" : "false") << std::endl;
 
 		return stream.str();
 	}
 
 private:
 	std::shared_ptr<FloatSpectralNode> mBaseColor;
-	std::shared_ptr<FloatScalarNode> mSpecular;
-	std::shared_ptr<FloatScalarNode> mSpecularTint;
+	std::shared_ptr<FloatSpectralNode> mIOR;
+	std::shared_ptr<FloatScalarNode> mDiffuseTransmission;
 	std::shared_ptr<FloatScalarNode> mRoughness;
 	std::shared_ptr<FloatScalarNode> mAnisotropic;
-	std::shared_ptr<FloatScalarNode> mSubsurface;
+	std::shared_ptr<FloatScalarNode> mSpecularTransmission;
+	std::shared_ptr<FloatScalarNode> mSpecularTint;
+	std::shared_ptr<FloatScalarNode> mFlatness;
 	std::shared_ptr<FloatScalarNode> mMetallic;
 	std::shared_ptr<FloatScalarNode> mSheen;
 	std::shared_ptr<FloatScalarNode> mSheenTint;
@@ -328,25 +630,62 @@ private:
 	std::shared_ptr<FloatScalarNode> mClearcoatGloss;
 }; // namespace PR
 
-template <bool UseVNDF>
-inline static std::shared_ptr<IMaterial> createPrincipled(const SceneLoadContext& ctx)
+template <bool UseVNDF, bool Thin, bool SpectralVarying, bool HasTransmission>
+inline static std::shared_ptr<IMaterial> createPrincipled1(const SceneLoadContext& ctx)
 {
 	const auto base_color	   = ctx.lookupSpectralNode({ "base_color", "base" }, 0.8f);
-	const auto specular		   = ctx.lookupScalarNode("specular", 0.5f);
+	const auto ior			   = ctx.lookupSpectralNode({ "ior", "eta", "index" }, 1.55f);
+	const auto diffuse_trans   = ctx.lookupScalarNode({ "diffuse_transmission", "diff_trans" }, 0.0f);
+	const auto specular_trans  = ctx.lookupScalarNode({ "specular_transmission", "spec_trans" }, 0.0f);
 	const auto specular_tint   = ctx.lookupScalarNode("specular_tint", 0.0f);
 	const auto roughness	   = ctx.lookupScalarNode("roughness", 0.5f);
 	const auto anisotropic	   = ctx.lookupScalarNode("anisotropic", 0.0f);
-	const auto subsurface	   = ctx.lookupScalarNode("subsurface", 0.0f);
+	const auto flatness		   = ctx.lookupScalarNode({ "flatness", "subsurface" }, 0.0f);
 	const auto metallic		   = ctx.lookupScalarNode("metallic", 0.0f);
 	const auto sheen		   = ctx.lookupScalarNode("sheen", 0.0f);
 	const auto sheen_tint	   = ctx.lookupScalarNode("sheen_tint", 0.0f);
 	const auto clearcoat	   = ctx.lookupScalarNode("clearcoat", 0.0f);
 	const auto clearcoat_gloss = ctx.lookupScalarNode("clearcoat_gloss", 0.0f);
 
-	return std::make_shared<PrincipledMaterial<UseVNDF>>(
-		base_color, specular, specular_tint, roughness,
-		anisotropic, subsurface, metallic, sheen,
+	return std::make_shared<PrincipledMaterial<UseVNDF, Thin, SpectralVarying, HasTransmission>>(
+		base_color, ior, diffuse_trans, roughness, anisotropic,
+		specular_trans, specular_tint, flatness, metallic, sheen,
 		sheen_tint, clearcoat, clearcoat_gloss);
+}
+
+template <bool UseVNDF, bool Thin, bool SpectralVarying>
+inline static std::shared_ptr<IMaterial> createPrincipled2(const SceneLoadContext& ctx)
+{
+	const bool hasTransmission = ctx.parameters().hasParameter("specular_transmission") || ctx.parameters().hasParameter("spec_trans")
+								 || ctx.parameters().hasParameter("diffuse_transmission") || ctx.parameters().hasParameter("diff_trans");
+
+	if (hasTransmission)
+		return createPrincipled1<UseVNDF, Thin, SpectralVarying, true>(ctx);
+	else
+		return createPrincipled1<UseVNDF, Thin, SpectralVarying, false>(ctx);
+}
+
+template <bool UseVNDF, bool Thin>
+inline static std::shared_ptr<IMaterial> createPrincipled3(const SceneLoadContext& ctx)
+{
+	// No need per default
+	const bool spectralVarying = ctx.parameters().getBool("spectral_varying", false);
+
+	if (spectralVarying)
+		return createPrincipled2<UseVNDF, Thin, true>(ctx);
+	else
+		return createPrincipled2<UseVNDF, Thin, false>(ctx);
+}
+
+template <bool UseVNDF>
+inline static std::shared_ptr<IMaterial> createPrincipled4(const SceneLoadContext& ctx)
+{
+	const bool thin = ctx.parameters().getBool("thin", false);
+
+	if (thin)
+		return createPrincipled3<UseVNDF, true>(ctx);
+	else
+		return createPrincipled3<UseVNDF, false>(ctx);
 }
 
 class PrincipledMaterialPlugin : public IMaterialPlugin {
@@ -357,9 +696,9 @@ public:
 		const bool use_vndf = ctx.parameters().getBool("vndf", false);
 
 		if (use_vndf)
-			return createPrincipled<true>(ctx);
+			return createPrincipled4<true>(ctx);
 		else
-			return createPrincipled<false>(ctx);
+			return createPrincipled4<false>(ctx);
 	}
 
 	const std::vector<std::string>& getNames() const

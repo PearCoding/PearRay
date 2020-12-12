@@ -13,6 +13,8 @@
 
 namespace PR {
 
+// TODO: Better make it a parameter
+constexpr float AIR = 1.0002926f;
 template <bool HasTransmissionColor, bool IsThin, bool SpectralVarying>
 class DielectricMaterial : public IMaterial {
 public:
@@ -29,19 +31,6 @@ public:
 	virtual ~DielectricMaterial() = default;
 
 	int flags() const override { return MF_OnlyDeltaDistribution; }
-
-	inline float fresnelTermHero(float dot, const ShadingContext& sctx, float& eta) const
-	{
-		SpectralBlob n1 = SpectralBlob::Ones();
-		SpectralBlob n2 = mIOR->eval(sctx);
-
-		if (dot < 0)
-			std::swap(n1, n2);
-
-		eta = n1[0] / n2[0];
-
-		return Fresnel::dielectric(std::abs(dot), n1[0], n2[0]);
-	}
 
 	void eval(const MaterialEvalInput&, MaterialEvalOutput& out,
 			  const RenderTileSession&) const override
@@ -71,8 +60,8 @@ public:
 		PR_PROFILE_THIS;
 		out.PDF_S = 1;
 
-		float eta;
-		float F = fresnelTermHero(in.Context.NdotV(), in.ShadingContext, eta);
+		const SpectralBlob n2 = mIOR->eval(in.ShadingContext);
+		float F				  = Fresnel::dielectric(in.Context.V.cosTheta(), AIR, n2[0]);
 
 		if constexpr (IsThin) {
 			// Account for scattering between interfaces
@@ -80,41 +69,43 @@ public:
 				F += (1 - F) * F / (F + 1);
 		}
 
-		if (in.RND[0] <= F) {
-			out.Type = MST_SpecularReflection;
-			out.L	 = Scattering::reflect(in.Context.V);
-		} else {
-			if constexpr (IsThin) {
-				out.Type = MST_SpecularTransmission;
-				out.L	 = -in.Context.V; // Passthrough
-			} else {
-				const float NdotT = Scattering::refraction_angle(in.Context.NdotV(), eta);
+		const SpectralBlob rWeight = mSpecularity->eval(in.ShadingContext);
 
-				if (NdotT < 0) { // TOTAL REFLECTION
-					out.Type = MST_SpecularReflection;
-					out.L	 = Scattering::reflect(in.Context.V);
+		// Branch out
+		if (in.RND.getFloat() <= F) {
+			out.Type   = MST_SpecularReflection;
+			out.L	   = Scattering::reflect(in.Context.V);
+			out.Weight = rWeight; // To make sure the pdf is 1, we do not apply the fresnel term to the outgoing weight
+		} else {
+			SpectralBlob tWeight;
+			if constexpr (HasTransmissionColor)
+				tWeight = mTransmission->eval(in.ShadingContext);
+			else
+				tWeight = rWeight;
+
+			if constexpr (IsThin) {
+				out.Type   = MST_SpecularTransmission;
+				out.L	   = -in.Context.V; // Passthrough
+				out.Weight = tWeight;
+			} else {
+				// Only rays from lights are weighted by this factor
+				// as radiance flows in the opposite direction
+				if (in.Context.RayFlags & RF_Light) {
+					const float eta = in.Context.V.isPositiveHemisphere() ? AIR / n2[0] : n2[0] / AIR;
+					tWeight *= eta * eta;
+				}
+
+				out.L = Scattering::refract(AIR / n2[0], in.Context.V);
+
+				if (out.L.sameHemisphere(in.Context.V)) { // TOTAL REFLECTION
+					out.Type   = MST_SpecularReflection;
+					out.Weight = rWeight;
 				} else {
-					out.Type = MST_SpecularTransmission;
-					out.L	 = Scattering::refract(eta, NdotT, in.Context.V);
+					out.Type   = MST_SpecularTransmission;
+					out.Weight = tWeight;
 				}
 			}
 		}
-
-		// The weight is independent of the fresnel term
-		if constexpr (HasTransmissionColor) {
-			if (out.Type == MST_SpecularReflection)
-				out.Weight = mSpecularity->eval(in.ShadingContext);
-			else
-				out.Weight = mTransmission->eval(in.ShadingContext);
-		} else {
-			out.Weight = mSpecularity->eval(in.ShadingContext);
-		}
-
-		// Only rays from lights are weighted by this factor
-		// as radiance flows in the opposite direction
-		// Note that some implementations use 1/eta as eta
-		if ((in.Context.RayFlags & RF_Light) && out.Type == MST_SpecularTransmission)
-			out.Weight /= eta * eta;
 
 		if constexpr (SpectralVarying)
 			out.Flags = MSF_DeltaDistribution | MSF_SpectralVarying;
@@ -146,9 +137,10 @@ private:
 template <bool HasTransmissionColor, bool IsThin, bool SpectralVarying>
 static std::shared_ptr<IMaterial> createMaterial1(const SceneLoadContext& ctx)
 {
+	const auto specular = ctx.lookupSpectralNode("specularity", 1);
 	return std::make_shared<DielectricMaterial<HasTransmissionColor, IsThin, SpectralVarying>>(
-		ctx.lookupSpectralNode("specularity", 1),
-		HasTransmissionColor ? ctx.lookupSpectralNode("transmission", 1) : nullptr,
+		specular,
+		HasTransmissionColor ? ctx.lookupSpectralNode("transmission", 1) : specular,
 		ctx.lookupSpectralNode("index", 1.55f));
 }
 

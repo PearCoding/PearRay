@@ -62,7 +62,7 @@ public:
 		SpectralBlob fresnel;
 		PR_UNROLL_LOOP(PR_SPECTRAL_BLOB_SIZE)
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-			fresnel[i] = Fresnel::conductor(in.Context.V.absCosTheta(), eta[i], k[i]);
+			fresnel[i] = Fresnel::conductor(in.Context.V.absCosTheta(), 1, eta[i], k[i]);
 
 		out.Weight = fresnel * mSpecularity->eval(in.ShadingContext);
 		out.Type   = MST_SpecularReflection;

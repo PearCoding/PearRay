@@ -5,12 +5,11 @@
 #include "material/IMaterialPlugin.h"
 #include "math/Fresnel.h"
 #include "math/Microfacet.h"
+#include "math/MicrofacetReflection.h"
+#include "math/MicrofacetTransmission.h"
 #include "math/Projection.h"
 #include "math/Scattering.h"
-
 #include "renderer/RenderContext.h"
-
-#include "Roughness.h"
 
 #include <sstream>
 
@@ -38,8 +37,107 @@ namespace PR {
  * Eurographics Symposium on Rendering. 195-206. 10.2312/EGWR/EGSR07/195-206. 
  */
 
-// TODO: Roughness + Thin
+// TODO: Thin
+constexpr float AIR = 1.0002926f;
 template <bool SpectralVarying, bool UseVNDF, bool IsAnisotropic>
+struct RoughDielectricClosure {
+	using Reflection   = MicrofacetReflection<IsAnisotropic, UseVNDF>;
+	using Transmission = MicrofacetTransmission<IsAnisotropic, UseVNDF>;
+
+	const float M1;
+	const float M2;
+	const SpectralBlob SpecularityFactor;
+	const SpectralBlob TransmissionFactor;
+	const SpectralBlob IOR;
+
+	inline RoughDielectricClosure(float M1, float M2, const SpectralBlob& specularity, const SpectralBlob& transmission, const SpectralBlob& ior)
+		: M1(M1)
+		, M2(M2)
+		, SpecularityFactor(specularity)
+		, TransmissionFactor(transmission)
+		, IOR(ior)
+	{
+	}
+
+	// Special constructor to be used when only the pdf is evaluated
+	inline RoughDielectricClosure(float M1, float M2, const SpectralBlob& ior)
+		: M1(M1)
+		, M2(M2)
+		, SpecularityFactor(SpectralBlob::Ones())
+		, TransmissionFactor(SpectralBlob::Ones())
+		, IOR(ior)
+	{
+	}
+
+	inline bool isDelta() const { return Reflection(M1, M2).isDelta(); }
+
+	inline SpectralBlob eval(const ShadingVector& V, const ShadingVector& L, bool isLightPath) const
+	{
+		if (V.sameHemisphere(L)) {
+			const auto reflection = Reflection(M1, M2);
+
+			SpectralBlob rWeight;
+			PR_UNROLL_LOOP(PR_SPECTRAL_BLOB_SIZE)
+			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
+				rWeight[i] = reflection.evalDielectric(V, L, AIR, IOR[i]);
+
+			return rWeight * SpecularityFactor;
+		} else {
+			SpectralBlob tWeight;
+			PR_UNROLL_LOOP(PR_SPECTRAL_BLOB_SIZE)
+			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
+				const auto transmission = Transmission(M1, M2, AIR, IOR[i]);
+				tWeight[i]				= transmission.evalDielectric(V, L, isLightPath);
+			}
+			return tWeight * TransmissionFactor;
+		}
+	}
+
+	inline SpectralBlob pdf(const ShadingVector& V, const ShadingVector& L) const
+	{
+		// Calculate Fresnel term
+		SpectralBlob F;
+		PR_UNROLL_LOOP(PR_SPECTRAL_BLOB_SIZE)
+		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
+			F[i] = Fresnel::dielectric(V.cosTheta(), AIR, IOR[i]);
+
+		if (V.sameHemisphere(L)) {
+			const auto reflection = Reflection(M1, M2);
+
+			SpectralBlob rPdf;
+			PR_UNROLL_LOOP(PR_SPECTRAL_BLOB_SIZE)
+			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
+				rPdf[i] = reflection.pdf(L, V);
+
+			return F * rPdf;
+		} else {
+			SpectralBlob tPdf;
+			PR_UNROLL_LOOP(PR_SPECTRAL_BLOB_SIZE)
+			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
+				const auto transmission = Transmission(M1, M2, AIR, IOR[i]);
+				tPdf[i]					= transmission.pdf(V, L);
+			}
+			return (1 - F) * tPdf;
+		}
+	}
+
+	inline Vector3f sample(Random& rnd, const ShadingVector& V) const
+	{
+		// Calculate Fresnel term
+		const float F = Fresnel::dielectric(V.cosTheta(), AIR, IOR[0]); /* Hero Wavelength */
+
+		// Breach out into two cases
+		if (rnd.getFloat() <= F) {
+			const auto reflection = Reflection(M1, M2);
+			return reflection.sample(rnd.get2D(), V);
+		} else {
+			const auto refraction = Transmission(M1, M2, AIR, IOR[0] /* Hero Wavelength */);
+			return refraction.sample(rnd.get2D(), V);
+		}
+	}
+};
+
+template <bool HasTransmissionColor, bool SpectralVarying, bool UseVNDF, bool IsAnisotropic>
 class RoughDielectricMaterial : public IMaterial {
 public:
 	RoughDielectricMaterial(const std::shared_ptr<FloatSpectralNode>& spec,
@@ -51,39 +149,31 @@ public:
 		, mSpecularity(spec)
 		, mTransmission(trans)
 		, mIOR(ior)
-		, mRoughness(roughnessX, roughnessY)
+		, mRoughnessX(roughnessX)
+		, mRoughnessY(roughnessY)
 	{
 	}
 
 	virtual ~RoughDielectricMaterial() = default;
 
-	inline SpectralBlob fresnelTerm(float dot, const ShadingContext& sctx) const
+	inline RoughDielectricClosure<SpectralVarying, UseVNDF, IsAnisotropic> getClosure(const ShadingContext& sctx) const
 	{
-		SpectralBlob n1 = SpectralBlob::Ones();
-		SpectralBlob n2 = mIOR->eval(sctx);
+		const float m1			= mRoughnessX->eval(sctx);
+		const SpectralBlob spec = mSpecularity->eval(sctx);
 
-		if (dot < 0)
-			std::swap(n1, n2);
-
-		SpectralBlob res;
-		PR_UNROLL_LOOP(PR_SPECTRAL_BLOB_SIZE)
-		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-			res[i] = Fresnel::dielectric(std::abs(dot), n1[i], n2[i]);
-		return res;
+		return RoughDielectricClosure<SpectralVarying, UseVNDF, IsAnisotropic>(m1,
+																			   IsAnisotropic ? mRoughnessY->eval(sctx) : m1,
+																			   spec,
+																			   HasTransmissionColor ? mTransmission->eval(sctx) : spec,
+																			   mIOR->eval(sctx));
 	}
 
-	inline float fresnelTermHero(float dot, const ShadingContext& sctx, float& eta, float& NdotT) const
+	inline RoughDielectricClosure<SpectralVarying, UseVNDF, IsAnisotropic> getClosurePdf(const ShadingContext& sctx) const
 	{
-		SpectralBlob n1 = SpectralBlob::Ones();
-		SpectralBlob n2 = mIOR->eval(sctx);
-
-		if (dot < 0)
-			std::swap(n1, n2);
-
-		eta	  = n1[0] / n2[0]; // See top note
-		NdotT = Scattering::refraction_angle(std::abs(dot), eta);
-
-		return Fresnel::dielectric(dot, NdotT, n1[0], n2[0]);
+		const float m1 = mRoughnessX->eval(sctx);
+		return RoughDielectricClosure<SpectralVarying, UseVNDF, IsAnisotropic>(m1,
+																			   IsAnisotropic ? mRoughnessY->eval(sctx) : m1,
+																			   mIOR->eval(sctx));
 	}
 
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
@@ -91,64 +181,21 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		const auto closure = mRoughness.closure(in.ShadingContext);
-
-		if (in.Context.V.sameHemisphere(in.Context.L)) { // Scattering
-			out.Type			  = MST_SpecularReflection;
-			const ShadingVector H = Scattering::halfway_reflection(in.Context.V, in.Context.L);
-			const float HdotV	  = H.dot(in.Context.V);
-			PR_ASSERT(HdotV >= 0.0f, "HdotV must be positive");
-
-			const float DGNorm	 = closure.DGNorm(H, in.Context.V, in.Context.L);
-			const float pdf		 = closure.pdf(H, in.Context.V);
-			const SpectralBlob F = fresnelTerm(HdotV, in.ShadingContext);
-
-			const float jacobian = Scattering::reflective_jacobian(HdotV);
-			out.Weight			 = mSpecularity->eval(in.ShadingContext) * F * (DGNorm * jacobian);
-			out.PDF_S			 = F * pdf * jacobian;
-		} else {
-			const bool flip		  = in.Context.V.cosTheta() < 0;
-			const ShadingVector V = flip ? -in.Context.V : in.Context.V;
-			const ShadingVector L = flip ? -in.Context.L : in.Context.L;
-
-			SpectralBlob n1 = SpectralBlob::Ones();
-			SpectralBlob n2 = mIOR->eval(in.ShadingContext);
-
-			if (flip)
-				std::swap(n1, n2);
-
-			const SpectralBlob eta = n1 / n2;
-
-			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
-				const Vector3f H = Scattering::halfway_refractive(eta[i], V, L);
-
-				// The refractive H vector does not have the good property of HdotV == HdotL as in the reflective case:
-				float HdotV = H.dot((Vector3f)V);
-				float HdotL = H.dot((Vector3f)L);
-
-				if (HdotV < 0 || HdotL > 0) { // Invalid configuration
-					out.Weight[i] = 0;
-					out.PDF_S[i]  = 0;
-					continue;
-				}
-
-				const float DGNorm	 = closure.DGNorm(H, V, L);
-				const float pdf		 = closure.pdf(H, V);
-				const float jacobian = Scattering::refractive_jacobian(HdotV, -HdotL, eta[i]);
-				const float F		 = Fresnel::dielectric(HdotV, -HdotL, n1[i], n2[i]); // Zero in case of total reflection
-
-				out.Weight[i] = (1 - F) * DGNorm * jacobian;
-				out.PDF_S[i]  = (1 - F) * pdf * jacobian;
-			}
-
-			out.Weight *= mTransmission->eval(in.ShadingContext);
-
-			// Only rays from lights are weighted by this factor
-			// as radiance flows in the opposite direction
-			// Note that some implementations use 1/eta as eta
-			if ((in.Context.RayFlags & RF_Light))
-				out.Weight /= eta * eta;
+		const auto closure = getClosure(in.ShadingContext);
+		if (closure.isDelta()) { // Reject
+			out.PDF_S  = 0.0f;
+			out.Weight = SpectralBlob::Zero();
+			return;
 		}
+
+		out.Weight = closure.eval(in.Context.V, in.Context.L, in.Context.RayFlags & RF_Light);
+		out.PDF_S  = closure.pdf(in.Context.V, in.Context.L);
+
+		// Determine type
+		if (in.Context.V.sameHemisphere(in.Context.L))
+			out.Type = MST_SpecularReflection;
+		else
+			out.Type = MST_SpecularTransmission;
 	}
 
 	void pdf(const MaterialEvalInput& in, MaterialPDFOutput& out,
@@ -156,67 +203,21 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		const auto closure = mRoughness.closure(in.ShadingContext);
-
-		if (in.Context.V.sameHemisphere(in.Context.L)) { // Scattering
-			const ShadingVector H = Scattering::halfway_reflection(in.Context.V, in.Context.L);
-			const float HdotV	  = H.dot(in.Context.V);
-			PR_ASSERT(HdotV >= 0.0f, "HdotV must be positive");
-
-			const float pdf		 = closure.pdf(H, in.Context.V);
-			const SpectralBlob F = fresnelTerm(HdotV, in.ShadingContext);
-
-			const float jacobian = Scattering::reflective_jacobian(HdotV);
-			out.PDF_S			 = F * pdf * jacobian;
-		} else {
-			const bool flip		  = in.Context.V.cosTheta() < 0;
-			const ShadingVector V = flip ? -in.Context.V : in.Context.V;
-			const ShadingVector L = flip ? -in.Context.L : in.Context.L;
-
-			SpectralBlob n1 = SpectralBlob::Ones();
-			SpectralBlob n2 = mIOR->eval(in.ShadingContext);
-
-			if (flip)
-				std::swap(n1, n2);
-
-			// Mitsuba style eta definition
-			const SpectralBlob eta = n2 / n1;
-
-			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
-				const Vector3f H = Scattering::halfway_refractive(eta[i], V, L);
-
-				float HdotV = H.dot((Vector3f)V);
-				float HdotL = H.dot((Vector3f)L);
-
-				if (HdotV < 0 || HdotL > 0) { // Invalid configuration
-					out.PDF_S[i] = 0;
-					continue;
-				}
-
-				const float pdf		 = closure.pdf(H, V);
-				const float jacobian = Scattering::refractive_jacobian(HdotV, -HdotL, eta[i]);
-				const float F		 = Fresnel::dielectric(HdotV, -HdotL, n1[i], n2[i]); // Zero in case of total reflection
-
-				out.PDF_S[i] = (1 - F) * pdf * jacobian;
-			}
+		const auto closure = getClosurePdf(in.ShadingContext);
+		if (closure.isDelta()) { // Reject
+			out.PDF_S = 0.0f;
+			return;
 		}
+
+		out.PDF_S = closure.pdf(in.Context.V, in.Context.L);
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
 				const RenderTileSession&) const override
 	{
-		// FIXME: Just a bad hack
-		constexpr int SPLIT_F = 1000;
-		const float u1		  = int(in.RND[0] * SPLIT_F) / float(SPLIT_F);
-		const float u2		  = in.RND[0] * SPLIT_F - int(in.RND[0] * SPLIT_F);
+		const auto closure = getClosure(in.ShadingContext);
 
-		const bool flip		  = in.Context.V.cosTheta() < 0;
-		const ShadingVector V = flip ? -in.Context.V : in.Context.V;
-
-		// Sample microfacet normal
-		const auto closure = mRoughness.closure(in.ShadingContext);
-		const Vector3f H   = closure.sample(Vector2f(u2, in.RND[1]), V);
-		out.PDF_S		   = closure.pdf(H, V);
+		out.L = closure.sample(in.RND, in.Context.V);
 
 		// Set flags
 		if constexpr (SpectralVarying)
@@ -224,73 +225,25 @@ public:
 		else
 			out.Flags = (closure.isDelta() ? MSF_DeltaDistribution : 0);
 
-		// Check correct side
-		const float HdotV = H.dot((Vector3f)V);
-		if (HdotV <= PR_EPSILON) {
+		if (PR_UNLIKELY(out.L.isZero())) {
 			out = MaterialSampleOutput::Reject(MST_SpecularReflection, out.Flags);
 			return;
 		}
 
-		// Calculate Fresnel term
-		float eta;
-		float HdotT;
-		const float F			   = fresnelTermHero(HdotV, in.ShadingContext, eta, HdotT);
-		const bool totalReflection = HdotT < 0;
+		out.Weight = closure.eval(in.Context.V, out.L, in.Context.RayFlags & RF_Light);
+		out.PDF_S  = closure.pdf(in.Context.V, out.L);
 
-		// Breach out into two cases
-		if (totalReflection || u1 <= F) {
-			out.Type = MST_SpecularReflection;
-			out.L	 = Scattering::reflect(in.Context.V, H); // No need to use the (possibly) flipped V
-
-			if (!in.Context.V.sameHemisphere(out.L)) { // Side check
-				out = MaterialSampleOutput::Reject(MST_SpecularReflection, out.Flags);
-				return;
-			}
-
-			out.Weight = mSpecularity->eval(in.ShadingContext);
-
-			if (!closure.isDelta()) {
-				const float DGNorm	 = closure.DGNorm(H, V, out.L);
-				const float jacobian = Scattering::reflective_jacobian(HdotV);
-				out.Weight *= F * DGNorm * jacobian;
-				out.PDF_S *= F * jacobian;
-			}
-		} else {
-			out.Type = MST_SpecularTransmission;
-			out.L	 = Scattering::refract(eta, HdotT, HdotV, V, H);
-
-			// Side check: As we have a refraction case, both vectors should not be on the same side!
-			if (in.Context.V.sameHemisphere(out.L)) {
-				out = MaterialSampleOutput::Reject(MST_SpecularTransmission, out.Flags);
-				return;
-			}
-
-			out.Weight = mTransmission->eval(in.ShadingContext);
-
-			if (!closure.isDelta()) {
-				// The refractive H vector does not have the good property of HdotV == HdotL as in the reflective case:
-				const float HdotL = H.dot((Vector3f)out.L);
-
-				PR_ASSERT(HdotV * HdotL < 0, "V & L have to be on different sides by construction");
-
-				const float DGNorm	 = closure.DGNorm(H, V, out.L);
-				const float jacobian = Scattering::refractive_jacobian(HdotV, -HdotL, eta);
-
-				out.Weight *= (1 - F) * DGNorm * jacobian;
-				out.PDF_S *= (1 - F) * jacobian;
-
-				//PR_ASSERT(out.Weight[0]/out.PDF_S[0] <= 1, "Expected correct weights");
-			}
-
-			if (flip)
-				out.L = -out.L;
-
-			// Only rays from lights are weighted by this factor
-			// as radiance flows in the opposite direction
-			// Note that some implementations use 1/eta as eta
-			if ((in.Context.RayFlags & RF_Light))
-				out.Weight /= eta * eta;
+		// If we handle a delta case, make sure the outgoing pdf will be 1
+		if (closure.isDelta()) {
+			out.Weight /= out.PDF_S[0];
+			out.PDF_S = 1.0f;
 		}
+
+		// Set type
+		if (in.Context.V.sameHemisphere(out.L))
+			out.Type = MST_SpecularReflection;
+		else
+			out.Type = MST_SpecularTransmission;
 	}
 
 	std::string dumpInformation() const override
@@ -302,9 +255,10 @@ public:
 			   << "    Specularity:     " << mSpecularity->dumpInformation() << std::endl
 			   << "    Transmission:    " << mTransmission->dumpInformation() << std::endl
 			   << "    IOR:             " << mIOR->dumpInformation() << std::endl
-			   << "    RoughnessX:      " << mRoughness.roughnessX()->dumpInformation() << std::endl
-			   << "    RoughnessY:      " << mRoughness.roughnessY()->dumpInformation() << std::endl
-			   << "    SpectralVarying: " << (SpectralVarying ? "true" : "false") << std::endl;
+			   << "    RoughnessX:      " << mRoughnessX->dumpInformation() << std::endl
+			   << "    RoughnessY:      " << mRoughnessY->dumpInformation() << std::endl
+			   << "    SpectralVarying: " << (SpectralVarying ? "true" : "false") << std::endl
+			   << "    VNDF:            " << (UseVNDF ? "true" : "false") << std::endl;
 
 		return stream.str();
 	}
@@ -313,11 +267,12 @@ private:
 	const std::shared_ptr<FloatSpectralNode> mSpecularity;
 	const std::shared_ptr<FloatSpectralNode> mTransmission;
 	const std::shared_ptr<FloatSpectralNode> mIOR;
-	const Roughness<IsAnisotropic, UseVNDF, false> mRoughness;
+	const std::shared_ptr<FloatScalarNode> mRoughnessX;
+	const std::shared_ptr<FloatScalarNode> mRoughnessY;
 };
 
 // System of function which probably could be simplified with template meta programming
-template <bool SpectralVarying, bool UseVNDF>
+template <bool HasTransmissionColor, bool SpectralVarying, bool UseVNDF>
 static std::shared_ptr<IMaterial> createMaterial1(const SceneLoadContext& ctx)
 {
 	std::shared_ptr<FloatScalarNode> rx;
@@ -341,37 +296,47 @@ static std::shared_ptr<IMaterial> createMaterial1(const SceneLoadContext& ctx)
 	const auto index = ctx.lookupSpectralNode({ "eta", "index", "ior" }, 1.55f);
 
 	if (rx == ry)
-		return std::make_shared<RoughDielectricMaterial<SpectralVarying, UseVNDF, false>>(spec, trans, index, rx, ry);
+		return std::make_shared<RoughDielectricMaterial<HasTransmissionColor, SpectralVarying, UseVNDF, false>>(spec, trans, index, rx, ry);
 	else
-		return std::make_shared<RoughDielectricMaterial<SpectralVarying, UseVNDF, true>>(spec, trans, index, rx, ry);
+		return std::make_shared<RoughDielectricMaterial<HasTransmissionColor, SpectralVarying, UseVNDF, true>>(spec, trans, index, rx, ry);
 }
 
-template <bool SpectralVarying>
+template <bool HasTransmissionColor, bool SpectralVarying>
 static std::shared_ptr<IMaterial> createMaterial2(const SceneLoadContext& ctx)
 {
 	// TODO: Fix VNDF and make it default again
 	const bool use_vndf = ctx.parameters().getBool("vndf", false);
 
 	if (use_vndf)
-		return createMaterial1<SpectralVarying, true>(ctx);
+		return createMaterial1<HasTransmissionColor, SpectralVarying, true>(ctx);
 	else
-		return createMaterial1<SpectralVarying, false>(ctx);
+		return createMaterial1<HasTransmissionColor, SpectralVarying, false>(ctx);
 }
 
+template <bool HasTransmissionColor>
 static std::shared_ptr<IMaterial> createMaterial3(const SceneLoadContext& ctx)
 {
 	const bool spectralVarying = ctx.parameters().getBool("spectral_varying", true);
 	if (spectralVarying)
-		return createMaterial2<true>(ctx);
+		return createMaterial2<HasTransmissionColor, true>(ctx);
 	else
-		return createMaterial2<false>(ctx);
+		return createMaterial2<HasTransmissionColor, false>(ctx);
+}
+
+static std::shared_ptr<IMaterial> createMaterial4(const SceneLoadContext& ctx)
+{
+	const bool hasTransmission = ctx.parameters().hasParameter("transmission");
+	if (hasTransmission)
+		return createMaterial3<true>(ctx);
+	else
+		return createMaterial3<false>(ctx);
 }
 
 class RoughDielectricMaterialPlugin : public IMaterialPlugin {
 public:
 	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx)
 	{
-		return createMaterial3(ctx);
+		return createMaterial4(ctx);
 	}
 
 	const std::vector<std::string>& getNames() const
