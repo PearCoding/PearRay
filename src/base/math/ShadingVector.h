@@ -86,25 +86,21 @@ public:
 
 	inline bool sameHemisphere(const ShadingVector& other) const { return std::signbit(cosTheta()) == std::signbit(other.cosTheta()); }
 	inline bool isPositiveHemisphere() const { return !std::signbit(cosTheta()); }
+
+	/// Make other the same hemisphere as this one
 	inline ShadingVector makeSameHemisphere(const ShadingVector& other) const
 	{
-		if (sameHemisphere(other))
-			return other;
-		else
-			return other.flipZ();
+		return sameHemisphere(other) ? other : -other;
 	}
+
+	/// Return transformed vector if not in positive hemisphere, else this will be returned
 	inline ShadingVector makePositiveHemisphere() const
 	{
-		if (!isPositiveHemisphere())
-			return flipZ();
-		else
-			return *this;
+		return isPositiveHemisphere() ? *this : -(*this);
 	}
 
 	inline float x() const { return (*this)[0]; }
 	inline float y() const { return (*this)[1]; }
 	inline float z() const { return (*this)[2]; }
-
-	inline ShadingVector flipZ() const { return ShadingVector(Vector3f(x(), y(), -z())); }
 };
 } // namespace PR

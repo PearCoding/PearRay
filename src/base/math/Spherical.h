@@ -7,22 +7,21 @@ namespace Spherical {
 
 inline Vector2f from_direction(const Vector3f& D)
 {
-	float x		= (D(0) == 0 && D(1) == 0) ? 1e-5f : D(0);
-	float phi	= atan2(D(1), x);
-	phi			= phi < 0 ? phi + 2 * PR_PI : phi; // We want phi to be [0,2pi] not [-pi,pi]
-	float theta = acos(D(2));
+	const float x	  = (D(0) == 0 && D(1) == 0) ? 1e-5f : D(0);
+	float phi		  = atan2(D(1), x);
+	phi				  = phi < 0 ? phi + 2 * PR_PI : phi; // We want phi to be [0,2pi] not [-pi,pi]
+	const float theta = acos(D(2));
 	return Vector2f(theta, phi);
 }
 
 inline Vector2f from_direction_hemi(const Vector3f& D)
 {
-	Vector2f tp = from_direction(D);
-	return (tp(0) < 0.0f) ? Vector2f(-tp(0), tp(1)) : tp;
+	return (D(2) < 0) ? from_direction(-D) : from_direction(D);
 }
 
 inline Vector2f uv_from_normal(const Vector3f& N)
 {
-	Vector2f tp = from_direction(N) * PR_INV_PI;
+	const Vector2f tp = from_direction(N) * PR_INV_PI;
 	return Vector2f(tp(1) / 2, tp(0));
 }
 

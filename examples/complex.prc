@@ -51,13 +51,13 @@
 		:albedo 0.40 ; Sandy environment
 		:hour 16
 	)
-	;(light
-	;	:name 'sun'
-	;	:type 'sun'
-	;	:turbidity 3
-	;	:radius 4
-	;	:hour 16
-	;)
+	(light
+		:name 'sun'
+		:type 'sun'
+		:turbidity 3
+		:radius 4
+		:hour 16
+	)
 	; Curves
 	; Particle Systems
 	; Materials
@@ -73,7 +73,11 @@
 	)
 	(material
 		:name 'Material.002'
-		:type 'mirror'
+		:type 'conductor'
+		:roughness 0.01
+		; Silver
+		:index 0.051585
+		:kappa 3.9046
 	)
 	(material
 		:name 'Material.003'
