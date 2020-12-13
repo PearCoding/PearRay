@@ -92,7 +92,7 @@ public:
 			return 1.0f;
 
 		if constexpr (UseVNDF) {
-			return Microfacet::pdf_ggx_vndf(V, H, M1, M2);
+			return Microfacet::pdf_ggx_vndf(V.makePositiveHemisphere(), H.makePositiveHemisphere(), M1, M2);
 		} else {
 			if constexpr (!IsAnisotropic)
 				return Microfacet::pdf_ggx(H, M1);
@@ -107,7 +107,7 @@ public:
 			return Vector3f(0, 0, 1);
 
 		if constexpr (UseVNDF) {
-			return Microfacet::sample_vndf_ggx(rnd[0], rnd[1], V, M1, M2);
+			return Microfacet::sample_vndf_ggx(rnd[0], rnd[1], V.makePositiveHemisphere(), M1, M2);
 		} else {
 			if constexpr (IsAnisotropic) {
 				return Microfacet::sample_ndf_ggx(rnd[0], rnd[1], M1, M2);

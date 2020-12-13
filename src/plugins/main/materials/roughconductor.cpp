@@ -159,8 +159,7 @@ static std::shared_ptr<IMaterial> createMaterial1(const SceneLoadContext& ctx)
 template <bool SpectralVarying>
 static std::shared_ptr<IMaterial> createMaterial2(const SceneLoadContext& ctx)
 {
-	// TODO: Fix VNDF and make it default again
-	const bool use_vndf = ctx.parameters().getBool("vndf", false);
+	const bool use_vndf = ctx.parameters().getBool("vndf", true);
 
 	if (use_vndf)
 		return createMaterial1<SpectralVarying, true>(ctx);

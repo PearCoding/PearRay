@@ -93,7 +93,9 @@
 		:name 'Glass'
 		:type 'glass'
 		:index (lookup_index "bk7")
-		:roughness 0.02
+		:roughness_x 0.02
+		:roughness_y 0.1
+		:vndf true
 	)
 	; Primitives
 	(include 'meshes/Floor.prc')

@@ -261,7 +261,8 @@ inline Vector3f sample_ndf_ggx(float u0, float u1, float roughnessX, float rough
 inline float pdf_ggx_vndf(const ShadingVector& V, const ShadingVector& H,
 						  float roughnessX, float roughnessY)
 {
-	return g_1_smith(V, roughnessX, roughnessY) * std::abs(V.dot(H)) * ndf_ggx(H, roughnessX, roughnessY) /* V.absCosTheta()*/;
+	return V.absCosTheta() <= PR_EPSILON ? 0.0f
+										 : g_1_smith(V, roughnessX, roughnessY) * std::abs(V.dot(H)) * ndf_ggx(H, roughnessX, roughnessY) / V.absCosTheta();
 }
 
 // nV is in sample space!
