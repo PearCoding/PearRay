@@ -25,8 +25,8 @@ static const uint32 UPDATE_MESSAGE_HEADER_SIZE				= 4 + 1 + IMAGE_NAME_SIZE + 1 
 constexpr uint32 UPDATE_TILE_SIZE							= 64;
 
 struct TevChannelInfo {
-	const char* Name;
-	size_t UpdateMessageSize;
+	const char* Name		 = nullptr;
+	size_t UpdateMessageSize = 0;
 };
 
 class TevConnection {
@@ -41,6 +41,7 @@ public:
 
 	TevConnection(const std::string& ip, uint16 port)
 		: CreateMessageSize(0)
+		, MaxUpdateMessageSize(0)
 	{
 		Con.connect(port, ip);
 		Out.setSocket(&Con, false);

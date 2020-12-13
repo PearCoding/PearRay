@@ -31,6 +31,8 @@ public:
 		: mIn(in)
 		, mSize(size)
 		, mPos(0)
+		, mStream()
+		, mBuffer()
 	{
 		mStream.zalloc	 = Z_NULL;
 		mStream.zfree	 = Z_NULL;

@@ -7,26 +7,15 @@ namespace PR {
 class PR_LIB_BASE ProjectionMap {
 public:
 	inline explicit ProjectionMap(uint32 res)
-		: mProbability(nullptr)
+		: mProbability(res)
 		, mProbTable(nullptr)
 		, mAliasTable(nullptr)
 		, mResolution(res)
 	{
 		PR_ASSERT(res > 0, "resolution of ProjectionMap has to greater 0");
-
-		mProbability = new float[res];
 	}
 
-	inline ~ProjectionMap()
-	{
-		delete[] mProbability;
-
-		if (mProbTable)
-			delete[] mProbTable;
-
-		if (mAliasTable)
-			delete[] mAliasTable;
-	}
+	~ProjectionMap() = default;
 
 	inline void setProbability(uint32 x, float value)
 	{
@@ -73,14 +62,14 @@ public:
 
 	inline bool isSetup() const
 	{
-		return mProbTable != nullptr;
+		return mProbTable.empty();
 	}
 
 	inline void setup()
 	{
 		// Setup tables
-		mProbTable  = new float[mResolution];
-		mAliasTable = new uint32[mResolution];
+		mProbTable.resize(mResolution);
+		mAliasTable.resize(mResolution);
 		std::deque<uint32> small;
 		std::deque<uint32> large;
 
@@ -151,10 +140,10 @@ public:
 	}
 
 private:
-	float* mProbability;
+	std::vector<float> mProbability;
 	// Alias method
-	float* mProbTable;
-	uint32* mAliasTable;
+	std::vector<float> mProbTable;
+	std::vector<uint32> mAliasTable;
 	uint32 mResolution;
 };
-}
+} // namespace PR

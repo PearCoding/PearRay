@@ -19,6 +19,7 @@ StatusObserver::StatusObserver()
 	, mUpdateCycleSeconds(0)
 	, mBeautify(true)
 	, mFirstTime(true)
+	, mHasPasses(false)
 {
 }
 
