@@ -42,8 +42,14 @@ void setup_environment(py::module& m)
 
 	py::class_<SceneLoader::LoadOptions>(sl, "LoadOptions")
 		.def(py::init<>())
-		.def_readwrite("PluginPath", &SceneLoader::LoadOptions::PluginPath)
-		.def_readwrite("WorkingDir", &SceneLoader::LoadOptions::WorkingDir)
+		.def_property(
+			"PluginPath",
+			[](SceneLoader::LoadOptions& ops) { return ops.PluginPath; },
+			[](SceneLoader::LoadOptions& ops, const std::string& st) { ops.PluginPath = st; })
+		.def_property(
+			"WorkingDir",
+			[](SceneLoader::LoadOptions& ops) { return ops.WorkingDir; },
+			[](SceneLoader::LoadOptions& ops, const std::string& st) { ops.WorkingDir = st; })
 		.def_readwrite("CacheMode", &SceneLoader::LoadOptions::CacheMode);
 }
 } // namespace PRPY
