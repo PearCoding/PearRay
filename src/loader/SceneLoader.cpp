@@ -2,6 +2,7 @@
 #include "Environment.h"
 #include "Logger.h"
 #include "Platform.h"
+#include "archives/MtsSerializedLoader.h"
 #include "archives/PlyLoader.h"
 #include "archives/WavefrontLoader.h"
 #include "cache/Cache.h"
@@ -775,8 +776,11 @@ void SceneLoader::addMesh(const DL::DataGroup& group, SceneLoadContext& ctx)
 	ctx.addMesh(name, std::move(mesh));
 }
 
+// TODO: This needs a good overhaul. Make use of plugins and construct real archives (with bounding box + lazy loading)
 void SceneLoader::addSubGraph(const DL::DataGroup& group, SceneLoadContext& ctx)
 {
+	ctx.parameters() = populateObjectParameters(group, ctx);
+
 	DL::Data loaderD = group.getFromKey("loader");
 	DL::Data fileD	 = group.getFromKey("file");
 
@@ -828,6 +832,24 @@ void SceneLoader::addSubGraph(const DL::DataGroup& group, SceneLoadContext& ctx)
 		if (cacheD.type() == DL::DT_Bool)
 			loader.setCacheMode(cacheD.getBool() ? CM_All : CM_None);
 
+		try {
+			loader.load(file, ctx);
+		} catch (const std::bad_alloc& ex) {
+			PR_LOG(L_ERROR) << "[Loader] Out of memory to load subgraph " << fileD.getString() << std::endl;
+		}
+	} else if (loader == "mts") {
+		DL::Data flipNormalD = group.getFromKey("flipNormal");
+		DL::Data nameD		 = group.getFromKey("name");
+		DL::Data cacheD		 = group.getFromKey("cache");
+
+		MtsSerializedLoader loader(nameD.type() == DL::DT_String ? nameD.getString() : "");
+
+		if (flipNormalD.type() == DL::DT_Bool)
+			loader.flipNormal(flipNormalD.getBool());
+
+		if (cacheD.type() == DL::DT_Bool)
+			loader.setCacheMode(cacheD.getBool() ? CM_All : CM_None);
+			
 		try {
 			loader.load(file, ctx);
 		} catch (const std::bad_alloc& ex) {

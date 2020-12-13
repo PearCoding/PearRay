@@ -31,6 +31,8 @@ set(PR_Src
   integrator/IIntegratorPlugin.h
   integrator/IntegratorManager.cpp
   integrator/IntegratorManager.h
+  archives/MtsSerializedLoader.cpp
+  archives/MtsSerializedLoader.h
   archives/PlyLoader.cpp
   archives/PlyLoader.h
   archives/SubGraphLoader.h
@@ -94,7 +96,7 @@ target_link_libraries(pr_lib_loader
   PUBLIC
     pr_lib_core
   PRIVATE
-    datalisp OpenImageIO::OpenImageIO OpenImageIO::OpenImageIO_Util
+    ZLIB::ZLIB datalisp OpenImageIO::OpenImageIO OpenImageIO::OpenImageIO_Util
 )
 set_target_properties(pr_lib_loader PROPERTIES CXX_VISIBILITY_PRESET hidden)
 target_include_directories(pr_lib_loader 

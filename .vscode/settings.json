@@ -148,7 +148,8 @@
       "glextensions": "cpp",
       "graphicscostestimator": "cpp",
       "image": "cpp",
-      "fast_back_stack": "cpp"
+      "fast_back_stack": "cpp",
+      "types": "cpp"
     },
     "files.exclude": {
         "**/.git": true,

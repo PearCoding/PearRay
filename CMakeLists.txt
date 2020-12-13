@@ -120,6 +120,8 @@ find_package(OpenImageIO REQUIRED)
 find_package(Embree REQUIRED)
 find_package(TBB REQUIRED COMPONENTS tbb)
 
+find_package(ZLIB REQUIRED)
+
 # Optional
 if(PR_USE_CCACHE)
 	include(CCache)
