@@ -239,7 +239,7 @@ public:
 		} else {
 			// Set initial gather radius based on the footprint
 			acquiredFootprint /= hits;
-			mInitialGatherRadius = std::max(0.0001f, 10 * std::sqrt(acquiredFootprint * PR_INV_PI) * mParameters.GatherRadiusFactor);
+			mInitialGatherRadius = std::max(0.0001f, std::sqrt(acquiredFootprint * PR_INV_PI) * mParameters.GatherRadiusFactor);
 		}
 
 		PR_LOG(L_DEBUG) << "VCM: Avg. footprint " << acquiredFootprint << ", initial gather radius " << mInitialGatherRadius << std::endl;
