@@ -91,7 +91,7 @@ public:
 			out = MaterialSampleOutput::Reject(MST_SpecularReflection, out.Flags);
 			return;
 		}
-		
+
 		const SpectralBlob eta = mEta->eval(in.ShadingContext);
 		const SpectralBlob k   = mK->eval(in.ShadingContext);
 		SpectralBlob factor;
@@ -102,6 +102,12 @@ public:
 		out.Weight = mSpecularity->eval(in.ShadingContext) * factor;
 		out.Type   = MST_SpecularReflection;
 		out.PDF_S  = closure.pdf(out.L, in.Context.V);
+
+		// If we handle a delta case, make sure the outgoing pdf will be 1
+		if (closure.isDelta() && out.PDF_S[0] > PR_EPSILON) {
+			out.Weight /= out.PDF_S[0];
+			out.PDF_S = 1.0f;
+		}
 	}
 
 	std::string dumpInformation() const override

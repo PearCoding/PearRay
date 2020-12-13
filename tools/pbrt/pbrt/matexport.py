@@ -23,10 +23,10 @@ def getK(operator, op, name, default):
         return iorexport.unpackK(operator, default)
 
 
-def getScal(operator, op, name, default):
+def getScal(operator, op, name, default, doSqrt=False):
     val = op.parameters.get(name, default)
     if isinstance(val, str):
-        return "(texture '%s')" % val
+        return "(texture '%s')" % val  # What if doSqrt?
     elif isinstance(val, list):
         return str(sum(val) / len(val))  # TODO:
     else:
@@ -119,13 +119,14 @@ def export(operator, op, isNamed):
         operator.w.goIn()
         operator.w.write(":type 'principled'")
         operator.w.write(":name '%s'" % name)
-        operator.w.write(":base %s" % getRefl(operator, op, 'Kd', [0.5, 0.5, 0.5]))#TODO
+        operator.w.write(":base %s" % getRefl(
+            operator, op, 'Kd', [0.5, 0.5, 0.5]))  # TODO
         #operator.w.write(":specular %s" % getScal(operator, op, 'Ks', 0.5))
         operator.w.write(":index %s" % getIOR(operator, op, 'eta', 'bk7'))
 
         roughness = getRoughness(operator, op)
         if roughness is not None:
-            if roughness[0] != roughness[1]: #TODO
+            if roughness[0] != roughness[1]:  # TODO
                 operator.w.write(":roughness_x %s" % roughness[0])
                 operator.w.write(":roughness_y %s" % roughness[1])
             else:

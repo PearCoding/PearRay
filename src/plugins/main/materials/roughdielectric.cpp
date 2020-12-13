@@ -234,7 +234,7 @@ public:
 		out.PDF_S  = closure.pdf(in.Context.V, out.L);
 
 		// If we handle a delta case, make sure the outgoing pdf will be 1
-		if (closure.isDelta()) {
+		if (closure.isDelta() && out.PDF_S[0] > PR_EPSILON) {
 			out.Weight /= out.PDF_S[0];
 			out.PDF_S = 1.0f;
 		}

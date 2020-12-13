@@ -114,8 +114,7 @@
 		:name 'tallBox'
 		:type 'principled'
 		:base 'Wood-albedo'
-		:roughness 0.04 ;'Wood-roughness'
-		; Explodes at roughness < 0.04
+		:roughness 'Wood-roughness'
 	)
 
 	; Meshes

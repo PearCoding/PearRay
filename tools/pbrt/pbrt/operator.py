@@ -323,10 +323,20 @@ class Operator:
         if self.options.skipWorld:
             return
 
-        # Ignore type for now
         self.w.write("(integrator")
         self.w.goIn()
-        self.w.write(":type 'direct'")
+
+        if op.operand == "bdpt":
+            self.w.write(":type 'bdpt'")
+        elif op.operand == "sppm":
+            self.w.write(":type 'ppm'")
+        elif op.operand == "path":
+            self.w.write(":type 'direct'")
+        elif op.operand == "vcm":
+            self.w.write(":type 'vcm'")
+        else:  # If unkown, fallback to most powerful integrator
+            self.w.write(":type 'vcm'")
+
         self.w.write(":max_ray_depth %i" % op.parameters.get('maxdepth', 8))
         self.w.goOut()
         self.w.write(")")
@@ -482,7 +492,8 @@ class Operator:
             self.w.write("(light")
             self.w.goIn()
             self.w.write(":type 'environment'")
-            self.w.write(":transform  %s" % Operator.mat2str(TRANSFORM_CAM @ self.contextStack[-1].transform))
+            self.w.write(":transform  %s" % Operator.mat2str(
+                TRANSFORM_CAM @ self.contextStack[-1].transform))
             if tex_name is not None:
                 self.w.write(
                     ":radiance (smul (illuminant 'd65') %s)" % tex_name)
@@ -494,7 +505,8 @@ class Operator:
         elif op.operand == "distant":
             D = np.array(op.parameters['from']) - np.array(op.parameters['to'])
             D = D/np.linalg.norm(D, ord=2)
-            D = self.contextStack[-1].transform @ np.array([D[0],D[1],D[2],0])
+            D = self.contextStack[-1].transform @ np.array(
+                [D[0], D[1], D[2], 0])
             color = colexport.unpackIllum(self, op.parameters['L'])
 
             self.w.write("(light")

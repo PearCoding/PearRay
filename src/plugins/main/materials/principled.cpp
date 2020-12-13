@@ -108,7 +108,7 @@ struct PrincipledClosure {
 		float SpecularTransmission;
 	};
 
-	inline LobeDistribution calculateLobeDistribution() const
+	inline LobeDistribution calculateLobeDistribution(const ShadingVector& V) const
 	{
 		LobeDistribution distribution;
 
@@ -116,9 +116,12 @@ struct PrincipledClosure {
 		distribution.SpecularReflection = 1;
 
 		if constexpr (HasTransmission) {
+			const float F					  = Fresnel::dielectric(V.cosTheta(), AIR, IOR[0]); // Sample based on shading normal
 			distribution.DiffuseTransmission  = DiffuseTransmission * distribution.DiffuseReflection;
-			distribution.SpecularTransmission = (1.0f - Metallic) * SpecularTransmission;
+			distribution.SpecularTransmission = (1.0f - F) * (1.0f - Metallic) * SpecularTransmission;
+			distribution.SpecularReflection *= F;
 		} else {
+			PR_UNUSED(V);
 			distribution.DiffuseTransmission  = 0;
 			distribution.SpecularTransmission = 0;
 		}
@@ -135,23 +138,12 @@ struct PrincipledClosure {
 		return distribution;
 	}
 
-	inline SpectralBlob calculateEta(float dot) const
-	{
-		return (dot < 0) ? IOR : 1 / IOR; // Note: In paper eta is given as n2/n1
-	}
-
-	inline float fresnelTermComponent(float dot, size_t i) const
-	{
-		return (dot < 0) ? Fresnel::dielectric(-dot, IOR[i], 1)
-						 : Fresnel::dielectric(dot, 1, IOR[i]);
-	}
-
 	inline SpectralBlob fresnelTerm(float dot) const
 	{
 		SpectralBlob res;
 		PR_UNROLL_LOOP(PR_SPECTRAL_BLOB_SIZE)
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-			res[i] = fresnelTermComponent(dot, i);
+			res[i] = Fresnel::dielectric(dot, AIR, IOR[i]);
 
 		return res;
 	}
@@ -162,20 +154,13 @@ struct PrincipledClosure {
 			return fresnelTerm(HdotV);
 
 		const SpectralBlob color = tintColor(wvl);
-
-		SpectralBlob n1 = SpectralBlob::Ones();
-		SpectralBlob n2 = IOR;
-
-		if (HdotV < 0)
-			std::swap(n1, n2);
-
-		const SpectralBlob eta = n1 / n2;
+		const SpectralBlob eta	 = HdotV < 0 ? (AIR / IOR).eval() : (IOR / AIR).eval();
 
 		SpectralBlob res;
 		PR_UNROLL_LOOP(PR_SPECTRAL_BLOB_SIZE)
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
 			const float r0 = mix(schlickR0(eta[i]) * mix(1.0f, color[i], SpecularTint), Base[i], Metallic);
-			const float f1 = Fresnel::dielectric(std::abs(HdotV), n1[i], n2[i]);
+			const float f1 = Fresnel::dielectric(HdotV, AIR, IOR[i]);
 			const float f2 = Fresnel::schlick(std::abs(HdotL), r0);
 
 			res[i] = mix<float>(f1, f2, Metallic);
@@ -253,7 +238,7 @@ struct PrincipledClosure {
 	inline float specularRefractionTermComponent(size_t i, const MaterialEvalContext& ctx) const
 	{
 		const float scaledR = Thin ? thinTransmissionRoughness() : Roughness;
-		const auto micro	= MicrofacetTransmission(roughnessClosure(scaledR), IOR[i], AIR);
+		const auto micro	= MicrofacetTransmission(roughnessClosure(scaledR), AIR, IOR[i]);
 		const float R		= micro.evalDielectric(ctx.V, ctx.L);
 
 		if constexpr (Thin)
@@ -302,7 +287,7 @@ struct PrincipledClosure {
 		}
 
 		const Vector3f rH = Scattering::halfway_reflection(ctx.V, ctx.L);
-		const float HdotL = rH.dot((Vector3f)ctx.V);
+		const float HdotL = rH.dot((Vector3f)ctx.L);
 
 		SpectralBlob value = SpectralBlob::Zero();
 
@@ -342,9 +327,8 @@ struct PrincipledClosure {
 
 				// Only rays from lights are weighted by this factor
 				// as radiance flows in the opposite direction
-				// Note that some implementations use 1/eta as eta
 				if (ctx.RayFlags & RF_Light) {
-					const SpectralBlob eta = calculateEta(ctx.V.cosTheta());
+					const SpectralBlob eta = HdotL < 0.0f ? (IOR / AIR).eval() : (AIR / IOR).eval();
 					weight *= eta * eta;
 				}
 
@@ -377,7 +361,7 @@ struct PrincipledClosure {
 		SpectralBlob pdf;
 		PR_UNROLL_LOOP(PR_SPECTRAL_BLOB_SIZE)
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
-			const MicrofacetTransmission refr = MicrofacetTransmission(roughness, IOR[i], AIR);
+			const MicrofacetTransmission refr = MicrofacetTransmission(roughness, AIR, IOR[i]);
 			pdf[i]							  = refr.pdf(ctx.V, ctx.L);
 		}
 		return pdf;
@@ -388,15 +372,26 @@ struct PrincipledClosure {
 		if (PR_UNLIKELY(ctx.V.absCosTheta() <= PR_EPSILON || ctx.L.absCosTheta() <= PR_EPSILON))
 			return SpectralBlob::Zero();
 
-		const LobeDistribution distr = calculateLobeDistribution();
+		const LobeDistribution distr = calculateLobeDistribution(ctx.V);
 
-		SpectralBlob pdfV = (distr.DiffuseReflection + distr.DiffuseTransmission) * pdfDiffuse(ctx);
+		const bool isTransmission  = !ctx.V.sameHemisphere(ctx.L);
+		const SpectralBlob diffPdf = pdfDiffuse(ctx);
 
-		if constexpr (HasTransmission)
-			pdfV += distr.SpecularTransmission * pdfRefractive(ctx);
+		SpectralBlob pdfV = SpectralBlob::Zero();
 
-		if (distr.SpecularReflection > EVAL_EPS)
-			pdfV += distr.SpecularReflection * pdfReflection(ctx);
+		if (!isTransmission) {
+			pdfV += distr.DiffuseReflection * diffPdf;
+			if (distr.SpecularReflection > EVAL_EPS)
+				pdfV += distr.SpecularReflection * pdfReflection(ctx);
+		}
+
+		if constexpr (HasTransmission) {
+			if (isTransmission) {
+				pdfV += distr.DiffuseTransmission * diffPdf;
+				if (distr.SpecularTransmission > EVAL_EPS)
+					pdfV += distr.SpecularTransmission * pdfRefractive(ctx);
+			}
+		}
 
 		return pdfV;
 	}
@@ -416,7 +411,7 @@ struct PrincipledClosure {
 
 	inline Vector3f sampleRefractive(Random& rnd, const MaterialSampleContext& ctx) const
 	{
-		const MicrofacetTransmission refr = MicrofacetTransmission(roughnessClosure(Roughness), IOR[0] /* Hero wavelength */, AIR);
+		const MicrofacetTransmission refr = MicrofacetTransmission(roughnessClosure(Roughness), AIR, IOR[0] /* Hero wavelength */);
 		return refr.sample(rnd.get2D(), ctx.V);
 	}
 
@@ -425,7 +420,7 @@ struct PrincipledClosure {
 		if (PR_UNLIKELY(ctx.V.absCosTheta() <= PR_EPSILON))
 			return Vector3f::Zero();
 
-		const LobeDistribution distr = calculateLobeDistribution();
+		const LobeDistribution distr = calculateLobeDistribution(ctx.V);
 
 		const float u0 = rnd.getFloat();
 
@@ -563,7 +558,7 @@ public:
 		else
 			out.Flags = (closure.isDelta() ? MSF_DeltaDistribution : 0);
 
-		if (PR_UNLIKELY(Vector3f(out.L).isZero())) {
+		if (PR_UNLIKELY(out.L.isZero())) {
 			out = MaterialSampleOutput::Reject(MST_DiffuseReflection, out.Flags);
 			return;
 		}
@@ -584,6 +579,12 @@ public:
 		const auto ectx = in.Context.expand(out.L);
 		out.Weight		= closure.eval(ectx);
 		out.PDF_S		= closure.pdf(ectx);
+
+		// If we handle a delta case, make sure the outgoing pdf will be 1
+		if (closure.isDelta() && out.PDF_S[0] > PR_EPSILON) {
+			out.Weight /= out.PDF_S[0];
+			out.PDF_S = 1.0f;
+		}
 
 		PR_ASSERT(out.PDF_S[0] >= 0.0f, "PDF has to be positive");
 	}
@@ -692,8 +693,7 @@ class PrincipledMaterialPlugin : public IMaterialPlugin {
 public:
 	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx)
 	{
-		// TODO: Fix VNDF and make it default again
-		const bool use_vndf = ctx.parameters().getBool("vndf", false);
+		const bool use_vndf = ctx.parameters().getBool("vndf", true);
 
 		if (use_vndf)
 			return createPrincipled4<true>(ctx);
