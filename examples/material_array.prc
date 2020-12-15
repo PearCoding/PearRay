@@ -6,7 +6,7 @@
 	(sampler 
 	  :slot 'aa'
 	  :type 'hammersley'
-	  :sample_count 4096
+	  :sample_count 128
 	)
 	(filter 
 	  :slot 'pixel'
@@ -23,6 +23,9 @@
 		:name 'image'
 		(channel :type 'color' :color 'srgb' )
 		(channel :type 'n')
+		(channel :type 'ng')
+		(channel :type 'nx')
+		(channel :type 'ny')
 	)
 	; Camera
 	(camera

@@ -130,26 +130,36 @@ public:
 	// This trick is borrowed from Alex, who borrowed it from Mitsuba, which borrowed it from MTGP:
 	// We generate a random number in [1,2) and subtract 1 from it.
 
-	inline float getFloat() //[0, 1)
+	inline static float uint32ToFloat(uint32 v)
 	{
 		union {
-			uint32_t u;
+			uint32 u;
 			float f;
 		} x;
 
-		x.u = (get32() >> 9) | 0x3F800000U;
+		x.u = (v >> 9) | 0x3F800000U;
 		return x.f - 1.0f;
+	}
+
+	inline static double uint64ToDouble(uint64 v)
+	{
+		union {
+			uint64 u;
+			double f;
+		} x;
+
+		x.u = (v >> 12) | 0x3FF0000000000000ULL;
+		return x.f - 1.0;
+	}
+
+	inline float getFloat() //[0, 1)
+	{
+		return uint32ToFloat(get32());
 	}
 
 	inline double getDouble() //[0, 1)
 	{
-		union {
-			uint64_t u;
-			double f;
-		} x;
-
-		x.u = (get64() >> 12) | 0x3FF0000000000000ULL;
-		return x.f - 1.0;
+		return uint64ToDouble(get64());
 	}
 
 	inline Vector2f get2D()

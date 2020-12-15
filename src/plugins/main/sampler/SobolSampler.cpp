@@ -45,10 +45,8 @@ public:
 			last[0] = entry[0];
 			last[1] = entry[1];
 
-			mSamples1D[i] = static_cast<float>(entry[0] / static_cast<double>(std::numeric_limits<sobol_entry_t>::max()));
-			mSamples2D[i] = Vector2f(
-				mSamples1D.at(i),
-				static_cast<float>(entry[1] / static_cast<double>(std::numeric_limits<sobol_entry_t>::max())));
+			mSamples1D[i] = static_cast<float>(Random::uint64ToDouble(entry[0]));
+			mSamples2D[i] = Vector2f(mSamples1D.at(i), static_cast<float>(Random::uint64ToDouble(entry[1])));
 		}
 
 		// Shuffle the order of the samples
