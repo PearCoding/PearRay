@@ -293,7 +293,7 @@ private:
 		else
 			mCameraPath.addToken(LightPathToken::Emissive());
 
-		session.pushSpectralFragment(SpectralBlob(mis), current.Throughput, contrib,
+		session.pushSpectralFragment(mis, current.Throughput, contrib,
 									 cameraIP.Ray, mCameraPath);
 
 		mCameraPath.popToken(2);
@@ -331,7 +331,7 @@ private:
 		// If directly visible from camera, do not calculate mis weights
 		if (cameraPathLength == 1 || current.LastWasDelta) {
 			mCameraPath.addToken(LightPathToken::Emissive());
-			session.pushSpectralFragment(SpectralBlob::Ones(), current.Throughput, radiance, cameraIP.Ray, mCameraPath);
+			session.pushSpectralFragment(1, current.Throughput, radiance, cameraIP.Ray, mCameraPath);
 			mCameraPath.popToken();
 			return;
 		}
@@ -357,7 +357,7 @@ private:
 
 		// Splat
 		mCameraPath.addToken(LightPathToken::Emissive());
-		session.pushSpectralFragment(SpectralBlob(mis), current.Throughput, radiance, cameraIP.Ray, mCameraPath);
+		session.pushSpectralFragment(mis, current.Throughput, radiance, cameraIP.Ray, mCameraPath);
 		mCameraPath.popToken();
 	}
 
@@ -388,7 +388,7 @@ private:
 
 		// If directly visible from camera or last one was a delta distribution, do not calculate mis weights
 		if (cameraPathLength == 1 || current.LastWasDelta) {
-			session.pushSpectralFragment(SpectralBlob::Ones(), current.Throughput, radiance, ray, mCameraPath);
+			session.pushSpectralFragment(1, current.Throughput, radiance, ray, mCameraPath);
 			return;
 		}
 
@@ -401,13 +401,13 @@ private:
 		PR_ASSERT(mis <= 1.0f, "MIS must be between 0 and 1");
 
 		// Splat
-		session.pushSpectralFragment(SpectralBlob(mis), current.Throughput, radiance, ray, mCameraPath);
+		session.pushSpectralFragment(mis, current.Throughput, radiance, ray, mCameraPath);
 	}
 
 	/// Handle case where camera ray hits nothing and there is no inf-lights
 	inline void handleZero(const RenderTileSession& session, TraversalContext& current, const Ray& ray) const
 	{
-		session.pushSpectralFragment(SpectralBlob::Ones(), current.Throughput, SpectralBlob::Zero(), ray, mCameraPath);
+		session.pushSpectralFragment(1, current.Throughput, SpectralBlob::Zero(), ray, mCameraPath);
 	}
 
 private:

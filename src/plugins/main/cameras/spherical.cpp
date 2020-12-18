@@ -30,9 +30,9 @@ public:
 		, mLocalDirection(ld)
 		, mLocalRight(lr)
 		, mLocalUp(lu)
-		, mDirection_Cache((normalMatrix() * mLocalDirection).normalized())
-		, mRight_Cache((normalMatrix() * mLocalRight).normalized())
-		, mUp_Cache((normalMatrix() * mLocalUp).normalized())
+		, mDirection_Cache(transform.linear() * mLocalDirection)
+		, mRight_Cache(transform.linear() * mLocalRight)
+		, mUp_Cache(transform.linear() * mLocalUp)
 	{
 		PR_LOG(L_DEBUG) << name << ": Dir" << PR_FMT_MAT(mDirection_Cache)
 						<< " Right" << PR_FMT_MAT(mRight_Cache)
@@ -74,7 +74,8 @@ public:
 		const float sP = std::sin(phi);
 		const float cP = std::cos(phi);
 		d			   = Tangent::fromTangentSpace(mUp_Cache, mRight_Cache, mDirection_Cache,
-									   Vector3f(sP * cT, cP * cT, sT));
+									   Vector3f(sP * cT, cP * cT, sT))
+				.normalized();
 	}
 
 private:
@@ -110,9 +111,9 @@ public:
 												 params.getNumber("phi_end", PR_PI),
 												 params.getNumber("near", NEAR_DEFAULT),
 												 params.getNumber("far", FAR_DEFAULT),
-												 params.getVector3f("localDirection", ICamera::DefaultDirection),
-												 params.getVector3f("localRight", ICamera::DefaultRight),
-												 params.getVector3f("localUp", ICamera::DefaultUp));
+												 params.getVector3f("local_direction", ICamera::DefaultDirection),
+												 params.getVector3f("local_right", ICamera::DefaultRight),
+												 params.getVector3f("local_up", ICamera::DefaultUp));
 	}
 
 	const std::vector<std::string>& getNames() const

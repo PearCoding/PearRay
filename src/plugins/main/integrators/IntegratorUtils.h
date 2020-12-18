@@ -39,7 +39,7 @@ public:
 				InfiniteLightEvalOutput lout;
 				light->asInfiniteLight()->eval(lin, lout, session);
 
-				session.pushSpectralFragment(SpectralBlob::Ones(), SpectralBlob::Ones(), lout.Radiance, ray, cb);
+				session.pushSpectralFragment(1, SpectralBlob::Ones(), lout.Radiance, ray, cb);
 			}
 		}
 
@@ -47,7 +47,7 @@ public:
 			for (size_t i = 0; i < sg.size(); ++i) {
 				Ray ray;
 				sg.extractRay(i, ray);
-				session.pushSpectralFragment(SpectralBlob::Ones(), SpectralBlob::Ones(), SpectralBlob::Zero(), ray, cb);
+				session.pushSpectralFragment(1, SpectralBlob::Ones(), SpectralBlob::Zero(), ray, cb);
 			}
 		}
 	}

@@ -6,7 +6,7 @@
 #define PR_CHECK_NEGS
 #endif
 namespace PR {
-inline void OutputQueue::pushSpectralFragment(const Point2i& p, const SpectralBlob& mis, const SpectralBlob& importance, const SpectralBlob& radiance,
+inline void OutputQueue::pushSpectralFragment(const Point2i& p, float mis, const SpectralBlob& importance, const SpectralBlob& radiance,
 											  const SpectralBlob& wavelengths, bool isMono, uint32 rayGroupID, const LightPath& path)
 {
 #ifdef PR_CHECK_NANS

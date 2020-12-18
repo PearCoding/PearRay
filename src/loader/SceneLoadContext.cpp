@@ -423,7 +423,7 @@ std::vector<uint32> SceneLoadContext::lookupMaterialIDArray(const Parameter& par
 				id = PR_INVALID_ID;
 				break;
 			case PT_String:
-				id = environment()->sceneDatabase()->Materials->getID(parameter.getString(""));
+				id = environment()->sceneDatabase()->Materials->getID(parameter.getString(i, ""));
 				break;
 			}
 

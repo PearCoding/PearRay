@@ -26,9 +26,9 @@ public:
 		, mLocalDirection(ld)
 		, mLocalRight(lr)
 		, mLocalUp(lu)
-		, mDirection_Cache((normalMatrix() * mLocalDirection).normalized())
-		, mRight_Cache((normalMatrix() * mLocalRight).normalized() * 0.5f * mWidth)
-		, mUp_Cache((normalMatrix() * mLocalUp).normalized() * 0.5f * mHeight)
+		, mDirection_Cache((transform.linear() * mLocalDirection).normalized())
+		, mRight_Cache(transform.linear() * mLocalRight * 0.5f * mWidth)
+		, mUp_Cache(transform.linear() * mLocalUp * 0.5f * mHeight)
 	{
 		PR_LOG(L_DEBUG) << name << ": Dir" << PR_FMT_MAT(mDirection_Cache)
 						<< " Right" << PR_FMT_MAT(mRight_Cache)
@@ -93,9 +93,9 @@ public:
 											 params.getNumber("height", 1),
 											 params.getNumber("near", NEAR_DEFAULT),
 											 params.getNumber("far", FAR_DEFAULT),
-											 params.getVector3f("localDirection", ICamera::DefaultDirection),
-											 params.getVector3f("localRight", ICamera::DefaultRight),
-											 params.getVector3f("localUp", ICamera::DefaultUp));
+											 params.getVector3f("local_direction", ICamera::DefaultDirection),
+											 params.getVector3f("local_right", ICamera::DefaultRight),
+											 params.getVector3f("local_up", ICamera::DefaultUp));
 	}
 
 	const std::vector<std::string>& getNames() const

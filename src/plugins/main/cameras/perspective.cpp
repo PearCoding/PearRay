@@ -83,9 +83,10 @@ public:
 
 	void cache()
 	{
-		mDirection_Cache = (normalMatrix() * mLocalDirection).normalized();
-		mRight_Cache	 = (normalMatrix() * mLocalRight).normalized();
-		mUp_Cache		 = (normalMatrix() * mLocalUp).normalized();
+		// Apply transformation (with scale support)
+		mDirection_Cache = transform().linear() * mLocalDirection;
+		mRight_Cache	 = transform().linear() * mLocalRight;
+		mUp_Cache		 = transform().linear() * mLocalUp;
 
 		PR_LOG(L_DEBUG) << name() << ": Dir" << PR_FMT_MAT(mDirection_Cache)
 						<< " Right" << PR_FMT_MAT(mRight_Cache)
@@ -142,11 +143,11 @@ public:
 		const ParameterGroup& params = ctx.parameters();
 		std::string name			 = params.getString("name", "__unnamed__");
 
-		const float apr	  = params.getNumber("apertureRadius", 0.05f);
+		const float apr	  = params.getNumber("aperture_radius", 0.05f);
 		const float fstop = params.getNumber("fstop", 0);
-		const Vector3f ld = params.getVector3f("localDirection", ICamera::DefaultDirection);
-		const Vector3f lr = params.getVector3f("localRight", ICamera::DefaultRight);
-		const Vector3f lu = params.getVector3f("localUp", ICamera::DefaultUp);
+		const Vector3f ld = params.getVector3f("local_direction", ICamera::DefaultDirection);
+		const Vector3f lr = params.getVector3f("local_right", ICamera::DefaultRight);
+		const Vector3f lu = params.getVector3f("local_up", ICamera::DefaultUp);
 
 		const float w  = params.getNumber("width", 1);
 		const float h  = params.getNumber("height", 1);

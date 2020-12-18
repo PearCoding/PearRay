@@ -10,7 +10,7 @@ enum OutputSpectralEntryFlags {
 
 struct PR_LIB_CORE OutputSpectralEntry {
 	Point2i Position;
-	SpectralBlob MIS;
+	float MIS;
 	SpectralBlob Importance;
 	SpectralBlob Radiance;
 	SpectralBlob Wavelengths;

@@ -211,8 +211,6 @@ public:
 		std::string name	  = params.getString("name", "__unnamed__");
 		std::string mesh_name = params.getString("mesh", "");
 
-		std::vector<std::string> matNames = params.getStringArray("materials");
-
 		const std::vector<uint32> materials = ctx.lookupMaterialIDArray(params.getParameter("materials"));
 		const uint32 emsID = ctx.lookupEmissionID(params.getParameter("emission"));
 

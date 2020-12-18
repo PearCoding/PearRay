@@ -39,9 +39,9 @@ public:
 		, mLocalRight(lr)
 		, mLocalUp(lu)
 		, mMapType(mapType)
-		, mDirection_Cache((normalMatrix() * mLocalDirection).normalized())
-		, mRight_Cache((normalMatrix() * mLocalRight).normalized())
-		, mUp_Cache((normalMatrix() * mLocalUp).normalized())
+		, mDirection_Cache(transform.linear() * mLocalDirection)
+		, mRight_Cache(transform.linear() * mLocalRight)
+		, mUp_Cache(transform.linear() * mLocalUp)
 	{
 		PR_LOG(L_DEBUG) << name << ": Dir" << PR_FMT_MAT(mDirection_Cache)
 						<< " Right" << PR_FMT_MAT(mRight_Cache)
@@ -114,7 +114,8 @@ public:
 		const float sP = r < PR_EPSILON ? 0 : ny / r;
 		const float cP = r < PR_EPSILON ? 0 : nx / r;
 		d			   = Tangent::fromTangentSpace(mDirection_Cache, mRight_Cache, mUp_Cache,
-									   Vector3f(cP * sT, sP * sT, cT));
+									   Vector3f(cP * sT, sP * sT, cT))
+				.normalized();
 	}
 
 private:
@@ -152,9 +153,9 @@ static inline std::shared_ptr<ICamera> createCamera(const ParameterGroup& params
 													  params.getNumber("fov", 180.0f * PR_DEG2RAD),
 													  params.getNumber("near", NEAR_DEFAULT),
 													  params.getNumber("far", FAR_DEFAULT),
-													  params.getVector3f("localDirection", ICamera::DefaultDirection),
-													  params.getVector3f("localRight", ICamera::DefaultRight),
-													  params.getVector3f("localUp", ICamera::DefaultUp),
+													  params.getVector3f("local_direction", ICamera::DefaultDirection),
+													  params.getVector3f("local_right", ICamera::DefaultRight),
+													  params.getVector3f("local_up", ICamera::DefaultUp),
 													  mapType);
 }
 

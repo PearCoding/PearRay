@@ -112,7 +112,7 @@ Point2i RenderTileSession::localCoordinates(Point1i pixelIndex) const
 	return Point2i(gpx, gpy) - mTile->start();
 }
 
-void RenderTileSession::pushSpectralFragment(const SpectralBlob& mis, const SpectralBlob& importance, const SpectralBlob& radiance,
+void RenderTileSession::pushSpectralFragment(float mis, const SpectralBlob& importance, const SpectralBlob& radiance,
 											 const Ray& ray, const LightPath& path) const
 {
 	PR_PROFILE_THIS;
