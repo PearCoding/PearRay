@@ -32,7 +32,6 @@ public:
 		float& t)
 	{
 		constexpr float INT_EPS = 1e-6f;
-		constexpr float INF		= PR_INF;
 
 		const float A = parameters[0];
 		const float B = parameters[1];
@@ -54,19 +53,19 @@ public:
 				  + D * origin[0] * origin[1] + E * origin[0] * origin[2] + F * origin[1] * origin[2]
 				  + G * origin[0] + H * origin[1] + I * origin[2] + J;
 
-		bool linear	  = abs(a) < PR_EPSILON;
+		bool linear	  = abs(a) <= PR_EPSILON;
 		float lin	  = -c / b;
 		float discrim = b * b - 4 * a * c;
 		bool invalid  = discrim < 0;
 		discrim		  = sqrt(discrim);
 		float qu1	  = (-b - discrim) / (2 * a);
 		float qu2	  = (-b + discrim) / (2 * a);
-		bool behind	  = qu1 < INT_EPS;
+		bool behind	  = qu1 <= INT_EPS;
 		float qu	  = behind ? qu2 : qu1;
 
-		t = linear ? lin : (invalid ? INF : qu);
+		t = linear ? lin : (invalid ? PR_INF : qu);
 
-		return t < INF && (t > INT_EPS);
+		return t < PR_INF && (t >= INT_EPS);
 	}
 
 	inline static float eval(
