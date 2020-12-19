@@ -114,9 +114,7 @@ public:
 		const ParameterArray& parameters,
 		const Vector3f& xyz)
 	{
-		Vector3f N = gradient(parameters, xyz);
-		float norm = N.norm();
-		return N / norm;
+		return gradient(parameters, xyz).normalized();
 	}
 
 	inline static Eigen::Matrix4f matrix(
@@ -147,18 +145,16 @@ public:
 	}
 
 	typedef std::array<float, 4> EigenvalueArray;
-	inline static void eigenvalues(
-		const ParameterArray& parameters,
-		EigenvalueArray& values)
+	inline static EigenvalueArray eigenvalues(const ParameterArray& parameters)
 	{
 		Eigen::SelfAdjointEigenSolver<Eigen::Matrix4f> solver;
 		solver.compute(matrix(parameters), Eigen::EigenvaluesOnly);
 
 		if (solver.info() == Eigen::Success) {
 			Vector4f val = solver.eigenvalues();
-			values		 = { val(0), val(1), val(2), val(3) };
+			return { val(0), val(1), val(2), val(3) };
 		} else {
-			values = { 0, 0, 0, 0 };
+			return { 0, 0, 0, 0 };
 		}
 	}
 

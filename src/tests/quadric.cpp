@@ -6,7 +6,7 @@ using namespace PR;
 
 PR_BEGIN_TESTCASE(Quadric)
 
-static Quadric::ParameterArray SPHERE   = { 1, 1, 1, 0, 0, 0, 0, 0, 0, -1 };
+static Quadric::ParameterArray SPHERE	= { 1, 1, 1, 0, 0, 0, 0, 0, 0, -1 };
 static Quadric::ParameterArray CONE		= { 1, 1, -1, 0, 0, 0, 0, 0, 0, 0 };
 static Quadric::ParameterArray CYLINDER = { 1, 1, 0, 0, 0, 0, 0, 0, 0, -1 };
 
@@ -45,19 +45,19 @@ PR_TEST("Intersection sphere")
 PR_TEST("Eigenvalues")
 {
 	Quadric::EigenvalueArray values;
-	Quadric::eigenvalues(SPHERE, values);
+	values = Quadric::eigenvalues(SPHERE);
 	PR_CHECK_NEARLY_EQ(values[0], -1);
 	PR_CHECK_NEARLY_EQ(values[1], 1);
 	PR_CHECK_NEARLY_EQ(values[2], 1);
 	PR_CHECK_NEARLY_EQ(values[3], 1);
 
-	Quadric::eigenvalues(CONE, values);
+	values = Quadric::eigenvalues(CONE);
 	PR_CHECK_NEARLY_EQ(values[0], -1);
 	PR_CHECK_NEARLY_EQ(values[1], 0);
 	PR_CHECK_NEARLY_EQ(values[2], 1);
 	PR_CHECK_NEARLY_EQ(values[3], 1);
 
-	Quadric::eigenvalues(CYLINDER, values);
+	values = Quadric::eigenvalues(CYLINDER);
 	PR_CHECK_NEARLY_EQ(values[0], -1);
 	PR_CHECK_NEARLY_EQ(values[1], 0);
 	PR_CHECK_NEARLY_EQ(values[2], 1);

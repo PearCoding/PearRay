@@ -19,6 +19,8 @@ static void userBoundsFunc(const RTCBoundsFunctionArguments* args);
 static void userIntersectFuncN(const RTCIntersectFunctionNArguments* args);
 static void userOccludedFuncN(const RTCOccludedFunctionNArguments* args);
 
+constexpr float BBOX_EPS = 1e-4f;
+
 class QuadricEntity : public IEntity {
 public:
 	ENTITY_CLASS
@@ -28,7 +30,7 @@ public:
 				  const Vector3f& minB, const Vector3f& maxB,
 				  uint32 matID, uint32 lightID)
 		: IEntity(lightID, name, transform)
-		, mBoundingBox(minB, maxB)
+		, mBoundingBox(minB - Vector3f(BBOX_EPS, BBOX_EPS, BBOX_EPS), maxB + Vector3f(BBOX_EPS, BBOX_EPS, BBOX_EPS))
 		, mWorldBoundingBox(worldBoundingBox())
 		, mParameters(parameters)
 		, mMaterialID(matID)
@@ -282,7 +284,7 @@ public:
 
 				const float kz = 1 / height;
 
-				return std::make_shared<QuadricEntity>(name, ctx.transform(), std::array<float, 10>{ a2, a2, -h2, 0, 0, 0, 0, 0, -kz, -0.25f }, minB, maxB, matID, emsID);
+				return std::make_shared<QuadricEntity>(name, ctx.transform(), std::array<float, 10>{ a2, a2, -h2, 0, 0, 0, 0, 0, kz, -0.25f }, minB, maxB, matID, emsID);
 			} else {
 				const Vector3f minB = Vector3f(-radius, -radius, 0);
 				const Vector3f maxB = Vector3f(radius, radius, height);
