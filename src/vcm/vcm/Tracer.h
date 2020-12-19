@@ -17,6 +17,8 @@
 
 namespace PR {
 namespace VCM {
+
+// This is based on http://www.smallvcm.com/
 template <bool UseMerging, MISMode Mode = MM_Balance>
 class Tracer {
 public:
@@ -295,9 +297,8 @@ private:
 
 		path.addToken(sout.Type);
 
-		const Vector3f L		  = sout.globalL(ip);
-		const bool isDelta		  = sout.isDelta();
-		current.OnlySpecularSoFar = current.OnlySpecularSoFar && isDelta;
+		const Vector3f L   = sout.globalL(ip);
+		const bool isDelta = sout.isDelta();
 
 		if (sout.Weight.isZero()) {
 			path.popToken();
@@ -743,7 +744,7 @@ private:
 			const float lightRoulette = mLightRR.probability(vertex.IP.Ray.IterationDepth + 1);
 
 			// Apply shading
-			float cameraForwardPDF_S;
+			float cameraForwardPDF_S; // == lightBackwardPDF_S
 			float cameraBackwardPDF_S;
 			MaterialScatteringType cameraScatteringType; // Ignore
 			const SpectralBlob cameraW = extractMaterial(tctx, cameraIP, cameraMaterial, L, cameraForwardPDF_S, cameraBackwardPDF_S, cameraScatteringType);
@@ -804,12 +805,6 @@ private:
 		// If directly visible from camera, do not calculate mis weights
 		if (cameraPathLength == 1) {
 			tctx.Session.pushSpectralFragment(1, current.Throughput, radiance, cameraIP.Ray, tctx.ThreadContext.CameraPath);
-			return;
-		}
-
-		if constexpr (UseMerging) {
-			if (current.OnlySpecularSoFar)
-				tctx.Session.pushSpectralFragment(1, current.Throughput, radiance, cameraIP.Ray, tctx.ThreadContext.CameraPath);
 			return;
 		}
 
@@ -880,12 +875,6 @@ private:
 		// If directly visible from camera, do not calculate mis weights
 		if (cameraPathLength == 1) {
 			tctx.Session.pushSpectralFragment(1, current.Throughput, radiance, ray, tctx.ThreadContext.CameraPath);
-			return;
-		}
-
-		if constexpr (UseMerging) {
-			if (current.OnlySpecularSoFar)
-				tctx.Session.pushSpectralFragment(1, current.Throughput, radiance, ray, tctx.ThreadContext.CameraPath);
 			return;
 		}
 

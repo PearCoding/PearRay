@@ -10,7 +10,6 @@ struct BaseTraversalContext {
 	float MIS_VCM			= 0;
 	float MIS_VC			= 0;
 	float MIS_VM			= 0;
-	bool OnlySpecularSoFar	= true;
 };
 
 struct CameraTraversalContext : public BaseTraversalContext {
