@@ -4,6 +4,10 @@
 #include <QPainter>
 #include <QWheelEvent>
 
+#ifndef QT_NO_CONTEXTMENU
+#include <QMenu>
+#endif
+
 #include <cmath>
 
 namespace PR {
@@ -34,6 +38,12 @@ constexpr int KNOB_W   = 10;
 constexpr int BORDER_W = 5;
 constexpr int MIN_W	   = BORDER_W * 2 + KNOB_W * 2;
 
+constexpr QRgb KNOB_COLOR				= qRgb(78, 167, 245);
+constexpr QRgb KNOB_COLOR_INACTIVE		= qRgb(169, 204, 235);
+constexpr QRgb SLIDE_BAR_COLOR			= qRgb(52, 149, 235);
+constexpr QRgb SLIDE_BAR_COLOR_INACTIVE = qRgb(121, 168, 209);
+constexpr QRgb SLIDE_P					= qRgb(27, 91, 148);
+
 RangeSlider::DrawStyle RangeSlider::calculateStyle() const
 {
 	DrawStyle sty;
@@ -48,6 +58,10 @@ RangeSlider::DrawStyle RangeSlider::calculateStyle() const
 
 	sty.LeftKnobStart  = sty.SlideStart - KNOB_W;
 	sty.RightKnobStart = sty.SlideEnd + 1;
+
+	sty.SlideBarColor  = isEnabled() ? SLIDE_BAR_COLOR : SLIDE_BAR_COLOR_INACTIVE;
+	sty.SlideKnobColor = isEnabled() ? KNOB_COLOR : KNOB_COLOR_INACTIVE;
+	sty.TextColor	   = isEnabled() ? Qt::black : Qt::gray;
 
 	return sty;
 }
@@ -99,21 +113,19 @@ void RangeSlider::setMaxValue(float f)
 	setRightValue(mRight);
 }
 
-constexpr QRgb KNOB_C  = qRgb(78, 167, 245);
-constexpr QRgb SLIDE_B = qRgb(52, 149, 235);
-constexpr QRgb SLIDE_P = qRgb(27, 91, 148);
-
 void RangeSlider::paintEvent(QPaintEvent* event)
 {
 	Q_UNUSED(event);
-	int h		  = height();
-	DrawStyle sty = calculateStyle();
+	int h				= height();
+	const QRect content = QRect(0, 0, width() - 1, h - 1);
+	const QString text	= QString("%1 | %2").arg(mLeft, 0, 'g', 3).arg(mRight, 0, 'g', 3);
+	DrawStyle sty		= calculateStyle();
 
 	QPainter painter(this);
 
 	// Background
 	painter.setBrush(QBrush(Qt::gray));
-	painter.drawRect(QRect(0, 0, width() - 1, h - 1));
+	painter.drawRect(content);
 
 	// Border
 	painter.setBrush(QBrush(Qt::darkGray));
@@ -122,18 +134,20 @@ void RangeSlider::paintEvent(QPaintEvent* event)
 
 	painter.setPen(QPen(SLIDE_P));
 	// Knob Left
-	painter.setBrush(QBrush(KNOB_C));
+	painter.setBrush(QBrush(sty.SlideKnobColor));
 	painter.drawRect(QRect(sty.LeftKnobStart, 1, KNOB_W - 1, h - 3));
 
 	// Knob Right
 	painter.drawRect(QRect(sty.RightKnobStart, 1, KNOB_W - 1, h - 3));
 
 	// Slide
-	painter.setBrush(QBrush(SLIDE_B));
+	painter.setBrush(QBrush(sty.SlideBarColor));
 	painter.drawRect(QRect(sty.SlideStart, 1,
 						   sty.SlideEnd - sty.SlideStart, h - 3));
 
-	painter.setBrush(QBrush(Qt::darkGray));
+	// Text
+	painter.setPen(QPen(sty.TextColor));
+	painter.drawText(content, text, QTextOption(Qt::AlignCenter));
 }
 
 void RangeSlider::mousePressEvent(QMouseEvent* event)
@@ -210,5 +224,15 @@ void RangeSlider::pan(int dx)
 		repaint();
 	}
 }
+
+#ifndef QT_NO_CONTEXTMENU
+void RangeSlider::contextMenuEvent(QContextMenuEvent* event)
+{
+	QMenu menu(this);
+	menu.addAction("Normal", [this]() { this->setLeftValue(0); this->setRightValue(1); this->update(); });
+	menu.addAction("Fill", [this]() { this->setLeftValue(-PR_INF); this->setRightValue(PR_INF); this->update(); });
+	menu.exec(event->globalPos());
+}
+#endif // QT_NO_CONTEXTMENU
 } // namespace UI
 } // namespace PR

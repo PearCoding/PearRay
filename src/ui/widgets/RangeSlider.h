@@ -36,12 +36,19 @@ protected:
 	void mouseMoveEvent(QMouseEvent* event) override;
 	void wheelEvent(QWheelEvent* event) override;
 
+#ifndef QT_NO_CONTEXTMENU
+	void contextMenuEvent(QContextMenuEvent* event) override;
+#endif // QT_NO_CONTEXTMENU
+
 private:
 	struct DrawStyle {
 		int LeftKnobStart;
 		int RightKnobStart;
 		int SlideStart;
 		int SlideEnd;
+		QColor SlideBarColor;
+		QColor SlideKnobColor;
+		QColor TextColor;
 	};
 	DrawStyle calculateStyle() const;
 

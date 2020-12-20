@@ -41,10 +41,10 @@ set(Src
   properties/SelectionProperty.cpp
   properties/TextProperty.cpp
   widgets/ColorButton.cpp
+  widgets/ImagePipelineEditor.cpp
   widgets/ImageView.cpp
   widgets/PropertyView.cpp
   widgets/RangeSlider.cpp
-  widgets/ToneMapperEditor.cpp
   widgets/View3DWidget.cpp)
 
 set(Hdr
@@ -77,7 +77,7 @@ set(Hdr
   3d/shader/WireframeShader.h
   io/EXRFile.h
   io/ImageBufferView.h
-  mapper/ToneMapper.h
+  mapper/ImagePipeline.h
   properties/BoolProperty.h
   properties/ColorProperty.h
   properties/DoubleProperty.h
@@ -90,14 +90,14 @@ set(Hdr
   properties/SelectionProperty.h
   properties/TextProperty.h
   widgets/ColorButton.h
+  widgets/ImagePipelineEditor.h
   widgets/ImageView.h
   widgets/PropertyView.h
   widgets/RangeSlider.h
-  widgets/ToneMapperEditor.h
   widgets/View3DWidget.h)
 
 set(Fms
-  ui/ToneMapperEditor.ui)
+  ui/ImagePipelineEditor.ui)
 
 QT5_WRAP_CPP(Hdr_Moc ${Hdr})
 QT5_WRAP_UI(Fms_Hdr ${Fms})

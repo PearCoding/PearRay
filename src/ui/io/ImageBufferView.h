@@ -6,7 +6,7 @@
 
 namespace PR {
 namespace UI {
-class ToneMapper;
+class ImagePipeline;
 
 // TODO: Split this into channel count specific classes!
 class PR_LIB_UI ImageBufferView {
@@ -20,11 +20,8 @@ public:
 
 	virtual float value(int x, int y, int channel) const = 0;
 
-	void fillImage(QImage& image, const ToneMapper& mapper,
+	void fillImage(QImage& image, const ImagePipeline& mapper,
 				   quint32 channelOffset = 0, quint8 channelMask = 0xFF) const;
-
-	void getMappedMinMax(float& min, float& max, const ToneMapper& mapper) const;
-	void getMinMaxOfChannel(float& min, float& max, int channel) const;
 };
 } // namespace UI
 } // namespace PR

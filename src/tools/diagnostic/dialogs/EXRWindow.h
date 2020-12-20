@@ -24,7 +24,6 @@ private slots:
 	void layerChanged();
 	void exportImage();
 	void updateMapper();
-	void updateMapperFormat();
 
 private:
 	void updateImage(int layerID);

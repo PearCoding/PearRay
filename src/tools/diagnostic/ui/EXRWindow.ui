@@ -95,7 +95,7 @@
              <string>Reset View</string>
             </property>
             <property name="icon">
-             <iconset resource="../resources/icons.qrc">
+             <iconset resource="../../../ui/resources/icons.qrc">
               <normaloff>:/ic_settings_overscan_black_24dp_2x.png</normaloff>:/ic_settings_overscan_black_24dp_2x.png</iconset>
             </property>
            </widget>
@@ -106,7 +106,7 @@
              <string>Original Scale</string>
             </property>
             <property name="icon">
-             <iconset resource="../resources/icons.qrc">
+             <iconset resource="../../../ui/resources/icons.qrc">
               <normaloff>:/ic_aspect_ratio_black_24dp_2x.png</normaloff>:/ic_aspect_ratio_black_24dp_2x.png</iconset>
             </property>
            </widget>
@@ -117,7 +117,7 @@
              <string>Export Image</string>
             </property>
             <property name="icon">
-             <iconset resource="../resources/icons.qrc">
+             <iconset resource="../../../ui/resources/icons.qrc">
               <normaloff>:/ic_file_download_black_24dp_2x.png</normaloff>:/ic_file_download_black_24dp_2x.png</iconset>
             </property>
            </widget>
@@ -139,7 +139,7 @@
         </widget>
        </item>
        <item>
-        <widget class="PR::UI::ToneMapperEditor" name="toneMapperEditor" native="true">
+        <widget class="PR::UI::ImagePipelineEditor" name="imagePipelineEditor" native="true">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -211,9 +211,9 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>PR::UI::ToneMapperEditor</class>
+   <class>PR::UI::ImagePipelineEditor</class>
    <extends>QWidget</extends>
-   <header>widgets/ToneMapperEditor.h</header>
+   <header>widgets/ImagePipelineEditor.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

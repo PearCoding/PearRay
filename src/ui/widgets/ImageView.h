@@ -1,6 +1,6 @@
 #pragma once
 
-#include "mapper/ToneMapper.h"
+#include "mapper/ImagePipeline.h"
 
 #include <QSignalMapper>
 #include <QWidget>
@@ -17,7 +17,7 @@ public:
 
 	inline std::shared_ptr<ImageBufferView> view() const { return mView; }
 	void setView(const std::shared_ptr<ImageBufferView>& view);
-	void setMapper(const ToneMapper& mapper);
+	void setPipeline(const ImagePipeline& mapper);
 
 	void exportImage(const QString& path) const;
 
@@ -60,7 +60,7 @@ private:
 	QPixmap mBackground;
 
 	std::shared_ptr<ImageBufferView> mView;
-	ToneMapper mMapper;
+	ImagePipeline mPipeline;
 };
 } // namespace UI
 } // namespace PR
