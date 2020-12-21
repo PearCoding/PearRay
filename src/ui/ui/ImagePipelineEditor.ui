@@ -95,6 +95,11 @@ QCheckBox::indicator { subcontrol-origin: padding; subcontrol-position: left cen
         </item>
         <item>
          <property name="text">
+          <string>Adobe RGB</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
           <string>Lab</string>
          </property>
         </item>
@@ -220,6 +225,11 @@ QCheckBox::indicator { subcontrol-origin: padding; subcontrol-position: left cen
         <item>
          <property name="text">
           <string>sRGB</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Adobe RGB</string>
          </property>
         </item>
         <item>

@@ -7,9 +7,11 @@
 
 namespace PR {
 namespace UI {
+// Mapping mostly based on http://www.brucelindbloom.com/
 enum ColorFormat {
 	CF_XYZ = 0,
 	CF_SRGB,
+	CF_AdobeRGB,
 	CF_LAB,
 	CF_LUV
 };
@@ -119,9 +121,50 @@ private:
 			y = +2.126390e-01f * r + 7.151687e-01f * g + 7.219232e-02f * b;
 			z = +1.933082e-02f * r + 1.191948e-01f * g + 9.505322e-01f * b;
 			break;
+		case CF_AdobeRGB:
+			x = 0.5767309 * r + 0.1855540 * g + 0.1881852 * b;
+			y = 0.2973769 * r + 0.6273491 * g + 0.0752741 * b;
+			z = 0.0270343 * r + 0.0706872 * g + 0.9911085 * b;
+			break;
 		case CF_LAB: {
+			// Maybe from 0,1 to common range?
+			const float L = r;
+			const float A = g;
+			const float B = b;
+
+			const float fy = (L + 16) / 116;
+			const float fx = A / 500 + fy;
+			const float fz = fy - B / 200;
+
+			const float fx3 = fx * fx * fx;
+			const float fz3 = fz * fz * fz;
+
+			const float xr = fx3 <= CIE_ETA ? (116 * fx - 16) / CIE_KAPPA : fx3;
+			const float zr = fz3 <= CIE_ETA ? (116 * fz - 16) / CIE_KAPPA : fz3;
+			const float yr = L <= CIE_ETA * CIE_KAPPA ? L / CIE_KAPPA : std::pow((L + 16) / 116, 3);
+
+			x = REF_WHITE_X * xr;
+			y = REF_WHITE_Y * yr;
+			z = REF_WHITE_Z * zr;
 		} break;
 		case CF_LUV: {
+			// Maybe from 0,1 to common range?
+			const float L = r;
+			const float U = g;
+			const float V = b;
+
+			const float ur = 4 * REF_WHITE_X / (REF_WHITE_X + 15 * REF_WHITE_Y + 3 * REF_WHITE_Z);
+			const float vr = 9 * REF_WHITE_Y / (REF_WHITE_X + 15 * REF_WHITE_Y + 3 * REF_WHITE_Z);
+
+			const float y = L <= CIE_ETA * CIE_KAPPA ? L / CIE_KAPPA : std::pow((L + 16) / 116, 3);
+
+			const float A = (52 * L / (U + 13 * L * ur) - 1) / 3;
+			const float B = -5 * y;
+			const float C = -1 / 3.0f;
+			const float D = y * (39 * L / (V + 13 * L * vr) * 5);
+
+			x = (D - B) / (A - C);
+			z = x * A + B;
 		} break;
 		}
 	}
@@ -141,6 +184,11 @@ private:
 			r = +3.240970e+00f * x - 1.537383e+00f * y - 4.986108e-01f * z;
 			g = -9.692436e-01f * x + 1.875968e+00f * y + 4.155506e-02f * z;
 			b = +5.563008e-02f * x - 2.039770e-01f * y + 1.056972e+00f * z;
+			break;
+		case CF_AdobeRGB:
+			r = +2.0413690 * x - 0.5649464 * y - 0.3446944 * z;
+			g = -0.9692660 * x + 1.8760108 * y + 0.0415560 * z;
+			b = +0.0134474 * x - 0.1183897 * y + 1.0154096 * z;
 			break;
 		case CF_LAB: {
 			const float xr = x / REF_WHITE_X;
