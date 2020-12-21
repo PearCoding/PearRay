@@ -12,12 +12,20 @@ enum ColorFormat {
 	CF_SRGB
 };
 
+enum ToneMapping {
+	TM_None = 0,
+	TM_Reinhard,
+	TM_ModifiedReinhard,
+	TM_ACES
+};
+
 /* Pipeline:
- (1) Src to XYZ
- (2) Exposure + Offset
- (3) Range
- (4) XYZ to Dst
- (5) Gamma
+ (1) Range
+ (2) Src to XYZ
+ (3) Exposure + Offset
+ (4) Tone Mapping
+ (5) XYZ to Dst
+ (6) Gamma
 */
 class PR_LIB_UI ImagePipeline {
 public:
@@ -28,6 +36,7 @@ public:
 		, mMaxRange(0)
 		, mTripletFormatSrc(CF_XYZ)
 		, mTripletFormatDst(CF_XYZ)
+		, mToneMapping(TM_None)
 		, mGamma(-1)
 	{
 	}
@@ -37,6 +46,7 @@ public:
 	inline void setOffset(float offset) { mOffset = offset; }
 	inline void setMaxRange(float f) { mMaxRange = f; }
 	inline void setMinRange(float f) { mMinRange = f; }
+	inline void setToneMapping(ToneMapping tm) { mToneMapping = tm; }
 
 	inline void setTripletFormat(ColorFormat formatFrom, ColorFormat formatTo)
 	{
@@ -49,17 +59,29 @@ public:
 	inline void mapTriplet(float x, float y, float z, float& r, float& g, float& b) const
 	{
 		// (1)
+		x = mapRange(x);
+		y = mapRange(y);
+		z = mapRange(z);
+
+		// (2)
 		formatTripletToXYZ(mTripletFormatSrc, x, y, z, r, g, b);
 
-		// (2)+(3)
-		x = mapRange(applyExposureOffset(r));
-		y = mapRange(applyExposureOffset(g));
-		z = mapRange(applyExposureOffset(b));
+		// (3)
+		x = applyExposureOffset(r);
+		y = applyExposureOffset(g);
+		z = applyExposureOffset(b);
 
 		// (4)
-		formatTripletFromXYZ(mTripletFormatDst, x, y, z, r, g, b);
+		const float lum = mapTone(y);
+		const float f	= (std::abs(y) <= PR_EPSILON) ? 1.0f : lum / y;
+		x *= f;
+		y *= f;
+		z *= f;
 
 		// (5)
+		formatTripletFromXYZ(mTripletFormatDst, x, y, z, r, g, b);
+
+		// (6)
 		r = clamp01(applyGamma(r));
 		g = clamp01(applyGamma(g));
 		b = clamp01(applyGamma(b));
@@ -104,6 +126,40 @@ private:
 		}
 	}
 
+	inline float tm_reinhard(float x) const { return x / (1 + x); }
+
+	inline float tm_modified_reinhard(float x) const
+	{
+		constexpr float WhitePoint = 4.0f; // TODO: Make it a a parameter
+		return x * (1 + x / (WhitePoint * WhitePoint)) / (1 + x);
+	}
+
+	// https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/
+	inline float tm_aces(float x) const
+	{
+		float a = 2.51f;
+		float b = 0.03f;
+		float c = 2.43f;
+		float d = 0.59f;
+		float e = 0.14f;
+		return x * std::fma(a, x, b) / std::fma(std::fma(c, x, d), x, e);
+	}
+
+	inline float mapTone(float x) const
+	{
+		switch (mToneMapping) {
+		default:
+		case TM_None:
+			return x;
+		case TM_Reinhard:
+			return tm_reinhard(x);
+		case TM_ModifiedReinhard:
+			return tm_modified_reinhard(x);
+		case TM_ACES:
+			return tm_aces(x);
+		}
+	}
+
 	inline float mapRange(float val) const
 	{
 		if (mMinRange < mMaxRange)
@@ -131,6 +187,7 @@ private:
 	float mMaxRange;
 	ColorFormat mTripletFormatSrc;
 	ColorFormat mTripletFormatDst;
+	ToneMapping mToneMapping;
 	float mGamma;
 };
 } // namespace UI

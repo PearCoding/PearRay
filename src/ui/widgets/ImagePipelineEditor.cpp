@@ -17,10 +17,12 @@ ImagePipelineEditor::ImagePipelineEditor(QWidget* parent)
 	connect(ui->rangeSlider, SIGNAL(leftValueChanged(float)), this, SIGNAL(changed()));
 	connect(ui->rangeSlider, SIGNAL(rightValueChanged(float)), this, SIGNAL(changed()));
 
+	connect(ui->toneMapperCB, SIGNAL(currentIndexChanged(int)), this, SIGNAL(changed()));
 	connect(ui->formatToCB, SIGNAL(currentIndexChanged(int)), this, SIGNAL(changed()));
 	connect(ui->formatFromCB, SIGNAL(currentIndexChanged(int)), this, SIGNAL(changed()));
 
 	connect(ui->gammaCB, SIGNAL(stateChanged(int)), this, SIGNAL(changed()));
+	connect(ui->invertCB, SIGNAL(stateChanged(int)), this, SIGNAL(changed()));
 	connect(ui->gammaSB, SIGNAL(valueChanged(double)), this, SIGNAL(changed()));
 }
 
@@ -41,13 +43,19 @@ ImagePipeline ImagePipelineEditor::constructPipeline() const
 		mapper.setMaxRange(ui->rangeSlider->rightValue());
 	}
 
+	mapper.setToneMapping((ToneMapping)ui->toneMapperCB->currentIndex());
+
 	mapper.setTripletFormat((ColorFormat)ui->formatFromCB->currentIndex(),
 							(ColorFormat)ui->formatToCB->currentIndex());
 
-	if (ui->gammaCB->isChecked())
-		mapper.setGamma(ui->gammaSB->value());
-	else
+	if (ui->gammaCB->isChecked()) {
+		if (ui->invertCB->isChecked())
+			mapper.setGamma(1.0f / ui->gammaSB->value());
+		else
+			mapper.setGamma(ui->gammaSB->value());
+	} else {
 		mapper.setGamma(-1);
+	}
 
 	return mapper;
 }
