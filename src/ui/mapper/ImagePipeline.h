@@ -9,8 +9,23 @@ namespace PR {
 namespace UI {
 enum ColorFormat {
 	CF_XYZ = 0,
-	CF_SRGB
+	CF_SRGB,
+	CF_LAB,
+	CF_LUV
 };
+
+// TODO: Maybe make it adaptable?
+/*constexpr float REF_WHITE_X = 1 / 3.0f;
+constexpr float REF_WHITE_Y = 1 / 3.0f;
+constexpr float REF_WHITE_Z = 1 / 3.0f;*/
+
+// D65 2deg
+constexpr float REF_WHITE_X = 0.31271f;
+constexpr float REF_WHITE_Y = 0.32902f;
+constexpr float REF_WHITE_Z = 0.35827f;
+
+constexpr float CIE_ETA	  = 0.008856f;
+constexpr float CIE_KAPPA = 903.3f;
 
 enum ToneMapping {
 	TM_None = 0,
@@ -104,6 +119,10 @@ private:
 			y = +2.126390e-01f * r + 7.151687e-01f * g + 7.219232e-02f * b;
 			z = +1.933082e-02f * r + 1.191948e-01f * g + 9.505322e-01f * b;
 			break;
+		case CF_LAB: {
+		} break;
+		case CF_LUV: {
+		} break;
 		}
 	}
 
@@ -123,6 +142,41 @@ private:
 			g = -9.692436e-01f * x + 1.875968e+00f * y + 4.155506e-02f * z;
 			b = +5.563008e-02f * x - 2.039770e-01f * y + 1.056972e+00f * z;
 			break;
+		case CF_LAB: {
+			const float xr = x / REF_WHITE_X;
+			const float yr = y / REF_WHITE_Y;
+			const float zr = z / REF_WHITE_Z;
+
+			const float fx = xr <= CIE_ETA ? (CIE_KAPPA * xr + 16) / 116.0f : std::cbrt(xr);
+			const float fy = yr <= CIE_ETA ? (CIE_KAPPA * yr + 16) / 116.0f : std::cbrt(yr);
+			const float fz = zr <= CIE_ETA ? (CIE_KAPPA * zr + 16) / 116.0f : std::cbrt(zr);
+
+			const float L = 116 * fy - 16;
+			const float A = 500 * (fx - fy);
+			const float B = 200 * (fy - fz);
+
+			r = L / 100.0f;			// [0, 100] => [0, 1]
+			g = (A + 128) / 255.0f; // [-128, 127] => [0, 1]
+			b = (B + 128) / 255.0f; // [-128, 127] => [0, 1]
+		} break;
+		case CF_LUV: {
+			const float yr = y / REF_WHITE_Y;
+			const float fy = yr <= CIE_ETA ? (CIE_KAPPA * yr + 16) / 116.0f : std::cbrt(yr);
+			const float L  = 116 * fy - 16;
+
+			const float uc = 4 * x / (x + 15 * y + 3 * z);
+			const float vc = 9 * y / (x + 15 * y + 3 * z);
+
+			const float ur = 4 * REF_WHITE_X / (REF_WHITE_X + 15 * REF_WHITE_Y + 3 * REF_WHITE_Z);
+			const float vr = 9 * REF_WHITE_Y / (REF_WHITE_X + 15 * REF_WHITE_Y + 3 * REF_WHITE_Z);
+
+			const float u = 13 * L * (uc - ur);
+			const float v = 13 * L * (vc - vr);
+
+			r = L / 100.0f;			// [0, 100] => [0, 1]
+			g = (u + 100) / 200.0f; // [-100, 100] => [0, 1]
+			b = (v + 100) / 200.0f; // [-100, 100] => [0, 1]
+		} break;
 		}
 	}
 
