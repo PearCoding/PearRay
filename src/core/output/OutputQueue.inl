@@ -10,17 +10,17 @@ inline void OutputQueue::pushSpectralFragment(const Point2i& p, float mis, const
 											  const SpectralBlob& wavelengths, bool isMono, uint32 rayGroupID, const LightPath& path)
 {
 #ifdef PR_CHECK_NANS
-	PR_ASSERT(!mis.hasNaN(), "Given MIS term has NaNs");
+	PR_ASSERT(!std::isnan(mis), "Given MIS term has NaNs");
 	PR_ASSERT(!importance.hasNaN(), "Given Importance term has NaNs");
 	PR_ASSERT(!radiance.hasNaN(), "Given Radiance term has NaNs");
 #endif
 #ifdef PR_CHECK_INFS
-	PR_ASSERT(!mis.isInf().any(), "Given MIS term has Infs");
+	PR_ASSERT(!std::isinf(mis), "Given MIS term has Infs");
 	PR_ASSERT(!importance.isInf().any(), "Given Importance term has Infs");
 	PR_ASSERT(!radiance.isInf().any(), "Given Radiance term has Infs");
 #endif
 #ifdef PR_CHECK_NEGS
-	PR_ASSERT(!((mis < -PR_EPSILON).any()), "Given MIS term has Negatives");
+	PR_ASSERT(!(mis < -PR_EPSILON), "Given MIS term has Negatives");
 	PR_ASSERT(!((importance < -PR_EPSILON).any()), "Given Importance term has Negatives");
 	PR_ASSERT(!((radiance < -PR_EPSILON).any()), "Given Radiance term has Negatives");
 #endif
