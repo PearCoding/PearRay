@@ -14,7 +14,7 @@
 	  :radius 1
 	)
 	(integrator 
-	  :type 'direct'
+	  :type 'vcm'
 	  :max_ray_depth 8
 	)
 	; Outputs

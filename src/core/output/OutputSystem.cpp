@@ -37,6 +37,7 @@ std::shared_ptr<LocalOutputSystem> OutputSystem::createLocal(const Size2i& size)
 
 void OutputSystem::mergeLocal(const Point2i& p, const std::shared_ptr<LocalOutputSystem>& local)
 {
+	local->beforeMerge();
 	for (size_t i = 0; i < mOutputDevices.size(); ++i)
 		mOutputDevices[i]->mergeLocal(p, local->localOutputDevice(i));
 }

@@ -17,5 +17,7 @@ public:
 	virtual void commitCustom3D(uint32 aov_id, const OutputCustom3DEntry* entries, size_t entrycount)										 = 0;
 	virtual void commitCustom1D(uint32 aov_id, const OutputCustom1DEntry* entries, size_t entrycount)										 = 0;
 	virtual void commitCustomCounter(uint32 aov_id, const OutputCustomCounterEntry* entries, size_t entrycount)								 = 0;
+
+	virtual void beforeMerge() {}
 };
 } // namespace PR

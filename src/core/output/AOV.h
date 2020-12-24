@@ -34,6 +34,7 @@ enum AOV1D {
 
 enum AOVCounter {
 	AOV_SampleCount = 0,
+	AOV_PixelContributionCount, // How many times a pixel was contributed to
 	AOV_Feedback,
 
 	AOV_COUNTER_COUNT

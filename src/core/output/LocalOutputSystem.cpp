@@ -74,4 +74,10 @@ std::shared_ptr<LocalOutputDevice> LocalOutputSystem::localOutputDevice(size_t i
 	PR_ASSERT(i < mLocalOutputDevices.size(), "Invalid local output system configuration!");
 	return mLocalOutputDevices[i];
 }
+
+void LocalOutputSystem::beforeMerge()
+{
+	for (const auto& device : mLocalOutputDevices)
+		device->beforeMerge();
+}
 } // namespace PR

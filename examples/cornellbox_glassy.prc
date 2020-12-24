@@ -6,7 +6,7 @@
 	:camera 'Camera'
 	; Settings
 	(integrator
-		:type 'direct'
+		:type 'vcm'
 		:max_ray_depth 16
 		:max_camera_ray_depth 4
 		:max_light_ray_depth 4

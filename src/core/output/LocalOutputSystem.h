@@ -29,6 +29,8 @@ public:
 	void commitCustom1D(uint32 aov_id, const OutputCustom1DEntry* entries, size_t entrycount);
 	void commitCustomCounter(uint32 aov_id, const OutputCustomCounterEntry* entries, size_t entrycount);
 
+	void beforeMerge();
+	
 protected:
 	void addLocalOutputDevice(const std::shared_ptr<LocalOutputDevice>& device);
 	std::shared_ptr<LocalOutputDevice> localOutputDevice(size_t i) const;
