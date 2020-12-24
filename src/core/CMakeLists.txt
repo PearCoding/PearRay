@@ -4,36 +4,31 @@ set(PR_Src
   ServiceObserver.h
   ServiceObserver.inl
   archive/IArchive.h
-  buffer/AOV.h
+  buffer/AsyncFrameBuffer.h
   buffer/ColorBuffer.cpp
   buffer/ColorBuffer.h
-  buffer/Feedback.h
   buffer/FrameBuffer.h
-  buffer/FrameBufferSystem.cpp
-  buffer/FrameBufferSystem.h
-  buffer/FrameBufferBucket.cpp
-  buffer/FrameBufferBucket.h
-  buffer/FrameBufferContainer.cpp
-  buffer/FrameBufferContainer.h
-  buffer/FrameBufferContainer.inl
+  buffer/PixelLock.h
   buffer/VarianceEstimator.h
   buffer/VarianceEstimator.inl
-  cache/ICachable.h
-  cache/Cache.h
   cache/Cache.cpp
-  cache/ISerializeCachable.h
+  cache/Cache.h
+  cache/ICachable.h
   cache/ISerializeCachable.cpp
+  cache/ISerializeCachable.h
   camera/ICamera.cpp
   camera/ICamera.h
+  container/HashGrid.h
+  container/HashGrid.inl
   container/kdTreeBuilder.cpp
   container/kdTreeBuilder.h
   container/kdTreeBuilderNaive.cpp
   container/kdTreeBuilderNaive.h
-  container/HashGrid.h
-  container/HashGrid.inl
   container/PointKdTree.h
   container/PointKdTree.inl
   container/PositionGetter.h
+  emission/IEmission.cpp
+  emission/IEmission.h
   entity/GeometryRepr.h
   entity/IEntity.cpp
   entity/IEntity.h
@@ -41,8 +36,6 @@ set(PR_Src
   entity/ITransformable.cpp
   entity/ITransformable.h
   entity/ITransformable.inl
-  emission/IEmission.cpp
-  emission/IEmission.h
   filter/FilterCache.h
   filter/IFilter.h
   filter/IFilterFactory.h
@@ -83,9 +76,18 @@ set(PR_Src
   mesh/MeshBase.h
   mesh/MeshBase.inl
   mesh/MeshInfo.h
-  output/OutputQueue.cpp
-  output/OutputQueue.h
-  output/OutputQueue.inl
+  output/AOV.h
+  output/Feedback.h
+  output/LocalOutputDevice.h
+  output/LocalOutputQueue.cpp
+  output/LocalOutputQueue.h
+  output/LocalOutputQueue.inl
+  output/LocalOutputSystem.cpp
+  output/LocalOutputSystem.h
+  output/OutputData.h
+  output/OutputDevice.h
+  output/OutputSystem.cpp
+  output/OutputSystem.h
   path/LightPath.cpp
   path/LightPath.h
   path/LightPath.inl
@@ -119,11 +121,10 @@ set(PR_Src
   renderer/RenderEnums.h
   renderer/RenderFactory.cpp
   renderer/RenderFactory.h
-  renderer/RenderSettings.h
-  renderer/RenderTileStatistics.h
-  renderer/RenderStatus.h
   renderer/RenderSettings.cpp
+  renderer/RenderSettings.h
   renderer/RenderStatus.cpp
+  renderer/RenderStatus.h
   renderer/RenderThread.cpp
   renderer/RenderThread.h
   renderer/RenderThreadStatistics.cpp
@@ -135,6 +136,7 @@ set(PR_Src
   renderer/RenderTileSession.cpp
   renderer/RenderTileSession.h
   renderer/RenderTileStatistics.cpp
+  renderer/RenderTileStatistics.h
   renderer/RenderTileStatistics.h
   renderer/StreamPipeline.cpp
   renderer/StreamPipeline.h
@@ -148,6 +150,13 @@ set(PR_Src
   scene/Scene.h
   scene/SceneDatabase.cpp
   scene/SceneDatabase.h
+  shader/INode.h
+  shader/NodeUtils.cpp
+  shader/NodeUtils.h
+  shader/ShadingContext.h
+  shader/ShadingGroup.cpp
+  shader/ShadingGroup.h
+  shader/ShadingGroupBlock.h
   spectral/Blackbody.h
   spectral/CIE.cpp
   spectral/CIE.h
@@ -165,21 +174,14 @@ set(PR_Src
   spectral/SpectralUpsampler.h
   spectral/ToneMapper.cpp
   spectral/ToneMapper.h
-  shader/INode.h
-  shader/NodeUtils.h
-  shader/NodeUtils.cpp
-  shader/ShadingContext.h
-  shader/ShadingGroup.cpp
-  shader/ShadingGroup.h
-  shader/ShadingGroupBlock.h
   thread/Thread.cpp
   thread/Thread.h
   thread/Thread.inl
-  trace/IntersectionPoint.h
   trace/HitEntry.h
   trace/HitPoint.h
   trace/HitStream.cpp
   trace/HitStream.h
+  trace/IntersectionPoint.h
 )
 
 add_library(pr_lib_core ${PR_Src})

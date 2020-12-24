@@ -42,9 +42,9 @@ SPECSCENESTR = """
         :type 'orthographic'
         :width 2
         :height 2
-        :localDirection [0,0,1]
-        :localUp [0,1,0]
-        :localRight [1,0,0]
+        :local_direction [0,0,1]
+        :local_up [0,1,0]
+        :local_right [1,0,0]
         :position [0,0,-1.0005]
     )
     ; Background
@@ -109,9 +109,9 @@ FULLSCENESTR = """
         :type 'orthographic'
         :width 2
         :height 2
-        :localDirection [0,0,1]
-        :localUp [0,1,0]
-        :localRight [1,0,0]
+        :local_direction [0,0,1]
+        :local_up [0,1,0]
+        :local_right [1,0,0]
         :position [0,0,-1.00005]
     )
     ; Background
@@ -154,12 +154,13 @@ class TestWhitefurnance(unittest.TestCase):
         fct = env.createRenderFactory()
         intr = env.createSelectedIntegrator()
         ctx = fct.create(intr)
+        output = env.createAndAssignFrameOutputDevice(ctx)
         env.setup(ctx)
 
         ctx.start(8, 8)
         ctx.waitForFinish()
 
-        return np.divide(ctx.output.spectral, ctx.output.pixelweight)
+        return np.divide(output.spectral, output.pixelweight)
 
     def mean(self, img):
         intr = 0

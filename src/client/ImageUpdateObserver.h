@@ -10,7 +10,7 @@ public:
 	ImageUpdateObserver(Environment* environment);
 	virtual ~ImageUpdateObserver();
 
-	void begin(RenderContext* renderContext, const ProgramSettings& settings) override;
+	void begin(RenderContext* renderContext, FrameOutputDevice* outputDevice, const ProgramSettings& settings) override;
 	void end() override;
 	void update(const UpdateInfo& info) override;
 	void onIteration(const UpdateInfo& info) override;
@@ -19,6 +19,7 @@ private:
 	void save(const UpdateInfo& info);
 
 	RenderContext* mRenderContext;
+	FrameOutputDevice* mFrameOutputDevice;
 	Environment* mEnvironment;
 	ToneMapper mToneMapper;
 

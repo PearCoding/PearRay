@@ -6,7 +6,6 @@
 #include "RenderTile.h"
 #include "RenderTileMap.h"
 #include "RenderTileSession.h"
-#include "buffer/FrameBufferSystem.h"
 #include "camera/ICamera.h"
 #include "entity/IEntity.h"
 #include "infinitelight/IInfiniteLight.h"
@@ -15,6 +14,7 @@
 #include "material/IMaterial.h"
 #include "math/Projection.h"
 #include "math/Scattering.h"
+#include "output/OutputSystem.h"
 #include "scene/Scene.h"
 #include "trace/IntersectionPoint.h"
 
@@ -27,7 +27,7 @@ RenderContext::RenderContext(uint32 index, const Point2i& viewOffset, const Size
 	, mViewOffset(viewOffset)
 	, mViewSize(viewSize)
 	, mScene(scene)
-	, mOutputMap()
+	, mOutputSystem(std::make_unique<OutputSystem>(viewSize))
 	, mTileMap()
 	, mThreadsWaitingForIteration(0)
 	, mIncrementalCurrentIteration(0)
@@ -41,10 +41,6 @@ RenderContext::RenderContext(uint32 index, const Point2i& viewOffset, const Size
 	PR_ASSERT(mIntegrator, "Integrator can not be NULL!");
 	PR_ASSERT(mScene, "Scene can not be NULL!");
 	reset();
-
-	mOutputMap = std::make_unique<FrameBufferSystem>(
-		settings.createPixelFilter(),
-		viewSize, 3, settings.spectralMono); // TODO: Should be encapsulated by an output device
 }
 
 RenderContext::~RenderContext()
@@ -56,16 +52,13 @@ void RenderContext::reset()
 {
 	PR_PROFILE_THIS;
 
-	for (RenderThread* thread : mThreads)
-		delete thread;
+	mThreads.clear();
 
 	mShouldStop					 = false;
 	mShouldSoftStop				 = false;
 	mOutputClearRequest			 = false;
 	mThreadsWaitingForIteration	 = 0;
 	mIncrementalCurrentIteration = 0;
-
-	mThreads.clear();
 }
 
 void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
@@ -76,8 +69,6 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 
 	reset();
 
-	PR_ASSERT(mOutputMap, "Output Map must be already created!");
-
 	/* Setup threads */
 	uint32 threadCount = Thread::hardwareThreadCount();
 	if (threads < 0)
@@ -85,10 +76,8 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 	else if (threads > 0)
 		threadCount = threads;
 
-	for (uint32 i = 0; i < threadCount; ++i) {
-		RenderThread* thread = new RenderThread(i, this);
-		mThreads.push_back(thread);
-	}
+	for (uint32 i = 0; i < threadCount; ++i)
+		mThreads.emplace_back(std::make_unique<RenderThread>(i, this));
 
 	// Setup light sampler
 	mLightSampler = std::make_shared<LightSampler>(mScene.get());
@@ -99,7 +88,7 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 
 	// Init modules
 	mIntegrator->onInit(this);
-	mOutputMap->clear();
+	mOutputSystem->clear();
 
 	mIntegratorPassCount = mIntegrator->configuration().PassCount;
 
@@ -130,7 +119,7 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 	for (const auto& clb : mIterationCallbacks)
 		clb(RenderIteration{ 0, 0 });
 	PR_LOG(L_INFO) << "Starting threads." << std::endl;
-	for (RenderThread* thread : mThreads)
+	for (const auto& thread : mThreads)
 		thread->start();
 }
 
@@ -161,7 +150,8 @@ std::vector<Rect2i> RenderContext::currentTiles() const
 	std::lock_guard<std::mutex> guard(mTileMutex);
 
 	std::vector<Rect2i> list;
-	for (RenderThread* thread : mThreads) {
+
+	for (const auto& thread : mThreads) {
 		RenderTile* tile = thread->currentTile();
 		if (tile)
 			list.push_back(Rect2i(tile->start(), tile->viewSize()));
@@ -173,7 +163,7 @@ bool RenderContext::isFinished() const
 {
 	PR_PROFILE_THIS;
 
-	for (RenderThread* thread : mThreads) {
+	for (const auto& thread : mThreads) {
 		if (thread->state() != Thread::S_Stopped)
 			return false;
 	}
@@ -189,7 +179,7 @@ void RenderContext::waitForFinish()
 		std::this_thread::yield();*/
 
 	// Wait for all threads to stop
-	for (RenderThread* thread : mThreads)
+	for (const auto& thread : mThreads)
 		thread->join();
 }
 
@@ -211,7 +201,7 @@ void RenderContext::requestInternalStop()
 	mShouldStop = true;
 
 	// Request all threads to stop
-	for (RenderThread* thread : mThreads)
+	for (const auto& thread : mThreads)
 		thread->requestStop();
 }
 
@@ -222,7 +212,7 @@ void RenderContext::stop()
 	requestStop();
 
 	// Wait for all threads to stop
-	for (RenderThread* thread : mThreads)
+	for (const auto& thread : mThreads)
 		thread->join();
 }
 
@@ -274,7 +264,7 @@ void RenderContext::handleNextIteration()
 
 	if (mOutputClearRequest.exchange(false)) {
 		PR_LOG(L_DEBUG) << "Clearing output buffer" << std::endl;
-		mOutputMap->clear(true);
+		mOutputSystem->clear(true);
 	}
 
 	++mIncrementalCurrentIteration;

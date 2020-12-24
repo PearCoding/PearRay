@@ -1,9 +1,9 @@
 #include "TevObserver.h"
 #include "Logger.h"
 #include "ProgramSettings.h"
-#include "buffer/Feedback.h"
-#include "buffer/FrameBufferSystem.h"
 #include "network/Socket.h"
+#include "output/Feedback.h"
+#include "output/FrameOutputDevice.h"
 #include "renderer/RenderContext.h"
 #include "serialization/BufferedNetworkSerializer.h"
 #include "spectral/RGBConverter.h"
@@ -50,6 +50,7 @@ public:
 
 TevObserver::TevObserver()
 	: mRenderContext(nullptr)
+	, mFrameOutputDevice(nullptr)
 	, mUpdateCycleSeconds(0)
 	, mDisplayVariance(false)
 	, mDisplayWeight(false)
@@ -61,11 +62,12 @@ TevObserver::~TevObserver()
 {
 }
 
-void TevObserver::begin(RenderContext* renderContext, const ProgramSettings& settings)
+void TevObserver::begin(RenderContext* renderContext, FrameOutputDevice* outputDevice, const ProgramSettings& settings)
 {
 	PR_ASSERT(renderContext, "Invalid render context");
 
 	mRenderContext		= renderContext;
+	mFrameOutputDevice	= outputDevice;
 	mConnection			= std::make_unique<TevConnection>(settings.TevIp, settings.TevPort);
 	mUpdateCycleSeconds = settings.TevUpdate;
 	mDisplayVariance	= settings.TevVariance;
@@ -166,7 +168,7 @@ void TevObserver::calculateProtocolCache()
 // Channels*String 	ChannelNames
 void TevObserver::createImageProtocol()
 {
-	auto channel = mRenderContext->output()->data().getInternalChannel_Spectral(AOV_Output);
+	auto channel = mFrameOutputDevice->data().getInternalChannel_Spectral(AOV_Output);
 	PR_ASSERT(channel->channels() == 3,
 			  "Expect spectral channel to have 3 channels");
 
@@ -214,10 +216,10 @@ void TevObserver::closeImageProtocol()
 // float*W*H	Data
 void TevObserver::updateImageProtocol()
 {
-	const auto channel		 = mRenderContext->output()->data().getInternalChannel_Spectral(AOV_Output);
-	const auto blend_channel = mRenderContext->output()->data().getInternalChannel_1D(AOV_PixelWeight);
-	const auto var_channel	 = mRenderContext->output()->data().getInternalChannel_Spectral(AOV_OnlineVariance);
-	const auto fdb_channel	 = mRenderContext->output()->data().getInternalChannel_Counter(AOV_Feedback);
+	const auto channel		 = mFrameOutputDevice->data().getInternalChannel_Spectral(AOV_Output);
+	const auto blend_channel = mFrameOutputDevice->data().getInternalChannel_1D(AOV_PixelWeight);
+	const auto var_channel	 = mFrameOutputDevice->data().getInternalChannel_Spectral(AOV_OnlineVariance);
+	const auto fdb_channel	 = mFrameOutputDevice->data().getInternalChannel_Counter(AOV_Feedback);
 
 	PR_ASSERT(channel->channels() == 3, "Expect spectral channel to have 3 channels");
 

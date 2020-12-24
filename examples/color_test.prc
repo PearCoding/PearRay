@@ -36,9 +36,9 @@
 		:width 0.720000
 		:height 0.720000
 		:zoom 1.000000
-		:localDirection [0,0,-1]
-		:localUp [0,1,0]
-		:localRight [1,0,0]
+		:local_direction [0,0,-1]
+		:local_up [0,1,0]
+		:local_right [1,0,0]
 		:near 0.100000
 		:far 100.000000
 		:transform [1.0,0.0,0.0,0.0,0.0,0.0,-1.0,-2.5,0.0,1.0,0.0,1.0,0.0,0.0,0.0,1.0]

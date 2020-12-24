@@ -10,6 +10,7 @@ namespace PR {
 class ToneMapper;
 class Environment;
 class FileLock;
+class FrameOutputDevice;
 
 struct OutputSaveOptions {
 	std::string NameSuffix = "";
@@ -28,10 +29,13 @@ public:
 	void deinit();
 	inline bool isInit() const { return mInit; }
 
-	void setup(const std::shared_ptr<RenderContext>& renderer);
+	void setup(const std::shared_ptr<RenderContext>& context);
 
 	void parse(Environment* env, const DL::DataGroup& group);
-	void save(RenderContext* renderer, ToneMapper& toneMapper, const OutputSaveOptions& options) const;
+
+	/// Save whole specification by using a FrameOutputDevice
+	void save(RenderContext* renderer, FrameOutputDevice* outputDevice,
+			  ToneMapper& toneMapper, const OutputSaveOptions& options) const;
 
 private:
 	bool mInit;

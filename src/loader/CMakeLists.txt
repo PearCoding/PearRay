@@ -3,34 +3,17 @@ set(PR_Src
   DebugIO.h
   DefaultSRGB.cpp
   DefaultSRGB.h
-  ResourceManager.cpp
-  ResourceManager.h
   Environment.cpp
   Environment.h
   Environment.inl
   ImageIO.cpp
   ImageIO.h
+  ResourceManager.cpp
+  ResourceManager.h
   SceneLoadContext.cpp
   SceneLoadContext.h
   SceneLoader.cpp
   SceneLoader.h
-  camera/CameraManager.cpp
-  camera/CameraManager.h
-  entity/EntityManager.cpp
-  entity/EntityManager.h
-  entity/IEntityPlugin.h
-  emission/IEmissionPlugin.h
-  emission/EmissionManager.cpp
-  emission/EmissionManager.h
-  filter/IFilterPlugin.h
-  filter/FilterManager.cpp
-  filter/FilterManager.h
-  infinitelight/IInfiniteLightPlugin.h
-  infinitelight/InfiniteLightManager.cpp
-  infinitelight/InfiniteLightManager.h
-  integrator/IIntegratorPlugin.h
-  integrator/IntegratorManager.cpp
-  integrator/IntegratorManager.h
   archives/MtsSerializedLoader.cpp
   archives/MtsSerializedLoader.h
   archives/PlyLoader.cpp
@@ -38,9 +21,37 @@ set(PR_Src
   archives/SubGraphLoader.h
   archives/WavefrontLoader.cpp
   archives/WavefrontLoader.h
+  camera/CameraManager.cpp
+  camera/CameraManager.h
+  emission/EmissionManager.cpp
+  emission/EmissionManager.h
+  emission/IEmissionPlugin.h
+  entity/EntityManager.cpp
+  entity/EntityManager.h
+  entity/IEntityPlugin.h
+  filter/FilterManager.cpp
+  filter/FilterManager.h
+  filter/IFilterPlugin.h
+  infinitelight/IInfiniteLightPlugin.h
+  infinitelight/InfiniteLightManager.cpp
+  infinitelight/InfiniteLightManager.h
+  integrator/IIntegratorPlugin.h
+  integrator/IntegratorManager.cpp
+  integrator/IntegratorManager.h
   material/IMaterialPlugin.h
   material/MaterialManager.cpp
   material/MaterialManager.h
+  output/FrameContainer.cpp
+  output/FrameContainer.h
+  output/FrameContainer.inl
+  output/FrameOutputDevice.cpp
+  output/FrameOutputDevice.h
+  output/LocalFrameOutputDevice.cpp
+  output/LocalFrameOutputDevice.h
+  output/io/ImageWriter.cpp
+  output/io/ImageWriter.h
+  output/io/OutputSpecification.cpp
+  output/io/OutputSpecification.h
   parameter/Parameter.cpp
   parameter/Parameter.h
   parameter/Parameter.inl
@@ -58,10 +69,6 @@ set(PR_Src
   plugin/Plugin.h
   plugin/PluginManager.cpp
   plugin/PluginManager.h
-  output/ImageWriter.cpp
-  output/ImageWriter.h
-  output/OutputSpecification.cpp
-  output/OutputSpecification.h
   sampler/ISamplerPlugin.h
   sampler/SamplerManager.cpp
   sampler/SamplerManager.h
@@ -76,7 +83,7 @@ set(PR_Src
   spectral/ISpectralMapperPlugin.h
   spectral/SpectralMapperManager.cpp
   spectral/SpectralMapperManager.h
-  )
+)
 
 if(NOT WIN32)
   # For non Windows (prob. only Linux) systems we use assembler to embed srgb.coeff

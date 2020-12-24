@@ -1,8 +1,6 @@
 #include "Environment.h"
 #include "Profiler.h"
 #include "SceneLoadContext.h"
-#include "buffer/Feedback.h"
-#include "buffer/FrameBufferSystem.h"
 #include "emission/IEmission.h"
 #include "infinitelight/IInfiniteLight.h"
 #include "integrator/IIntegrator.h"
@@ -12,6 +10,8 @@
 #include "material/IMaterial.h"
 #include "math/ImportanceSampling.h"
 #include "math/Sampling.h"
+#include "output/Feedback.h"
+#include "output/OutputSystem.h"
 #include "path/LightPath.h"
 #include "photon/PhotonMap.h"
 #include "renderer/RenderContext.h"
@@ -239,7 +239,7 @@ public:
 					session.tile()->statistics().addBackgroundHitCount();
 					session.pushSpectralFragment(1, weight, SpectralBlob::Zero(), ray, path);
 				}
-				
+
 				path.popToken();
 			});
 		path.popTokenUntil(1);

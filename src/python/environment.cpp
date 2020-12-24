@@ -1,6 +1,7 @@
 #include "integrator/IIntegrator.h"
 #include "material/IMaterial.h"
 #include "mesh/MeshBase.h"
+#include "output/FrameOutputDevice.h"
 #include "renderer/RenderContext.h"
 #include "renderer/RenderFactory.h"
 
@@ -28,6 +29,7 @@ void setup_environment(py::module& m)
 		.def("save", &Environment::save)
 		.def("createSelectedIntegrator", &Environment::createSelectedIntegrator)
 		.def("createRenderFactory", &Environment::createRenderFactory)
+		.def("createAndAssignFrameOutputDevice", &Environment::createAndAssignFrameOutputDevice)
 		.def_property(
 			"renderSettings",
 			[](Environment& env) { return env.renderSettings(); },

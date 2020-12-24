@@ -1,4 +1,3 @@
-#include "buffer/FrameBufferSystem.h"
 #include "entity/IEntity.h"
 #include "integrator/IIntegrator.h"
 #include "renderer/RenderContext.h"
@@ -16,7 +15,7 @@ void setup_renderer(py::module& m)
 {
 	py::class_<RenderFactory, std::shared_ptr<RenderFactory>>(m, "RenderFactory")
 		.def("create", (std::shared_ptr<RenderContext>(RenderFactory::*)(const std::shared_ptr<IIntegrator>&) const) & RenderFactory::create)
-		.def("create", (std::shared_ptr<RenderContext>(RenderFactory::*)(const std::shared_ptr<IIntegrator>&, Point1i, const Size2i&) const) &RenderFactory::create);
+		.def("create", (std::shared_ptr<RenderContext>(RenderFactory::*)(const std::shared_ptr<IIntegrator>&, Point1i, const Size2i&) const) & RenderFactory::create);
 
 	py::class_<RenderContext, std::shared_ptr<RenderContext>>(m, "RenderContext")
 		.def_property_readonly("viewSize", &RenderContext::viewSize)
@@ -27,7 +26,6 @@ void setup_renderer(py::module& m)
 		//.def_property_readonly("currentTiles", &RenderContext::currentTiles)
 		.def_property_readonly("settings", &RenderContext::settings)
 		.def_property_readonly("scene", &RenderContext::scene)
-		.def_property_readonly("output", &RenderContext::output)
 		.def_property_readonly("status", &RenderContext::status)
 		.def("start", &RenderContext::start, py::arg("rtx"), py::arg("rty"), py::arg("threads") = 0)
 		.def("stop", &RenderContext::stop)

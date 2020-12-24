@@ -4,6 +4,8 @@
 #include "Logger.h"
 
 namespace PR {
+LightPathExpression::LightPathExpression() {}
+
 LightPathExpression::LightPathExpression(const std::string& str)
 {
 	parseString(str);
@@ -31,17 +33,17 @@ bool LightPathExpression::parseString(const std::string& str)
 
 bool LightPathExpression::match(const LightPath& path) const
 {
-	return mAutomaton->match(path);
+	return mAutomaton ? mAutomaton->match(path) : false;
 }
 
 bool LightPathExpression::match(const LightPathView& path) const
 {
-	return mAutomaton->match(path);
+	return mAutomaton ? mAutomaton->match(path) : false;
 }
 
 std::string LightPathExpression::dumpTable() const
 {
-	return mAutomaton->dumpTable();
+	return mAutomaton ? mAutomaton->dumpTable() : "";
 }
 
 std::string LightPathExpression::generateTableString(const std::string& expr)

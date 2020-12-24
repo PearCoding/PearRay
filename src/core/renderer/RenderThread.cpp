@@ -5,10 +5,10 @@
 #include "RenderTile.h"
 #include "RenderTileSession.h"
 #include "StreamPipeline.h"
-#include "buffer/FrameBufferBucket.h"
-#include "buffer/FrameBufferSystem.h"
 #include "integrator/IIntegrator.h"
-#include "output/OutputQueue.h"
+#include "output/LocalOutputQueue.h"
+#include "output/LocalOutputSystem.h"
+#include "output/OutputSystem.h"
 #include "ray/RayStream.h"
 #include "trace/HitStream.h"
 
@@ -41,34 +41,27 @@ void RenderThread::main()
 
 	setupFloatingPointEnvironment();
 
-	auto integrator					   = mRenderer->integrator()->createThreadInstance(mRenderer, mThreadIndex);
-	std::shared_ptr<OutputQueue> queue = std::make_shared<OutputQueue>(mPipeline.get(), QUEUE_SIZE, QUEUE_THRESHOLD);
-	auto bucket						   = mRenderer->output()->createBucket(mRenderer->maxTileSize());
-
-	for (const auto& clb : mRenderer->outputSpectralSplatCallbacks()) {
-		OutputQueueSpectralCallback spectralCallback = [this, clb](const OutputSpectralEntry* entries, size_t entry_count) {
-			if (this->mTile)
-				clb(this, entries, entry_count);
-		};
-		queue->registerSpectralCallback(spectralCallback);
-	}
+	auto outputSystem = mRenderer->output();
+	auto integrator	  = mRenderer->integrator()->createThreadInstance(mRenderer, mThreadIndex);
+	auto queue		  = std::make_shared<LocalOutputQueue>(outputSystem.get(), mPipeline.get(), QUEUE_SIZE, QUEUE_THRESHOLD);
 
 	integrator->onStart();
 	for (mTile = mRenderer->getNextTile();
 		 mTile && !shouldStop();
 		 mTile = mRenderer->getNextTile()) {
 
-		RenderTileSession session(mThreadIndex, mTile, pipeline(), queue, bucket);
+		auto localSystem = outputSystem->createLocal(mTile->viewSize());
+		RenderTileSession session(mThreadIndex, mTile, pipeline(), queue, localSystem);
 
-		bucket->clear(true);
+		localSystem->clear(true);
 		mPipeline->reset(mTile);
 		integrator->onTile(session);
 		if (PR_UNLIKELY(shouldStop())) {
 			mTile->release();
 			break;
 		}
-		queue->commitAndFlush(bucket.get());
-		mRenderer->output()->mergeBucket(mTile->start(), bucket);
+		queue->commitAndFlush(localSystem.get());
+		outputSystem->mergeLocal(mTile->start(), localSystem);
 
 		mStatistics.addTileCount();
 		mTile->release();

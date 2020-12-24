@@ -1,21 +1,20 @@
-#include "FrameBufferBucket.h"
-#include "Feedback.h"
+#include "LocalFrameOutputDevice.h"
 #include "filter/IFilter.h"
+#include "output/Feedback.h"
 #include "output/OutputData.h"
 #include "path/LightPathView.h"
 #include "renderer/StreamPipeline.h"
 #include "spectral/CIE.h"
 
 namespace PR {
-FrameBufferBucket::FrameBufferBucket(const std::shared_ptr<IFilter>& filter,
-									 const Size2i& size, Size1i specChannels, bool monotonic)
-	: mFilter(filter.get())
+LocalFrameOutputDevice::LocalFrameOutputDevice(const std::shared_ptr<IFilter>& filter,
+											   const Size2i& size, Size1i specChannels, bool monotonic)
+	: LocalOutputDevice()
+	, mFilter(filter.get())
 	, mOriginalSize(size)
 	, mExtendedSize(mOriginalSize.Width + 2 * mFilter.radius(), mOriginalSize.Height + 2 * mFilter.radius())
 	, mMonotonic(monotonic)
 	, mHasFilter(mFilter.radius() > 0)
-	, mViewSize(mOriginalSize)
-	, mExtendedViewSize(mExtendedSize)
 	, mData(mExtendedSize, specChannels)
 	, mHasNonSpecLPE(false)
 	, mSpectralMapBuffer{ std::vector<float>(specChannels), std::vector<float>(specChannels), std::vector<float>(specChannels) }
@@ -23,20 +22,16 @@ FrameBufferBucket::FrameBufferBucket(const std::shared_ptr<IFilter>& filter,
 	PR_ASSERT(specChannels == 3, "Custom channel size not implemented yet :(");
 }
 
-FrameBufferBucket::~FrameBufferBucket()
+LocalFrameOutputDevice::~LocalFrameOutputDevice()
 {
 }
 
-void FrameBufferBucket::shrinkView(const Size2i& newView)
+void LocalFrameOutputDevice::clear(bool force)
 {
-	PR_ASSERT(newView.Width <= mOriginalSize.Width, "Width greater then original");
-	PR_ASSERT(newView.Height <= mOriginalSize.Height, "Height greater then original");
-
-	mViewSize		  = newView;
-	mExtendedViewSize = Size2i(newView.Width + 2 * mFilter.radius(), newView.Height + 2 * mFilter.radius());
+	mData.clear(force);
 }
 
-void FrameBufferBucket::cache()
+void LocalFrameOutputDevice::cache()
 {
 	mHasNonSpecLPE = false;
 	for (int i = 0; i < AOV_1D_COUNT; ++i) {
@@ -63,7 +58,7 @@ void FrameBufferBucket::cache()
 	}
 }
 
-void FrameBufferBucket::commitSpectrals(StreamPipeline* pipeline, const OutputSpectralEntry* entries, size_t entry_count)
+void LocalFrameOutputDevice::commitSpectrals(StreamPipeline* pipeline, const OutputSpectralEntry* entries, size_t entry_count)
 {
 	if (mMonotonic) {
 		if (mHasFilter)
@@ -78,8 +73,19 @@ void FrameBufferBucket::commitSpectrals(StreamPipeline* pipeline, const OutputSp
 	}
 }
 
+template <bool IsMono>
+static inline CIETriplet mapSpectral(const SpectralBlob& weight, const SpectralBlob& wvls)
+{
+	if constexpr (IsMono) {
+		PR_UNUSED(wvls);
+		return CIETriplet(weight[0]);
+	} else {
+		return CIE::eval(weight, wvls);
+	}
+}
+
 template <bool IsMono, bool HasFilter>
-void FrameBufferBucket::commitSpectrals2(StreamPipeline* pipeline, const OutputSpectralEntry* entries, size_t entry_count)
+void LocalFrameOutputDevice::commitSpectrals2(StreamPipeline* pipeline, const OutputSpectralEntry* entries, size_t entry_count)
 {
 	const int32 filterRadius = mFilter.radius();
 	const Size2i filterSize	 = Size2i(filterRadius, filterRadius);
@@ -125,7 +131,7 @@ void FrameBufferBucket::commitSpectrals2(StreamPipeline* pipeline, const OutputS
 		const RayGroup& grp		   = pipeline->getRayGroup(entry.RayGroupID);
 		const SpectralBlob factor  = isMono ? SpectralBlobUtils::HeroOnly() : SpectralBlob::Ones();
 		const SpectralBlob contrib = factor * grp.BlendWeight * entry.contribution();
-		const float blendWeight	   = (factor * grp.BlendWeight * entry.MIS).sum();
+		const float blendWeight	   = (factor * grp.BlendWeight).sum() * entry.MIS;
 
 #ifndef PR_NO_SPECTRAL_CHECKS
 		// Check for valid samples
@@ -143,20 +149,13 @@ void FrameBufferBucket::commitSpectrals2(StreamPipeline* pipeline, const OutputS
 		}
 #endif
 
-		CIETriplet triplet;
-		if constexpr (IsMono) {
-			triplet = contrib[0] /* CIE::eval(entry.Wavelengths[0])*/;
-		} else {
-			// Map to CIE XYZ
-			triplet = CIE::eval(contrib, entry.Wavelengths);
-		}
-
+		const CIETriplet triplet = mapSpectral<IsMono>(contrib, entry.Wavelengths);
 		const LightPathView path = LightPathView(entry.Path);
 
 		if constexpr (HasFilter) {
 			// Apply for each filter area
 			const Point2i start = Point2i::Zero().cwiseMax(rp - filterSize);
-			const Point2i end	= (extendedViewSize() - Point2i(1, 1)).cwiseMin(rp + filterSize);
+			const Point2i end	= (extendedSize() - Point2i(1, 1)).cwiseMin(rp + filterSize);
 			for (Point1i py = start(1); py <= end(1); ++py) {
 				for (Point1i px = start(0); px <= end(0); ++px) {
 					const Point2i sp		 = Point2i(px, py);
@@ -256,7 +255,7 @@ void FrameBufferBucket::commitSpectrals2(StreamPipeline* pipeline, const OutputS
 	}
 
 // TODO: Ignore medium shadingpoint entries
-void FrameBufferBucket::commitShadingPoints(const OutputShadingPointEntry* entries, size_t entry_count)
+void LocalFrameOutputDevice::commitShadingPoints(const OutputShadingPointEntry* entries, size_t entry_count)
 {
 	const int32 filterRadius = mFilter.radius();
 	const Size2i filterSize	 = Size2i(filterRadius, filterRadius);
@@ -308,7 +307,7 @@ void FrameBufferBucket::commitShadingPoints(const OutputShadingPointEntry* entri
 	BLEND_2D_LPE(AOV_UVW, entry.SP.Surface.Geometry.UV);
 }
 
-void FrameBufferBucket::commitFeedbacks(const OutputFeedbackEntry* entries, size_t entry_count)
+void LocalFrameOutputDevice::commitFeedbacks(const OutputFeedbackEntry* entries, size_t entry_count)
 {
 	PR_ASSERT(mData.hasInternalChannel_Counter(AOV_Feedback), "Feedback buffer has to be available!");
 	const int32 filterRadius = mFilter.radius();
@@ -320,6 +319,122 @@ void FrameBufferBucket::commitFeedbacks(const OutputFeedbackEntry* entries, size
 		const Point2i sp  = entry.Position + filterSize;
 
 		mData.getInternalChannel_Counter(AOV_Feedback)->getFragment(sp, 0) |= entry.Feedback;
+	}
+}
+
+void LocalFrameOutputDevice::commitCustomSpectrals(uint32 aov_id, StreamPipeline* pipeline, const OutputCustomSpectralEntry* entries, size_t entry_count)
+{
+	const auto aov = mData.getCustomChannel_Spectral(aov_id);
+	if (!aov)
+		return;
+
+	if (mMonotonic) {
+		if (mHasFilter)
+			commitCustomSpectrals2<true, true>(aov.get(), pipeline, entries, entry_count);
+		else
+			commitCustomSpectrals2<true, false>(aov.get(), pipeline, entries, entry_count);
+	} else {
+		if (mHasFilter)
+			commitCustomSpectrals2<false, true>(aov.get(), pipeline, entries, entry_count);
+		else
+			commitCustomSpectrals2<false, false>(aov.get(), pipeline, entries, entry_count);
+	}
+}
+
+template <bool IsMono, bool HasFilter>
+void LocalFrameOutputDevice::commitCustomSpectrals2(FrameBufferFloat* aov, StreamPipeline* pipeline, const OutputCustomSpectralEntry* entries, size_t entry_count)
+{
+	const int32 filterRadius = mFilter.radius();
+	const Size2i filterSize	 = Size2i(filterRadius, filterRadius);
+
+	PR_ASSERT(HasFilter || filterRadius == 0, "If no filter is choosen, radius must be zero");
+
+	const auto addContribution = [&](const Point2i& sp, float weight, const CIETriplet& triplet) {
+		// Add contribution to main channel
+		PR_UNROLL_LOOP(3)
+		for (Size1i k = 0; k < 3; ++k)
+			aov->getFragment(sp, k) += weight * triplet[k];
+	};
+
+	PR_OPT_LOOP
+	for (size_t i = 0; i < entry_count; ++i) {
+		const auto& entry = entries[i];
+
+		const Point2i rp		   = entry.Position + filterSize;
+		const bool isMono		   = IsMono || (entry.Flags & OSEF_Mono);
+		const RayGroup& grp		   = pipeline->getRayGroup(entry.RayGroupID);
+		const SpectralBlob factor  = isMono ? SpectralBlobUtils::HeroOnly() : SpectralBlob::Ones();
+		const SpectralBlob contrib = factor * grp.BlendWeight * entry.Value;
+		const float blendWeight	   = (factor * grp.BlendWeight).sum();
+
+		const CIETriplet triplet = mapSpectral<IsMono>(contrib, entry.Wavelengths);
+
+		if constexpr (HasFilter) {
+			// Apply for each filter area
+			const Point2i start = Point2i::Zero().cwiseMax(rp - filterSize);
+			const Point2i end	= (extendedSize() - Point2i(1, 1)).cwiseMin(rp + filterSize);
+			for (Point1i py = start(1); py <= end(1); ++py) {
+				for (Point1i px = start(0); px <= end(0); ++px) {
+					const Point2i sp		 = Point2i(px, py);
+					const float filterWeight = mFilter.evalWeight(sp(0) - rp(0), sp(1) - rp(1));
+					addContribution(sp, filterWeight * blendWeight, filterWeight * triplet);
+				}
+			}
+		} else {
+			addContribution(entry.Position, blendWeight, triplet);
+		}
+	}
+}
+
+void LocalFrameOutputDevice::commitCustom3D(uint32 aov_id, const OutputCustom3DEntry* entries, size_t entrycount)
+{
+	const auto aov = mData.getCustomChannel_3D(aov_id);
+	if (!aov)
+		return;
+
+	const int32 filterRadius = mFilter.radius();
+	const Size2i filterSize	 = Size2i(filterRadius, filterRadius);
+
+	PR_OPT_LOOP
+	for (size_t i = 0; i < entrycount; ++i) {
+		const auto& entry = entries[i];
+		const Point2i sp  = entry.Position + filterSize;
+		PR_UNROLL_LOOP(3)
+		for (Size1i k = 0; k < 3; ++k)
+			aov->getFragment(sp, k) += entry.Value(k);
+	}
+}
+
+void LocalFrameOutputDevice::commitCustom1D(uint32 aov_id, const OutputCustom1DEntry* entries, size_t entrycount)
+{
+	const auto aov = mData.getCustomChannel_1D(aov_id);
+	if (!aov)
+		return;
+
+	const int32 filterRadius = mFilter.radius();
+	const Size2i filterSize	 = Size2i(filterRadius, filterRadius);
+
+	PR_OPT_LOOP
+	for (size_t i = 0; i < entrycount; ++i) {
+		const auto& entry = entries[i];
+		const Point2i sp  = entry.Position + filterSize;
+		aov->getFragment(sp, 0) += entry.Value;
+	}
+}
+void LocalFrameOutputDevice::commitCustomCounter(uint32 aov_id, const OutputCustomCounterEntry* entries, size_t entrycount)
+{
+	const auto aov = mData.getCustomChannel_Counter(aov_id);
+	if (!aov)
+		return;
+
+	const int32 filterRadius = mFilter.radius();
+	const Size2i filterSize	 = Size2i(filterRadius, filterRadius);
+
+	PR_OPT_LOOP
+	for (size_t i = 0; i < entrycount; ++i) {
+		const auto& entry = entries[i];
+		const Point2i sp  = entry.Position + filterSize;
+		aov->getFragment(sp, 0) += entry.Value;
 	}
 }
 

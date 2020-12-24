@@ -6,6 +6,7 @@
 namespace PR {
 ImageUpdateObserver::ImageUpdateObserver(Environment* environment)
 	: mRenderContext(nullptr)
+	, mFrameOutputDevice(nullptr)
 	, mEnvironment(environment)
 	, mIterationCount(0)
 	, mIterationCycleCount(0)
@@ -19,10 +20,11 @@ ImageUpdateObserver::~ImageUpdateObserver()
 {
 }
 
-void ImageUpdateObserver::begin(RenderContext* renderContext, const ProgramSettings& settings)
+void ImageUpdateObserver::begin(RenderContext* renderContext, FrameOutputDevice* outputDevice, const ProgramSettings& settings)
 {
 	PR_ASSERT(renderContext, "Invalid render context");
 	mRenderContext		 = renderContext;
+	mFrameOutputDevice	 = outputDevice;
 	mUseTags			 = settings.ImgUseTags;
 	mIterationCount		 = 0;
 	mIterationCycleCount = settings.ImgUpdateIteration;
@@ -78,7 +80,7 @@ void ImageUpdateObserver::save(const UpdateInfo& info)
 		output_options.NameSuffix = stream.str();
 	}
 
-	mEnvironment->save(mRenderContext, mToneMapper, output_options);
+	mEnvironment->save(mRenderContext, mFrameOutputDevice, mToneMapper, output_options);
 }
 
 } // namespace PR

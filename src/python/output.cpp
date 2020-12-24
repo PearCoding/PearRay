@@ -1,4 +1,4 @@
-#include "buffer/FrameBufferSystem.h"
+#include "output/FrameOutputDevice.h"
 
 #include "pypearray.h"
 #include <pybind11/numpy.h>
@@ -53,13 +53,13 @@ void setup_output(py::module& m)
 
 	// Hiding FrameBufferContainer
 	// TODO: Add whole interface
-	py::class_<FrameBufferSystem, std::shared_ptr<FrameBufferSystem>>(m, "FrameBufferSystem")
-		.def("clear", &FrameBufferSystem::clear)
-		.def_property_readonly("spectral", [](const FrameBufferSystem& buffer) { return buffer.data().getInternalChannel_Spectral(AOV_Output); })
-		.def_property_readonly("pixelweight", [](const FrameBufferSystem& buffer) { return buffer.data().getInternalChannel_1D(AOV_PixelWeight); })
-		.def("aov_1d", [](const FrameBufferSystem& buffer, AOV1D var) { return buffer.data().getInternalChannel_1D(var); })
-		.def("aov_3d", [](const FrameBufferSystem& buffer, AOV3D var) { return buffer.data().getInternalChannel_3D(var); })
-		.def("aov_counter", [](const FrameBufferSystem& buffer, AOVCounter var) { return buffer.data().getInternalChannel_Counter(var); });
+	py::class_<FrameOutputDevice, std::shared_ptr<FrameOutputDevice>>(m, "FrameOutputDevice")
+		.def("clear", &FrameOutputDevice::clear)
+		.def_property_readonly("spectral", [](const FrameOutputDevice& buffer) { return buffer.data().getInternalChannel_Spectral(AOV_Output); })
+		.def_property_readonly("pixelweight", [](const FrameOutputDevice& buffer) { return buffer.data().getInternalChannel_1D(AOV_PixelWeight); })
+		.def("aov_1d", [](const FrameOutputDevice& buffer, AOV1D var) { return buffer.data().getInternalChannel_1D(var); })
+		.def("aov_3d", [](const FrameOutputDevice& buffer, AOV3D var) { return buffer.data().getInternalChannel_3D(var); })
+		.def("aov_counter", [](const FrameOutputDevice& buffer, AOVCounter var) { return buffer.data().getInternalChannel_Counter(var); });
 
 	py::enum_<AOV3D>(m, "AOV3D")
 		.value("POSITION", AOV_Position)

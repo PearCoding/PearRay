@@ -1,9 +1,9 @@
 #include "NetworkObserver.h"
 #include "Logger.h"
 #include "ProgramSettings.h"
-#include "buffer/FrameBufferSystem.h"
 #include "network/Protocol.h"
 #include "network/Socket.h"
+#include "output/FrameOutputDevice.h"
 #include "renderer/RenderContext.h"
 #include "serialization/BufferedNetworkSerializer.h"
 
@@ -68,8 +68,7 @@ bool handle_status(NetworkObserver* observer, Serializer& out)
 
 bool handle_image(NetworkObserver* observer, Serializer& out)
 {
-	auto context = observer->context();
-	auto channel = context->output()->data().getInternalChannel_Spectral(AOV_Output);
+	auto channel = observer->outputDevice()->data().getInternalChannel_Spectral(AOV_Output);
 
 	PR_ASSERT(channel->channels() == 3, "Expect spectral channel to have 3 channels"); // TODO: This may change in the future
 
@@ -241,6 +240,7 @@ void NetworkClient::start()
 // Observer
 NetworkObserver::NetworkObserver()
 	: mRenderContext(nullptr)
+	, mFrameOutputDevice(nullptr)
 	, mIterationCount(0)
 {
 }
@@ -251,16 +251,17 @@ NetworkObserver::~NetworkObserver()
 		mServer->stop();
 }
 
-void NetworkObserver::begin(RenderContext* renderContext, const ProgramSettings& settings)
+void NetworkObserver::begin(RenderContext* renderContext, FrameOutputDevice* outputDevice, const ProgramSettings& settings)
 {
 	PR_ASSERT(renderContext, "Invalid render context");
 
 	if (mServer)
 		mServer->stop();
 
-	mServer			= std::make_unique<NetworkServer>(this, settings.ListenNetwork);
-	mRenderContext	= renderContext;
-	mIterationCount = 0;
+	mServer			   = std::make_unique<NetworkServer>(this, settings.ListenNetwork);
+	mRenderContext	   = renderContext;
+	mFrameOutputDevice = outputDevice;
+	mIterationCount	   = 0;
 
 	mServer->start();
 }

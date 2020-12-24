@@ -144,6 +144,8 @@ int main(int argc, char** argv)
 			return EXIT_FAILURE;
 		}
 
+		auto outputDevice = env->createAndAssignFrameOutputDevice(renderer);
+
 		std::atomic<bool> softStop(false); // Stop after iteration end
 
 		// Make sure output is configured for output
@@ -167,7 +169,7 @@ int main(int argc, char** argv)
 
 		// Setup observers
 		for (const auto& obs : observers)
-			obs->begin(renderer.get(), options);
+			obs->begin(renderer.get(), outputDevice.get(), options);
 
 		// Setup iteration callback
 		renderer->addIterationCallback([&](const RenderIteration& iter) {
@@ -189,7 +191,7 @@ int main(int argc, char** argv)
 			const auto span_full = sc::duration_cast<sc::seconds>(end - start);
 
 			for (const auto& obs : observers)
-				obs->update(UpdateInfo{ start, maxIterations, 0  });
+				obs->update(UpdateInfo{ start, maxIterations, 0 });
 
 			if (options.MaxTime > 0 && span_full.count() >= options.MaxTime) {
 				if (options.MaxTimeForce)
@@ -218,7 +220,7 @@ int main(int argc, char** argv)
 			output_options.Image.TimeMeta	   = span.count();
 			output_options.Image.WriteMeta	   = true;
 			// output_options.NameSuffix = ""; // (Do not make use of tags)
-			env->save(renderer.get(), toneMapper, output_options);
+			env->save(renderer.get(), outputDevice.get(), toneMapper, output_options);
 		}
 
 		// Print Statistics

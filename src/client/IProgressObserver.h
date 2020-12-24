@@ -12,15 +12,17 @@ struct UpdateInfo {
 	uint32 CurrentPass;
 };
 
+class FrameOutputDevice;
 class ProgramSettings;
 class RenderContext;
+
 class IProgressObserver {
 public:
 	virtual ~IProgressObserver() = default;
 
-	virtual void begin(RenderContext* renderContext, const ProgramSettings& settings) = 0;
-	virtual void end()																  = 0;
-	virtual void update(const UpdateInfo& info)										  = 0;
-	virtual void onIteration(const UpdateInfo& info)								  = 0;
+	virtual void begin(RenderContext* renderContext, FrameOutputDevice* outputDevice, const ProgramSettings& settings) = 0;
+	virtual void end()																								   = 0;
+	virtual void update(const UpdateInfo& info)																		   = 0;
+	virtual void onIteration(const UpdateInfo& info)																   = 0;
 };
 } // namespace PR

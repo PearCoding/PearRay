@@ -1,7 +1,7 @@
 #include "ImageWriter.h"
 #include "Logger.h"
-#include "buffer/FrameBufferSystem.h"
 #include "config/Build.h"
+#include "output/FrameOutputDevice.h"
 #include "renderer/RenderContext.h"
 
 #include <OpenImageIO/imageio.h>
@@ -47,7 +47,8 @@ void ImageWriter::deinit()
 	mRenderer = nullptr;
 }
 
-bool ImageWriter::save(ToneMapper& toneMapper, const std::filesystem::path& file,
+bool ImageWriter::save(FrameOutputDevice* outputDevice,
+					   ToneMapper& toneMapper, const std::filesystem::path& file,
 					   const std::vector<IM_ChannelSettingSpec>& chSpec,
 					   const std::vector<IM_ChannelSetting1D>& ch1d,
 					   const std::vector<IM_ChannelSettingCounter>& chcounter,
@@ -115,7 +116,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::filesystem::path& file
 	if (!out)
 		return false;
 
-	const FrameBufferContainer& data = mRenderer->output()->data();
+	const FrameContainer& data = outputDevice->data();
 
 	// Write content
 	float* line = new float[channelCount * viewSize.Width];
@@ -142,10 +143,22 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::filesystem::path& file
 			// Spectral
 			for (const IM_ChannelSettingSpec& sett : chSpec) {
 				std::shared_ptr<FrameBufferFloat> channel;
-				if (sett.LPE < 0)
+				if (sett.CustomID >= 0)
+					channel = data.getCustomChannel_Spectral(sett.CustomID);
+				else if (sett.LPE < 0)
 					channel = data.getInternalChannel_Spectral(sett.Variable);
 				else
 					channel = data.getLPEChannel_Spectral(sett.Variable, sett.LPE);
+
+				if (!channel) {
+					if (!sett.Custom.empty())
+						PR_LOG(L_ERROR) << "Could not acquire custom spectral channel '" << sett.Custom << "'" << std::endl;
+					line[id]	 = 0;
+					line[id + 1] = 0;
+					line[id + 2] = 0;
+					id += 3;
+					continue;
+				}
 
 				if (mRenderer->settings().spectralMono || sett.IsRaw) {
 					line[id]	 = channel->getFragment(p, 0);
@@ -171,43 +184,73 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::filesystem::path& file
 
 			for (const IM_ChannelSetting3D& sett : ch3d) {
 				std::shared_ptr<FrameBufferFloat> channel;
-				if (sett.LPE < 0)
-					channel = data.getInternalChannel_3D(sett.Variable);
-				else
-					channel = data.getLPEChannel_3D(sett.Variable, sett.LPE);
 
-				if (channel) {
-					line[id]	 = sampleFactor * channel->getFragment(p, 0);
-					line[id + 1] = sampleFactor * channel->getFragment(p, 1);
-					line[id + 2] = sampleFactor * channel->getFragment(p, 2);
+				if (sett.CustomID >= 0) {
+					channel = data.getCustomChannel_3D(sett.CustomID);
+
+					if (channel) { // Do not apply any weighting
+						line[id]	 = channel->getFragment(p, 0);
+						line[id + 1] = channel->getFragment(p, 1);
+						line[id + 2] = channel->getFragment(p, 2);
+					}
+				} else {
+					if (sett.LPE < 0)
+						channel = data.getInternalChannel_3D(sett.Variable);
+					else
+						channel = data.getLPEChannel_3D(sett.Variable, sett.LPE);
+
+					if (channel) {
+						line[id]	 = sampleFactor * channel->getFragment(p, 0);
+						line[id + 1] = sampleFactor * channel->getFragment(p, 1);
+						line[id + 2] = sampleFactor * channel->getFragment(p, 2);
+					}
 				}
 
+				if (!channel) {
+					line[id]	 = 0;
+					line[id + 1] = 0;
+					line[id + 2] = 0;
+				}
 				id += 3;
 			}
 
 			for (const IM_ChannelSetting1D& sett : ch1d) {
 				std::shared_ptr<FrameBufferFloat> channel;
-				if (sett.LPE < 0)
-					channel = data.getInternalChannel_1D(sett.Variable);
-				else
-					channel = data.getLPEChannel_1D(sett.Variable, sett.LPE);
 
-				if (channel)
-					line[id] = sampleFactor * channel->getFragment(p, 0);
+				if (sett.CustomID >= 0) {
+					channel = data.getCustomChannel_1D(sett.CustomID);
+					if (channel)
+						line[id] = channel->getFragment(p, 0);
+				} else {
+					if (sett.LPE < 0)
+						channel = data.getInternalChannel_1D(sett.Variable);
+					else
+						channel = data.getLPEChannel_1D(sett.Variable, sett.LPE);
 
+					if (channel)
+						line[id] = sampleFactor * channel->getFragment(p, 0);
+				}
+
+				if (!channel)
+					line[id] = 0;
 				id += 1;
 			}
 
 			// No weights here
 			for (const IM_ChannelSettingCounter& sett : chcounter) {
 				std::shared_ptr<FrameBufferUInt32> channel;
-				if (sett.LPE < 0)
+
+				if (sett.CustomID >= 0)
+					channel = data.getCustomChannel_Counter(sett.CustomID);
+				else if (sett.LPE < 0)
 					channel = data.getInternalChannel_Counter(sett.Variable);
 				else
 					channel = data.getLPEChannel_Counter(sett.Variable, sett.LPE);
 
 				if (channel)
 					line[id] = static_cast<float>(channel->getFragment(p, 0));
+				else
+					line[id] = 0;
 
 				id += 1;
 			}

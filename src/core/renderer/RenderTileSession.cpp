@@ -3,10 +3,10 @@
 #include "RenderContext.h"
 #include "RenderTile.h"
 #include "StreamPipeline.h"
-#include "buffer/FrameBufferBucket.h"
 #include "material/IMaterial.h"
 #include "math/SplitSample.h"
-#include "output/OutputQueue.h"
+#include "output/LocalOutputQueue.h"
+#include "output/LocalOutputSystem.h"
 #include "scene/Scene.h"
 #include "scene/SceneDatabase.h"
 #include "trace/IntersectionPoint.h"
@@ -21,15 +21,14 @@ RenderTileSession::RenderTileSession()
 }
 
 RenderTileSession::RenderTileSession(uint32 thread, RenderTile* tile, StreamPipeline* pipeline,
-									 const std::shared_ptr<OutputQueue>& queue,
-									 const std::shared_ptr<FrameBufferBucket>& bucket)
+									 const std::shared_ptr<LocalOutputQueue>& localQueue,
+									 const std::shared_ptr<LocalOutputSystem>& localSystem)
 	: mThread(thread)
 	, mTile(tile)
 	, mPipeline(pipeline)
-	, mOutputQueue(queue)
-	, mBucket(bucket)
+	, mOutputQueue(localQueue)
+	, mLocalSystem(localSystem)
 {
-	bucket->shrinkView(tile->viewSize());
 }
 
 RenderTileSession::~RenderTileSession()
@@ -121,7 +120,7 @@ void RenderTileSession::pushSpectralFragment(float mis, const SpectralBlob& impo
 	mOutputQueue->pushSpectralFragment(coords, mis, grp.Importance * importance / grp.WavelengthPDF, radiance,
 									   ray.WavelengthNM, ray.Flags & RF_Monochrome, ray.GroupID, path);
 	if (mOutputQueue->isReadyToCommit())
-		mOutputQueue->commitAndFlush(mBucket.get());
+		mOutputQueue->commitAndFlush(mLocalSystem.get());
 }
 
 void RenderTileSession::pushSPFragment(const IntersectionPoint& pt,
@@ -131,7 +130,7 @@ void RenderTileSession::pushSPFragment(const IntersectionPoint& pt,
 	auto coords = localCoordinates(pt.Ray.PixelIndex);
 	mOutputQueue->pushSPFragment(coords, pt, path);
 	if (mOutputQueue->isReadyToCommit())
-		mOutputQueue->commitAndFlush(mBucket.get());
+		mOutputQueue->commitAndFlush(mLocalSystem.get());
 }
 
 void RenderTileSession::pushFeedbackFragment(uint32 feedback, const Ray& ray) const
@@ -140,6 +139,44 @@ void RenderTileSession::pushFeedbackFragment(uint32 feedback, const Ray& ray) co
 	auto coords = localCoordinates(ray.PixelIndex);
 	mOutputQueue->pushFeedbackFragment(coords, feedback);
 	if (mOutputQueue->isReadyToCommit())
-		mOutputQueue->commitAndFlush(mBucket.get());
+		mOutputQueue->commitAndFlush(mLocalSystem.get());
 }
+
+void RenderTileSession::pushCustomSpectralFragment(uint32 queueID, const Ray& ray, const SpectralBlob& value)
+{
+	PR_PROFILE_THIS;
+	auto coords		= localCoordinates(ray.PixelIndex);
+	const auto& grp = getRayGroup(ray);
+	mOutputQueue->pushCustomSpectralFragment(queueID, coords, grp.Importance * value / grp.WavelengthPDF, ray.WavelengthNM, ray.Flags & RF_Monochrome, ray.GroupID);
+	if (mOutputQueue->isReadyToCommit())
+		mOutputQueue->commitAndFlush(mLocalSystem.get());
+}
+
+void RenderTileSession::pushCustom3DFragment(uint32 queueID, const Ray& ray, const Vector3f& value)
+{
+	PR_PROFILE_THIS;
+	auto coords = localCoordinates(ray.PixelIndex);
+	mOutputQueue->pushCustom3DFragment(queueID, coords, value);
+	if (mOutputQueue->isReadyToCommit())
+		mOutputQueue->commitAndFlush(mLocalSystem.get());
+}
+
+void RenderTileSession::pushCustom1DFragment(uint32 queueID, const Ray& ray, float value)
+{
+	PR_PROFILE_THIS;
+	auto coords = localCoordinates(ray.PixelIndex);
+	mOutputQueue->pushCustom1DFragment(queueID, coords, value);
+	if (mOutputQueue->isReadyToCommit())
+		mOutputQueue->commitAndFlush(mLocalSystem.get());
+}
+
+void RenderTileSession::pushCustomCounterFragment(uint32 queueID, const Ray& ray, uint32 value)
+{
+	PR_PROFILE_THIS;
+	auto coords = localCoordinates(ray.PixelIndex);
+	mOutputQueue->pushCustomCounterFragment(queueID, coords, value);
+	if (mOutputQueue->isReadyToCommit())
+		mOutputQueue->commitAndFlush(mLocalSystem.get());
+}
+
 } // namespace PR

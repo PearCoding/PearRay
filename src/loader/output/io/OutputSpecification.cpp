@@ -1,7 +1,8 @@
 #include "OutputSpecification.h"
 #include "Logger.h"
 #include "arch/FileLock.h"
-#include "buffer/FrameBufferSystem.h"
+#include "output/FrameOutputDevice.h"
+#include "output/OutputSystem.h"
 #include "renderer/RenderContext.h"
 
 #include <filesystem>
@@ -56,63 +57,51 @@ void OutputSpecification::deinit()
 	mInit = false;
 }
 
-void OutputSpecification::setup(const std::shared_ptr<RenderContext>& renderer)
+void OutputSpecification::setup(const std::shared_ptr<RenderContext>& context)
 {
-	PR_ASSERT(renderer, "Given renderer has to be valid");
+	PR_ASSERT(context, "Given render context has to be valid");
 
 	if (!isInit())
-		init(renderer);
+		init(context);
 
-	mImageWriter.init(renderer);
-	FrameBufferContainer& data = renderer->output()->data();
+	mImageWriter.init(context);
+	auto outputSystem = context->output();
 
 	for (File& file : mFiles) {
 		for (IM_ChannelSetting3D& cs3d : file.Settings3D) {
-			if (!cs3d.LPE_S.empty() || !data.hasInternalChannel_3D(cs3d.Variable)) {
-				if (cs3d.LPE_S.empty())
-					data.requestInternalChannel_3D(cs3d.Variable);
-				else {
-					size_t id;
-					data.requestLPEChannel_3D(cs3d.Variable, LightPathExpression(cs3d.LPE_S), id);
-					cs3d.LPE = (int)id;
-				}
-			}
+			if (!cs3d.Custom.empty())
+				cs3d.CustomID = outputSystem->registerCustom3DChannel(cs3d.Custom);
+			else if (cs3d.LPE_S.empty())
+				outputSystem->enable3DChannel(cs3d.Variable);
+			else
+				cs3d.LPE = outputSystem->registerLPE3DChannel(cs3d.Variable, LightPathExpression(cs3d.LPE_S));
 		}
 
 		for (IM_ChannelSetting1D& cs1d : file.Settings1D) {
-			if (!cs1d.LPE_S.empty() || !data.hasInternalChannel_1D(cs1d.Variable)) {
-				if (cs1d.LPE_S.empty())
-					data.requestInternalChannel_1D(cs1d.Variable);
-				else {
-					size_t id;
-					data.requestLPEChannel_1D(cs1d.Variable, LightPathExpression(cs1d.LPE_S), id);
-					cs1d.LPE = (int)id;
-				}
-			}
+			if (!cs1d.Custom.empty())
+				cs1d.CustomID = outputSystem->registerCustom1DChannel(cs1d.Custom);
+			else if (cs1d.LPE_S.empty())
+				outputSystem->enable1DChannel(cs1d.Variable);
+			else
+				cs1d.LPE = outputSystem->registerLPE1DChannel(cs1d.Variable, LightPathExpression(cs1d.LPE_S));
 		}
 
 		for (IM_ChannelSettingCounter& cs : file.SettingsCounter) {
-			if (!cs.LPE_S.empty() || !data.hasInternalChannel_Counter(cs.Variable)) {
-				if (cs.LPE_S.empty())
-					data.requestInternalChannel_Counter(cs.Variable);
-				else {
-					size_t id;
-					data.requestLPEChannel_Counter(cs.Variable, LightPathExpression(cs.LPE_S), id);
-					cs.LPE = (int)id;
-				}
-			}
+			if (!cs.Custom.empty())
+				cs.CustomID = outputSystem->registerCustomCounterChannel(cs.Custom);
+			else if (cs.LPE_S.empty())
+				outputSystem->enableCounterChannel(cs.Variable);
+			else
+				cs.LPE = outputSystem->registerLPECounterChannel(cs.Variable, LightPathExpression(cs.LPE_S));
 		}
 
 		for (IM_ChannelSettingSpec& ss : file.SettingsSpectral) {
-			if (!ss.LPE_S.empty() || !data.hasInternalChannel_Spectral(ss.Variable)) {
-				if (ss.LPE_S.empty())
-					data.requestInternalChannel_Spectral(ss.Variable);
-				else {
-					size_t id;
-					data.requestLPEChannel_Spectral(ss.Variable, LightPathExpression(ss.LPE_S), id);
-					ss.LPE = (int)id;
-				}
-			}
+			if (!ss.Custom.empty())
+				ss.CustomID = outputSystem->registerCustomSpectralChannel(ss.Custom);
+			else if (ss.LPE_S.empty())
+				outputSystem->enableSpectralChannel(ss.Variable);
+			else
+				ss.LPE = outputSystem->registerLPESpectralChannel(ss.Variable, LightPathExpression(ss.LPE_S));
 		}
 	}
 }
@@ -329,9 +318,9 @@ void OutputSpecification::parse(Environment*, const DL::DataGroup& entry)
 
 				if (varSpectral != AOV_Output) {
 					spec.IsRaw = true;
-					spec.Name  = variableToString(varSpectral);
+					spec.Name += variableToString(varSpectral);
 				}
-				// else keep it empty
+				// else keep it empty (or custom)
 
 				if (!lpe.empty())
 					spec.Name = spec.Name + "[" + lpe + "]";
@@ -344,7 +333,8 @@ void OutputSpecification::parse(Environment*, const DL::DataGroup& entry)
 
 				std::string name = variableToString(var3D);
 				if (!lpe.empty())
-					name = name + "[" + lpe + "]";
+					name += "[" + lpe + "]";
+
 				spec.Name[0] = name + ".x";
 				spec.Name[1] = name + ".y";
 				spec.Name[2] = name + ".z";
@@ -356,8 +346,10 @@ void OutputSpecification::parse(Environment*, const DL::DataGroup& entry)
 				spec.LPE_S	  = lpe;
 				spec.LPE	  = -1;
 				spec.Name	  = variableToString(var1D);
+
 				if (!lpe.empty())
-					spec.Name = spec.Name + "[" + lpe + "]";
+					spec.Name += "[" + lpe + "]";
+
 				file.Settings1D.push_back(spec);
 			} else if (varCounter != AOV_COUNTER_COUNT) {
 				IM_ChannelSettingCounter spec;
@@ -365,11 +357,74 @@ void OutputSpecification::parse(Environment*, const DL::DataGroup& entry)
 				spec.LPE_S	  = lpe;
 				spec.LPE	  = -1;
 				spec.Name	  = variableToString(varCounter);
+
 				if (!lpe.empty())
-					spec.Name = spec.Name + "[" + lpe + "]";
+					spec.Name += "[" + lpe + "]";
+
 				file.SettingsCounter.push_back(spec);
 			} else {
 				PR_LOG(L_ERROR) << "Unknown channel type " << type;
+			}
+		} else if (channelD.type() == DL::DT_Group
+				   && channelD.getGroup().id() == "custom_channel") {
+			DL::DataGroup channel = channelD.getGroup();
+			DL::Data typeD		  = channel.getFromKey("type");
+			DL::Data colorD		  = channel.getFromKey("color");
+			DL::Data nameD		  = channel.getFromKey("name");
+
+			if (typeD.type() != DL::DT_String)
+				continue;
+
+			std::string type = typeD.getString();
+			std::transform(type.begin(), type.end(), type.begin(), ::tolower);
+
+			ToneColorMode tcm = TCM_SRGB;
+			if (colorD.type() == DL::DT_String) {
+				std::string color = colorD.getString();
+				std::transform(color.begin(), color.end(), color.begin(), ::tolower);
+				if (color == "xyz")
+					tcm = TCM_XYZ;
+				else if (color == "norm_xyz")
+					tcm = TCM_XYZ_NORM;
+				else if (color == "lum" || color == "luminance" || color == "gray")
+					tcm = TCM_LUMINANCE;
+			}
+
+			std::string name = "";
+			if (nameD.type() == DL::DT_String)
+				name = nameD.getString();
+
+			if (type == "spectral") {
+				IM_ChannelSettingSpec spec;
+				spec.Variable = AOV_SPECTRAL_COUNT;
+				spec.TCM	  = tcm;
+				spec.Custom	  = name;
+				spec.Name	  = name;
+				file.SettingsSpectral.push_back(spec);
+			} else if (type == "3d") {
+				IM_ChannelSetting3D spec;
+				spec.Variable = AOV_3D_COUNT;
+				spec.Custom	  = name;
+
+				spec.Name[0] = name + ".x";
+				spec.Name[1] = name + ".y";
+				spec.Name[2] = name + ".z";
+
+				file.Settings3D.push_back(spec);
+			} else if (type == "1d") {
+				IM_ChannelSetting1D spec;
+				spec.Variable = AOV_1D_COUNT;
+				spec.Custom	  = name;
+				spec.Name	  = name;
+				file.Settings1D.push_back(spec);
+			} else if (type == "counter") {
+				IM_ChannelSettingCounter spec;
+				spec.Variable = AOV_COUNTER_COUNT;
+				spec.Custom	  = name;
+				spec.Name	  = name;
+				file.SettingsCounter.push_back(spec);
+			} else {
+				PR_LOG(L_ERROR) << "Unknown custom channel type " << type;
 			}
 		}
 	}
@@ -377,7 +432,7 @@ void OutputSpecification::parse(Environment*, const DL::DataGroup& entry)
 	mFiles.push_back(file);
 }
 
-void OutputSpecification::save(RenderContext* renderer,
+void OutputSpecification::save(RenderContext* renderer, FrameOutputDevice* outputDevice,
 							   ToneMapper& toneMapper, const OutputSaveOptions& options) const
 {
 	std::filesystem::path path = mWorkingDir;
@@ -397,7 +452,7 @@ void OutputSpecification::save(RenderContext* renderer,
 
 	for (const File& f : mFiles) {
 		auto file = outputDir / (f.Name + options.NameSuffix + ".exr");
-		if (!mImageWriter.save(toneMapper, file.generic_wstring(),
+		if (!mImageWriter.save(outputDevice, toneMapper, file.generic_wstring(),
 							   f.SettingsSpectral, f.Settings1D, f.SettingsCounter, f.Settings3D,
 							   options.Image))
 			PR_LOG(L_ERROR) << "Couldn't save image file " << file << std::endl;

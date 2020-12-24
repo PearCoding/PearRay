@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Random.h"
-#include "buffer/Feedback.h"
+#include "output/Feedback.h"
 #include "entity/IEntity.h"
 #include "geometry/GeometryPoint.h"
 #include "ray/Ray.h"
@@ -14,12 +14,12 @@
 
 namespace PR {
 
-class FrameBufferBucket;
 class IEmission;
 class IMaterial;
 class IntersectionPoint;
 class LightPath;
-class OutputQueue;
+class LocalOutputQueue;
+class LocalOutputSystem;
 class RayGroup;
 class RenderTile;
 class StreamPipeline;
@@ -28,8 +28,8 @@ class PR_LIB_CORE RenderTileSession {
 public:
 	RenderTileSession(); // Dummy session!
 	RenderTileSession(uint32 threadIndex, RenderTile* tile, StreamPipeline* pipeline,
-					  const std::shared_ptr<OutputQueue>& queue,
-					  const std::shared_ptr<FrameBufferBucket>& bucket);
+					  const std::shared_ptr<LocalOutputQueue>& localQueue,
+					  const std::shared_ptr<LocalOutputSystem>& localSystem);
 	~RenderTileSession();
 
 	inline uint32 threadID() const { return mThread; }
@@ -54,6 +54,11 @@ public:
 	void pushSPFragment(const IntersectionPoint& pt, const LightPath& path) const;
 	void pushFeedbackFragment(uint32 feedback, const Ray& ray) const;
 
+	void pushCustomSpectralFragment(uint32 queueID, const Ray& ray, const SpectralBlob& value);
+	void pushCustom3DFragment(uint32 queueID, const Ray& ray, const Vector3f& value);
+	void pushCustom1DFragment(uint32 queueID, const Ray& ray, float value);
+	void pushCustomCounterFragment(uint32 queueID, const Ray& ray, uint32 value);
+
 private:
 	Point2i localCoordinates(Point1i pixelIndex) const;
 
@@ -62,7 +67,7 @@ private:
 	uint32 mThread;
 	RenderTile* mTile;
 	StreamPipeline* mPipeline;
-	std::shared_ptr<OutputQueue> mOutputQueue;
-	std::shared_ptr<FrameBufferBucket> mBucket;
+	const std::shared_ptr<LocalOutputQueue> mOutputQueue;
+	const std::shared_ptr<LocalOutputSystem> mLocalSystem;
 };
 } // namespace PR

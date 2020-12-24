@@ -27,7 +27,7 @@ StatusObserver::~StatusObserver()
 {
 }
 
-void StatusObserver::begin(RenderContext* renderContext, const ProgramSettings& settings)
+void StatusObserver::begin(RenderContext* renderContext, FrameOutputDevice*, const ProgramSettings& settings)
 {
 	PR_ASSERT(renderContext, "Invalid render context");
 	mRenderContext		= renderContext;

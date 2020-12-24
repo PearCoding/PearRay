@@ -1,39 +1,47 @@
 #pragma once
 
-#include "FrameBufferContainer.h"
+#include "FrameContainer.h"
 #include "output/OutputDevice.h"
+
 #include <mutex>
 
 namespace PR {
 class IFilter;
-class FrameBufferBucket;
-class PR_LIB_LOADER FrameOutputDevice : public OutputDevice {
+class PR_LIB_CORE FrameOutputDevice : public OutputDevice {
 public:
-	explicit FrameOutputDevice(Size1i specChannels);
-	~FrameOutputDevice();
+	explicit FrameOutputDevice(const std::shared_ptr<IFilter>& filter,
+							   const Size2i& size, Size1i specChannels, bool monotonic);
+	virtual ~FrameOutputDevice();
 
-	inline FrameBufferContainer& data() { return *mData; }
-	inline const FrameBufferContainer& data() const { return *mData; }
+	inline FrameContainer& data() { return mData; }
+	inline const FrameContainer& data() const { return mData; }
 
-	inline void clear(bool force = false) { mData->clear(force); }
+	// Mandatory interface
 
-	// OutputDevice interface
-	void commitSpectrals(const OutputCommitInformation& info, const OutputSpectralEntry* entries, size_t entrycount) override;
-	void commitShadingPoints(const OutputCommitInformation& info, const OutputShadingPointEntry* entries, size_t entrycount) override;
-	void commitFeedbacks(const OutputCommitInformation& info, const OutputFeedbackEntry* entries, size_t entrycount) override;
+	void clear(bool force = false) override;
+	std::shared_ptr<LocalOutputDevice> createLocal(const Size2i& size) const override;
+	void mergeLocal(const Point2i& p, const std::shared_ptr<LocalOutputDevice>& bucket) override;
 
-	void onStart(RenderContext* ctx);
-	void onNextIteration();
-	void onStop();
+	void enable1DChannel(AOV1D var) override;
+	void enableCounterChannel(AOVCounter var) override;
+	void enable3DChannel(AOV3D var) override;
+	void enableSpectralChannel(AOVSpectral var) override;
 
-protected:
-	virtual void handleSpectrals(const OutputSpectralEntry* entries, size_t entrycount) = 0;
+	void registerLPE1DChannel(AOV1D var, const LightPathExpression& expr, uint32 id) override;
+	void registerLPECounterChannel(AOVCounter var, const LightPathExpression& expr, uint32 id) override;
+	void registerLPE3DChannel(AOV3D var, const LightPathExpression& expr, uint32 id) override;
+	void registerLPESpectralChannel(AOVSpectral var, const LightPathExpression& expr, uint32 id) override;
+
+	void registerCustom1DChannel(const std::string& str, uint32 id) override;
+	void registerCustomCounterChannel(const std::string& str, uint32 id) override;
+	void registerCustom3DChannel(const std::string& str, uint32 id) override;
+	void registerCustomSpectralChannel(const std::string& str, uint32 id) override;
 
 private:
-	const Size1i mSpectralChannels;
+	const std::shared_ptr<IFilter> mFilter;
+	const bool mMonotonic;
 
-	std::vector<std::shared_ptr<FrameBufferBucket>> mBuckets;
-	std::unique_ptr<FrameBufferContainer> mData;
+	FrameContainer mData;
 	std::mutex mMergeMutex;
 };
 } // namespace PR

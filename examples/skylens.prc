@@ -23,9 +23,9 @@
 		:name 'Camera'
 		:type 'fisheye'
 		:fov (deg2rad 180)
-		:localDirection [0,0,1]
-		:localUp [0,1,0]
-		:localRight [1,0,0]
+		:local_direction [0,0,1]
+		:local_up [0,1,0]
+		:local_right [1,0,0]
 	)
 	(light
 		:name 'sky'

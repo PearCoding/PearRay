@@ -7,7 +7,6 @@
 #include <atomic>
 #include <condition_variable>
 #include <functional>
-#include <list>
 #include <mutex>
 #include <vector>
 
@@ -16,16 +15,14 @@ class HitStream;
 class IEntity;
 class IIntegrator;
 class IMaterial;
-class FrameBufferSystem;
 class LightSampler;
+class OutputSystem;
 class RayStream;
-class RenderTileSession;
 class RenderThread;
 class RenderTile;
 class RenderTileMap;
+class RenderTileSession;
 class Scene;
-
-struct OutputSpectralEntry;
 
 /* Iteration Terminology:
  * A pass is a walk through all pixels,
@@ -36,8 +33,7 @@ struct PR_LIB_CORE RenderIteration {
 	uint32 Pass;
 };
 
-using RenderIterationCallback			= std::function<void(const RenderIteration&)>;
-using RenderOutputSpectralSplatCallback = std::function<void(const RenderThread*, const OutputSpectralEntry*, size_t)>;
+using RenderIterationCallback = std::function<void(const RenderIteration&)>;
 
 class PR_LIB_CORE RenderContext {
 	friend class RenderThread;
@@ -103,15 +99,12 @@ public:
 	RenderTileStatistics statistics() const;
 	RenderStatus status() const;
 
-	inline std::shared_ptr<FrameBufferSystem> output() const { return mOutputMap; }
+	inline std::shared_ptr<OutputSystem> output() const { return mOutputSystem; }
 	inline std::shared_ptr<Scene> scene() const { return mScene; }
 	inline std::shared_ptr<LightSampler> lightSampler() const { return mLightSampler; }
 
 	/// Set a callback called each start of iteration. The internal state of the callee is undefined
 	inline void addIterationCallback(const RenderIterationCallback& clb) { mIterationCallbacks.push_back(clb); }
-
-	inline void addOutputSpectralSplatCallback(const RenderOutputSpectralSplatCallback& clb) { mOutputSpectralSplatCallbacks.push_back(clb); }
-	inline const std::vector<RenderOutputSpectralSplatCallback>& outputSpectralSplatCallbacks() const { return mOutputSpectralSplatCallbacks; }
 
 protected:
 	RenderTile* getNextTile();
@@ -127,7 +120,7 @@ private:
 	const Size2i mViewSize;
 
 	const std::shared_ptr<Scene> mScene;
-	std::shared_ptr<FrameBufferSystem> mOutputMap;
+	const std::shared_ptr<OutputSystem> mOutputSystem;
 
 	mutable std::mutex mTileMutex;
 	std::unique_ptr<RenderTileMap> mTileMap;
@@ -137,7 +130,7 @@ private:
 	std::atomic<uint32> mThreadsWaitingForIteration;
 
 	std::atomic<uint32> mIncrementalCurrentIteration; // A linear variant of iterations and passes
-	std::list<RenderThread*> mThreads;
+	std::vector<std::unique_ptr<RenderThread>> mThreads;
 
 	const RenderSettings mRenderSettings;
 
@@ -151,6 +144,5 @@ private:
 	std::atomic<bool> mOutputClearRequest;
 
 	std::vector<RenderIterationCallback> mIterationCallbacks;
-	std::vector<RenderOutputSpectralSplatCallback> mOutputSpectralSplatCallbacks;
 };
 } // namespace PR

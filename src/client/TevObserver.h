@@ -9,7 +9,7 @@ public:
 	TevObserver();
 	virtual ~TevObserver();
 
-	void begin(RenderContext* renderContext, const ProgramSettings& settings) override;
+	void begin(RenderContext* renderContext, FrameOutputDevice* outputDevice, const ProgramSettings& settings) override;
 	void end() override;
 	void update(const UpdateInfo& info) override;
 	void onIteration(const UpdateInfo& info) override;
@@ -22,6 +22,7 @@ private:
 
 	std::unique_ptr<class TevConnection> mConnection;
 	RenderContext* mRenderContext;
+	FrameOutputDevice* mFrameOutputDevice;
 	uint64 mUpdateCycleSeconds;
 	bool mDisplayVariance;
 	bool mDisplayWeight;

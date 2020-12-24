@@ -17,8 +17,11 @@
 #include "integrator/IntegratorManager.h"
 #include "material/IMaterial.h"
 #include "material/MaterialManager.h"
+#include "output/FrameOutputDevice.h"
+#include "output/OutputSystem.h"
 #include "parameter/Parameter.h"
 #include "plugin/PluginManager.h"
+#include "renderer/RenderContext.h"
 #include "renderer/RenderFactory.h"
 #include "renderer/RenderSettings.h"
 #include "sampler/ISamplerPlugin.h"
@@ -135,9 +138,9 @@ void Environment::setup(const std::shared_ptr<RenderContext>& renderer)
 	mOutputSpecification.setup(renderer);
 }
 
-void Environment::save(RenderContext* renderer, ToneMapper& toneMapper, const OutputSaveOptions& options) const
+void Environment::save(RenderContext* renderer, FrameOutputDevice* outputDevice, ToneMapper& toneMapper, const OutputSaveOptions& options) const
 {
-	mOutputSpecification.save(renderer, toneMapper, options);
+	mOutputSpecification.save(renderer, outputDevice, toneMapper, options);
 }
 
 std::shared_ptr<IIntegrator> Environment::createSelectedIntegrator() const
@@ -188,6 +191,15 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory()
 
 	fct->settings() = mRenderSettings;
 	return fct;
+}
+
+std::shared_ptr<FrameOutputDevice> Environment::createAndAssignFrameOutputDevice(const std::shared_ptr<RenderContext>& context) const
+{
+	auto device = std::make_shared<FrameOutputDevice>(mRenderSettings.createPixelFilter(),
+													  context->viewSize(), 3, mRenderSettings.spectralMono);
+
+	context->output()->addOutputDevice(device);
+	return device;
 }
 
 void Environment::initPlugins(const std::filesystem::path& pluginDir)

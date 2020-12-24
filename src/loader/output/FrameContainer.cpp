@@ -1,7 +1,7 @@
-#include "FrameBufferContainer.h"
+#include "FrameContainer.h"
 
 namespace PR {
-FrameBufferContainer::FrameBufferContainer(const Size2i& size, Size1i specChannels)
+FrameContainer::FrameContainer(const Size2i& size, Size1i specChannels)
 {
 	mSpectral[AOV_Output] = std::make_shared<FrameBufferFloat>(std::max<Size1i>(3, specChannels), size, 0.0f);
 	PR_ASSERT(mSpectral[AOV_Output], "Spectral Output has to be available all the time");
@@ -13,11 +13,11 @@ FrameBufferContainer::FrameBufferContainer(const Size2i& size, Size1i specChanne
 	mIntCounter[AOV_Feedback]	  = createCounterBuffer();
 }
 
-FrameBufferContainer::~FrameBufferContainer()
+FrameContainer::~FrameContainer()
 {
 }
 
-void FrameBufferContainer::clear(bool force)
+void FrameContainer::clear(bool force)
 {
 	for (uint32 i = 0; i < AOV_SPECTRAL_COUNT; ++i) {
 		if (mSpectral[i])
@@ -48,37 +48,37 @@ void FrameBufferContainer::clear(bool force)
 	}
 
 	for (auto p : mCustom1D)
-		p.second->clear(force);
+		p->clear(force);
 
 	for (auto p : mCustomCounter)
-		p.second->clear(force);
+		p->clear(force);
 
 	for (auto p : mCustom3D)
-		p.second->clear(force);
+		p->clear(force);
 
 	for (auto p : mCustomSpectral)
-		p.second->clear(force);
+		p->clear(force);
 }
 
-std::shared_ptr<FrameBufferFloat> FrameBufferContainer::createSpectralBuffer() const
+std::shared_ptr<FrameBufferFloat> FrameContainer::createSpectralBuffer() const
 {
 	PR_ASSERT(mSpectral[AOV_Output], "Spectral Output has to be available all the time");
 	return std::make_shared<FrameBufferFloat>(mSpectral[AOV_Output]->channels(), mSpectral[AOV_Output]->size(), 0.0f);
 }
 
-std::shared_ptr<FrameBufferFloat> FrameBufferContainer::create3DBuffer() const
+std::shared_ptr<FrameBufferFloat> FrameContainer::create3DBuffer() const
 {
 	PR_ASSERT(mSpectral[AOV_Output], "Spectral Output has to be available all the time");
 	return std::make_shared<FrameBufferFloat>(3, mSpectral[AOV_Output]->size(), 0.0f);
 }
 
-std::shared_ptr<FrameBufferFloat> FrameBufferContainer::create1DBuffer() const
+std::shared_ptr<FrameBufferFloat> FrameContainer::create1DBuffer() const
 {
 	PR_ASSERT(mSpectral[AOV_Output], "Spectral Output has to be available all the time");
 	return std::make_shared<FrameBufferFloat>(1, mSpectral[AOV_Output]->size(), 0.0f);
 }
 
-std::shared_ptr<FrameBufferUInt32> FrameBufferContainer::createCounterBuffer() const
+std::shared_ptr<FrameBufferUInt32> FrameContainer::createCounterBuffer() const
 {
 	PR_ASSERT(mSpectral[AOV_Output], "Spectral Output has to be available all the time");
 	return std::make_shared<FrameBufferUInt32>(1, mSpectral[AOV_Output]->size(), 0);

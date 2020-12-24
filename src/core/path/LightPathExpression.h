@@ -12,7 +12,8 @@ class LightPathView;
 
 class PR_LIB_CORE LightPathExpression {
 public:
-	LightPathExpression(const std::string& str);
+	LightPathExpression();
+	explicit LightPathExpression(const std::string& str);
 	~LightPathExpression();
 
 	bool parseString(const std::string& str);
@@ -23,8 +24,9 @@ public:
 
 	std::string dumpTable() const;
 
-	static std::string generateTableString(const std::string& expr); 
-	static std::string generateDotString(const std::string& expr); 
+	static std::string generateTableString(const std::string& expr);
+	static std::string generateDotString(const std::string& expr);
+
 private:
 	std::shared_ptr<LPE::Automaton> mAutomaton;
 };

@@ -1,24 +1,32 @@
 #pragma once
 
+#include "AOV.h"
 #include "OutputData.h"
 
 namespace PR {
-class RenderContext;
-
-struct PR_LIB_CORE OutputCommitInformation {
-	Point2i TileStart;
-	uint32 ThreadID;
-};
+class LocalOutputDevice;
+class LightPathExpression;
 
 /// Abstract output device
 class PR_LIB_CORE OutputDevice {
 public:
-	virtual void commitSpectrals(const OutputCommitInformation& info, const OutputSpectralEntry* entries, size_t entrycount)		 = 0;
-	virtual void commitShadingPoints(const OutputCommitInformation& info, const OutputShadingPointEntry* entries, size_t entrycount) = 0;
-	virtual void commitFeedbacks(const OutputCommitInformation& info, const OutputFeedbackEntry* entries, size_t entrycount)		 = 0;
+	virtual void clear(bool force = false)														= 0;
+	virtual std::shared_ptr<LocalOutputDevice> createLocal(const Size2i& size) const			= 0;
+	virtual void mergeLocal(const Point2i& p, const std::shared_ptr<LocalOutputDevice>& bucket) = 0;
 
-	virtual void onStart(RenderContext* ctx) = 0;
-	virtual void onNextIteration()			 = 0;
-	virtual void onStop()					 = 0;
+	virtual void enable1DChannel(AOV1D var)				= 0;
+	virtual void enableCounterChannel(AOVCounter var)	= 0;
+	virtual void enable3DChannel(AOV3D var)				= 0;
+	virtual void enableSpectralChannel(AOVSpectral var) = 0;
+
+	virtual void registerLPE1DChannel(AOV1D var, const LightPathExpression& expr, uint32 id)			 = 0;
+	virtual void registerLPECounterChannel(AOVCounter var, const LightPathExpression& expr, uint32 id)	 = 0;
+	virtual void registerLPE3DChannel(AOV3D var, const LightPathExpression& expr, uint32 id)			 = 0;
+	virtual void registerLPESpectralChannel(AOVSpectral var, const LightPathExpression& expr, uint32 id) = 0;
+
+	virtual void registerCustom1DChannel(const std::string& str, uint32 id)		  = 0;
+	virtual void registerCustomCounterChannel(const std::string& str, uint32 id)  = 0;
+	virtual void registerCustom3DChannel(const std::string& str, uint32 id)		  = 0;
+	virtual void registerCustomSpectralChannel(const std::string& str, uint32 id) = 0;
 };
 } // namespace PR
