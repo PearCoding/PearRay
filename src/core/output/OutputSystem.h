@@ -45,6 +45,7 @@ public:
 
 	/// It triggers an undefined behavior if the following methods are called after the renderer started
 
+	void enableVarianceEstimation();
 	void enable1DChannel(AOV1D var);
 	void enableCounterChannel(AOVCounter var);
 	void enable3DChannel(AOV3D var);

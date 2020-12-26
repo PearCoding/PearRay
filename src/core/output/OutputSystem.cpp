@@ -42,6 +42,12 @@ void OutputSystem::mergeLocal(const Point2i& p, const std::shared_ptr<LocalOutpu
 		mOutputDevices[i]->mergeLocal(p, local->localOutputDevice(i));
 }
 
+void OutputSystem::enableVarianceEstimation()
+{
+	enableSpectralChannel(AOV_OnlineVariance);
+	enableSpectralChannel(AOV_OnlineMean);
+}
+
 void OutputSystem::enable1DChannel(AOV1D var)
 {
 	for (const auto& device : mOutputDevices)

@@ -38,6 +38,7 @@ public:
 	inline bool hasInternalChannel_3D(AOV3D var) const;
 	inline bool hasInternalChannel_Spectral(AOVSpectral var) const;
 
+	inline bool hasVarianceEstimator() const;
 	inline VarianceEstimator varianceEstimator() const;
 
 	inline std::shared_ptr<FrameBufferFloat> getInternalChannel_1D(AOV1D var) const;

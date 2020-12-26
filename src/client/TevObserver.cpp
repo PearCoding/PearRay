@@ -4,6 +4,7 @@
 #include "network/Socket.h"
 #include "output/Feedback.h"
 #include "output/FrameOutputDevice.h"
+#include "output/OutputSystem.h"
 #include "renderer/RenderContext.h"
 #include "serialization/BufferedNetworkSerializer.h"
 #include "spectral/RGBConverter.h"
@@ -74,6 +75,10 @@ void TevObserver::begin(RenderContext* renderContext, FrameOutputDevice* outputD
 	mDisplayWeight		= settings.TevWeight;
 	mDisplayFeedback	= settings.TevFeedback;
 	mLastUpdate			= std::chrono::high_resolution_clock::now();
+
+	// Enable variance estimation if requested
+	if (mDisplayVariance)
+		mRenderContext->output()->enableVarianceEstimation();
 
 	if (mConnection->Con.isOpen()) {
 		calculateProtocolCache();

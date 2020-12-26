@@ -12,8 +12,14 @@ inline std::shared_ptr<FrameBufferUInt32> FrameContainer::getInternalChannel_Cou
 inline std::shared_ptr<FrameBufferFloat> FrameContainer::getInternalChannel_3D(AOV3D var) const { return mInt3D[var]; }
 inline std::shared_ptr<FrameBufferFloat> FrameContainer::getInternalChannel_Spectral(AOVSpectral var) const { return mSpectral[var]; }
 
+inline bool FrameContainer::hasVarianceEstimator() const
+{
+	return mSpectral[AOV_OnlineMean] && mSpectral[AOV_OnlineVariance];
+}
+
 inline VarianceEstimator FrameContainer::varianceEstimator() const
 {
+	PR_ASSERT(hasVarianceEstimator(), "Expected to have a variance estimator");
 	return VarianceEstimator(mSpectral[AOV_OnlineMean], mSpectral[AOV_OnlineVariance]);
 }
 

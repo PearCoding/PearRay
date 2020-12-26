@@ -93,7 +93,6 @@ void LocalFrameOutputDevice::commitSpectrals2(StreamPipeline* pipeline, const Ou
 	const auto spectralCh	  = mData.getInternalChannel_Spectral(AOV_Output);
 	const auto pixelWeightCh  = mData.getInternalChannel_1D(AOV_PixelWeight);
 	const auto pixelCounterCh = mData.getInternalChannel_Counter(AOV_PixelContributionCount); // This is the LOCAL pixel contribution count, which is reset each iteration!
-	auto varianceEstimator	  = mData.varianceEstimator();
 
 	PR_ASSERT(HasFilter || filterRadius == 0, "If no filter is choosen, radius must be zero");
 
@@ -101,15 +100,14 @@ void LocalFrameOutputDevice::commitSpectrals2(StreamPipeline* pipeline, const Ou
 		float& pixelWeight	 = pixelWeightCh->getFragment(sp, 0);
 		uint32& contribCount = pixelCounterCh->getFragment(sp, 0);
 
+		// Update weights
+		pixelWeight = std::fma(pixelWeight, contribCount, iterWeight) / (contribCount + 1);
+		contribCount += 1;
+
 		// Add contribution to main channel
 		PR_UNROLL_LOOP(3)
 		for (Size1i k = 0; k < 3; ++k)
 			spectralCh->getFragment(sp, k) += triplet[k];
-
-		// Add contribution to variance channel
-		PR_UNROLL_LOOP(3)
-		for (Size1i k = 0; k < 3; ++k)
-			varianceEstimator.addValue(sp, k, pixelWeight, iterWeight, triplet[k]);
 
 		// LPE
 		for (auto pair : mData.mLPE_Spectral[AOV_Output]) {
@@ -119,10 +117,6 @@ void LocalFrameOutputDevice::commitSpectrals2(StreamPipeline* pipeline, const Ou
 					pair.second->getFragment(sp, k) += triplet[k];
 			}
 		}
-
-		// Update weights
-		pixelWeight = std::fma(pixelWeight, contribCount, iterWeight) / (contribCount + 1);
-		contribCount += 1;
 	};
 
 	PR_OPT_LOOP

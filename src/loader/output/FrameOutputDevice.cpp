@@ -16,6 +16,12 @@ FrameOutputDevice::~FrameOutputDevice()
 {
 }
 
+// Do not propagate the variance aovs to local, as it is handled in global entirely
+inline static bool ignoreInLocal(AOVSpectral var)
+{
+	return var == AOV_OnlineMean || var == AOV_OnlineVariance;
+}
+
 std::shared_ptr<LocalOutputDevice> FrameOutputDevice::createLocal(const Size2i& size) const
 {
 	std::shared_ptr<LocalFrameOutputDevice> bucket = std::make_shared<LocalFrameOutputDevice>(
@@ -23,8 +29,10 @@ std::shared_ptr<LocalOutputDevice> FrameOutputDevice::createLocal(const Size2i& 
 		mData.getInternalChannel_Spectral(AOV_Output)->channels(), mMonotonic);
 
 	// Internals
-	for (int i = 0; i < AOV_SPECTRAL_COUNT; ++i)
-		bucket->data().requestInternalChannel_Spectral((AOVSpectral)i);
+	for (int i = 0; i < AOV_SPECTRAL_COUNT; ++i) {
+		if (!ignoreInLocal((AOVSpectral)i))
+			bucket->data().requestInternalChannel_Spectral((AOVSpectral)i);
+	}
 	for (int i = 0; i < AOV_3D_COUNT; ++i)
 		bucket->data().requestInternalChannel_3D((AOV3D)i);
 	for (int i = 0; i < AOV_1D_COUNT; ++i)
@@ -59,6 +67,9 @@ std::shared_ptr<LocalOutputDevice> FrameOutputDevice::createLocal(const Size2i& 
 			bucket->data().requestLPEChannel_Counter((AOVCounter)i, p.first, id++);
 	}
 	for (int i = 0; i < AOV_SPECTRAL_COUNT; ++i) {
+		if (ignoreInLocal((AOVSpectral)i))
+			continue;
+
 		uint32 id = 0;
 		for (const auto& p : mData.mLPE_Spectral[i])
 			bucket->data().requestLPEChannel_Spectral((AOVSpectral)i, p.first, id++);
@@ -88,8 +99,19 @@ void FrameOutputDevice::mergeLocal(const Point2i& p,
 	const Size2i src_size = Size2i::fromArray(bucket->extendedSize() - src_off);
 	const Size2i dst_size = src_size;
 
+	// Do the variance estimation
+	if (mData.hasVarianceEstimator()) {
+		auto varianceEstimator = mData.varianceEstimator();
+		for (Size1i i = 0; i < mData.mSpectral[AOV_OnlineMean]->channels(); ++i)
+			varianceEstimator.addBlock(i, dst_off, dst_size, *mData.mInt1D[AOV_PixelWeight], src_off, src_size, *bucket->data().mInt1D[AOV_PixelWeight], *bucket->data().mSpectral[AOV_Output]);
+	}
+
+	// Add spectral AOVs
 	PR_OPT_LOOP
 	for (int i = 0; i < AOV_SPECTRAL_COUNT; ++i) {
+		if (ignoreInLocal((AOVSpectral)i))
+			continue;
+
 		if (mData.mSpectral[i])
 			mData.mSpectral[i]->addBlock(dst_off, dst_size, src_off, src_size, *bucket->data().mSpectral[i]);
 
@@ -98,6 +120,7 @@ void FrameOutputDevice::mergeLocal(const Point2i& p,
 			mData.mLPE_Spectral[i][k].second->addBlock(dst_off, dst_size, src_off, src_size, *bucket->data().mLPE_Spectral[i][k].second);
 	}
 
+	// Add 3d AOVs
 	PR_OPT_LOOP
 	for (int i = 0; i < AOV_3D_COUNT; ++i) {
 		if (mData.mInt3D[i])
@@ -108,6 +131,7 @@ void FrameOutputDevice::mergeLocal(const Point2i& p,
 			mData.mLPE_3D[i][k].second->addBlock(dst_off, dst_size, src_off, src_size, *bucket->data().mLPE_3D[i][k].second);
 	}
 
+	// Add 1d AOVs
 	PR_OPT_LOOP
 	for (int i = 0; i < AOV_1D_COUNT; ++i) {
 		if (mData.mInt1D[i])
@@ -118,6 +142,7 @@ void FrameOutputDevice::mergeLocal(const Point2i& p,
 			mData.mLPE_1D[i][k].second->addBlock(dst_off, dst_size, src_off, src_size, *bucket->data().mLPE_1D[i][k].second);
 	}
 
+	// Add counter AOVs
 	PR_OPT_LOOP
 	for (int i = 0; i < AOV_COUNTER_COUNT; ++i) {
 		if (i == AOV_Feedback) {
@@ -139,7 +164,15 @@ void FrameOutputDevice::mergeLocal(const Point2i& p,
 		}
 	}
 
-	// Custom
+	// Add custom spectral aovs
+	PR_OPT_LOOP
+	for (auto aI = mData.mCustomSpectral.begin(), bI = bucket->data().mCustomSpectral.begin();
+		 aI != mData.mCustomSpectral.end();
+		 ++aI, ++bI) {
+		(*aI)->addBlock(dst_off, dst_size, src_off, src_size, *(*bI));
+	}
+
+	// Add custom 3d aovs
 	PR_OPT_LOOP
 	for (auto aI = mData.mCustom3D.begin(), bI = bucket->data().mCustom3D.begin();
 		 aI != mData.mCustom3D.end();
@@ -147,6 +180,7 @@ void FrameOutputDevice::mergeLocal(const Point2i& p,
 		(*aI)->addBlock(dst_off, dst_size, src_off, src_size, *(*bI));
 	}
 
+	// Add custom 1d aovs
 	PR_OPT_LOOP
 	for (auto aI = mData.mCustom1D.begin(), bI = bucket->data().mCustom1D.begin();
 		 aI != mData.mCustom1D.end();
@@ -154,16 +188,10 @@ void FrameOutputDevice::mergeLocal(const Point2i& p,
 		(*aI)->addBlock(dst_off, dst_size, src_off, src_size, *(*bI));
 	}
 
+	// Add custom counter aovs
 	PR_OPT_LOOP
 	for (auto aI = mData.mCustomCounter.begin(), bI = bucket->data().mCustomCounter.begin();
 		 aI != mData.mCustomCounter.end();
-		 ++aI, ++bI) {
-		(*aI)->addBlock(dst_off, dst_size, src_off, src_size, *(*bI));
-	}
-
-	PR_OPT_LOOP
-	for (auto aI = mData.mCustomSpectral.begin(), bI = bucket->data().mCustomSpectral.begin();
-		 aI != mData.mCustomSpectral.end();
 		 ++aI, ++bI) {
 		(*aI)->addBlock(dst_off, dst_size, src_off, src_size, *(*bI));
 	}
