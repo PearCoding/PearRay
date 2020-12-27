@@ -57,7 +57,7 @@ static uint32 sForceStop			 = 0;
 static uint32 sInterruptCounter		 = 0;
 constexpr uint32 HARD_STOP_THRESHOLD = 5;  // After this count, the renderer will try to hard stop (inbetween iterations) execution
 constexpr uint32 MAX_INTERRUPTS		 = 15; // After this count, the renderer will abort execution
-void pr_signalHandler(int)
+void pr_signalHandler(int signal)
 {
 	++sInterruptCounter;
 	if (sInterruptCounter > MAX_INTERRUPTS) {
@@ -65,7 +65,7 @@ void pr_signalHandler(int)
 				  << "Aborting renderer!" << std::endl
 				  << std::endl;
 		exit(EXIT_FAILURE);
-	} else if (sInterruptCounter > HARD_STOP_THRESHOLD) {
+	} else if (signal == SIGTERM || sInterruptCounter > HARD_STOP_THRESHOLD) {
 		if (sForceStop != 2)
 			std::cout << std::endl
 					  << "Trying to stop the renderer" << std::endl
@@ -88,7 +88,7 @@ int main(int argc, char** argv)
 		return EXIT_FAILURE;
 
 	// Setup signal handler
-	if (signal(SIGINT, pr_signalHandler) == SIG_ERR)
+	if (signal(SIGINT, pr_signalHandler) == SIG_ERR || signal(SIGTERM, pr_signalHandler) == SIG_ERR)
 		std::cout << "Error while setting signal handler. Stopping progressive rendering through console might not be possible" << std::endl;
 
 	if (options.Profile)
