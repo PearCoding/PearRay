@@ -6,13 +6,14 @@
 namespace PR {
 class LocalOutputDevice;
 class StreamPipeline;
+class RenderThread;
 
 /// Per Thread/Tile based output system
 class PR_LIB_CORE LocalOutputSystem {
 	friend class OutputSystem;
 
 public:
-	explicit LocalOutputSystem(const OutputSystem* parent, const Size2i& localSize);
+	explicit LocalOutputSystem(const RenderTile* tileRenderTile, const OutputSystem* parent, const Size2i& localSize);
 	~LocalOutputSystem();
 
 	inline const Size2i& globalSize() const { return mParent->size(); }
@@ -36,6 +37,7 @@ protected:
 	std::shared_ptr<LocalOutputDevice> localOutputDevice(size_t i) const;
 
 private:
+	const RenderTile* mTile;
 	const OutputSystem* mParent;
 	const Size2i mLocalSize;
 	std::vector<std::shared_ptr<LocalOutputDevice>> mLocalOutputDevices;

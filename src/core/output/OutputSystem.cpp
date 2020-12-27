@@ -26,9 +26,9 @@ void OutputSystem::clear(bool force)
 		device->clear(force);
 }
 
-std::shared_ptr<LocalOutputSystem> OutputSystem::createLocal(const Size2i& size) const
+std::shared_ptr<LocalOutputSystem> OutputSystem::createLocal(const RenderTile* tile, const Size2i& size) const
 {
-	auto local = std::make_shared<LocalOutputSystem>(this, size);
+	auto local = std::make_shared<LocalOutputSystem>(tile, this, size);
 	for (const auto& device : mOutputDevices)
 		local->addLocalOutputDevice(device->createLocal(size));
 

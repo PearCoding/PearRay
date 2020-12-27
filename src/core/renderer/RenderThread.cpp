@@ -50,7 +50,7 @@ void RenderThread::main()
 		 mTile && !shouldStop();
 		 mTile = mRenderer->getNextTile()) {
 
-		auto localSystem = outputSystem->createLocal(mTile->viewSize());
+		auto localSystem = outputSystem->createLocal(mTile, mTile->viewSize());
 		RenderTileSession session(mThreadIndex, mTile, pipeline(), queue, localSystem);
 
 		localSystem->clear(true);

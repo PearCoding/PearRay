@@ -10,9 +10,12 @@ class OutputDevice;
 class LocalOutputSystem;
 class LightPathExpression;
 
+class RenderTile;
 struct OutputSpectralEntry;
+struct OutputFeedbackEntry;
 
-using OutputSpectralCallback = std::function<void(const OutputSpectralEntry*, size_t)>;
+using OutputSpectralCallback = std::function<void(const RenderTile*, const OutputSpectralEntry*, size_t)>;
+using OutputFeedbackCallback = std::function<void(const RenderTile*, const OutputFeedbackEntry*, size_t)>;
 
 /// Core Output system
 /// Three types of channel provider:
@@ -40,7 +43,7 @@ public:
 
 	void clear(bool force = false);
 
-	std::shared_ptr<LocalOutputSystem> createLocal(const Size2i& size) const;
+	std::shared_ptr<LocalOutputSystem> createLocal(const RenderTile* tile, const Size2i& size) const;
 	void mergeLocal(const Point2i& p, const std::shared_ptr<LocalOutputSystem>& local);
 
 	/// It triggers an undefined behavior if the following methods are called after the renderer started
@@ -76,7 +79,13 @@ public:
 		mSpectralCallbacks.push_back(callback);
 	}
 
+	inline void registerFeedbackCallback(const OutputFeedbackCallback& callback)
+	{
+		mFeedbackCallbacks.push_back(callback);
+	}
+
 	inline const std::vector<OutputSpectralCallback>& spectralCallbacks() const { return mSpectralCallbacks; }
+	inline const std::vector<OutputFeedbackCallback>& feedbackCallbacks() const { return mFeedbackCallbacks; }
 
 private:
 	const Size2i mSize;
@@ -92,5 +101,6 @@ private:
 	uint32 mLPESpectralCount;
 
 	std::vector<OutputSpectralCallback> mSpectralCallbacks;
+	std::vector<OutputFeedbackCallback> mFeedbackCallbacks;
 };
 } // namespace PR

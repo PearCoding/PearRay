@@ -2,8 +2,9 @@
 #include "LocalOutputDevice.h"
 
 namespace PR {
-LocalOutputSystem::LocalOutputSystem(const OutputSystem* parent, const Size2i& localSize)
-	: mParent(parent)
+LocalOutputSystem::LocalOutputSystem(const RenderTile* tile, const OutputSystem* parent, const Size2i& localSize)
+	: mTile(tile)
+	, mParent(parent)
 	, mLocalSize(localSize)
 {
 }
@@ -24,7 +25,7 @@ void LocalOutputSystem::commitSpectrals(StreamPipeline* pipeline, const OutputSp
 		device->commitSpectrals(pipeline, entries, entrycount);
 
 	for (const auto& clb : mParent->spectralCallbacks())
-		clb(entries, entrycount);
+		clb(mTile, entries, entrycount);
 }
 
 void LocalOutputSystem::commitShadingPoints(const OutputShadingPointEntry* entries, size_t entrycount)
@@ -37,6 +38,9 @@ void LocalOutputSystem::commitFeedbacks(const OutputFeedbackEntry* entries, size
 {
 	for (const auto& device : mLocalOutputDevices)
 		device->commitFeedbacks(entries, entrycount);
+
+	for (const auto& clb : mParent->feedbackCallbacks())
+		clb(mTile, entries, entrycount);
 }
 
 void LocalOutputSystem::commitCustomSpectrals(uint32 aov_id, StreamPipeline* pipeline, const OutputCustomSpectralEntry* entries, size_t entrycount)
