@@ -26,8 +26,9 @@ bool ProgramSettings::parse(int argc, char** argv)
 			("version", "Show version and exit")
 			("v,verbose", "Print detailed information into log file (and perhabs into console)")
 			("P,profile", "Profile execution and dump results into a file")
-			("p,progress", "Show progress (regardless if quiet or not)", cxxopts::value<uint32>()->implicit_value("1"))
+			("progress", "Show progress if not quiet", cxxopts::value<uint32>()->default_value("1"))
 			("I,information", "Print additional scene information into log file (and perhabs into console)")
+			("p,progressive", "Start a progressive rendering. Some integrators may not support this")
 
 			("i,input", "Input file", cxxopts::value<std::string>())
 			("o,output", "Output directory", cxxopts::value<std::string>()->default_value("./scene"))
@@ -129,7 +130,7 @@ bool ProgramSettings::parse(int argc, char** argv)
 		IsVerbose		= (vm.count("verbose") != 0);
 		IsQuiet			= (vm.count("quiet") != 0);
 		NoPrettyConsole = (vm.count("no-pretty-console") != 0);
-		ShowProgress	= vm.count("progress") ? vm["progress"].as<uint32>() : 0;
+		ShowProgress	= !IsQuiet ? vm["progress"].as<uint32>() : 0;
 		ShowInformation = (vm.count("information") != 0);
 
 #ifdef PR_WITH_PROFILER
@@ -150,7 +151,7 @@ bool ProgramSettings::parse(int argc, char** argv)
 		// Tev Image
 		TevVariance = vm.count("tev-var") != 0;
 		TevWeight	= vm.count("tev-weight") != 0;
-		TevFeedback	= vm.count("tev-feedback") != 0;
+		TevFeedback = vm.count("tev-feedback") != 0;
 
 		if (vm.count("tev") || TevVariance || TevWeight || TevFeedback) {
 			TevUpdate = vm["tev-update"].as<uint32>();
@@ -198,6 +199,8 @@ bool ProgramSettings::parse(int argc, char** argv)
 			CacheMode = CM_All;
 		else
 			CacheMode = CM_Auto;
+
+		Progressive = (vm.count("progressive") != 0);
 	} catch (const cxxopts::OptionException& e) {
 		std::cout << "Error while parsing commandline: " << e.what() << std::endl;
 		return false;

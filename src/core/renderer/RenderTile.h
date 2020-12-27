@@ -62,8 +62,8 @@ public:
 	inline const Size2i& viewSize() const { return mViewSize; }
 	inline const Size2i& imageSize() const { return mImageSize; }
 
-	inline bool isFinished() const { return pixelSamplesRendered() >= maxPixelSamples(); }
-	inline bool isMarkedDone() const { return mStatus == RTS_Done; } // Used by RenderContext to mark an full pass being done
+	inline bool isFinished() const { return maxPixelSamples() != 0 /* Progressive */ && pixelSamplesRendered() >= maxPixelSamples(); }
+	inline bool isMarkedDone() const { return mStatus == RTS_Done; } // Used by RenderContext to mark a full pass being done
 
 	inline uint64 maxPixelSamples() const { return mMaxPixelSamples; }
 	inline uint64 pixelSamplesRendered() const { return mContext.PixelSamplesRendered; }

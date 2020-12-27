@@ -6,31 +6,25 @@
 #include <vector>
 
 namespace PR {
+/// A very bad sampler for test purposes
 class UniformSampler : public ISampler {
 public:
 	explicit UniformSampler(uint32 samples)
 		: ISampler(samples)
-		, m2D_X(static_cast<uint32>(std::sqrt(samples)))
-		, m2D_Y((samples + m2D_X - 1) / m2D_X)
 	{
 	}
 
 	virtual ~UniformSampler() = default;
 
-	float generate1D(uint32 index) override
+	float generate1D(uint32) override
 	{
-		return (index % maxSamples() + 0.5f) / maxSamples();
+		return 0.5f;
 	}
 
-	Vector2f generate2D(uint32 index) override
+	Vector2f generate2D(uint32) override
 	{
-		return Vector2f((index % m2D_X + 0.5f) / m2D_X,
-						(index / m2D_X + 0.5f) / m2D_Y);
+		return Vector2f(0.5f, 0.5f);
 	}
-
-private:
-	const uint32 m2D_X;
-	const uint32 m2D_Y;
 };
 
 class UniformSamplerFactory : public ISamplerFactory {

@@ -1,9 +1,11 @@
+#include "Environment.h"
+#include "Logger.h"
 #include "Random.h"
 #include "SceneLoadContext.h"
-
 #include "sampler/ISampler.h"
 #include "sampler/ISamplerFactory.h"
 #include "sampler/ISamplerPlugin.h"
+
 #include <vector>
 
 namespace PR {
@@ -27,8 +29,6 @@ public:
 		: ISampler(samples)
 		, mRandom(random)
 	{
-		PR_ASSERT(samples > 0, "Given sample count has to be greater than 0");
-
 		mSamples1D.resize(samples);
 		mSamples2D.resize(samples);
 
@@ -106,7 +106,13 @@ class SobolSamplerPlugin : public ISamplerPlugin {
 public:
 	std::shared_ptr<ISamplerFactory> create(const std::string&, const SceneLoadContext& ctx) override
 	{
-		return std::make_shared<SobolSamplerFactory>(ctx.parameters());
+		// Skip sobol if progressive
+		if (ctx.environment()->renderSettings().progressive) {
+			PR_LOG(L_WARNING) << "Sobol sampler does not support progressive rendering. Using 'mjitt' instead" << std::endl;
+			return ctx.loadSamplerFactory("mjitt", ctx.parameters());
+		} else {
+			return std::make_shared<SobolSamplerFactory>(ctx.parameters());
+		}
 	}
 
 	const std::vector<std::string>& getNames() const override

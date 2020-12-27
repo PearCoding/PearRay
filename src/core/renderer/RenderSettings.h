@@ -31,6 +31,7 @@ public:
 	TileMode tileMode;
 	bool useAdaptiveTiling;
 	bool sortHits;
+	bool progressive;
 
 	float spectralStart;
 	float spectralEnd;

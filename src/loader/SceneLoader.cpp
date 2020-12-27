@@ -99,6 +99,8 @@ std::shared_ptr<Environment> SceneLoader::createEnvironment(const std::vector<DL
 			} catch (const BadRenderEnvironment&) {
 				return nullptr;
 			}
+			
+			env->renderSettings().progressive = opts.Progressive;
 
 			if (renderWidthD.type() == DL::DT_Integer)
 				env->renderSettings().filmWidth = renderWidthD.getInt();
@@ -849,7 +851,7 @@ void SceneLoader::addSubGraph(const DL::DataGroup& group, SceneLoadContext& ctx)
 
 		if (cacheD.type() == DL::DT_Bool)
 			loader.setCacheMode(cacheD.getBool() ? CM_All : CM_None);
-			
+
 		try {
 			loader.load(file, ctx);
 		} catch (const std::bad_alloc& ex) {

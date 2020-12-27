@@ -20,6 +20,8 @@ SceneLoadContext::SceneLoadContext(Environment* env, const std::filesystem::path
 	, mFileStack()
 	, mEnvironment(env)
 {
+	PR_ASSERT(env, "Expected valid environment");
+
 	if (!filename.empty())
 		mFileStack.push_back(filename);
 }

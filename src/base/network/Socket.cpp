@@ -163,7 +163,7 @@ Socket::Socket()
 	mInternal->IsIp6 = true;
 
 	if (!checkSocketAndErrorCode(socket)) {
-		PR_LOG(L_WARNING) << "No IPv6 support" << std::endl;
+		//PR_LOG(L_WARNING) << "No IPv6 support" << std::endl;
 #endif
 
 		socket = ::socket(AF_INET, SOCK_STREAM, 0);
@@ -203,7 +203,7 @@ bool Socket::connect(uint16 port, const std::string& ip)
 {
 	if (mInternal->IsIp6) {
 		if (!mInternal->connect6(port, ip)) {
-			PR_LOG(L_WARNING) << "No IPv6 support" << std::endl;
+			//PR_LOG(L_WARNING) << "No IPv6 support" << std::endl;
 			return mInternal->connect4(port, ip);
 		}
 	} else {
@@ -220,7 +220,7 @@ bool Socket::bindAndListen(uint16 port, int32 maxClients)
 	int max = maxClients < 0 ? SOMAXCONN : maxClients;
 	if (mInternal->IsIp6) {
 		if (!mInternal->bind6(port)) {
-			PR_LOG(L_WARNING) << "No IPv6 support" << std::endl;
+			//PR_LOG(L_WARNING) << "No IPv6 support" << std::endl;
 			return mInternal->bind4(port);
 		}
 	} else {

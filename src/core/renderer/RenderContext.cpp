@@ -101,7 +101,7 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 				   << "  Passes:                 " << mIntegratorPassCount << std::endl
 				   << "  Tiles:                  " << rtx << " x " << rty << std::endl
 				   << "  Entities:               " << mScene->entityCount() << std::endl
-				   << "  Lights:                 " << mLightSampler->emissiveEntityCount() << std::endl
+				   << "  Surface Lights:         " << mLightSampler->emissiveEntityCount() << std::endl
 				   << "  Materials:              " << mScene->materialCount() << std::endl
 				   << "  Emissions:              " << mScene->emissionCount() << std::endl
 				   << "  InfLights:              " << mScene->infiniteLightCount() << std::endl
@@ -112,7 +112,8 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 				   << "  Scene Extent:           " << mScene->boundingBox().width() << " x " << mScene->boundingBox().height() << " x " << mScene->boundingBox().depth() << std::endl
 				   << "  Scene Origin Radius:    " << mScene->boundingSphere().radius() << std::endl
 				   << "  Spectral Domain:        [" << mRenderSettings.spectralStart << ", " << mRenderSettings.spectralEnd << "]" << std::endl
-				   << "  Adaptive Tiling:        " << (mRenderSettings.useAdaptiveTiling ? "true" : "false") << std::endl;
+				   << "  Adaptive Tiling:        " << (mRenderSettings.useAdaptiveTiling ? "true" : "false") << std::endl
+				   << "  Progressive:            " << (mRenderSettings.progressive ? "true" : "false") << std::endl;
 
 	// Start
 	mIntegrator->onStart();

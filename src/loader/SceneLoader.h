@@ -25,6 +25,7 @@ public:
 		std::filesystem::path WorkingDir;
 		std::filesystem::path PluginPath;
 		uint32 CacheMode;
+		bool Progressive;
 	};
 
 	static std::shared_ptr<Environment> loadFromFile(const std::filesystem::path& path, const LoadOptions& opts);

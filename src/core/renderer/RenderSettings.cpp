@@ -16,6 +16,7 @@ RenderSettings::RenderSettings()
 	, tileMode(TM_ZORDER)
 	, useAdaptiveTiling(true)
 	, sortHits(false)
+	, progressive(false)
 	, spectralStart(PR_VISIBLE_WAVELENGTH_START)
 	, spectralEnd(PR_VISIBLE_WAVELENGTH_END)
 	, spectralMono(false)
@@ -71,9 +72,12 @@ std::shared_ptr<ISpectralMapper> RenderSettings::createSpectralMapper(RenderCont
 uint32 RenderSettings::maxSampleCount() const
 {
 	PR_ASSERT(aaSamplerFactory && lensSamplerFactory && timeSamplerFactory && spectralSamplerFactory, "Expect all samplers to be constructed");
-	return aaSamplerFactory->requestedSampleCount()
-		   * lensSamplerFactory->requestedSampleCount()
-		   * timeSamplerFactory->requestedSampleCount()
-		   * spectralSamplerFactory->requestedSampleCount();
+	if (progressive)
+		return 0;
+	else
+		return aaSamplerFactory->requestedSampleCount()
+			   * lensSamplerFactory->requestedSampleCount()
+			   * timeSamplerFactory->requestedSampleCount()
+			   * spectralSamplerFactory->requestedSampleCount();
 }
 } // namespace PR

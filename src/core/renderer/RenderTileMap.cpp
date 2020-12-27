@@ -1,11 +1,11 @@
 #include "RenderTileMap.h"
+#include "Logger.h"
 #include "Profiler.h"
 #include "RenderContext.h"
 #include "RenderTile.h"
 #include "math/Bits.h"
 #include "math/Generator.h"
 
-#include "Logger.h"
 namespace PR {
 RenderTileMap::RenderTileMap()
 	: mTiles()

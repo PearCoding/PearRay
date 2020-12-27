@@ -19,6 +19,7 @@
 #include <filesystem>
 
 #include <chrono>
+#include <csignal>
 #include <iomanip>
 #include <iostream>
 #include <thread>
@@ -52,12 +53,43 @@ void printStatistics(const RenderStatus& status)
 		<< "  Iterations:      " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.iteration_count").getUInt() << std::endl;
 }
 
+static uint32 sForceStop			 = 0;
+static uint32 sInterruptCounter		 = 0;
+constexpr uint32 HARD_STOP_THRESHOLD = 5;  // After this count, the renderer will try to hard stop (inbetween iterations) execution
+constexpr uint32 MAX_INTERRUPTS		 = 15; // After this count, the renderer will abort execution
+void pr_signalHandler(int)
+{
+	++sInterruptCounter;
+	if (sInterruptCounter > MAX_INTERRUPTS) {
+		std::cerr << std::endl
+				  << "Aborting renderer!" << std::endl
+				  << std::endl;
+		exit(EXIT_FAILURE);
+	} else if (sInterruptCounter > HARD_STOP_THRESHOLD) {
+		if (sForceStop != 2)
+			std::cout << std::endl
+					  << "Trying to stop the renderer" << std::endl
+					  << std::endl;
+		sForceStop = 2;
+	} else {
+		if (sForceStop != 1)
+			std::cout << std::endl
+					  << "Trying to soft stop the renderer" << std::endl
+					  << std::endl;
+		sForceStop = 1;
+	}
+}
+
 constexpr uint32 PROFILE_SAMPLE_RATE = 10;
 int main(int argc, char** argv)
 {
 	ProgramSettings options;
 	if (!options.parse(argc, argv))
 		return EXIT_FAILURE;
+
+	// Setup signal handler
+	if (signal(SIGINT, pr_signalHandler) == SIG_ERR)
+		std::cout << "Error while setting signal handler. Stopping progressive rendering through console might not be possible" << std::endl;
 
 	if (options.Profile)
 		Profiler::start(PROFILE_SAMPLE_RATE);
@@ -95,10 +127,12 @@ int main(int argc, char** argv)
 
 	// Load scene
 	SceneLoader::LoadOptions opts;
-	opts.WorkingDir					 = options.OutputDir.generic_wstring();
-	opts.PluginPath					 = options.PluginPath.generic_wstring();
-	opts.CacheMode					 = options.CacheMode;
-	std::shared_ptr<Environment> env = SceneLoader::loadFromFile(
+	opts.WorkingDir	 = options.OutputDir.generic_wstring();
+	opts.PluginPath	 = options.PluginPath.generic_wstring();
+	opts.CacheMode	 = options.CacheMode;
+	opts.Progressive = options.Progressive;
+
+	const std::shared_ptr<Environment> env = SceneLoader::loadFromFile(
 		options.InputFile.generic_wstring(),
 		opts);
 
@@ -122,31 +156,25 @@ int main(int argc, char** argv)
 		observers.push_back(std::make_unique<TevObserver>());
 
 	// Setup renderFactory
-	auto renderFactory = env->createRenderFactory();
+	const auto renderFactory = env->createRenderFactory();
 	if (!renderFactory) {
 		PR_LOG(L_ERROR) << "Could not setup render factory." << std::endl;
-
 		return EXIT_FAILURE;
 	}
 
-	auto integrator = env->createSelectedIntegrator();
+	const auto integrator = env->createSelectedIntegrator();
 
 	// Render per image tile
 	ToneMapper toneMapper;
 	for (uint32 i = 0; i < options.ImageTileXCount * options.ImageTileYCount; ++i) {
-		auto renderer = renderFactory->create(
-			integrator,
-			i,
-			Size2i(options.ImageTileXCount, options.ImageTileYCount));
+		const auto renderer = renderFactory->create(integrator, i, Size2i(options.ImageTileXCount, options.ImageTileYCount));
 
 		if (!renderer) {
 			PR_LOG(L_ERROR) << "Unable to create renderer!" << std::endl;
 			return EXIT_FAILURE;
 		}
 
-		auto outputDevice = env->createAndAssignFrameOutputDevice(renderer);
-
-		std::atomic<bool> softStop(false); // Stop after iteration end
+		const auto outputDevice = env->createAndAssignFrameOutputDevice(renderer);
 
 		// Make sure output is configured for output
 		// TODO: This is bad design -> Encapsulate rendercontext dependent parts
@@ -165,7 +193,7 @@ int main(int argc, char** argv)
 
 		// Status variables
 		uint32 maxIterations = 0;
-		auto start			 = sc::high_resolution_clock::now();
+		const auto start	 = sc::high_resolution_clock::now();
 
 		// Setup observers
 		for (const auto& obs : observers)
@@ -173,9 +201,6 @@ int main(int argc, char** argv)
 
 		// Setup iteration callback
 		renderer->addIterationCallback([&](const RenderIteration& iter) {
-			if (softStop.exchange(false))
-				renderer->requestStop();
-
 			maxIterations = std::max(maxIterations, iter.Iteration);
 
 			for (const auto& obs : observers)
@@ -193,11 +218,16 @@ int main(int argc, char** argv)
 			for (const auto& obs : observers)
 				obs->update(UpdateInfo{ start, maxIterations, 0 });
 
+			if (sForceStop == 1)
+				renderer->requestSoftStop();
+			else if (sForceStop == 2)
+				renderer->requestStop();
+
 			if (options.MaxTime > 0 && span_full.count() >= options.MaxTime) {
 				if (options.MaxTimeForce)
 					renderer->requestStop();
 				else
-					softStop = true;
+					renderer->requestSoftStop();
 			}
 
 			if (renderer->isStopping())
@@ -226,6 +256,9 @@ int main(int argc, char** argv)
 		// Print Statistics
 		if (!options.IsQuiet)
 			printStatistics(renderer->status());
+
+		if (sForceStop != 0)
+			break;
 	}
 
 	observers.clear();

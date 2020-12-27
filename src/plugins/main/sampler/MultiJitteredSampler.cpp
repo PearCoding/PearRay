@@ -1,9 +1,9 @@
 #include "Random.h"
 #include "SceneLoadContext.h"
-
 #include "sampler/ISampler.h"
 #include "sampler/ISamplerFactory.h"
 #include "sampler/ISamplerPlugin.h"
+
 #include <vector>
 
 namespace PR {
@@ -120,7 +120,7 @@ public:
 		constexpr uint32 FH = 0x51633e2d;
 		constexpr uint32 F1 = 0x68bc21eb;
 		constexpr uint32 F2 = 0x02e5be93;
-		index				= permute(index, maxSamples(), mSeed * FH);
+		index				= permute(index, std::max(1u, maxSamples()), mSeed * FH);
 #else
 		constexpr uint32 F1 = 0xa511e9b3;
 		constexpr uint32 F2 = 0x63d83595;
@@ -139,7 +139,7 @@ public:
 
 #ifdef PR_MJS_CLIP
 		const Vector2f r = Vector2f((sx + (sy + jx) / m2D_Y) / m2D_X,
-									(index + jy) / maxSamples());
+									(index + jy) / std::max(1u, maxSamples()));
 #else
 		const Vector2f r	= Vector2f((index % m2D_X + (sy + jx) / m2D_Y) / m2D_X,
 									   (index / m2D_X + (sx + jy) / m2D_X) / m2D_Y);
@@ -173,7 +173,7 @@ public:
 	{
 		const uint32 PRIME = 14512081;
 		return std::make_shared<MultiJitteredSampler>(rnd, sample_count,
-													  mParams.getUInt("bins", sample_count),
+													  mParams.getUInt("bins", std::max(1u, sample_count)),
 													  mParams.getUInt("seed", PRIME ^ rnd.get32()));
 	}
 

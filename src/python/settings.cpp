@@ -17,7 +17,16 @@ void setup_settings(py::module& m)
 		.def_readwrite("cropMinX", &RenderSettings::cropMinX)
 		.def_readwrite("cropMaxY", &RenderSettings::cropMaxY)
 		.def_readwrite("cropMinY", &RenderSettings::cropMinY)
-		.def_readwrite("tileMode", &RenderSettings::tileMode);
+		.def_readwrite("tileMode", &RenderSettings::tileMode)
+		.def_readwrite("maxParallelRays", &RenderSettings::maxParallelRays)
+		.def_readwrite("progressive", &RenderSettings::progressive)
+		.def_readwrite("seed", &RenderSettings::seed)
+		.def_readwrite("sortHits", &RenderSettings::sortHits)
+		.def_readwrite("spectralHero", &RenderSettings::spectralHero)
+		.def_readwrite("spectralMono", &RenderSettings::spectralMono)
+		.def_readwrite("spectralStart", &RenderSettings::spectralStart)
+		.def_readwrite("spectralEnd", &RenderSettings::spectralEnd)
+		.def_readwrite("useAdaptiveTiling", &RenderSettings::useAdaptiveTiling);
 
 	py::enum_<TileMode>(m, "TileMode")
 		.value("LINEAR", TM_LINEAR)

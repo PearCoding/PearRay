@@ -35,7 +35,7 @@ struct DiParameters {
 /// Suports NEE, Inf Lights
 /// TODO: Mediums/Volume
 /// TODO: Revisit Hero Wavelength MIS
-template <bool HasInfLights, VCM::MISMode MISMode>
+template <bool HasInfLights, VCM::MISMode MISMode, bool EmissiveScatter>
 class IntDirectInstance : public IIntegratorInstance {
 private:
 	struct TraversalContext {
@@ -76,8 +76,11 @@ public:
 		if (pathLength == 1)
 			session.pushSPFragment(ip, mCameraPath);
 
-		if (entity->hasEmission())
+		if (entity->hasEmission()) {
 			handleDirectHit(session, ip, entity, current);
+			if constexpr (!EmissiveScatter)
+				return {};
+		}
 
 		// If there is no material to scatter from, give up
 		if (PR_UNLIKELY(!material))
@@ -419,7 +422,7 @@ private:
 	LightPath mCameraPath;
 };
 
-template <VCM::MISMode MISMode>
+template <VCM::MISMode MISMode, bool EmissiveScatter>
 class IntDirect : public IIntegrator {
 public:
 	explicit IntDirect(const DiParameters& parameters)
@@ -433,9 +436,9 @@ public:
 	{
 		const bool hasInfLights = ctx->scene()->infiniteLightCount() != 0;
 		if (hasInfLights)
-			return std::make_shared<IntDirectInstance<true, MISMode>>(mParameters, ctx->lightSampler());
+			return std::make_shared<IntDirectInstance<true, MISMode, EmissiveScatter>>(mParameters, ctx->lightSampler());
 		else
-			return std::make_shared<IntDirectInstance<false, MISMode>>(mParameters, ctx->lightSampler());
+			return std::make_shared<IntDirectInstance<false, MISMode, EmissiveScatter>>(mParameters, ctx->lightSampler());
 	}
 
 private:
@@ -455,6 +458,10 @@ public:
 			mMISMode = VCM::MM_Power;
 		else
 			mMISMode = VCM::MM_Balance;
+
+		// Per default, do not scatter at emissive surfaces, as they introduce more noise than normal
+		// Keep in mind however, that it introduces (conceptional) bias, as we assume an emissive light surface is also a perfect black surface
+		mEmissiveScatter = params.getBool("emissive_scatter", false);
 	}
 
 	std::shared_ptr<IIntegrator> createInstance() const override
@@ -462,15 +469,22 @@ public:
 		switch (mMISMode) {
 		default:
 		case VCM::MM_Balance:
-			return std::make_shared<IntDirect<VCM::MM_Balance>>(mParameters);
+			if (mEmissiveScatter)
+				return std::make_shared<IntDirect<VCM::MM_Balance, true>>(mParameters);
+			else
+				return std::make_shared<IntDirect<VCM::MM_Balance, false>>(mParameters);
 		case VCM::MM_Power:
-			return std::make_shared<IntDirect<VCM::MM_Power>>(mParameters);
+			if (mEmissiveScatter)
+				return std::make_shared<IntDirect<VCM::MM_Power, true>>(mParameters);
+			else
+				return std::make_shared<IntDirect<VCM::MM_Power, false>>(mParameters);
 		}
 	}
 
 private:
 	DiParameters mParameters;
 	VCM::MISMode mMISMode;
+	bool mEmissiveScatter;
 };
 
 class IntDirectFactoryFactory : public IIntegratorPlugin {

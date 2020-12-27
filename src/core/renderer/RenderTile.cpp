@@ -27,9 +27,9 @@ RenderTile::RenderTile(const Point2i& start, const Point2i& end,
 
 	// Even while each sampler has his own number of requested samples...
 	// each sampler deals with the combination of all requested samples
-	mAASampler		 = mRenderContext->settings().createAASampler(mRandom);
-	mLensSampler	 = mRenderContext->settings().createLensSampler(mRandom);
-	mTimeSampler	 = mRenderContext->settings().createTimeSampler(mRandom);
+	mAASampler = mRenderContext->settings().createAASampler(mRandom);
+	mLensSampler = mRenderContext->settings().createLensSampler(mRandom);
+	mTimeSampler = mRenderContext->settings().createTimeSampler(mRandom);
 	mSpectralSampler = mRenderContext->settings().createSpectralSampler(mRandom);
 
 	mSpectralMapper = mRenderContext->settings().createSpectralMapper(mRenderContext);
@@ -59,6 +59,7 @@ RenderTile::~RenderTile()
 {
 }
 
+// TODO
 /* Our sample approach gives each pixel in a single tile the SAME samples (except for random sampler)! 
  * This may sometimes good, but also bad... more investigations required...
  */

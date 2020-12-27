@@ -149,7 +149,8 @@
       "graphicscostestimator": "cpp",
       "image": "cpp",
       "fast_back_stack": "cpp",
-      "types": "cpp"
+      "types": "cpp",
+      "timer": "cpp"
     },
     "files.exclude": {
         "**/.git": true,

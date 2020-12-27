@@ -55,7 +55,7 @@ public:
 
 	std::shared_ptr<ISampler> createInstance(uint32 sample_count, Random& rnd) const override
 	{
-		return std::make_shared<StratifiedSampler>(rnd, sample_count, mParams.getUInt("bins", sample_count));
+		return std::make_shared<StratifiedSampler>(rnd, sample_count, mParams.getUInt("bins", std::max(1u, sample_count)));
 	}
 
 private:

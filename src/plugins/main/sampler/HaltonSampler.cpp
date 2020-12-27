@@ -1,8 +1,10 @@
+#include "Environment.h"
+#include "Logger.h"
 #include "SceneLoadContext.h"
-
 #include "sampler/ISampler.h"
 #include "sampler/ISamplerFactory.h"
 #include "sampler/ISamplerPlugin.h"
+
 #include <vector>
 
 namespace PR {
@@ -33,8 +35,6 @@ public:
 		, mBaseY(baseY)
 		, mBurnin(burnin)
 	{
-		PR_ASSERT(samples > 0, "Given sample count has to be greater than 0");
-
 		for (uint32 i = 0; i < samples; ++i) {
 			mBaseXSamples[i] = halton(i + burnin, mBaseX);
 			mBaseYSamples[i] = halton(i + burnin, mBaseY);
@@ -82,8 +82,6 @@ public:
 		, mBaseX(baseX)
 		, mBurnin(burnin)
 	{
-		PR_ASSERT(samples > 0, "Given sample count has to be greater than 0");
-
 		for (uint32 i = 0; i < samples; ++i) {
 			mBaseXSamples[i] = halton(i + burnin, mBaseX);
 			mBaseYSamples[i] = (0.5f + i) / samples;
@@ -155,8 +153,8 @@ public:
 
 	std::shared_ptr<ISampler> createInstance(uint32 sample_count, Random&) const override
 	{
-		uint32 baseX   = (uint32)mParams.getUInt("base_x", 13);
-		uint32 burnin  = (uint32)mParams.getUInt("burnin", baseX);
+		uint32 baseX  = (uint32)mParams.getUInt("base_x", 13);
+		uint32 burnin = (uint32)mParams.getUInt("burnin", baseX);
 		return std::make_shared<HammersleySampler>(sample_count, baseX, burnin);
 	}
 
@@ -168,10 +166,16 @@ class HaltonSamplerPlugin : public ISamplerPlugin {
 public:
 	std::shared_ptr<ISamplerFactory> create(const std::string& name, const SceneLoadContext& ctx) override
 	{
-		if (name == "halton")
-			return std::make_shared<HaltonSamplerFactory>(ctx.parameters());
-		else
-			return std::make_shared<HammersleySamplerFactory>(ctx.parameters());
+		// Skip sobol if progressive
+		if (ctx.environment()->renderSettings().progressive) {
+			PR_LOG(L_WARNING) << "Halton and hammersley sampler do not support progressive rendering. Using 'mjitt' instead" << std::endl;
+			return ctx.loadSamplerFactory("mjitt", ctx.parameters());
+		} else {
+			if (name == "halton")
+				return std::make_shared<HaltonSamplerFactory>(ctx.parameters());
+			else
+				return std::make_shared<HammersleySamplerFactory>(ctx.parameters());
+		}
 	}
 
 	const std::vector<std::string>& getNames() const override

@@ -33,24 +33,23 @@ bool SamplerManager::createDefaultsIfNecessary(Environment* env)
 
 	// Add if necessary
 	if (!settings.aaSamplerFactory) {
-		PR_LOG(L_WARNING) << "No AA sampler selected. Using sobol sampler with sample count " << DEF_AA_SC << std::endl;
-		settings.aaSamplerFactory = createAndAdd("sobol", DEF_AA_SC);
+		if (settings.progressive) {
+			PR_LOG(L_WARNING) << "No AA sampler selected. Using multi jittered with sample count " << DEF_AA_SC << std::endl;
+			settings.aaSamplerFactory = createAndAdd("mjitt", DEF_AA_SC);
+		} else {
+			PR_LOG(L_WARNING) << "No AA sampler selected. Using sobol sampler with sample count " << DEF_AA_SC << std::endl;
+			settings.aaSamplerFactory = createAndAdd("sobol", DEF_AA_SC);
+		}
 	}
 
-	if (!settings.lensSamplerFactory) {
-		//PR_LOG(L_WARNING) << "No lens sampler selected. Using halton sampler with sample count " << DEF_LENS_SC << std::endl;
-		settings.lensSamplerFactory = createAndAdd("halton", DEF_LENS_SC);
-	}
+	if (!settings.lensSamplerFactory)
+		settings.lensSamplerFactory = createAndAdd("random", DEF_LENS_SC);
 
-	if (!settings.timeSamplerFactory) {
-		//PR_LOG(L_WARNING) << "No time sampler selected. Using multi jittered sampler with sample count " << DEF_TIME_SC << std::endl;
-		settings.timeSamplerFactory = createAndAdd("mjitt", DEF_TIME_SC);
-	}
+	if (!settings.timeSamplerFactory)
+		settings.timeSamplerFactory = createAndAdd("random", DEF_TIME_SC);
 
-	if (!settings.spectralSamplerFactory) {
-		//PR_LOG(L_WARNING) << "No spectral sampler selected. Using random sampler with sample count " << DEF_SPEC_SC << std::endl;
+	if (!settings.spectralSamplerFactory)
 		settings.spectralSamplerFactory = createAndAdd("random", DEF_SPEC_SC);
-	}
 
 	// Check again
 	if (!settings.aaSamplerFactory)
