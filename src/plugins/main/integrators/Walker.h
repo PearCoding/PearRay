@@ -135,8 +135,11 @@ private:
 				if (weight.isZero(PR_EPSILON) || PR_UNLIKELY(sout.PDF_S[0] <= PR_EPSILON))
 					return {};
 
+				if (sout.isHeroCollapsing())
+					weight *= SpectralBlobUtils::HeroOnly();
+
 				int rflags = RF_Bounce;
-				if (sout.isSpectralVarying())
+				if (sout.isHeroCollapsing())
 					rflags |= RF_Monochrome;
 
 				if (!sout.isDelta())

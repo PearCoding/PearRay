@@ -13,7 +13,7 @@
 #include <sstream>
 
 namespace PR {
-template <bool SpectralVarying, bool UseVNDF, bool IsAnisotropic>
+template <bool UseVNDF, bool IsAnisotropic>
 class RoughConductorMaterial : public IMaterial {
 public:
 	RoughConductorMaterial(const std::shared_ptr<FloatSpectralNode>& eta, const std::shared_ptr<FloatSpectralNode>& k,
@@ -46,6 +46,7 @@ public:
 		if (closure.isDelta()) { // Reject
 			out.PDF_S  = 0.0f;
 			out.Weight = SpectralBlob::Zero();
+			out.Flags  = MSF_DeltaDistribution;
 			return;
 		}
 
@@ -68,8 +69,10 @@ public:
 		const auto closure = MicrofacetReflection(roughness(in.ShadingContext));
 		if (closure.isDelta()) {
 			out.PDF_S = 0.0f;
+			out.Flags = MSF_DeltaDistribution;
 			return;
 		}
+
 		out.PDF_S = closure.pdf(in.Context.L, in.Context.V);
 	}
 
@@ -82,10 +85,7 @@ public:
 		out.L			   = closure.sample(in.RND.get2D(), in.Context.V);
 
 		// Set flags
-		if constexpr (SpectralVarying)
-			out.Flags = (closure.isDelta() ? MSF_DeltaDistribution : 0) | MSF_SpectralVarying;
-		else
-			out.Flags = (closure.isDelta() ? MSF_DeltaDistribution : 0);
+		out.Flags = (closure.isDelta() ? MSF_DeltaDistribution : 0);
 
 		if (!in.Context.V.sameHemisphere(out.L)) { // No transmission
 			out = MaterialSampleOutput::Reject(MST_SpecularReflection, out.Flags);
@@ -121,7 +121,6 @@ public:
 			   << "    Specularity:     " << mSpecularity->dumpInformation() << std::endl
 			   << "    RoughnessX:      " << mRoughnessX->dumpInformation() << std::endl
 			   << "    RoughnessY:      " << mRoughnessY->dumpInformation() << std::endl
-			   << "    SpectralVarying: " << (SpectralVarying ? "true" : "false") << std::endl
 			   << "    VNDF:            " << (UseVNDF ? "true" : "false") << std::endl;
 
 		return stream.str();
@@ -136,7 +135,7 @@ private:
 };
 
 // System of function which probably could be simplified with template meta programming
-template <bool SpectralVarying, bool UseVNDF>
+template <bool UseVNDF>
 static std::shared_ptr<IMaterial> createMaterial1(const SceneLoadContext& ctx)
 {
 	std::shared_ptr<FloatScalarNode> rx;
@@ -157,43 +156,31 @@ static std::shared_ptr<IMaterial> createMaterial1(const SceneLoadContext& ctx)
 	const auto spec = ctx.lookupSpectralNode("specularity", 1);
 
 	if (rx == ry)
-		return std::make_shared<RoughConductorMaterial<SpectralVarying, UseVNDF, false>>(eta, k, spec, rx, ry);
+		return std::make_shared<RoughConductorMaterial<UseVNDF, false>>(eta, k, spec, rx, ry);
 	else
-		return std::make_shared<RoughConductorMaterial<SpectralVarying, UseVNDF, true>>(eta, k, spec, rx, ry);
+		return std::make_shared<RoughConductorMaterial<UseVNDF, true>>(eta, k, spec, rx, ry);
 }
 
-template <bool SpectralVarying>
 static std::shared_ptr<IMaterial> createMaterial2(const SceneLoadContext& ctx)
 {
 	const bool use_vndf = ctx.parameters().getBool("vndf", true);
 
 	if (use_vndf)
-		return createMaterial1<SpectralVarying, true>(ctx);
+		return createMaterial1<true>(ctx);
 	else
-		return createMaterial1<SpectralVarying, false>(ctx);
-}
-
-static std::shared_ptr<IMaterial> createMaterial3(const SceneLoadContext& ctx)
-{
-	// Contrary to the dielectric interface, conductors are not spectral varying per default
-	// as it is quite uncommon to use ior functions
-	const bool spectralVarying = ctx.parameters().getBool("spectral_varying", false);
-	if (spectralVarying)
-		return createMaterial2<true>(ctx);
-	else
-		return createMaterial2<false>(ctx);
+		return createMaterial1<false>(ctx);
 }
 
 class RoughConductorMaterialPlugin : public IMaterialPlugin {
 public:
 	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx)
 	{
-		return createMaterial3(ctx);
+		return createMaterial2(ctx);
 	}
 
 	const std::vector<std::string>& getNames() const
 	{
-		const static std::vector<std::string> names({ "roughconductor", "roughmetal" });
+		const static std::vector<std::string> names({ "roughconductor", "roughmirror", "roughmetal" });
 		return names;
 	}
 

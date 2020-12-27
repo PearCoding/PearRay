@@ -206,7 +206,7 @@ public:
 					MaterialEvalOutput eval_out;
 					mat->eval(eval_in, eval_out, session);
 
-					MaterialEvalOutput pdf_out;
+					MaterialPDFOutput pdf_out;
 					mat->pdf(eval_in, pdf_out, session);
 
 					float weightNorm = samp_out.Weight.cwiseAbs().sum();

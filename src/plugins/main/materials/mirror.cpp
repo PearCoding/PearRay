@@ -34,6 +34,7 @@ public:
 		out.PDF_S  = 0.0f;
 		out.Type   = MST_SpecularReflection;
 		out.Weight = SpectralBlob::Zero();
+		out.Flags  = MSF_DeltaDistribution;
 	}
 
 	void pdf(const MaterialEvalInput&, MaterialPDFOutput& out,
@@ -44,6 +45,7 @@ public:
 		PR_ASSERT(false, "Delta distribution materials should not be evaluated");
 
 		out.PDF_S = 0;
+		out.Flags  = MSF_DeltaDistribution;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,

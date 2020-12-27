@@ -7,17 +7,38 @@
 
 namespace PR {
 
+enum MaterialScatterFlags {
+	MSF_Null			  = 0x1,
+	MSF_DeltaDistribution = 0x2,
+	MSF_SpectralVarying	  = 0x4,  // TODO
+	MSF_SpatialVarying	  = 0x8,  // TODO
+	MSF_TimeVarying		  = 0x10, // TODO
+};
+
+struct PR_LIB_CORE MaterialBaseOutput {
+	SpectralBlob PDF_S;
+	uint8 Flags = 0;
+
+	inline bool isNull() const { return Flags & MSF_Null; }
+	inline bool isDelta() const { return Flags & MSF_DeltaDistribution; }
+	inline bool isSpectralVarying() const { return Flags & MSF_SpectralVarying; }
+	inline bool isSpatialVarying() const { return Flags & MSF_SpatialVarying; }
+	inline bool isTimeVarying() const { return Flags & MSF_TimeVarying; }
+
+	// When to reduce to hero wavelength only
+	inline bool isHeroCollapsing() const { return !isNull() && isDelta(); }
+};
+
 // Evaluation
 struct PR_LIB_CORE MaterialEvalInput {
 	MaterialEvalContext Context;
 	PR::ShadingContext ShadingContext;
 };
 
-struct PR_LIB_CORE MaterialPDFOutput {
-	SpectralBlob PDF_S;
+struct PR_LIB_CORE MaterialPDFOutput : public MaterialBaseOutput {
 };
 
-struct PR_LIB_CORE MaterialEvalOutput : public MaterialPDFOutput {
+struct PR_LIB_CORE MaterialEvalOutput : public MaterialBaseOutput {
 	SpectralBlob Weight;
 	MaterialScatteringType Type;
 };
@@ -40,22 +61,11 @@ struct PR_LIB_CORE MaterialSampleInput {
 	{
 	}
 };
-
-enum MaterialScatterFlags {
-	MSF_DeltaDistribution = 0x1,
-	MSF_SpectralVarying	  = 0x2 // The sampled direction (not the weight) is different for each wavelength
-};
-
-struct PR_LIB_CORE MaterialSampleOutput {
+struct PR_LIB_CORE MaterialSampleOutput : public MaterialBaseOutput {
 	ShadingVector L;
 
 	SpectralBlob Weight;
-	SpectralBlob PDF_S;
 	MaterialScatteringType Type;
-	uint8 Flags = 0;
-
-	inline bool isDelta() const { return Flags & MSF_DeltaDistribution; }
-	inline bool isSpectralVarying() const { return Flags & MSF_SpectralVarying; }
 
 	inline Vector3f globalL(const IntersectionPoint& ip) const
 	{
@@ -64,10 +74,13 @@ struct PR_LIB_CORE MaterialSampleOutput {
 
 	static inline MaterialSampleOutput Reject(MaterialScatteringType type = MST_DiffuseReflection, uint8 flags = 0)
 	{
-		return MaterialSampleOutput{ ShadingVector(Vector3f::Zero()),
-									 SpectralBlob::Zero(),
-									 SpectralBlob::Zero(),
-									 type, flags };
+		MaterialSampleOutput out;
+		out.L	   = Vector3f::Zero();
+		out.Weight = SpectralBlob::Zero();
+		out.PDF_S  = SpectralBlob::Zero();
+		out.Type   = type;
+		out.Flags  = flags;
+		return out;
 	}
 };
 } // namespace PR

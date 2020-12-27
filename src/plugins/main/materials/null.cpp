@@ -7,6 +7,7 @@
 namespace PR {
 
 // Special material not scattering rays and changing energy
+// TODO: The integrators should not apply delta stuff on this, as its not 'wavelength' dependent
 class NullMaterial : public IMaterial {
 public:
 	explicit NullMaterial()
@@ -28,6 +29,7 @@ public:
 		out.PDF_S  = 0.0f;
 		out.Type   = MST_SpecularTransmission;
 		out.Weight = SpectralBlob::Zero();
+		out.Flags  = MSF_Null | MSF_DeltaDistribution;
 	}
 
 	void pdf(const MaterialEvalInput&, MaterialPDFOutput& out,
@@ -37,6 +39,7 @@ public:
 
 		PR_ASSERT(false, "Delta distribution materials should not be evaluated");
 		out.PDF_S = 0.0f;
+		out.Flags = MSF_Null | MSF_DeltaDistribution;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -48,7 +51,7 @@ public:
 		out.PDF_S  = 1;
 		out.Type   = MST_SpecularTransmission;
 		out.L	   = -in.Context.V;
-		out.Flags  = MSF_DeltaDistribution;
+		out.Flags  = MSF_Null | MSF_DeltaDistribution;
 	}
 
 	std::string dumpInformation() const override

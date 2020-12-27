@@ -191,7 +191,7 @@ private:
 		// Update throughput
 		current.Throughput *= sout.Weight / pdf_s; // cosine term already applied inside material
 
-		if (sout.isSpectralVarying())
+		if (sout.isHeroCollapsing())
 			current.Throughput *= SpectralBlobUtils::HeroOnly();
 
 		if (current.Throughput.isZero(PR_EPSILON))
@@ -199,7 +199,7 @@ private:
 
 		// Setup ray flags
 		int rflags = RF_Bounce;
-		if (sout.isSpectralVarying())
+		if (sout.isHeroCollapsing())
 			rflags |= RF_Monochrome;
 
 		return std::make_optional(ip.nextRay(L, rflags, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX));
@@ -241,6 +241,9 @@ private:
 		min.ShadingContext = ShadingContext::fromIP(session.threadID(), cameraIP);
 		MaterialEvalOutput mout;
 		cameraMaterial->eval(min, mout, session);
+
+		if (mout.isDelta())
+			return;
 
 		const float bsdfWvlPdfS = (cameraIP.Ray.Flags & RF_Monochrome) ? mout.PDF_S[0] : mout.PDF_S.sum(); // Each wavelength could have generated the path
 		if (bsdfWvlPdfS <= PDF_EPS)																		   // Its impossible to sample the bsdf, so skip it

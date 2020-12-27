@@ -435,7 +435,7 @@ struct PrincipledClosure {
 	}
 };
 
-template <bool UseVNDF, bool Thin, bool SpectralVarying, bool HasTransmission>
+template <bool UseVNDF, bool Thin, bool HasTransmission>
 class PrincipledMaterial : public IMaterial {
 public:
 	using EvalClosure = PrincipledClosure<UseVNDF, Thin, HasTransmission>;
@@ -504,6 +504,7 @@ public:
 		if (closure.isDelta()) { // Reject
 			out.Weight = 0;
 			out.PDF_S  = 0;
+			out.Flags  = MSF_DeltaDistribution;
 			return;
 		}
 
@@ -535,6 +536,7 @@ public:
 		const auto closure = createClosure(in.ShadingContext);
 		if (closure.isDelta()) { // Reject
 			out.PDF_S = 0;
+			out.Flags = MSF_DeltaDistribution;
 			return;
 		}
 
@@ -552,11 +554,7 @@ public:
 		out.L			   = closure.sample(in.RND, in.Context);
 
 		// Set flags
-		// SpectralVarying is only accounted for if transmission is available
-		if constexpr (SpectralVarying && HasTransmission)
-			out.Flags = (closure.isDelta() ? MSF_DeltaDistribution : 0) | MSF_SpectralVarying;
-		else
-			out.Flags = (closure.isDelta() ? MSF_DeltaDistribution : 0);
+		out.Flags = (closure.isDelta() ? MSF_DeltaDistribution : 0);
 
 		if (PR_UNLIKELY(out.L.isZero())) {
 			out = MaterialSampleOutput::Reject(MST_DiffuseReflection, out.Flags);
@@ -609,7 +607,6 @@ public:
 			   << "    Clearcoat:            " << mClearcoat->dumpInformation() << std::endl
 			   << "    ClearcoatGloss:       " << mClearcoatGloss->dumpInformation() << std::endl
 			   << "    Thin:                 " << (Thin ? "true" : "false") << std::endl
-			   << "    SpectralVarying:      " << ((SpectralVarying && HasTransmission) ? "true" : "false") << std::endl
 			   << "    VNDF:                 " << (UseVNDF ? "true" : "false") << std::endl;
 
 		return stream.str();
@@ -631,7 +628,7 @@ private:
 	std::shared_ptr<FloatScalarNode> mClearcoatGloss;
 }; // namespace PR
 
-template <bool UseVNDF, bool Thin, bool SpectralVarying, bool HasTransmission>
+template <bool UseVNDF, bool Thin, bool HasTransmission>
 inline static std::shared_ptr<IMaterial> createPrincipled1(const SceneLoadContext& ctx)
 {
 	const auto base_color	   = ctx.lookupSpectralNode({ "base_color", "base" }, 0.8f);
@@ -648,45 +645,33 @@ inline static std::shared_ptr<IMaterial> createPrincipled1(const SceneLoadContex
 	const auto clearcoat	   = ctx.lookupScalarNode("clearcoat", 0.0f);
 	const auto clearcoat_gloss = ctx.lookupScalarNode("clearcoat_gloss", 0.0f);
 
-	return std::make_shared<PrincipledMaterial<UseVNDF, Thin, SpectralVarying, HasTransmission>>(
+	return std::make_shared<PrincipledMaterial<UseVNDF, Thin, HasTransmission>>(
 		base_color, ior, diffuse_trans, roughness, anisotropic,
 		specular_trans, specular_tint, flatness, metallic, sheen,
 		sheen_tint, clearcoat, clearcoat_gloss);
 }
 
-template <bool UseVNDF, bool Thin, bool SpectralVarying>
+template <bool UseVNDF, bool Thin>
 inline static std::shared_ptr<IMaterial> createPrincipled2(const SceneLoadContext& ctx)
 {
 	const bool hasTransmission = ctx.parameters().hasParameter("specular_transmission") || ctx.parameters().hasParameter("spec_trans")
 								 || ctx.parameters().hasParameter("diffuse_transmission") || ctx.parameters().hasParameter("diff_trans");
 
 	if (hasTransmission)
-		return createPrincipled1<UseVNDF, Thin, SpectralVarying, true>(ctx);
+		return createPrincipled1<UseVNDF, Thin, true>(ctx);
 	else
-		return createPrincipled1<UseVNDF, Thin, SpectralVarying, false>(ctx);
-}
-
-template <bool UseVNDF, bool Thin>
-inline static std::shared_ptr<IMaterial> createPrincipled3(const SceneLoadContext& ctx)
-{
-	// No need per default
-	const bool spectralVarying = ctx.parameters().getBool("spectral_varying", false);
-
-	if (spectralVarying)
-		return createPrincipled2<UseVNDF, Thin, true>(ctx);
-	else
-		return createPrincipled2<UseVNDF, Thin, false>(ctx);
+		return createPrincipled1<UseVNDF, Thin, false>(ctx);
 }
 
 template <bool UseVNDF>
-inline static std::shared_ptr<IMaterial> createPrincipled4(const SceneLoadContext& ctx)
+inline static std::shared_ptr<IMaterial> createPrincipled3(const SceneLoadContext& ctx)
 {
 	const bool thin = ctx.parameters().getBool("thin", false);
 
 	if (thin)
-		return createPrincipled3<UseVNDF, true>(ctx);
+		return createPrincipled2<UseVNDF, true>(ctx);
 	else
-		return createPrincipled3<UseVNDF, false>(ctx);
+		return createPrincipled2<UseVNDF, false>(ctx);
 }
 
 class PrincipledMaterialPlugin : public IMaterialPlugin {
@@ -696,9 +681,9 @@ public:
 		const bool use_vndf = ctx.parameters().getBool("vndf", true);
 
 		if (use_vndf)
-			return createPrincipled4<true>(ctx);
+			return createPrincipled3<true>(ctx);
 		else
-			return createPrincipled4<false>(ctx);
+			return createPrincipled3<false>(ctx);
 	}
 
 	const std::vector<std::string>& getNames() const

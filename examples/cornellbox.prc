@@ -1,9 +1,9 @@
 ; Original CornellBox converted to PearRay format
 (scene
-	:name 'cornellbox'
 	:render_width 1000
 	:render_height 1000
 	:camera 'Camera'
+	
 	; Settings
 	(integrator
 		:type 'direct'

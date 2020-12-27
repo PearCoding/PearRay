@@ -354,7 +354,7 @@ private:
 		if constexpr (!IsCamera)
 			current.Throughput *= correctShadingNormalForLight(-ip.Ray.Direction, L, ip.Surface.N, ip.Surface.Geometry.N);
 
-		if (sout.isSpectralVarying())
+		if (sout.isHeroCollapsing())
 			current.Throughput *= SpectralBlobUtils::HeroOnly();
 
 		if (current.Throughput.isZero(PR_EPSILON)) {
@@ -364,7 +364,7 @@ private:
 
 		// Setup ray flags
 		int rflags = RF_Bounce;
-		if (sout.isSpectralVarying())
+		if (sout.isHeroCollapsing())
 			rflags |= RF_Monochrome;
 
 		return std::make_optional(ip.nextRay(L, rflags, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX));

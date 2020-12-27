@@ -17,7 +17,7 @@ enum MaterialDelta {
 	MD_All
 };
 
-template <MaterialDelta Delta, bool SpectralVarying>
+template <MaterialDelta Delta>
 class FresnelBlendMaterial : public IMaterial {
 public:
 	explicit FresnelBlendMaterial(const std::shared_ptr<IMaterial>& material0, const std::shared_ptr<IMaterial>& material1,
@@ -145,9 +145,6 @@ public:
 			out.Weight *= prob;
 			out.PDF_S *= prob;
 		}
-
-		if constexpr (SpectralVarying)
-			out.Flags |= MSF_SpectralVarying;
 	}
 
 	std::string dumpInformation() const override
@@ -168,7 +165,6 @@ private:
 	const std::shared_ptr<FloatSpectralNode> mIOR;
 };
 
-template <bool SpectralVarying>
 std::shared_ptr<IMaterial> createMaterial(const SceneLoadContext& ctx)
 {
 	const ParameterGroup& params = ctx.parameters();
@@ -190,14 +186,14 @@ std::shared_ptr<IMaterial> createMaterial(const SceneLoadContext& ctx)
 	switch (deltaCount) {
 	case 0:
 	default:
-		return std::make_shared<FresnelBlendMaterial<MD_None, SpectralVarying>>(mat1, mat2, ior);
+		return std::make_shared<FresnelBlendMaterial<MD_None>>(mat1, mat2, ior);
 	case 1:
 		if (mat1->hasOnlyDeltaDistribution())
-			return std::make_shared<FresnelBlendMaterial<MD_First, SpectralVarying>>(mat1, mat2, ior);
+			return std::make_shared<FresnelBlendMaterial<MD_First>>(mat1, mat2, ior);
 		else
-			return std::make_shared<FresnelBlendMaterial<MD_Second, SpectralVarying>>(mat1, mat2, ior);
+			return std::make_shared<FresnelBlendMaterial<MD_Second>>(mat1, mat2, ior);
 	case 2:
-		return std::make_shared<FresnelBlendMaterial<MD_All, SpectralVarying>>(mat1, mat2, ior);
+		return std::make_shared<FresnelBlendMaterial<MD_All>>(mat1, mat2, ior);
 	}
 }
 
@@ -206,11 +202,7 @@ class FresnelBlendMaterialPlugin : public IMaterialPlugin {
 public:
 	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx)
 	{
-		const bool spectralVarying = ctx.parameters().getBool("spectral_varying", false);
-		if (spectralVarying)
-			return createMaterial<true>(ctx);
-		else
-			return createMaterial<false>(ctx);
+		return createMaterial(ctx);
 	}
 
 	const std::vector<std::string>& getNames() const

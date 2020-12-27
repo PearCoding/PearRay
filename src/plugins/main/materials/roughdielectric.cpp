@@ -39,7 +39,7 @@ namespace PR {
 
 // TODO: Thin
 constexpr float AIR = 1.0002926f;
-template <bool SpectralVarying, bool UseVNDF, bool IsAnisotropic>
+template <bool UseVNDF, bool IsAnisotropic>
 struct RoughDielectricClosure {
 	using Reflection   = MicrofacetReflection<IsAnisotropic, UseVNDF>;
 	using Transmission = MicrofacetTransmission<IsAnisotropic, UseVNDF>;
@@ -137,7 +137,7 @@ struct RoughDielectricClosure {
 	}
 };
 
-template <bool HasTransmissionColor, bool SpectralVarying, bool UseVNDF, bool IsAnisotropic>
+template <bool HasTransmissionColor, bool UseVNDF, bool IsAnisotropic>
 class RoughDielectricMaterial : public IMaterial {
 public:
 	RoughDielectricMaterial(const std::shared_ptr<FloatSpectralNode>& spec,
@@ -156,24 +156,24 @@ public:
 
 	virtual ~RoughDielectricMaterial() = default;
 
-	inline RoughDielectricClosure<SpectralVarying, UseVNDF, IsAnisotropic> getClosure(const ShadingContext& sctx) const
+	inline RoughDielectricClosure<UseVNDF, IsAnisotropic> getClosure(const ShadingContext& sctx) const
 	{
 		const float m1			= mRoughnessX->eval(sctx);
 		const SpectralBlob spec = mSpecularity->eval(sctx);
 
-		return RoughDielectricClosure<SpectralVarying, UseVNDF, IsAnisotropic>(m1,
-																			   IsAnisotropic ? mRoughnessY->eval(sctx) : m1,
-																			   spec,
-																			   HasTransmissionColor ? mTransmission->eval(sctx) : spec,
-																			   mIOR->eval(sctx));
+		return RoughDielectricClosure<UseVNDF, IsAnisotropic>(m1,
+															  IsAnisotropic ? mRoughnessY->eval(sctx) : m1,
+															  spec,
+															  HasTransmissionColor ? mTransmission->eval(sctx) : spec,
+															  mIOR->eval(sctx));
 	}
 
-	inline RoughDielectricClosure<SpectralVarying, UseVNDF, IsAnisotropic> getClosurePdf(const ShadingContext& sctx) const
+	inline RoughDielectricClosure<UseVNDF, IsAnisotropic> getClosurePdf(const ShadingContext& sctx) const
 	{
 		const float m1 = mRoughnessX->eval(sctx);
-		return RoughDielectricClosure<SpectralVarying, UseVNDF, IsAnisotropic>(m1,
-																			   IsAnisotropic ? mRoughnessY->eval(sctx) : m1,
-																			   mIOR->eval(sctx));
+		return RoughDielectricClosure<UseVNDF, IsAnisotropic>(m1,
+															  IsAnisotropic ? mRoughnessY->eval(sctx) : m1,
+															  mIOR->eval(sctx));
 	}
 
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
@@ -185,6 +185,7 @@ public:
 		if (closure.isDelta()) { // Reject
 			out.PDF_S  = 0.0f;
 			out.Weight = SpectralBlob::Zero();
+			out.Flags  = MSF_DeltaDistribution;
 			return;
 		}
 
@@ -206,6 +207,7 @@ public:
 		const auto closure = getClosurePdf(in.ShadingContext);
 		if (closure.isDelta()) { // Reject
 			out.PDF_S = 0.0f;
+			out.Flags = MSF_DeltaDistribution;
 			return;
 		}
 
@@ -220,10 +222,7 @@ public:
 		out.L = closure.sample(in.RND, in.Context.V);
 
 		// Set flags
-		if constexpr (SpectralVarying)
-			out.Flags = (closure.isDelta() ? MSF_DeltaDistribution : 0) | MSF_SpectralVarying;
-		else
-			out.Flags = (closure.isDelta() ? MSF_DeltaDistribution : 0);
+		out.Flags = (closure.isDelta() ? MSF_DeltaDistribution : 0);
 
 		if (PR_UNLIKELY(out.L.isZero())) {
 			out = MaterialSampleOutput::Reject(MST_SpecularReflection, out.Flags);
@@ -257,7 +256,6 @@ public:
 			   << "    IOR:             " << mIOR->dumpInformation() << std::endl
 			   << "    RoughnessX:      " << mRoughnessX->dumpInformation() << std::endl
 			   << "    RoughnessY:      " << mRoughnessY->dumpInformation() << std::endl
-			   << "    SpectralVarying: " << (SpectralVarying ? "true" : "false") << std::endl
 			   << "    VNDF:            " << (UseVNDF ? "true" : "false") << std::endl;
 
 		return stream.str();
@@ -272,7 +270,7 @@ private:
 };
 
 // System of function which probably could be simplified with template meta programming
-template <bool HasTransmissionColor, bool SpectralVarying, bool UseVNDF>
+template <bool HasTransmissionColor, bool UseVNDF>
 static std::shared_ptr<IMaterial> createMaterial1(const SceneLoadContext& ctx)
 {
 	std::shared_ptr<FloatScalarNode> rx;
@@ -296,46 +294,36 @@ static std::shared_ptr<IMaterial> createMaterial1(const SceneLoadContext& ctx)
 	const auto index = ctx.lookupSpectralNode({ "eta", "index", "ior" }, 1.55f);
 
 	if (rx == ry)
-		return std::make_shared<RoughDielectricMaterial<HasTransmissionColor, SpectralVarying, UseVNDF, false>>(spec, trans, index, rx, ry);
+		return std::make_shared<RoughDielectricMaterial<HasTransmissionColor, UseVNDF, false>>(spec, trans, index, rx, ry);
 	else
-		return std::make_shared<RoughDielectricMaterial<HasTransmissionColor, SpectralVarying, UseVNDF, true>>(spec, trans, index, rx, ry);
+		return std::make_shared<RoughDielectricMaterial<HasTransmissionColor, UseVNDF, true>>(spec, trans, index, rx, ry);
 }
 
-template <bool HasTransmissionColor, bool SpectralVarying>
+template <bool HasTransmissionColor>
 static std::shared_ptr<IMaterial> createMaterial2(const SceneLoadContext& ctx)
 {
 	const bool use_vndf = ctx.parameters().getBool("vndf", true);
 
 	if (use_vndf)
-		return createMaterial1<HasTransmissionColor, SpectralVarying, true>(ctx);
+		return createMaterial1<HasTransmissionColor, true>(ctx);
 	else
-		return createMaterial1<HasTransmissionColor, SpectralVarying, false>(ctx);
+		return createMaterial1<HasTransmissionColor, false>(ctx);
 }
 
-template <bool HasTransmissionColor>
 static std::shared_ptr<IMaterial> createMaterial3(const SceneLoadContext& ctx)
-{
-	const bool spectralVarying = ctx.parameters().getBool("spectral_varying", true);
-	if (spectralVarying)
-		return createMaterial2<HasTransmissionColor, true>(ctx);
-	else
-		return createMaterial2<HasTransmissionColor, false>(ctx);
-}
-
-static std::shared_ptr<IMaterial> createMaterial4(const SceneLoadContext& ctx)
 {
 	const bool hasTransmission = ctx.parameters().hasParameter("transmission");
 	if (hasTransmission)
-		return createMaterial3<true>(ctx);
+		return createMaterial2<true>(ctx);
 	else
-		return createMaterial3<false>(ctx);
+		return createMaterial2<false>(ctx);
 }
 
 class RoughDielectricMaterialPlugin : public IMaterialPlugin {
 public:
 	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx)
 	{
-		return createMaterial4(ctx);
+		return createMaterial3(ctx);
 	}
 
 	const std::vector<std::string>& getNames() const

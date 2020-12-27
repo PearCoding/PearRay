@@ -1,7 +1,6 @@
 (scene
-	:name 'box_test_scene'
-	:render_width 1920
-	:render_height 1080
+	:render_width 1000
+	:render_height 1000
 
 	(sampler 
 	  :slot 'aa'
@@ -38,11 +37,8 @@
 	(camera
 		:name 'Camera'
 		:type 'standard'
-		:width 0.914286
-		:height 0.514286
-		:zoom 1.000000
-		:fstop 0.000000
-		:apertureRadius 0.500000
+		:width 0.5
+		:height 0.5
 		:local_direction [0,0,-1]
 		:local_up [0,1,0]
 		:local_right [1,0,0]
