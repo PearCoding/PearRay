@@ -28,5 +28,7 @@ public:
 	virtual void registerCustomCounterChannel(const std::string& str, uint32 id)  = 0;
 	virtual void registerCustom3DChannel(const std::string& str, uint32 id)		  = 0;
 	virtual void registerCustomSpectralChannel(const std::string& str, uint32 id) = 0;
+
+	virtual const char* type() const = 0;
 };
 } // namespace PR

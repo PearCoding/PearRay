@@ -603,10 +603,13 @@ private:
 
 		tctx.ThreadContext.TmpPath.addToken(cameraScatteringType);
 
-		if (light->isInfinite())
+		if (light->isInfinite()) {
+			tctx.Session.tile()->statistics().addBackgroundHitCount();
 			tctx.ThreadContext.TmpPath.addToken(LightPathToken::Background());
-		else
+		} else {
+			tctx.Session.tile()->statistics().addEntityHitCount();
 			tctx.ThreadContext.TmpPath.addToken(LightPathToken::Emissive());
+		}
 
 		// Splat
 		tctx.Session.pushSpectralFragment(mis, current.Throughput, contrib,
@@ -833,6 +836,7 @@ private:
 	void handleInfLights(const IterationContext& tctx, CameraTraversalContext& current, const Ray& ray) const
 	{
 		const uint32 cameraPathLength = ray.IterationDepth + 1;
+		tctx.Session.tile()->statistics().addBackgroundHitCount();
 
 		// Evaluate radiance
 		float misDenom		  = 0;

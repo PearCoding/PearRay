@@ -40,6 +40,7 @@ public:
 
 	/// Add an abstract output device to the container. This should be called before all other methods
 	void addOutputDevice(const std::shared_ptr<OutputDevice>& device);
+	inline const std::vector<std::shared_ptr<OutputDevice>>& outputDevices() const { return mOutputDevices; }
 
 	void clear(bool force = false);
 
@@ -74,15 +75,8 @@ public:
 	inline const CustomNameMap& customCounterChannels() const { return mCustomCounterChannelMap; }
 	inline const CustomNameMap& customSpectralChannels() const { return mCustomSpectralChannelMap; }
 
-	inline void registerSpectralCallback(const OutputSpectralCallback& callback)
-	{
-		mSpectralCallbacks.push_back(callback);
-	}
-
-	inline void registerFeedbackCallback(const OutputFeedbackCallback& callback)
-	{
-		mFeedbackCallbacks.push_back(callback);
-	}
+	inline void registerSpectralCallback(const OutputSpectralCallback& callback) { mSpectralCallbacks.push_back(callback); }
+	inline void registerFeedbackCallback(const OutputFeedbackCallback& callback) { mFeedbackCallbacks.push_back(callback); }
 
 	inline const std::vector<OutputSpectralCallback>& spectralCallbacks() const { return mSpectralCallbacks; }
 	inline const std::vector<OutputFeedbackCallback>& feedbackCallbacks() const { return mFeedbackCallbacks; }

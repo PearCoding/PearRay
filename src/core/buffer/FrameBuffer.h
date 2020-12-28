@@ -25,6 +25,17 @@ public:
 	{
 	}
 
+	template <typename U>
+	inline static FrameBuffer sameAs(const FrameBuffer<U>& other, const T& clear_value = T())
+	{
+		return FrameBuffer(other.mSize, other.mChannels, clear_value, other.mNeverClear);
+	}
+
+	inline bool isSameSizeAs(const FrameBuffer<T>& other) const
+	{
+		return mSize == other.mSize && mChannels == other.mChannels;
+	}
+
 	inline const Size2i& size() const { return mSize; }
 
 	inline Size1i width() const { return mSize.Width; }
@@ -198,6 +209,12 @@ public:
 	inline void fill(const T& v)
 	{
 		std::fill(mData.begin(), mData.end(), v);
+	}
+
+	inline void copyFrom(const FrameBuffer<T>& other)
+	{
+		PR_ASSERT(!isSameSizeAs(other), "Expected other to be of the same size!");
+		std::copy(other.mData.begin(), other.mData.end(), mData.begin());
 	}
 
 private:

@@ -294,10 +294,13 @@ private:
 		// Construct LPE path
 		mCameraPath.addToken(mout.Type);
 
-		if (light->isInfinite())
+		if (light->isInfinite()) {
+			session.tile()->statistics().addBackgroundHitCount();
 			mCameraPath.addToken(LightPathToken::Background());
-		else
+		} else {
+			session.tile()->statistics().addEntityHitCount();
 			mCameraPath.addToken(LightPathToken::Emissive());
+		}
 
 		session.pushSpectralFragment(mis, current.Throughput, contrib,
 									 cameraIP.Ray, mCameraPath);
@@ -371,6 +374,7 @@ private:
 	void handleInfLights(const RenderTileSession& session, TraversalContext& current, const Ray& ray) const
 	{
 		const uint32 cameraPathLength = ray.IterationDepth + 1;
+		session.tile()->statistics().addBackgroundHitCount();
 
 		// Evaluate radiance
 		float denom_mis		  = 0;
@@ -413,6 +417,7 @@ private:
 	/// Handle case where camera ray hits nothing and there is no inf-lights
 	inline void handleZero(const RenderTileSession& session, TraversalContext& current, const Ray& ray) const
 	{
+		session.tile()->statistics().addBackgroundHitCount();
 		session.pushSpectralFragment(1, current.Throughput, SpectralBlob::Zero(), ray, mCameraPath);
 	}
 

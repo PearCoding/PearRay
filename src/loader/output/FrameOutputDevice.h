@@ -37,6 +37,8 @@ public:
 	void registerCustom3DChannel(const std::string& str, uint32 id) override;
 	void registerCustomSpectralChannel(const std::string& str, uint32 id) override;
 
+	const char* type() const override { return "pr_frameoutputdevice"; };
+
 private:
 	const std::shared_ptr<IFilter> mFilter;
 	const bool mMonotonic;
