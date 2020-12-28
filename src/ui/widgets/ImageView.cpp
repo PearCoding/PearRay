@@ -20,41 +20,67 @@ constexpr int GRID_S = 10;
 
 ImageView::ImageView(QWidget* parent)
 	: QWidget(parent)
-	, mZoom(1)
 	, mChannelMask(0xFF)
 	, mChannelOffset(0)
 	, mLastPixel(0, 0)
 {
-	setContextMenuPolicy(Qt::CustomContextMenu);
-	connect(this, SIGNAL(customContextMenuRequested(const QPoint&)),
-			this, SLOT(showContextMenu(const QPoint&)));
+	zoomToOriginal();
 
+	setContextMenuPolicy(Qt::CustomContextMenu);
 	setMouseTracking(true);
+
+	connect(this, &ImageView::customContextMenuRequested,
+			this, &ImageView::showContextMenu);
 }
 
 ImageView::~ImageView()
 {
 }
 
-void ImageView::resetView()
+void ImageView::zoomToFit()
 {
-	float zw = width() / (float)mImage.width();
-	float zh = (height() - BAR_HEIGHT) / (float)mImage.height();
+	if (mImage.isNull())
+		return;
 
-	mZoom  = std::min(zw, zh);
-	mDelta = QPointF(0, 0);
+	// Scale
+	const float zw = viewSize().width() / (float)mImage.width();
+	const float zh = viewSize().height() / (float)mImage.height();
 
-	cacheImage();
+	const float zoom = zw < zh ? zw : zh;
+
+	mTransform = QTransform::fromScale(zoom, zoom);
+
+	// Shift to center
+	QPoint imgCenter   = mTransform.map(QPoint(mImage.width() / 2, mImage.height() / 2));
+	QPoint viewCenter  = QPoint(viewSize().width() / 2, viewSize().height() / 2);
+	QPoint deltaCenter = viewCenter - imgCenter;
+
+	mTransform.translate(deltaCenter.x(), deltaCenter.y());
+	mInvTransform = mTransform.inverted();
+
 	repaint();
 }
 
-void ImageView::zoomToOriginalSize()
+void ImageView::zoomToOriginal()
 {
-	mZoom  = 1;
-	mDelta = QPointF(0, 0);
+	if (mImage.isNull())
+		return;
+	// No scale
 
-	cacheImage();
+	// Shift to center
+	QPoint imgCenter   = QPoint(mImage.width() / 2, mImage.height() / 2);
+	QPoint viewCenter  = QPoint(viewSize().width() / 2, viewSize().height() / 2);
+	QPoint deltaCenter = viewCenter - imgCenter;
+
+	mTransform	  = QTransform::fromTranslate(deltaCenter.x(), deltaCenter.y());
+	mInvTransform = mTransform.inverted();
+
 	repaint();
+}
+
+QSize ImageView::viewSize() const
+{
+	return QSize(width(), height() - BAR_HEIGHT);
 }
 
 void ImageView::setView(const std::shared_ptr<ImageBufferView>& view)
@@ -98,6 +124,10 @@ QSize ImageView::sizeHint() const
 void ImageView::paintEvent(QPaintEvent* event)
 {
 	QPainter painter(this);
+	painter.setRenderHint(QPainter::SmoothPixmapTransform, false);
+	painter.setRenderHint(QPainter::TextAntialiasing, true);
+	painter.setRenderHint(QPainter::Antialiasing, true);
+
 	painter.drawPixmap(0, 0, mBackground);
 
 	// Position Field
@@ -109,7 +139,7 @@ void ImageView::paintEvent(QPaintEvent* event)
 					 QString::number(mLastPixel.y()),
 					 QTextOption(Qt::AlignCenter));
 
-	bool additionalField = mView->viewChannelCount() == 1;
+	const bool additionalField = mView->viewChannelCount() == 1;
 	if (additionalField) {
 		painter.drawText(QRect(BAR_POS_W + 1, 0, BAR_POS_W / 2 - 1, BAR_HEIGHT - 1),
 						 QString::number(mChannelOffset),
@@ -128,10 +158,10 @@ void ImageView::paintEvent(QPaintEvent* event)
 	// Image
 	painter.setClipRect(0, BAR_HEIGHT, width(), height() - BAR_HEIGHT);
 	painter.setClipping(true);
+	painter.translate(0, BAR_HEIGHT);
+	painter.setTransform(mTransform, true);
 
-	int dx = (width() - mPixmap.width()) / 2 + mDelta.x();
-	int dy = (height() - mPixmap.height() - BAR_HEIGHT) / 2 + mDelta.y();
-	painter.drawPixmap(dx, dy + BAR_HEIGHT, mPixmap);
+	painter.drawPixmap(0, 0, mPixmap);
 
 	event->accept();
 }
@@ -139,10 +169,16 @@ void ImageView::paintEvent(QPaintEvent* event)
 // Cache background
 void ImageView::resizeEvent(QResizeEvent* event)
 {
+	renderBackground(event->size());
+}
+
+void ImageView::renderBackground(const QSize& size)
+{
 	QPainter painter;
-	mBackground = QPixmap(event->size());
+	mBackground = QPixmap(size);
 
 	painter.begin(&mBackground);
+	painter.setRenderHint(QPainter::Antialiasing, true);
 
 	// Bar
 	painter.setBrush(QBrush(Qt::darkGray));
@@ -188,10 +224,15 @@ void ImageView::mouseMoveEvent(QMouseEvent* event)
 {
 	if ((event->buttons() & Qt::LeftButton)
 		|| (event->buttons() & Qt::MiddleButton)) {
-		QPointF d = mLastPos - event->globalPos();
+		QPointF d = event->globalPos() - mLastPos;
 
-		mDelta += -d * PAN_W;
-		mLastPos = event->globalPos();
+		// No rotation involved, thats why this is fine.
+		const float sx = mTransform.m11();
+		const float sy = mTransform.m22();
+
+		mTransform.translate(d.x() * PAN_W / sx, d.y() * PAN_W / sy);
+		mInvTransform = mTransform.inverted();
+		mLastPos	  = event->globalPos();
 	}
 
 	QPoint pixel = mapToPixel(event->pos());
@@ -203,25 +244,21 @@ void ImageView::mouseMoveEvent(QMouseEvent* event)
 
 void ImageView::wheelEvent(QWheelEvent* event)
 {
-	float delta = event->angleDelta().y();
+	const float delta = event->angleDelta().y();
+	if (std::abs(delta) < 1e-3f)
+		return;
 
-	if (delta < 0)
-		mZoom /= ZOOM_W;
-	else if (delta > 0)
-		mZoom *= ZOOM_W;
+	const QPointF pos = mInvTransform.map(event->posF());
+	const float zoom  = delta < 0 ? 1 / ZOOM_W : ZOOM_W;
+
+	mTransform.translate(pos.x(), pos.y());
+	mTransform.scale(zoom, zoom);
+	mTransform.translate(-pos.x(), -pos.y());
+	mInvTransform = mTransform.inverted();
 
 	event->accept();
 
-	cacheImage();
 	repaint();
-}
-
-void ImageView::cacheImage()
-{
-	mPixmap = QPixmap::fromImage(mImage.scaled(mImage.width() * mZoom,
-											   mImage.height() * mZoom,
-											   Qt::KeepAspectRatio,
-											   Qt::FastTransformation));
 }
 
 void ImageView::showContextMenu(const QPoint& p)
@@ -283,20 +320,16 @@ void ImageView::onContextMenuClick(QObject* obj)
 void ImageView::updateImage()
 {
 	mView->fillImage(mImage, mPipeline, mChannelOffset, mChannelMask);
-	cacheImage();
+	mPixmap = QPixmap::fromImage(mImage);
+
 	repaint();
 }
 
 QPoint ImageView::mapToPixel(const QPoint& pos) const
 {
-	int dx = (width() - mPixmap.width()) / 2 + mDelta.x();
-	int dy = (height() - mPixmap.height() - BAR_HEIGHT) / 2 + mDelta.y() + BAR_HEIGHT;
-
-	const float sx = mImage.width() / (float)mPixmap.width();
-	const float sy = mImage.height() / (float)mPixmap.height();
-
-	return QPoint((pos.x() - dx) * sx,
-				  (pos.y() - dy) * sy);
+	const QPointF gp = QPointF(pos.x(), pos.y() - BAR_HEIGHT);
+	const QPointF lp = mInvTransform.map(gp);
+	return QPoint(std::floor(lp.x()), std::floor(lp.y()));
 }
 
 bool ImageView::isValidPixel(const QPoint& pixel) const

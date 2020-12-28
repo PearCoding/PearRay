@@ -2,7 +2,6 @@
 
 #include "mapper/ImagePipeline.h"
 
-#include <QSignalMapper>
 #include <QWidget>
 #include <memory>
 
@@ -25,8 +24,8 @@ public:
 	QSize sizeHint() const override;
 
 public slots:
-	void resetView();
-	void zoomToOriginalSize();
+	void zoomToFit();
+	void zoomToOriginal();
 
 protected:
 	void paintEvent(QPaintEvent* event) override;
@@ -40,15 +39,17 @@ private slots:
 	void onContextMenuClick(QObject* obj);
 
 private:
+	void renderBackground(const QSize& size);
 	void updateImage();
-	void cacheImage();
+	
+	QSize viewSize() const;
 
 	QPoint mapToPixel(const QPoint& pos) const;
 	bool isValidPixel(const QPoint& pixel) const;
 	QString valueAt(const QPoint& pixel) const;
 
-	float mZoom;
-	QPointF mDelta;
+	QTransform mTransform;
+	QTransform mInvTransform;
 	quint8 mChannelMask;
 	quint32 mChannelOffset;
 

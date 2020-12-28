@@ -158,7 +158,8 @@ void MainWindow::setupRecentMenu()
 
 void MainWindow::addToRecentFiles(const QString& path)
 {
-	mLastDir = QFileInfo(path).dir().path();
+	const QFileInfo info(path);
+	mLastDir = info.absoluteDir().path();
 
 	if (mLastFiles.contains(path))
 		mLastFiles.removeAll(path);

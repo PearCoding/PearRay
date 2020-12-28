@@ -9,11 +9,11 @@ EXRWindow::EXRWindow(QWidget* parent)
 {
 	ui.setupUi(this);
 
-	connect(ui.layerList, SIGNAL(itemSelectionChanged()), this, SLOT(layerChanged()));
-	connect(ui.resetViewButton, SIGNAL(clicked()), ui.imageWidget, SLOT(resetView()));
-	connect(ui.originalScaleButton, SIGNAL(clicked()), ui.imageWidget, SLOT(zoomToOriginalSize()));
-	connect(ui.exportImageButton, SIGNAL(clicked()), this, SLOT(exportImage()));
-	connect(ui.imagePipelineEditor, SIGNAL(changed()), this, SLOT(updateMapper()));
+	connect(ui.layerList, &QListWidget::itemSelectionChanged, this, &EXRWindow::layerChanged);
+	connect(ui.resetViewButton, &QToolButton::clicked, ui.imageWidget, &PR::UI::ImageView::zoomToFit);
+	connect(ui.originalScaleButton, &QToolButton::clicked, ui.imageWidget, &PR::UI::ImageView::zoomToOriginal);
+	connect(ui.exportImageButton, &QToolButton::clicked, this, &EXRWindow::exportImage);
+	connect(ui.imagePipelineEditor, &PR::UI::ImagePipelineEditor::changed, this, &EXRWindow::updateMapper);
 
 	mFile = std::make_unique<PR::UI::EXRFile>();
 }
@@ -35,6 +35,8 @@ void EXRWindow::openFile(const QString& str)
 			ui.layerList->setCurrentRow(0);
 
 		setWindowTitle(QString("[EXR] %1").arg(str));
+
+		ui.imageWidget->zoomToOriginal();
 	}
 }
 
@@ -61,7 +63,7 @@ void EXRWindow::updateImage(int layerID)
 
 	auto layer = mFile->layers()[layerID];
 	ui.imageWidget->setView(layer);
-	
+
 	updateMapper();
 }
 
