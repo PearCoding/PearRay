@@ -2,7 +2,7 @@
 
 #include "Random.h"
 #include "ray/Ray.h"
-#include "renderer/RenderTileStatistics.h"
+#include "renderer/RenderStatistics.h"
 
 #include <atomic>
 #include <chrono>
@@ -10,7 +10,7 @@
 namespace PR {
 struct PR_LIB_CORE RenderTileContext {
 	std::atomic<uint64> PixelSamplesRendered;
-	RenderTileStatistics Statistics;
+	RenderStatistics Statistics;
 
 	inline RenderTileContext()
 		: PixelSamplesRendered(0)
@@ -80,8 +80,8 @@ public:
 
 	inline ISpectralMapper* spectralMapper() const { return mSpectralMapper.get(); }
 
-	inline const RenderTileStatistics& statistics() const { return mContext.Statistics; }
-	inline RenderTileStatistics& statistics() { return mContext.Statistics; }
+	inline const RenderStatistics& statistics() const { return mContext.Statistics; }
+	inline RenderStatistics& statistics() { return mContext.Statistics; }
 
 	inline const RenderContext* context() const { return mRenderContext; }
 

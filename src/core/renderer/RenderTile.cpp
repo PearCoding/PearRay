@@ -69,7 +69,7 @@ std::optional<CameraRay> RenderTile::constructCameraRay(const Point2i& p, const 
 
 	PR_PROFILE_THIS;
 
-	statistics().addPixelSampleCount();
+	statistics().add(RST_PixelSampleCount);
 	++mContext.PixelSamplesRendered;
 	const uint32 sample = iter.Iteration;
 

@@ -3,19 +3,31 @@ namespace PR {
 inline void StreamPipeline::enqueueCameraRay(const Ray& ray)
 {
 	mWriteRayStream->addRay(ray);
-	mTile->statistics().addCameraRayCount();
+#ifndef PR_NO_RAY_STATISTICS
+	mTile->statistics().add(RST_CameraRayCount);
+	mTile->statistics().add(RST_PrimaryRayCount);
+#endif
 }
 
 inline void StreamPipeline::enqueueLightRay(const Ray& ray)
 {
 	mWriteRayStream->addRay(ray);
-	mTile->statistics().addLightRayCount();
+#ifndef PR_NO_RAY_STATISTICS
+	mTile->statistics().add(RST_LightRayCount);
+	mTile->statistics().add(RST_PrimaryRayCount);
+#endif
 }
 
 inline void StreamPipeline::enqueueBounceRay(const Ray& ray)
 {
 	mWriteRayStream->addRay(ray);
-	mTile->statistics().addBounceRayCount();
+#ifndef PR_NO_RAY_STATISTICS
+	if (ray.Flags & RF_Camera)
+		mTile->statistics().add(RST_CameraRayCount);
+	else if (ray.Flags & RF_Light)
+		mTile->statistics().add(RST_LightRayCount);
+	mTile->statistics().add(RST_BounceRayCount);
+#endif
 }
 
 inline Ray StreamPipeline::getTracedRay(size_t id) const

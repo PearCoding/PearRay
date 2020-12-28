@@ -70,8 +70,8 @@ public:
 
 		const uint32 pathLength = ip.Ray.IterationDepth + 1;
 
-		session.tile()->statistics().addEntityHitCount();
-		session.tile()->statistics().addCameraDepthCount();
+		session.tile()->statistics().add(RST_EntityHitCount);
+		session.tile()->statistics().add(RST_CameraDepthCount);
 
 		if (pathLength == 1)
 			session.pushSPFragment(ip, mCameraPath);
@@ -295,10 +295,10 @@ private:
 		mCameraPath.addToken(mout.Type);
 
 		if (light->isInfinite()) {
-			session.tile()->statistics().addBackgroundHitCount();
+			session.tile()->statistics().add(RST_BackgroundHitCount);
 			mCameraPath.addToken(LightPathToken::Background());
 		} else {
-			session.tile()->statistics().addEntityHitCount();
+			session.tile()->statistics().add(RST_EntityHitCount);
 			mCameraPath.addToken(LightPathToken::Emissive());
 		}
 
@@ -374,7 +374,7 @@ private:
 	void handleInfLights(const RenderTileSession& session, TraversalContext& current, const Ray& ray) const
 	{
 		const uint32 cameraPathLength = ray.IterationDepth + 1;
-		session.tile()->statistics().addBackgroundHitCount();
+		session.tile()->statistics().add(RST_BackgroundHitCount);
 
 		// Evaluate radiance
 		float denom_mis		  = 0;
@@ -417,7 +417,7 @@ private:
 	/// Handle case where camera ray hits nothing and there is no inf-lights
 	inline void handleZero(const RenderTileSession& session, TraversalContext& current, const Ray& ray) const
 	{
-		session.tile()->statistics().addBackgroundHitCount();
+		session.tile()->statistics().add(RST_BackgroundHitCount);
 		session.pushSpectralFragment(1, current.Throughput, SpectralBlob::Zero(), ray, mCameraPath);
 	}
 

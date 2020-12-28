@@ -6,12 +6,14 @@
 namespace PR {
 
 enum RayFlags : uint32 {
-	// Matches EntityVisibilityFlags
-	RF_Camera	  = 0x01,
+	RF_Camera	  = 0x01, // RF_Camera and RF_Light are exclusive
 	RF_Light	  = 0x02,
-	RF_Bounce	  = 0x04,
+	RF_Bounce	  = 0x04, // RF_Bounce and RF_Shadow are exclusive, if none of them is set its a primary ray
 	RF_Shadow	  = 0x08,
-	RF_Monochrome = 0x10
+	RF_Monochrome = 0x10,
+
+	RF_SourceMask = RF_Camera | RF_Light,
+	RF_TypeMask	  = RF_Bounce | RF_Shadow,
 };
 
 struct PR_LIB_CORE Ray {

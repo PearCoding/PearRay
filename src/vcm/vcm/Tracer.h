@@ -375,8 +375,8 @@ private:
 	{
 		PR_ASSERT(entity, "Expected valid entity");
 
-		tctx.Session.tile()->statistics().addEntityHitCount();
-		tctx.Session.tile()->statistics().addLightDepthCount();
+		tctx.Session.tile()->statistics().add(RST_EntityHitCount);
+		tctx.Session.tile()->statistics().add(RST_LightDepthCount);
 
 		const uint32 pathLength = ip.Ray.IterationDepth + 1;
 
@@ -426,8 +426,8 @@ private:
 	{
 		PR_ASSERT(entity, "Expected valid entity");
 
-		tctx.Session.tile()->statistics().addEntityHitCount();
-		tctx.Session.tile()->statistics().addCameraDepthCount();
+		tctx.Session.tile()->statistics().add(RST_EntityHitCount);
+		tctx.Session.tile()->statistics().add(RST_CameraDepthCount);
 
 		// Update the MIS quantities before computing the vertex.
 		current.MIS_VCM *= mis_term<Mode>(ip.Depth2);
@@ -604,10 +604,10 @@ private:
 		tctx.ThreadContext.TmpPath.addToken(cameraScatteringType);
 
 		if (light->isInfinite()) {
-			tctx.Session.tile()->statistics().addBackgroundHitCount();
+			tctx.Session.tile()->statistics().add(RST_BackgroundHitCount);
 			tctx.ThreadContext.TmpPath.addToken(LightPathToken::Background());
 		} else {
-			tctx.Session.tile()->statistics().addEntityHitCount();
+			tctx.Session.tile()->statistics().add(RST_EntityHitCount);
 			tctx.ThreadContext.TmpPath.addToken(LightPathToken::Emissive());
 		}
 
@@ -836,7 +836,7 @@ private:
 	void handleInfLights(const IterationContext& tctx, CameraTraversalContext& current, const Ray& ray) const
 	{
 		const uint32 cameraPathLength = ray.IterationDepth + 1;
-		tctx.Session.tile()->statistics().addBackgroundHitCount();
+		tctx.Session.tile()->statistics().add(RST_BackgroundHitCount);
 
 		// Evaluate radiance
 		float misDenom		  = 0;

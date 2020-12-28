@@ -59,12 +59,23 @@ const RayGroup& RenderTileSession::getRayGroup(uint32 id) const
 bool RenderTileSession::traceSingleRay(const Ray& ray, Vector3f& pos, GeometryPoint& pt, IEntity*& entity, IMaterial*& material) const
 {
 	PR_PROFILE_THIS;
+
+#ifndef PR_NO_RAY_STATISTICS
 	if (ray.Flags & RF_Camera)
-		mTile->statistics().addCameraRayCount();
+		mTile->statistics().add(RST_CameraRayCount);
 	else if (ray.Flags & RF_Light)
-		mTile->statistics().addLightRayCount();
+		mTile->statistics().add(RST_LightRayCount);
+
+	if (ray.Flags & RF_Bounce)
+		mTile->statistics().add(RST_BounceRayCount);
+	else if (ray.Flags & RF_Shadow) // Should not happen, but might for some bad written integrators
+		mTile->statistics().add(RST_ShadowRayCount);
 	else
-		mTile->statistics().addBounceRayCount();
+		mTile->statistics().add(RST_PrimaryRayCount);
+
+	if (ray.Flags & RF_Monochrome)
+		mTile->statistics().add(RST_MonochromeRayCount);
+#endif
 
 	HitEntry entry;
 	if (!mTile->context()->scene()->traceSingleRay(ray, entry))
@@ -93,7 +104,10 @@ bool RenderTileSession::traceShadowRay(const Ray& ray, float distance) const
 {
 	PR_PROFILE_THIS;
 
-	mTile->statistics().addShadowRayCount();
+#ifndef PR_NO_RAY_STATISTICS
+	mTile->statistics().add(RST_ShadowRayCount);
+#endif
+
 	return mTile->context()->scene()->traceShadowRay(ray, distance);
 }
 

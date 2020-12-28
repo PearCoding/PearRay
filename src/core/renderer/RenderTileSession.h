@@ -8,7 +8,7 @@
 #include "ray/RayStream.h"
 #include "renderer/RenderContext.h"
 #include "renderer/RenderTile.h"
-#include "renderer/RenderTileStatistics.h"
+#include "renderer/RenderStatistics.h"
 #include "scene/Scene.h"
 #include "trace/HitStream.h"
 

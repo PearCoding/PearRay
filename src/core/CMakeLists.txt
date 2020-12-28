@@ -123,6 +123,8 @@ set(PR_Src
   renderer/RenderFactory.h
   renderer/RenderSettings.cpp
   renderer/RenderSettings.h
+  renderer/RenderStatistics.cpp
+  renderer/RenderStatistics.h
   renderer/RenderStatus.cpp
   renderer/RenderStatus.h
   renderer/RenderThread.cpp
@@ -135,9 +137,6 @@ set(PR_Src
   renderer/RenderTileMap.h
   renderer/RenderTileSession.cpp
   renderer/RenderTileSession.h
-  renderer/RenderTileStatistics.cpp
-  renderer/RenderTileStatistics.h
-  renderer/RenderTileStatistics.h
   renderer/StreamPipeline.cpp
   renderer/StreamPipeline.h
   renderer/StreamPipeline.inl

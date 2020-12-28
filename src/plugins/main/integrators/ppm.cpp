@@ -189,8 +189,8 @@ public:
 		mCameraPathWalker.traverseBSDF(
 			session, SpectralBlob::Ones(), spt, entity, material,
 			[&](const SpectralBlob& weight, const IntersectionPoint& ip, IEntity* entity_hit, IMaterial* material_hit) {
-				session.tile()->statistics().addEntityHitCount();
-				session.tile()->statistics().addCameraDepthCount();
+				session.tile()->statistics().add(RST_EntityHitCount);
+				session.tile()->statistics().add(RST_CameraDepthCount);
 
 				// If we hit a light evaluate it and stop
 				if (entity_hit->hasEmission()
@@ -236,7 +236,7 @@ public:
 				});
 
 				if (!illuminated) {
-					session.tile()->statistics().addBackgroundHitCount();
+					session.tile()->statistics().add(RST_BackgroundHitCount);
 					session.pushSpectralFragment(1, weight, SpectralBlob::Zero(), ray, path);
 				}
 
@@ -302,8 +302,8 @@ public:
 			mLightPathWalker.traverseBSDFSimple(
 				session, radiance, ray,
 				[&](const SpectralBlob& weight, const IntersectionPoint& ip, IEntity* entity, IMaterial* material) {
-					session.tile()->statistics().addEntityHitCount();
-					session.tile()->statistics().addLightDepthCount();
+					session.tile()->statistics().add(RST_EntityHitCount);
+					session.tile()->statistics().add(RST_LightDepthCount);
 
 					if (entity->hasEmission()) // Stop at lights and do not save photons
 						return false;

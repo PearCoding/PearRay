@@ -2,7 +2,7 @@
 
 #include "RenderSettings.h"
 #include "RenderStatus.h"
-#include "RenderTileStatistics.h"
+#include "RenderStatistics.h"
 
 #include <atomic>
 #include <condition_variable>
@@ -96,7 +96,7 @@ public:
 	// Settings
 	inline const RenderSettings& settings() const { return mRenderSettings; }
 
-	RenderTileStatistics statistics() const;
+	RenderStatistics statistics() const;
 	RenderStatus status() const;
 
 	inline std::shared_ptr<OutputSystem> output() const { return mOutputSystem; }

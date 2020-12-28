@@ -8,7 +8,7 @@
 #include "log/FileLogListener.h"
 #include "renderer/RenderContext.h"
 #include "renderer/RenderFactory.h"
-#include "renderer/RenderTileStatistics.h"
+#include "renderer/RenderStatistics.h"
 #include "spectral/ToneMapper.h"
 
 #include "ImageUpdateObserver.h"
@@ -39,18 +39,22 @@ void printStatistics(const RenderStatus& status)
 	const auto raycount	  = status.getField("global.ray_count").getUInt();
 	const auto pixelcount = status.getField("global.pixel_sample_count").getUInt();
 
-	out << "  Ray Count:       " << std::setw(OUTPUT_FIELD_SIZE) << raycount << std::endl
-		<< "    Camera Share:  " << std::setw(OUTPUT_FIELD_SIZE) << 100 * status.getField("global.camera_ray_count").getUInt() / (double)raycount << " %" << std::endl
-		<< "    Light Share:   " << std::setw(OUTPUT_FIELD_SIZE) << 100 * status.getField("global.light_ray_count").getUInt() / (double)raycount << " %" << std::endl
-		<< "    Bounce Share:  " << std::setw(OUTPUT_FIELD_SIZE) << 100 * status.getField("global.bounce_ray_count").getUInt() / (double)raycount << " %" << std::endl
-		<< "    Shadow Share:  " << std::setw(OUTPUT_FIELD_SIZE) << 100 * status.getField("global.shadow_ray_count").getUInt() / (double)raycount << " %" << std::endl
-		<< "  Pixel Count:     " << std::setw(OUTPUT_FIELD_SIZE) << pixelcount << std::endl
-		<< "  Entity Hits:     " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.entity_hit_count").getUInt() << std::endl
-		<< "  Background Hits: " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.background_hit_count").getUInt() << std::endl
-		<< "  Mean Ray Depth:  " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.depth_count").getUInt() / (double)pixelcount << std::endl
-		<< "    Camera:        " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.camera_depth_count").getUInt() / (double)pixelcount << std::endl
-		<< "    Light:         " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.light_depth_count").getUInt() / (double)pixelcount << std::endl
-		<< "  Iterations:      " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.iteration_count").getUInt() << std::endl;
+	out << "  Ray Count:         " << std::setw(OUTPUT_FIELD_SIZE) << raycount << std::endl
+		<< "  │ Sources:" << std::endl
+		<< "  │ ├ Camera Share:  " << std::setw(OUTPUT_FIELD_SIZE) << 100 * status.getField("global.camera_ray_count").getUInt() / (double)raycount << " %" << std::endl
+		<< "  │ └ Light Share:   " << std::setw(OUTPUT_FIELD_SIZE) << 100 * status.getField("global.light_ray_count").getUInt() / (double)raycount << " %" << std::endl
+		<< "  ├ Types:" << std::endl
+		<< "  │ ├ Primary Share: " << std::setw(OUTPUT_FIELD_SIZE) << 100 * status.getField("global.primary_ray_count").getUInt() / (double)raycount << " %" << std::endl
+		<< "  │ ├ Bounce Share:  " << std::setw(OUTPUT_FIELD_SIZE) << 100 * status.getField("global.bounce_ray_count").getUInt() / (double)raycount << " %" << std::endl
+		<< "  │ └ Shadow Share:  " << std::setw(OUTPUT_FIELD_SIZE) << 100 * status.getField("global.shadow_ray_count").getUInt() / (double)raycount << " %" << std::endl
+		<< "  └ Monochrome:      " << std::setw(OUTPUT_FIELD_SIZE) << 100 * status.getField("global.monochrome_ray_count").getUInt() / (double)raycount << " %" << std::endl
+		<< "  Pixel Count:       " << std::setw(OUTPUT_FIELD_SIZE) << pixelcount << std::endl
+		<< "  Entity Hits:       " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.entity_hit_count").getUInt() << std::endl
+		<< "  Background Hits:   " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.background_hit_count").getUInt() << std::endl
+		<< "  Mean Ray Depth:    " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.depth_count").getUInt() / (double)pixelcount << std::endl
+		<< "  ├ Camera:          " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.camera_depth_count").getUInt() / (double)pixelcount << std::endl
+		<< "  └ Light:           " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.light_depth_count").getUInt() / (double)pixelcount << std::endl
+		<< "  Iterations:        " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.iteration_count").getUInt() << std::endl;
 }
 
 static uint32 sForceStop			 = 0;

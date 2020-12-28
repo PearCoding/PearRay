@@ -109,7 +109,7 @@ public:
 	{
 		LightPath stdPath = LightPath::createCDL(1);
 		Random random(42);
-		session.tile()->statistics().addEntityHitCount(grp.size());
+		session.tile()->statistics().add(RST_EntityHitCount, grp.size());
 		for (size_t i = 0; i < grp.size(); ++i) {
 			IntersectionPoint spt;
 			grp.computeShadingPoint(i, spt);
@@ -239,9 +239,9 @@ public:
 			session.pipeline()->runPipeline();
 			while (session.pipeline()->hasShadingGroup()) {
 				auto sg = session.pipeline()->popShadingGroup(session);
-				session.tile()->statistics().addCameraDepthCount(sg.size());
+				session.tile()->statistics().add(RST_CameraDepthCount, sg.size());
 				if (sg.isBackground())
-					session.tile()->statistics().addBackgroundHitCount(sg.size());
+					session.tile()->statistics().add(RST_BackgroundHitCount, sg.size());
 				else
 					handleShadingGroup(session, sg);
 			}

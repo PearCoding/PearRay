@@ -153,12 +153,12 @@ void RenderTileMap::makeAllIdle()
 		mTiles[i]->makeIdle();
 }
 
-RenderTileStatistics RenderTileMap::statistics() const
+RenderStatistics RenderTileMap::statistics() const
 {
 	PR_PROFILE_THIS;
 
 	Mutex::scoped_lock lock(mMutex, false);
-	RenderTileStatistics s;
+	RenderStatistics s;
 	for (size_t i = 0; i < mTiles.size(); ++i)
 		s += mTiles[i]->statistics();
 	return s;

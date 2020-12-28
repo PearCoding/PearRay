@@ -1,7 +1,7 @@
 #pragma once
 
 #include "renderer/RenderEnums.h"
-#include "renderer/RenderTileStatistics.h"
+#include "renderer/RenderStatistics.h"
 
 #include <tbb/queuing_rw_mutex.h>
 #include <vector>
@@ -29,7 +29,7 @@ public:
 	/// Unmark all tiles to prepare for next linear iteration
 	void makeAllIdle();
 
-	RenderTileStatistics statistics() const;
+	RenderStatistics statistics() const;
 	double percentage() const;
 
 private:
