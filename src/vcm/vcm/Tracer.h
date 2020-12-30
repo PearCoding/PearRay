@@ -262,12 +262,12 @@ public:
 
 private:
 	template <bool IsCamera>
-	inline auto checkRoulette(Random& rnd, uint32 path_length) const
+	inline auto checkRoulette(Random& rnd, uint32 path_length, bool delta) const
 	{
 		if constexpr (IsCamera)
-			return mCameraRR.check(rnd, path_length);
+			return mCameraRR.check(rnd, path_length, delta);
 		else
-			return mLightRR.check(rnd, path_length);
+			return mLightRR.check(rnd, path_length, delta);
 	}
 
 	template <bool IsCamera>
@@ -280,7 +280,7 @@ private:
 		LightPath& path = IsCamera ? tctx.ThreadContext.CameraPath : tctx.ThreadContext.LightPath;
 
 		// Russian roulette
-		const auto roulette = checkRoulette<IsCamera>(tctx.Session.random(), ip.Ray.IterationDepth + 1);
+		const auto roulette = checkRoulette<IsCamera>(tctx.Session.random(), ip.Ray.IterationDepth + 1, material && material->hasOnlyDeltaDistribution());
 		if (!roulette.has_value())
 			return {};
 
