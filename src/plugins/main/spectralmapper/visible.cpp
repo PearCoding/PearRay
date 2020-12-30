@@ -120,7 +120,7 @@ public:
 
 	const std::vector<std::string>& getNames() const override
 	{
-		const static std::vector<std::string> names({ "visible", "default", "visible_y", "visible_xyz"/*, "visible_rgb"*/ });
+		const static std::vector<std::string> names({ "visible", "visible_y", "visible_xyz"/*, "visible_rgb"*/ });
 		return names;
 	}
 

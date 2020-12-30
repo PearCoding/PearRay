@@ -52,6 +52,8 @@ public:
 	bool hasDeltaDistribution() const;
 	inline float relativeContribution() const { return mRelativeContribution; }
 
+	SpectralBlob averagePower(const SpectralBlob& wavelengths) const;
+
 	void eval(const LightEvalInput& in, LightEvalOutput& out, const RenderTileSession& session) const;
 	void sample(const LightSampleInput& in, LightSampleOutput& out, const RenderTileSession& session) const;
 	LightPDF pdfPosition(const Vector3f& posOnLight, const EntitySamplingInfo* info = nullptr) const;

@@ -6,7 +6,7 @@
 	:camera 'Camera'
 	; Settings
 	(integrator
-		:type 'bidi'
+		:type 'direct'
 		:max_ray_depth 16
 		:max_camera_ray_depth 4
 		:max_light_ray_depth 4
@@ -18,6 +18,11 @@
 		:slot 'aa'
 		:type 'mjitt'
 		:sample_count 128
+	)
+	(spectral_mapper
+		:type 'spd'
+		;:weighting 'none'
+		;:smooth_iterations 2
 	)
 	; Outputs
 	(output

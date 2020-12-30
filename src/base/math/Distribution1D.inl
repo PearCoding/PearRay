@@ -29,6 +29,43 @@ inline void Distribution1D::generate(Func func, float* integral)
 	}
 }
 
+inline void Distribution1D::reducePDFBy(float v, float* integral)
+{
+	// Extract
+	std::vector<float> pdfs;
+	pdfs.resize(mCDF.size() - 1, 0.0f);
+	for (size_t i = 0; i < mCDF.size() - 1; ++i)
+		pdfs[i] = discretePdf(i);
+
+	// Reduce
+	for (float& p : pdfs)
+		p = std::max(0.0f, p - v);
+
+	// Rebuild
+	generate([&](size_t i) { return pdfs[i]; }, integral);
+}
+
+inline void Distribution1D::increasePDFBy(float v, float* integral)
+{
+	reducePDFBy(-v, integral);
+}
+
+inline void Distribution1D::clampPDFBy(float v, float* integral)
+{
+	// Extract
+	std::vector<float> pdfs;
+	pdfs.resize(mCDF.size() - 1, 0.0f);
+	for (size_t i = 0; i < mCDF.size() - 1; ++i)
+		pdfs[i] = discretePdf(i);
+
+	// Reduce
+	for (float& p : pdfs)
+		p = std::max(v, p);
+
+	// Rebuild
+	generate([&](size_t i) { return pdfs[i]; }, integral);
+}
+
 inline float Distribution1D::sampleContinuous(float u, float& pdf, size_t* offset) const
 {
 	return sampleContinuous(u, pdf, mCDF.data(), mCDF.size(), offset);
@@ -114,22 +151,6 @@ inline float Distribution1D::evalDiscrete(float x, const float* cdf, size_t size
 {
 	const size_t off = std::min<size_t>(size - 2, x * (size - 1));
 	return cdf[off];
-}
-
-inline void Distribution1D::reducePDFBy(float v, float* integral)
-{
-	// Extract
-	std::vector<float> pdfs;
-	pdfs.resize(mCDF.size() - 1, 0.0f);
-	for (size_t i = 0; i < mCDF.size() - 1; ++i)
-		pdfs[i] = discretePdf(i);
-
-	// Reduce
-	for (float& p : pdfs)
-		p = std::max(0.0f, p - v);
-
-	// Rebuild
-	generate([&](size_t i) { return pdfs[i]; }, integral);
 }
 
 ////////////////////////////// StaticCDF
