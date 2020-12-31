@@ -32,7 +32,7 @@ typename std::enable_if<std::is_enum<T>::value, std::string>::type
 _prt_test_string(const T& val)
 {
 	std::stringstream stream;
-	stream << static_cast<std::underlying_type<T>::type>(val);
+	stream << static_cast<typename std::underlying_type<T>::type>(val);
 	return stream.str();
 }
 

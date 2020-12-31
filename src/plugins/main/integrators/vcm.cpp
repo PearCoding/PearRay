@@ -118,8 +118,8 @@ public:
 	explicit IntVCM(const VCM::Options& parameters, const std::shared_ptr<ServiceObserver>& service)
 		: mParameters(parameters)
 		, mServiceObserver(service)
-		, mInitialGatherRadius(0)
 		, mCBID(0)
+		, mInitialGatherRadius(0)
 	{
 		if (mServiceObserver) {
 			mCBID = mServiceObserver->registerBeforeRender([this](RenderContext* ctx) {
