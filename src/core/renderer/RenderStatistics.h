@@ -2,6 +2,7 @@
 
 #include "PR_Config.h"
 
+#include <array>
 #include <atomic>
 
 namespace PR {

@@ -40,7 +40,7 @@ bool ImageIO::save(const std::filesystem::path& path, const float* data, size_t 
 		return false;
 	}
 
-	if (!out->open(path, spec)) {
+	if (!out->open(path.generic_string(), spec)) {
 		PR_LOG(L_ERROR) << "[Output] Could not open file " << path << ", error = " << out->geterror() << std::endl;
 #if OIIO_PLUGIN_VERSION < 22
 		OIIO::ImageOutput::destroy(out);
@@ -124,12 +124,12 @@ bool ImageIO::load(const std::filesystem::path& path, std::vector<float>& data, 
 			else
 				return std::pow((u + 0.055f) / 1.055f, 2.4f);
 		};
-		PR_OPT_LOOP
+		//PR_OPT_LOOP
 		for (float& v : data)
 			v = map(v);
 	} else if (gamma != 1.0f) {
 		const float invGamma = 1 / gamma;
-		PR_OPT_LOOP
+		//PR_OPT_LOOP
 		for (float& v : data)
 			v = std::pow(v, invGamma);
 	}

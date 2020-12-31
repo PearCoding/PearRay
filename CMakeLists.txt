@@ -122,6 +122,12 @@ find_package(TBB REQUIRED COMPONENTS tbb)
 
 find_package(ZLIB REQUIRED)
 
+# OpenImageIO refers to OpenEXR header files!
+# This is eminent in windows, but actually also a problem on linux. Need a handling in OpenImageIO package handler
+if(WIN32)
+  find_package(OpenEXR REQUIRED)
+endif()
+
 # Optional
 if(PR_USE_CCACHE)
 	include(CCache)

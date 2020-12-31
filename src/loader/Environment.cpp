@@ -82,7 +82,7 @@ Environment::Environment(const std::filesystem::path& workdir,
 
 	mTextureSystem = ts;
 
-	if (useStandardLib) {
+	if (mDefaultSpectralUpsampler && useStandardLib) {
 		//Defaults
 		auto addColor = [&](const std::string& name, float r, float g, float b) {
 			ParametricBlob params;

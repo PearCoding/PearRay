@@ -89,22 +89,36 @@ if(NOT WIN32)
   # For non Windows (prob. only Linux) systems we use assembler to embed srgb.coeff
   enable_language(ASM)
   set(RC embed/srgb.s)
+else()
+  # This is not a satisfying solution, as srgb.coeff is quite large and each exe requires one build.
+  # A solution would be to use a custom dll, but this would enforce the dll to ship along...
+  # and then we could just ship srgb.coeff along...
+  enable_language(RC)    
+  set_source_files_properties(embed/srgb.rc LANGUAGE RC)
+  set(RC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/embed/srgb.rc>)
+  #add_library(pr_lib_win32_resources SHARED embed/srgb.rc)
+  #set_target_properties(pr_lib_win32_resources PROPERTIES EXPORT_NAME resources)
+  #install(TARGETS pr_lib_win32_resources COMPONENT runtime EXPORT PearRay-targets)
 endif()
 
 add_library(pr_lib_loader ${PR_Src} ${RC})
 
-if(WIN32)
-  # This is not a satisfying solution, as srgb.coeff is quite large and each exe requires one build.
-  # A solution would be to use a custom dll, but this would enforce the dll to ship along...
-  # and then we could just ship srgb.coeff along...
-  target_sources(pr_lib_loader PUBLIC embed/srgb.rc )
-endif()
 target_link_libraries(pr_lib_loader
   PUBLIC
     pr_lib_core
   PRIVATE
     ZLIB::ZLIB datalisp OpenImageIO::OpenImageIO OpenImageIO::OpenImageIO_Util
 )
+
+if(WIN32)
+  target_sources(pr_lib_loader PUBLIC ${RC} )
+  #target_link_libraries(pr_lib_loader PRIVATE pr_lib_win32_resources)
+endif()
+
+if(WIN32)
+  target_link_libraries(pr_lib_loader PRIVATE OpenEXR::IlmImf)
+endif()
+
 set_target_properties(pr_lib_loader PROPERTIES CXX_VISIBILITY_PRESET hidden)
 target_include_directories(pr_lib_loader 
   PUBLIC
@@ -129,6 +143,7 @@ if(BUILD_SHARED_LIBS)
   strip_binary(pr_lib_loader)
 endif()
 
+target_setup_deploy(pr_lib_loader RECURSIVE)
 if(BUILD_SHARED_LIBS)
   set(INSTALL_COMPONENT runtime)
 else()

@@ -1,6 +1,8 @@
 #include "BoxEntity.h"
 #include "3d/shader/ColorShader.h"
 
+#include <array>
+
 namespace PR {
 namespace UI {
 BoxEntity::BoxEntity(const BoundingBox& aabb)

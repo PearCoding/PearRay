@@ -5,6 +5,7 @@
 #include "material/IMaterial.h"
 #include "material/IMaterialPlugin.h"
 
+#include <array>
 #include <sstream>
 
 namespace PR {

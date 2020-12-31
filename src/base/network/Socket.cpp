@@ -151,9 +151,10 @@ Socket::Socket()
 {
 	static std::atomic<bool> sInitialized = false;
 	if (!sInitialized.exchange(true)) {
-		signal(SIGPIPE, SIG_IGN);
 #ifdef PR_OS_WINDOWS
 		initNetwork(); // We should close the network support but why bother?
+#else
+		signal(SIGPIPE, SIG_IGN);
 #endif
 	}
 
@@ -286,7 +287,12 @@ bool Socket::send(const char* data, size_t len)
 	size_t total = 0;
 
 	while (total < len) {
-		int ret = ::send(mInternal->Socket, data + total, len - total, MSG_NOSIGNAL);
+#ifdef PR_OS_WINDOWS
+#define SEND_FLAGS 0
+#else
+#define SEND_FLAGS MSG_NOSIGNAL
+#endif
+		int ret = ::send(mInternal->Socket, data + total, len - total, SEND_FLAGS);
 
 		if (isSocketError(ret)) {
 			mInternal->IsOpen = false;

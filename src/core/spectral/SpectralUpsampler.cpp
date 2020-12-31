@@ -1,6 +1,8 @@
 #include "SpectralUpsampler.h"
 #include "serialization/Serializer.h"
 
+#include <array>
+
 namespace PR {
 
 constexpr int COEFFS_N = 3; // Has to be 3 all the time!

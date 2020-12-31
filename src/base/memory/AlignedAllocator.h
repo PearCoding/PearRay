@@ -2,6 +2,9 @@
 
 #include "PR_Config.h"
 
+#include <cstdlib>
+#include <memory>
+
 namespace PR {
 template <typename T, size_t Alignment>
 class AlignedAllocator {
@@ -31,8 +34,13 @@ public:
 		if (n > std::numeric_limits<std::size_t>::max() / sizeof(T))
 			throw std::bad_alloc();
 
+#ifdef PR_OS_WINDOWS
+		if (auto p = static_cast<T*>(_aligned_malloc(n * sizeof(T), Alignment)))
+			return p;
+#else
 		if (auto p = static_cast<T*>(std::aligned_alloc(Alignment, n * sizeof(T))))
 			return p;
+#endif
 
 		throw std::bad_alloc();
 	}

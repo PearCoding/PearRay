@@ -2,6 +2,8 @@
 
 #include "BoundingBox.h"
 
+#include <array>
+
 namespace PR {
 class PR_LIB_CORE Triangle {
 	PR_CLASS_NON_CONSTRUCTABLE(Triangle);

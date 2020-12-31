@@ -26,10 +26,11 @@ SpectralBlob PathVertexMap::estimateSphere(const QuerySphere& sphere, const Accu
 		dist2			 = V.squaredNorm();
 		return dist2 <= sph.Distance2;
 	};
-	return estimate<AccumFunction>(
-		sphere,
-		sphere.SqueezeWeight > PR_EPSILON ? estSphereSqueeze : estSphereNoSqueeze,
-		accumFunc, found);
+
+	if (sphere.SqueezeWeight > PR_EPSILON)
+		return estimate<AccumFunction>(sphere, estSphereSqueeze, accumFunc, found);
+	else
+		return estimate<AccumFunction>(sphere, estSphereNoSqueeze, accumFunc, found);
 }
 
 template <typename AccumFunction>
@@ -49,10 +50,11 @@ SpectralBlob PathVertexMap::estimateDome(const QuerySphere& sphere, const AccumF
 		const float k	 = -pht.IP.Ray.Direction.dot(sph.Normal);
 		return k > -PR_EPSILON && dist2 <= sph.Distance2;
 	};
-	return estimate<AccumFunction>(
-		sphere,
-		sphere.SqueezeWeight > PR_EPSILON ? estDomeSqueeze : estDomeNoSqueeze,
-		accumFunc, found);
+
+	if (sphere.SqueezeWeight > PR_EPSILON)
+		return estimate<AccumFunction>(sphere, estDomeSqueeze, accumFunc, found);
+	else
+		return estimate<AccumFunction>(sphere, estDomeNoSqueeze, accumFunc, found);
 }
 
 template <typename AccumFunction>

@@ -111,6 +111,7 @@ set(PR_Src
   photon/PhotonMap.inl
   random/pcg_extras.hpp
   random/pcg_random.hpp
+  random/pcg_uint128.hpp
   ray/Ray.h
   ray/RayGroup.h
   ray/RayGroupContainer.h
@@ -199,6 +200,7 @@ if(BUILD_SHARED_LIBS)
   strip_binary(pr_lib_core)
 endif()
 
+target_setup_deploy(pr_lib_core RECURSIVE)
 if(BUILD_SHARED_LIBS)
   set(INSTALL_COMPONENT runtime)
 else()

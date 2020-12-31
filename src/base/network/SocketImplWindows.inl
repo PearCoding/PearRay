@@ -1,7 +1,6 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
-// TODO: This is not finished. Implementation is incomplete
 namespace PR {
 using socket_t = int;
 
@@ -236,17 +235,40 @@ inline bool checkSocket(socket_t socket)
 	return socket != INVALID_SOCKET;
 }
 
-inline std::string getStringFromAddress(SOCKADDR_IN& addr)
+inline std::string getStringFromAddress4(sockaddr_in& addr)
 {
 	DWORD bufferSize = 256;
 	thread_local char buffer[256];
 
 	int error = WSAAddressToString((SOCKADDR*)&addr, sizeof(SOCKADDR_IN), 0, buffer, &bufferSize);
 
-	if (checkSocketError(error) || bufferSize <= 0)
+	if (error == SOCKET_ERROR || bufferSize <= 0)
 		return "";
 
 	return buffer;
+}
+
+inline std::string getStringFromAddress6(sockaddr_in6& addr)
+{
+	DWORD bufferSize = 256;
+	thread_local char buffer[256];
+
+	int error = WSAAddressToString((SOCKADDR*)&addr, sizeof(SOCKADDR_IN6), 0, buffer, &bufferSize);
+
+	if (error == SOCKET_ERROR || bufferSize <= 0)
+		return "";
+
+	return buffer;
+}
+
+inline bool getAddressFromString4(const std::string& ip, sockaddr_in& addr)
+{
+	return false;
+}
+
+inline bool getAddressFromString6(const std::string& ip, sockaddr_in6& addr)
+{
+	return false;
 }
 
 inline void closeSocket(socket_t socket)
@@ -263,12 +285,12 @@ inline bool initNetwork()
 	int error = WSAStartup(version, &wsa);
 
 	if (error) {
-		PR_LOG(L_ERROR) << "[Network] Couldn't init WinSock2: " << getErrorString(WSAGetLastError()) << std::endl;
+		PR_LOG(L_ERROR) << "[Network] Could not init WinSock2: " << getErrorString() << std::endl;
 		return false;
 	}
 
 	if (LOBYTE(wsa.wVersion) != 2 || HIBYTE(wsa.wVersion) != 2) {
-		PR_LOG(L_ERROR) << "[Network] Couldn't find a usable version of Winsock.dll" << std::endl;
+		PR_LOG(L_ERROR) << "[Network] Could not find a usable version of Winsock.dll" << std::endl;
 		WSACleanup();
 		return false;
 	}

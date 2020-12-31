@@ -8,9 +8,9 @@ namespace PR {
 //// Parametric
 ParametricImageNode::ParametricImageNode(OIIO::TextureSystem* tsys,
 										 const OIIO::TextureOpt& options,
-										 const std::string& filename)
+										 const std::filesystem::path& filename)
 	: FloatSpectralNode()
-	, mFilename(filename)
+	, mFilename(filename.string().c_str())
 	, mTextureOptions(options)
 	, mTextureSystem(tsys)
 	, mIsPtex(false)
@@ -92,10 +92,10 @@ std::string ParametricImageNode::dumpInformation() const
 //// Non-Parametric
 NonParametricImageNode::NonParametricImageNode(OIIO::TextureSystem* tsys,
 											   const OIIO::TextureOpt& options,
-											   const std::string& filename,
+											   const std::filesystem::path& filename,
 											   SpectralUpsampler* upsampler)
 	: FloatSpectralNode()
-	, mFilename(filename)
+	, mFilename(filename.string().c_str())
 	, mTextureOptions(options)
 	, mTextureSystem(tsys)
 	, mUpsampler(upsampler)
@@ -183,9 +183,9 @@ std::string NonParametricImageNode::dumpInformation() const
 //// Scalar
 ScalarImageNode::ScalarImageNode(OIIO::TextureSystem* tsys,
 								 const OIIO::TextureOpt& options,
-								 const std::string& filename)
+								 const std::filesystem::path& filename)
 	: FloatScalarNode()
-	, mFilename(filename)
+	, mFilename(filename.string().c_str())
 	, mTextureOptions(options)
 	, mTextureSystem(tsys)
 	, mIsPtex(false)

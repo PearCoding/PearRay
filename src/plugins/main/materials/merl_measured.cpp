@@ -24,7 +24,7 @@ constexpr double SCALE_B = 1.66 / 1500;
 
 class MerlMeasurement {
 public:
-	MerlMeasurement(SpectralUpsampler* upsampler, const std::string& filename)
+	MerlMeasurement(SpectralUpsampler* upsampler, const std::filesystem::path& filename)
 		: mFilename(filename)
 		, mGood(false)
 	{
@@ -78,7 +78,7 @@ public:
 		mGood = true;
 	}
 
-	std::string filename() const { return mFilename; }
+	inline const std::filesystem::path& filename() const { return mFilename; }
 	bool isValid() const { return mGood; }
 
 	SpectralBlob eval(const Vector3f& H, const Vector3f& L, const SpectralBlob& wvls) const
@@ -116,7 +116,7 @@ public:
 	}
 
 private:
-	const std::string mFilename;
+	const std::filesystem::path mFilename;
 	std::vector<ParametricBlob, Eigen::aligned_allocator<ParametricBlob>> mData;
 	bool mGood;
 };

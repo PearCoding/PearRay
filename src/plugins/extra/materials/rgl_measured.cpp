@@ -28,10 +28,10 @@ namespace PR {
 
 class RGLMeasuredMaterial : public IMaterial {
 public:
-	RGLMeasuredMaterial(const std::string& filename, const std::shared_ptr<FloatSpectralNode>& tint)
+	RGLMeasuredMaterial(const std::filesystem::path& filename, const std::shared_ptr<FloatSpectralNode>& tint)
 		: IMaterial()
 		, mFilename(filename)
-		, mBRDF(filename.c_str())
+		, mBRDF(filename.generic_string())
 		, mTint(tint)
 	{
 	}
@@ -107,7 +107,7 @@ private:
 		return out;
 	}
 
-	const std::string mFilename;
+	const std::filesystem::path mFilename;
 	powitacq::BRDF mBRDF;
 	const std::shared_ptr<FloatSpectralNode> mTint;
 };

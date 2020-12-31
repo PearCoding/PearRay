@@ -6,6 +6,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <optional>
 
 namespace PR {
 struct PR_LIB_CORE RenderTileContext {

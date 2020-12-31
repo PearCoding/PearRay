@@ -2,6 +2,8 @@
 #include "Plane.h"
 #include "trace/HitPoint.h"
 
+#include <array>
+
 namespace PR {
 void BoundingBox::inflate(float eps, bool maxDir)
 {

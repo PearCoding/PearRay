@@ -32,7 +32,10 @@
 *.app
 
 # Directories
+.vs
+# Not .vscode though!
 build*
+out
 res
 
 # Sandbox/Script output

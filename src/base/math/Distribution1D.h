@@ -2,7 +2,9 @@
 
 #include "container/Interval.h"
 
+#include <array>
 #include <vector>
+
 namespace PR {
 // Compile-Time CDF constructor
 template <size_t SampleCount>

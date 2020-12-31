@@ -18,7 +18,7 @@
 #include <pugixml.hpp>
 
 namespace PR {
-static inline constexpr float projSA(float theta_low, float theta_high, float phi_low, float phi_high)
+static inline /*constexpr*/ float projSA(float theta_low, float theta_high, float phi_low, float phi_high)
 {
 	const float ta1 = std::cos(theta_high);
 	const float ta2 = std::cos(theta_low);
@@ -375,7 +375,7 @@ enum AllowedComponents {
 };
 class KlemsMeasurement {
 public:
-	KlemsMeasurement(const std::string& filename, int allowedComponents)
+	KlemsMeasurement(const std::filesystem::path& filename, int allowedComponents)
 		: mFilename(filename)
 		, mGood(false)
 	{
@@ -550,7 +550,7 @@ public:
 		mGood = true;
 	}
 
-	inline std::string filename() const { return mFilename; }
+	inline const std::filesystem::path& filename() const { return mFilename; }
 	inline bool isValid() const { return mGood; }
 
 	inline float eval(const Vector3f& in, const Vector3f& out) const
@@ -592,7 +592,7 @@ public:
 	}
 
 private:
-	const std::string mFilename;
+	const std::filesystem::path mFilename;
 	bool mGood;
 	std::shared_ptr<KlemsComponentRTPair> mFront;
 	std::shared_ptr<KlemsComponentRTPair> mBack;

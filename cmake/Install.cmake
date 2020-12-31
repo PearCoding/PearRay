@@ -41,6 +41,7 @@ install(EXPORT PearRay-targets
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME} COMPONENT development)
 
 # CPack stuff
+set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
 include(InstallRequiredSystemLibraries)
 
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${PearRay_DESCRIPTION}")

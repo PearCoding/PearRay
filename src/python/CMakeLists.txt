@@ -24,7 +24,10 @@ set(Hdr
 set(OUTPUT_DIR "${CMAKE_BINARY_DIR}/api")
 
 pybind11_add_module(pypearray SHARED ${Src} ${Hdr})
-target_link_libraries(pypearray PRIVATE pr_lib_loader)
+target_link_libraries(pypearray PRIVATE pr_lib_loader OpenImageIO::OpenImageIO)
+if(WIN32)
+  target_link_libraries(pypearray PRIVATE OpenEXR::IlmImf)
+endif()
 set_target_properties(pypearray PROPERTIES 
                       DEBUG_POSTFIX "" # Disable suffix for this target
                       )

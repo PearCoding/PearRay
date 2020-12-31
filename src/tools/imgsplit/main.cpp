@@ -198,7 +198,7 @@ int main(int argc, char** argv)
 		return EXIT_FAILURE;
 	}
 
-	if (!write_output(options.OutputFile, in_data, width, height, channel_info, channel_names.size()))
+	if (!write_output(options.OutputFile.string(), in_data, width, height, channel_info, channel_names.size()))
 		return EXIT_FAILURE;
 
 	return EXIT_SUCCESS;

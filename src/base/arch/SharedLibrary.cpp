@@ -2,20 +2,18 @@
 
 #ifdef PR_OS_LINUX
 #include <dlfcn.h>
-#elif PR_OS_WINDOWS
-#ifndef WIN32_LEAN_AND_MEAN
+#elif defined(PR_OS_WINDOWS)
 #define WIN32_LEAN_AND_MEAN
-#endif
 #include <Windows.h>
 #else
-#error Windows implementation missing
+#error DLL implementation missing
 #endif
 
 namespace PR {
 struct SharedLibraryInternal {
 #ifdef PR_OS_LINUX
 	void* Handle;
-#elif PR_OS_WINDOWS
+#elif defined(PR_OS_WINDOWS)
 	HINSTANCE Handle;
 #endif
 
@@ -26,7 +24,7 @@ struct SharedLibraryInternal {
 		if (!Handle)
 			throw std::runtime_error(dlerror());
 	}
-#elif PR_OS_WINDOWS
+#elif defined(PR_OS_WINDOWS)
 	explicit SharedLibraryInternal(const std::string& path)
 		: Handle(LoadLibraryA(path.c_str()))
 	{
@@ -39,7 +37,7 @@ struct SharedLibraryInternal {
 	{
 #ifdef PR_OS_LINUX
 		dlclose(Handle);
-#elif PR_OS_WINDOWS
+#elif defined(PR_OS_WINDOWS)
 		FreeLibrary(Handle);
 #endif
 	}
@@ -57,7 +55,7 @@ SharedLibrary::SharedLibrary(const std::wstring& file)
 	} catch (...) {
 		mInternal.reset(new SharedLibraryInternal(u8));
 	}
-#elif PR_OS_WINDOWS
+#elif defined(PR_OS_WINDOWS)
 	try {
 		mInternal.reset(new SharedLibraryInternal(u8 + ".dll"));
 	} catch (...) {
@@ -75,7 +73,7 @@ void* SharedLibrary::symbol(const std::string& name) const
 
 #ifdef PR_OS_LINUX
 	return dlsym(mInternal->Handle, name.c_str());
-#elif PR_OS_WINDOWS
+#elif defined(PR_OS_WINDOWS)
 	return GetProcAddress(mInternal->Handle, name.c_str());
 #endif
 }

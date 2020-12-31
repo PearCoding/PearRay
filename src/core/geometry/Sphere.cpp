@@ -4,6 +4,7 @@
 
 #include "math/Spherical.h"
 
+#include <array>
 #include <utility>
 
 namespace PR {

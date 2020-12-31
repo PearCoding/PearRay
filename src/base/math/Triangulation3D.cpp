@@ -1,6 +1,7 @@
 #include "Hash.h"
 #include "Triangulation.h"
 
+#include <array>
 #include <unordered_set>
 
 namespace PR {

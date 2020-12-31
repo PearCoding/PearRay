@@ -45,7 +45,7 @@ void SceneLoadContext::popFile()
 std::filesystem::path SceneLoadContext::setupParametricImage(const std::filesystem::path& path)
 {
 	bool updateNeeded	 = false;
-	const auto para_path = mEnvironment->resourceManager()->requestFile("image", path.stem(), ".exr", updateNeeded);
+	const auto para_path = mEnvironment->resourceManager()->requestFile("image", path.stem().generic_string(), ".exr", updateNeeded);
 
 	if (updateNeeded) {
 		PR_LOG(L_INFO) << "Converting " << path << " to parametric image " << para_path << std::endl;

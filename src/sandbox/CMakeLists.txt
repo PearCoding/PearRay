@@ -19,6 +19,9 @@ set(PR_Hdr ${PR_Main_Hdr}
 
 add_executable(prsandbox ${PR_Src} ${PR_Hdr})
 target_link_libraries(prsandbox PRIVATE pr_lib_loader OpenImageIO::OpenImageIO)
+if(WIN32)
+  target_link_libraries(prsandbox PRIVATE OpenEXR::IlmImf)
+endif()
 target_include_directories(prsandbox PRIVATE ${OpenEXR_INCLUDE_DIRS})# For lmathVec.h
 add_lto(prsandbox)
 strip_binary(prsandbox)

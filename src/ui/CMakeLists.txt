@@ -109,6 +109,9 @@ add_library(pr_lib_ui ${Src} ${Hdr} ${GenFiles})
 target_link_libraries(pr_lib_ui 
   PUBLIC pr_lib_loader Qt5::Widgets 
   PRIVATE OpenImageIO::OpenImageIO TBB::tbb)
+if(WIN32)
+  target_link_libraries(pr_lib_ui PRIVATE OpenEXR::IlmImf)
+endif()
 target_include_directories(pr_lib_ui PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 if(NOT BUILD_SHARED_LIBS)
   target_compile_definitions(pr_lib_ui PUBLIC "PR_LIB_UI_STATIC")

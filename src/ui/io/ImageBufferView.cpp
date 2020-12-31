@@ -1,9 +1,17 @@
 #include "ImageBufferView.h"
 #include "mapper/ImagePipeline.h"
 
+// Something wrong here...
+#ifdef PR_OS_WINDOWS
+#define PR_DIAG_NO_TBB
+#endif
+
 #ifndef PR_DIAG_NO_TBB
+// Disable tbb in a moc run, as problems may arrise due to the emit() calls inside the header profiling.h
+#ifndef Q_MOC_RUN
 #include "tbb/blocked_range.h"
 #include "tbb/parallel_for.h"
+#endif
 #endif
 
 namespace PR {

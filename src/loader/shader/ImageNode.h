@@ -2,6 +2,7 @@
 
 #include "shader/INode.h"
 
+#include <filesystem>
 #include <OpenImageIO/texture.h>
 
 namespace PR {
@@ -11,7 +12,7 @@ class PR_LIB_LOADER ParametricImageNode : public FloatSpectralNode {
 public:
 	ParametricImageNode(OIIO::TextureSystem* tsys,
 						const OIIO::TextureOpt& options,
-						const std::string& filename);
+						const std::filesystem::path& filename);
 	SpectralBlob eval(const ShadingContext& ctx) const override;
 	Vector2i queryRecommendedSize() const override;
 	std::string dumpInformation() const override;
@@ -32,7 +33,7 @@ class PR_LIB_LOADER NonParametricImageNode : public FloatSpectralNode {
 public:
 	NonParametricImageNode(OIIO::TextureSystem* tsys,
 						   const OIIO::TextureOpt& options,
-						   const std::string& filename,
+						   const std::filesystem::path& filename,
 						   SpectralUpsampler* upsampler);
 	SpectralBlob eval(const ShadingContext& ctx) const override;
 	Vector2i queryRecommendedSize() const override;
@@ -55,7 +56,7 @@ class PR_LIB_LOADER ScalarImageNode : public FloatScalarNode {
 public:
 	ScalarImageNode(OIIO::TextureSystem* tsys,
 					const OIIO::TextureOpt& options,
-					const std::string& filename);
+					const std::filesystem::path& filename);
 	float eval(const ShadingContext& ctx) const override;
 	//Vector2i queryRecommendedSize() const override;
 	std::string dumpInformation() const override;

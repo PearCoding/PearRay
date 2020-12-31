@@ -15,6 +15,8 @@
 
 #include "Logger.h"
 
+#include <numeric>
+
 namespace PR {
 namespace VCM {
 

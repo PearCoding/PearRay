@@ -5,6 +5,8 @@
 
 #include "3d/Camera.h"
 
+#include <array>
+
 namespace PR {
 namespace UI {
 class GraphicEntity;

@@ -3,6 +3,8 @@
 
 #include "Test.h"
 
+#include <array>
+
 using namespace PR;
 
 constexpr float EPS = 0.0001f;

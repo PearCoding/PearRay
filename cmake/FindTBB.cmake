@@ -16,6 +16,7 @@ endif()
 SET(TBB_FOUND FALSE)
 SET(TBB_INCLUDE_DIRS)
 SET(TBB_LIBRARIES)
+SET(TBB_ONEAPI FALSE)
 
 set(_def_search_paths
   ~/Library/Frameworks
@@ -36,13 +37,35 @@ find_path(TBB_INCLUDE_DIR tbb/tbb_stddef.h
   PATHS ${_def_search_paths}
 )
 
+if(NOT TBB_INCLUDE_DIR)
+  find_path(TBB_INCLUDE_DIR oneapi/tbb/version.h
+    HINTS
+      ENV TBB_HOME
+    PATH_SUFFIXES include/ local/include/
+    PATHS ${_def_search_paths}
+  )
+
+  if(TBB_INCLUDE_DIR)
+    set(TBB_ONEAPI TRUE)
+  endif()
+endif()
+
+if(NOT TBB_ONEAPI)
+  if(TBB_INCLUDE_DIR MATCHES ".*\\/oneAPI\\/.*")
+    set(TBB_ONEAPI TRUE)
+    set(TBB_VERSION_FILE "${TBB_INCLUDE_DIR}/oneapi/tbb/version.h")
+  else()
+    set(TBB_VERSION_FILE "${TBB_INCLUDE_DIR}/tbb/tbb_stddef.h")
+  endif()
+endif()
+
 get_filename_component(_TBB_ROOT_DIR ${TBB_INCLUDE_DIR} DIRECTORY)
 
 # Extract the version
 if(TBB_INCLUDE_DIR)
   set(TBB_INCLUDE_DIRS "${TBB_INCLUDE_DIR}")
 
-  file(READ "${TBB_INCLUDE_DIRS}/tbb/tbb_stddef.h" _tbb_version_file)
+  file(READ "${TBB_VERSION_FILE}" _tbb_version_file)
   string(REGEX REPLACE ".*#define TBB_VERSION_MAJOR ([0-9]+).*" "\\1"
       TBB_VERSION_MAJOR "${_tbb_version_file}")
   string(REGEX REPLACE ".*#define TBB_VERSION_MINOR ([0-9]+).*" "\\1"
@@ -102,7 +125,7 @@ foreach(component ${TBB_FIND_COMPONENTS})
       set(TBB_${component}_LIBRARY "${TBB_${component}_LIBRARY_RELEASE}")
     endif()
 
-    if(TBB_${component}_LIBRARY AND EXISTS "${TBB_${component}_LIBRARY}")
+    if(TBB_${component}_LIBRARY)
       set(TBB_${component}_FOUND TRUE)
     endif()
 

@@ -97,6 +97,9 @@ if(NOT WIN32)
   target_link_libraries(pr_lib_base PUBLIC Threads::Threads)
 endif()
 target_link_libraries(pr_lib_base PUBLIC Eigen3::Eigen PRIVATE ${CMAKE_DL_LIBS})
+if(WIN32)
+  target_link_libraries(pr_lib_base PRIVATE wsock32 ws2_32)
+endif()
 target_include_directories(pr_lib_base PUBLIC 
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<INSTALL_INTERFACE:${INCLUDE_PREFIX}/>)
@@ -112,6 +115,8 @@ add_lto(pr_lib_base)
 if(BUILD_SHARED_LIBS)
   strip_binary(pr_lib_base)
 endif()
+
+target_setup_deploy(pr_lib_base RECURSIVE)
 
 if(BUILD_SHARED_LIBS)
   set(INSTALL_COMPONENT runtime)

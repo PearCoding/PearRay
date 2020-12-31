@@ -3,6 +3,8 @@
 #include "entity/ITransformable.h"
 #include "spectral/SpectralBlob.h"
 
+#include <optional>
+
 namespace PR {
 struct PR_LIB_CORE CameraSample {
 	Size2i SensorSize;

@@ -5,6 +5,8 @@
 #include "shader/ConstNode.h"
 #include "shader/INodePlugin.h"
 
+#include <array>
+
 namespace PR {
 
 inline float teval(const ShadingContext&, float a) { return a; }

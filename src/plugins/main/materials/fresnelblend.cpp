@@ -6,6 +6,7 @@
 #include "material/IMaterialPlugin.h"
 #include "math/Fresnel.h"
 
+#include <array>
 #include <sstream>
 
 namespace PR {
