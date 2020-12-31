@@ -185,18 +185,18 @@ public:
 		if (closure.isDelta()) { // Reject
 			out.PDF_S  = 0.0f;
 			out.Weight = SpectralBlob::Zero();
-			out.Flags  = MSF_DeltaDistribution;
+			out.Flags  = MaterialScatter::DeltaDistribution;
 			return;
 		}
 
-		out.Weight = closure.eval(in.Context.V, in.Context.L, in.Context.RayFlags & RF_Light);
+		out.Weight = closure.eval(in.Context.V, in.Context.L, in.Context.RayFlags & RayFlag::Light);
 		out.PDF_S  = closure.pdf(in.Context.V, in.Context.L);
 
 		// Determine type
 		if (in.Context.V.sameHemisphere(in.Context.L))
-			out.Type = MST_SpecularReflection;
+			out.Type = MaterialScatteringType::SpecularReflection;
 		else
-			out.Type = MST_SpecularTransmission;
+			out.Type = MaterialScatteringType::SpecularTransmission;
 	}
 
 	void pdf(const MaterialEvalInput& in, MaterialPDFOutput& out,
@@ -207,7 +207,7 @@ public:
 		const auto closure = getClosurePdf(in.ShadingContext);
 		if (closure.isDelta()) { // Reject
 			out.PDF_S = 0.0f;
-			out.Flags = MSF_DeltaDistribution;
+			out.Flags = MaterialScatter::DeltaDistribution;
 			return;
 		}
 
@@ -222,14 +222,15 @@ public:
 		out.L = closure.sample(in.RND, in.Context.V);
 
 		// Set flags
-		out.Flags = (closure.isDelta() ? MSF_DeltaDistribution : 0);
+		if (closure.isDelta())
+			out.Flags |= MaterialScatter::DeltaDistribution;
 
 		if (PR_UNLIKELY(out.L.isZero())) {
-			out = MaterialSampleOutput::Reject(MST_SpecularReflection, out.Flags);
+			out = MaterialSampleOutput::Reject(MaterialScatteringType::SpecularReflection, out.Flags);
 			return;
 		}
 
-		out.Weight = closure.eval(in.Context.V, out.L, in.Context.RayFlags & RF_Light);
+		out.Weight = closure.eval(in.Context.V, out.L, in.Context.RayFlags & RayFlag::Light);
 		out.PDF_S  = closure.pdf(in.Context.V, out.L);
 
 		// If we handle a delta case, make sure the outgoing pdf will be 1
@@ -240,9 +241,9 @@ public:
 
 		// Set type
 		if (in.Context.V.sameHemisphere(out.L))
-			out.Type = MST_SpecularReflection;
+			out.Type = MaterialScatteringType::SpecularReflection;
 		else
-			out.Type = MST_SpecularTransmission;
+			out.Type = MaterialScatteringType::SpecularTransmission;
 	}
 
 	std::string dumpInformation() const override

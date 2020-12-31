@@ -16,10 +16,10 @@ public:
 	/**
 		* @brief The allowed states
 		*/
-	enum _State {
-		S_Running = 0,
-		S_Waiting = 1,
-		S_Stopped = 2
+	enum class State {
+		Running = 0,
+		Waiting = 1,
+		Stopped = 2
 	};
 
 	/**
@@ -37,7 +37,7 @@ public:
 		*
 		* @return The current state
 		*/
-	inline _State state() const;
+	inline State state() const;
 
 	/**
 		* @brief Caller thread wait for this thread to join him
@@ -96,7 +96,7 @@ protected:
 private:
 	static std::atomic<uint32> sThreadCount;
 
-	std::atomic<_State> mState;
+	std::atomic<State> mState;
 	std::thread* mThread;
 
 	std::atomic<bool> mShouldStop;

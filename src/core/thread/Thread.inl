@@ -1,7 +1,7 @@
 // IWYU pragma: private, include "thread/Thread.h"
 namespace PR {
 inline Thread::Thread()
-	: mState(S_Waiting)
+	: mState(State::Waiting)
 	, mThread(nullptr)
 	, mShouldStop(false)
 {
@@ -19,14 +19,14 @@ inline Thread::~Thread()
 	}
 }
 
-inline Thread::_State Thread::state() const
+inline Thread::State Thread::state() const
 {
 	return mState;
 }
 
 inline void Thread::join()
 {
-	if (mState != S_Running || !mThread || mThread->get_id() == std::this_thread::get_id() || !mThread->joinable())
+	if (mState != State::Running || !mThread || mThread->get_id() == std::this_thread::get_id() || !mThread->joinable())
 		return;
 
 	mThread->join();
@@ -34,7 +34,7 @@ inline void Thread::join()
 
 inline void Thread::requestStop()
 {
-	if (mState != S_Running || !mThread)
+	if (mState != State::Running || !mThread)
 		return;
 
 	mShouldStop = true;
@@ -42,7 +42,7 @@ inline void Thread::requestStop()
 
 inline void Thread::stop()
 {
-	if (mState != S_Running || !mThread)
+	if (mState != State::Running || !mThread)
 		return;
 	requestStop();
 

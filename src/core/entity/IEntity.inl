@@ -12,6 +12,6 @@ inline BoundingBox IEntity::worldBoundingBox() const
 	return bb;
 }
 
-inline uint8 IEntity::visibilityFlags() const { return mVisibilityFlags; }
-inline void IEntity::setVisibilityFlags(uint8 flags) { mVisibilityFlags = flags; }
+inline EntityVisibilityFlags IEntity::visibilityFlags() const { return mVisibilityFlags; }
+inline void IEntity::setVisibilityFlags(EntityVisibilityFlags flags) { mVisibilityFlags = flags; }
 } // namespace PR

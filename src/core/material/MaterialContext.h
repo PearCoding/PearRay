@@ -16,7 +16,7 @@ public:
 	Vector2f UV;
 	uint32 PrimitiveID = PR_INVALID_ID; // Useful for PTex
 	SpectralBlob WavelengthNM;
-	uint32 RayFlags = 0;
+	PR::RayFlags RayFlags = 0;
 
 	inline float NdotV() const { return V(2); }
 	inline float XdotV() const { return V(0); }

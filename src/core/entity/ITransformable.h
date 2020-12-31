@@ -5,11 +5,6 @@
 #include <string>
 
 namespace PR {
-enum EntityFlags {
-	EF_Debug	 = 0x1,
-	EF_LocalArea = 0x2,
-};
-
 #define ENTITY_CLASS \
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -26,9 +21,6 @@ public:
 	virtual std::string type() const;
 	virtual bool isRenderable() const;
 
-	inline void setFlags(uint8 f);
-	inline uint8 flags() const;
-
 	inline const Transformf& transform() const;
 	inline const Transformf& invTransform() const;
 	inline float volumeScalefactor() const;
@@ -41,7 +33,6 @@ public:
 
 private:
 	const std::string mName;
-	uint8 mFlags;
 
 	const Transformf mTransform;
 	const Transformf mInvTransformCache;

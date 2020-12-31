@@ -66,9 +66,9 @@ PR_TEST("Eigenvalues")
 
 PR_TEST("Classify")
 {
-	PR_CHECK_EQ(Quadric::classify(SPHERE), Quadric::C_RealEllipsoid);
-	PR_CHECK_EQ(Quadric::classify(CONE), Quadric::C_EllipticRealCone);
-	PR_CHECK_EQ(Quadric::classify(CYLINDER), Quadric::C_EllipticRealCylinder);
+	PR_CHECK_EQ(Quadric::classify(SPHERE), Quadric::Classification::RealEllipsoid);
+	PR_CHECK_EQ(Quadric::classify(CONE), Quadric::Classification::EllipticRealCone);
+	PR_CHECK_EQ(Quadric::classify(CYLINDER), Quadric::Classification::EllipticRealCylinder);
 }
 
 PR_END_TESTCASE()

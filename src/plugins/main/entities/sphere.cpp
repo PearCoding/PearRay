@@ -52,11 +52,10 @@ public:
 			Eigen::Matrix3f sca;
 			transform().computeRotationScaling((Eigen::Matrix3f*)nullptr, &sca);
 
-			const auto s = flags() & EF_LocalArea ? Vector3f(1, 1, 1) : sca.diagonal();
-
-			const float a = s(0) * mSphere.radius();
-			const float b = s(1) * mSphere.radius();
-			const float c = s(2) * mSphere.radius();
+			const Vector3f s = sca.diagonal();
+			const float a	 = s(0) * mSphere.radius();
+			const float b	 = s(1) * mSphere.radius();
+			const float c	 = s(2) * mSphere.radius();
 
 			// Knud Thomsen’s Formula
 			const float t = (std::pow(a * b, P) + std::pow(a * c, P) + std::pow(b * c, P)) / 3;

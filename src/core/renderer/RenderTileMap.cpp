@@ -48,7 +48,7 @@ void RenderTileMap::init(RenderContext* context, uint32 rtx, uint32 rty, TileMod
 
 	switch (mode) {
 	default:
-	case TM_LINEAR:
+	case TileMode::Linear:
 		for (Point1i i = 0; i < ty; ++i) {
 			for (Point1i j = 0; j < tx; ++j) {
 				Point1i sx = j * mMaxTileSize.Width;
@@ -60,7 +60,7 @@ void RenderTileMap::init(RenderContext* context, uint32 rtx, uint32 rty, TileMod
 			}
 		}
 		break;
-	case TM_TILE:
+	case TileMode::Tile:
 		// Even
 		for (Point1i i = 0; i < ty; ++i) {
 			for (Point1i j = ((i % 2) ? 1 : 0); j < tx; j += 2) {
@@ -84,7 +84,7 @@ void RenderTileMap::init(RenderContext* context, uint32 rtx, uint32 rty, TileMod
 			}
 		}
 		break;
-	case TM_SPIRAL: {
+	case TileMode::Spiral: {
 		MinRadiusGenerator<2> generator(std::max(tx / 2, ty / 2));
 		while (generator.hasNext()) {
 			const auto p   = generator.next();
@@ -99,7 +99,7 @@ void RenderTileMap::init(RenderContext* context, uint32 rtx, uint32 rty, TileMod
 			}
 		}
 	} break;
-	case TM_ZORDER: {
+	case TileMode::ZOrder: {
 		uint64 i = 0;
 		int32 c	 = 0;
 		while (c < tx * ty) {

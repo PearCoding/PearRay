@@ -128,7 +128,7 @@ float MeshBase::surfaceArea(uint32 matID, const Eigen::Affine3f& transform) cons
 {
 	PR_PROFILE_THIS;
 	
-	if (matID == PR_INVALID_ID || !(features() & MF_HAS_MATERIAL))
+	if (matID == PR_INVALID_ID || !(features() & MeshFeature::Material))
 		return surfaceArea(transform);
 
 	float a		   = 0;
@@ -173,7 +173,7 @@ void MeshBase::triangulate()
 
 	std::vector<uint32> new_indices(new_facecount * 3);
 	std::vector<uint32> new_mats;
-	if (mInfo.Features & MF_HAS_MATERIAL)
+	if (mInfo.Features & MeshFeature::Material)
 		new_mats.resize(new_facecount);
 
 	size_t indC = 0;
@@ -187,7 +187,7 @@ void MeshBase::triangulate()
 		new_indices[indC]	  = mIndices[indInd];
 		new_indices[indC + 1] = mIndices[indInd + 1];
 		new_indices[indC + 2] = mIndices[indInd + 2];
-		if (mInfo.Features & MF_HAS_MATERIAL)
+		if (mInfo.Features & MeshFeature::Material)
 			new_mats[facC] = mMaterialSlots[face];
 		indC += 3;
 		++facC;
@@ -198,7 +198,7 @@ void MeshBase::triangulate()
 			new_indices[indC + 1] = mIndices[indInd + 2];
 			new_indices[indC + 2] = mIndices[indInd + 3];
 
-			if (mInfo.Features & MF_HAS_MATERIAL)
+			if (mInfo.Features & MeshFeature::Material)
 				new_mats[facC] = mMaterialSlots[face];
 			indC += 3;
 			++facC;
@@ -217,7 +217,7 @@ void MeshBase::triangulate()
 
 void MeshBase::serialize(Serializer& serializer)
 {
-	serializer | mInfo.Features
+	serializer | mInfo.Features.value
 		| mInfo.NodeCount
 		| mInfo.TriangleCount
 		| mInfo.QuadCount

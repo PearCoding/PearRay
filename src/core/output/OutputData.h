@@ -1,12 +1,14 @@
 #pragma once
 
+#include "Feedback.h"
 #include "spectral/SpectralBlob.h"
 #include "trace/IntersectionPoint.h"
 
 namespace PR {
-enum OutputSpectralEntryFlags {
-	OSEF_Mono = 0x1
+enum class OutputSpectralEntryFlag : uint32 {
+	Mono = 0x1
 };
+PR_MAKE_FLAGS(OutputSpectralEntryFlag, OutputSpectralEntryFlags)
 
 struct PR_LIB_CORE OutputSpectralEntry {
 	Point2i Position;
@@ -14,7 +16,7 @@ struct PR_LIB_CORE OutputSpectralEntry {
 	SpectralBlob Importance;
 	SpectralBlob Radiance;
 	SpectralBlob Wavelengths;
-	uint32 Flags;
+	OutputSpectralEntryFlags Flags;
 	uint32 RayGroupID;
 	const uint32* Path;
 
@@ -30,7 +32,7 @@ struct PR_LIB_CORE OutputShadingPointEntry {
 
 struct PR_LIB_CORE OutputFeedbackEntry {
 	Point2i Position;
-	uint32 Feedback;
+	OutputFeedbackFlags Feedback;
 };
 
 // Custom queue entries
@@ -43,7 +45,7 @@ struct PR_LIB_CORE OutputCustomBaseEntry {
 
 struct PR_LIB_CORE OutputCustomSpectralEntry : public OutputCustomBaseEntry<SpectralBlob> {
 	SpectralBlob Wavelengths;
-	uint32 Flags;
+	OutputSpectralEntryFlags Flags;
 	uint32 RayGroupID;
 };
 

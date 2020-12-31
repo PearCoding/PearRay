@@ -9,7 +9,7 @@
 namespace PR {
 RenderTile::RenderTile(const Point2i& start, const Point2i& end,
 					   RenderContext* context, const RenderTileContext& tileContext)
-	: mStatus(RTS_Idle)
+	: mStatus(static_cast<LockFreeAtomic::value_type>(RenderTileStatus::Idle))
 	, mStart(start)
 	, mEnd(end)
 	, mViewSize(Size2i::fromPoints(start, end))
@@ -27,24 +27,24 @@ RenderTile::RenderTile(const Point2i& start, const Point2i& end,
 
 	// Even while each sampler has his own number of requested samples...
 	// each sampler deals with the combination of all requested samples
-	mAASampler = mRenderContext->settings().createAASampler(mRandom);
-	mLensSampler = mRenderContext->settings().createLensSampler(mRandom);
-	mTimeSampler = mRenderContext->settings().createTimeSampler(mRandom);
+	mAASampler		 = mRenderContext->settings().createAASampler(mRandom);
+	mLensSampler	 = mRenderContext->settings().createLensSampler(mRandom);
+	mTimeSampler	 = mRenderContext->settings().createTimeSampler(mRandom);
 	mSpectralSampler = mRenderContext->settings().createSpectralSampler(mRandom);
 
 	mSpectralMapper = mRenderContext->settings().createSpectralMapper(mRenderContext);
 
 	switch (mRenderContext->settings().timeMappingMode) {
 	default:
-	case TMM_CENTER:
+	case TimeMappingMode::Center:
 		mTimeAlpha = 1;
 		mTimeBeta  = -0.5;
 		break;
-	case TMM_RIGHT:
+	case TimeMappingMode::Right:
 		mTimeAlpha = 1;
 		mTimeBeta  = 0;
 		break;
-	case TMM_LEFT:
+	case TimeMappingMode::Left:
 		mTimeAlpha = -1;
 		mTimeBeta  = 0;
 		break;
@@ -65,11 +65,11 @@ RenderTile::~RenderTile()
  */
 std::optional<CameraRay> RenderTile::constructCameraRay(const Point2i& p, const RenderIteration& iter)
 {
-	PR_ASSERT(mStatus == RTS_Working, "Trying to use a tile which is not acquired");
+	PR_ASSERT(mStatus == (int)RenderTileStatus::Working, "Trying to use a tile which is not acquired");
 
 	PR_PROFILE_THIS;
 
-	statistics().add(RST_PixelSampleCount);
+	statistics().add(RenderStatisticEntry::PixelSampleCount);
 	++mContext.PixelSamplesRendered;
 	const uint32 sample = iter.Iteration;
 
@@ -123,8 +123,8 @@ bool RenderTile::accuire()
 	if (isFinished())
 		return false;
 
-	LockFreeAtomic::value_type expected = RTS_Idle;
-	const bool res						= mStatus.compare_exchange_strong(expected, RTS_Working);
+	LockFreeAtomic::value_type expected = static_cast<LockFreeAtomic::value_type>(RenderTileStatus::Idle);
+	const bool res						= mStatus.compare_exchange_strong(expected, static_cast<LockFreeAtomic::value_type>(RenderTileStatus::Working));
 
 	if (res) {
 		mWorkStart = std::chrono::high_resolution_clock::now();
@@ -136,8 +136,8 @@ bool RenderTile::accuire()
 
 void RenderTile::release()
 {
-	LockFreeAtomic::value_type expected = RTS_Working;
-	const bool res						= mStatus.compare_exchange_strong(expected, RTS_Done);
+	LockFreeAtomic::value_type expected = static_cast<LockFreeAtomic::value_type>(RenderTileStatus::Working);
+	const bool res						= mStatus.compare_exchange_strong(expected, static_cast<LockFreeAtomic::value_type>(RenderTileStatus::Done));
 
 	if (res) {
 		auto end	  = std::chrono::high_resolution_clock::now();

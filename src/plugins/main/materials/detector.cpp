@@ -47,7 +47,7 @@ public:
 
 		const float dot = std::abs(in.Context.NdotL());
 		out.Weight		= PR_INV_PI * calc(in.Context.V, in.Context.L, in.ShadingContext) * dot;
-		out.Type		= MST_DiffuseReflection;
+		out.Type		= MaterialScatteringType::DiffuseReflection;
 		out.PDF_S		= Sampling::cos_hemi_pdf(dot);
 	}
 
@@ -74,13 +74,13 @@ public:
 		}
 
 		const float NdotL = std::abs(out.L(2));
-		out.Weight	= PR_INV_PI * calc(in.Context.V, out.L, in.ShadingContext) * NdotL;
-		out.PDF_S	= Sampling::cos_hemi_pdf(NdotL);
+		out.Weight		  = PR_INV_PI * calc(in.Context.V, out.L, in.ShadingContext) * NdotL;
+		out.PDF_S		  = Sampling::cos_hemi_pdf(NdotL);
 
 		if (out.L[2] < 0)
-			out.Type = MST_DiffuseTransmission;
+			out.Type = MaterialScatteringType::DiffuseTransmission;
 		else
-			out.Type = MST_DiffuseReflection;
+			out.Type = MaterialScatteringType::DiffuseReflection;
 	}
 
 	std::string dumpInformation() const override

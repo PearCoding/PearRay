@@ -27,28 +27,28 @@ inline void MeshBase::setUVs(const std::vector<float>& uvs)
 {
 	mUVs = uvs;
 	if (!uvs.empty())
-		mInfo.Features |= MF_HAS_UV;
+		mInfo.Features |= MeshFeature::UV;
 }
 
 inline void MeshBase::setUVs(std::vector<float>&& uvs)
 {
 	mUVs = std::move(uvs);
 	if (!mUVs.empty())
-		mInfo.Features |= MF_HAS_UV;
+		mInfo.Features |= MeshFeature::UV;
 }
 
 inline void MeshBase::setVelocities(const std::vector<float>& velocities)
 {
 	mVelocities = velocities;
 	if (!velocities.empty())
-		mInfo.Features |= MF_HAS_VELOCITY;
+		mInfo.Features |= MeshFeature::Velocity;
 }
 
 inline void MeshBase::setVelocities(std::vector<float>&& velocities)
 {
 	mVelocities = std::move(velocities);
 	if (!mVelocities.empty())
-		mInfo.Features |= MF_HAS_VELOCITY;
+		mInfo.Features |= MeshFeature::Velocity;
 }
 
 inline void MeshBase::setIndices(const std::vector<uint32>& indices)
@@ -65,14 +65,14 @@ inline void MeshBase::setMaterialSlots(const std::vector<uint32>& f)
 {
 	mMaterialSlots = f;
 	if (!f.empty())
-		mInfo.Features |= MF_HAS_MATERIAL;
+		mInfo.Features |= MeshFeature::Material;
 }
 
 inline void MeshBase::setMaterialSlots(std::vector<uint32>&& f)
 {
 	mMaterialSlots = std::move(f);
 	if (!mMaterialSlots.empty())
-		mInfo.Features |= MF_HAS_MATERIAL;
+		mInfo.Features |= MeshFeature::Material;
 }
 
 inline void MeshBase::assumeTriangular(size_t faceCount)

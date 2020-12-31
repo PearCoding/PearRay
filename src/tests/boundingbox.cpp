@@ -136,7 +136,7 @@ PR_TEST("Intersects Left")
 	PR_CHECK_EQ(s.HitDistance, 1);
 
 	Vector3f p = ray.t(s.HitDistance);
-	PR_CHECK_EQ(box.getIntersectionSide(p), BoundingBox::FS_Left);
+	PR_CHECK_EQ(box.getIntersectionSide(p), BoundingBox::FaceSide::Left);
 }
 
 PR_TEST("Intersects Right Inside")
@@ -150,7 +150,7 @@ PR_TEST("Intersects Right Inside")
 	PR_CHECK_EQ(s.HitDistance, 1);
 
 	Vector3f p = ray.t(s.HitDistance);
-	PR_CHECK_EQ(box.getIntersectionSide(p), BoundingBox::FS_Right);
+	PR_CHECK_EQ(box.getIntersectionSide(p), BoundingBox::FaceSide::Right);
 }
 
 PR_TEST("Intersects Right")
@@ -164,7 +164,7 @@ PR_TEST("Intersects Right")
 	PR_CHECK_EQ(s.HitDistance, 1);
 
 	Vector3f p = ray.t(s.HitDistance);
-	PR_CHECK_EQ(box.getIntersectionSide(p), BoundingBox::FS_Right);
+	PR_CHECK_EQ(box.getIntersectionSide(p), BoundingBox::FaceSide::Right);
 }
 
 PR_TEST("Intersects Front")
@@ -178,7 +178,7 @@ PR_TEST("Intersects Front")
 	PR_CHECK_EQ(s.HitDistance, 1);
 
 	Vector3f p = ray.t(s.HitDistance);
-	PR_CHECK_EQ(box.getIntersectionSide(p), BoundingBox::FS_Front);
+	PR_CHECK_EQ(box.getIntersectionSide(p), BoundingBox::FaceSide::Front);
 }
 
 PR_TEST("Intersects Back Inside")
@@ -192,7 +192,7 @@ PR_TEST("Intersects Back Inside")
 	PR_CHECK_EQ(s.HitDistance, 1);
 
 	Vector3f p = ray.t(s.HitDistance);
-	PR_CHECK_EQ(box.getIntersectionSide(p), BoundingBox::FS_Back);
+	PR_CHECK_EQ(box.getIntersectionSide(p), BoundingBox::FaceSide::Back);
 }
 
 PR_TEST("Intersects Back")
@@ -206,7 +206,7 @@ PR_TEST("Intersects Back")
 	PR_CHECK_EQ(s.HitDistance, 1);
 
 	Vector3f p = ray.t(s.HitDistance);
-	PR_CHECK_EQ(box.getIntersectionSide(p), BoundingBox::FS_Back);
+	PR_CHECK_EQ(box.getIntersectionSide(p), BoundingBox::FaceSide::Back);
 }
 
 PR_TEST("Intersects Bottom")
@@ -220,7 +220,7 @@ PR_TEST("Intersects Bottom")
 	PR_CHECK_EQ(s.HitDistance, 1);
 
 	Vector3f p = ray.t(s.HitDistance);
-	PR_CHECK_EQ(box.getIntersectionSide(p), BoundingBox::FS_Bottom);
+	PR_CHECK_EQ(box.getIntersectionSide(p), BoundingBox::FaceSide::Bottom);
 }
 
 PR_TEST("Intersects Top Inside")
@@ -234,7 +234,7 @@ PR_TEST("Intersects Top Inside")
 	PR_CHECK_EQ(s.HitDistance, 1);
 
 	Vector3f p = ray.t(s.HitDistance);
-	PR_CHECK_EQ(box.getIntersectionSide(p), BoundingBox::FS_Top);
+	PR_CHECK_EQ(box.getIntersectionSide(p), BoundingBox::FaceSide::Top);
 }
 
 PR_TEST("Intersects Top")
@@ -248,7 +248,7 @@ PR_TEST("Intersects Top")
 	PR_CHECK_EQ(s.HitDistance, 1);
 
 	Vector3f p = ray.t(s.HitDistance);
-	PR_CHECK_EQ(box.getIntersectionSide(p), BoundingBox::FS_Top);
+	PR_CHECK_EQ(box.getIntersectionSide(p), BoundingBox::FaceSide::Top);
 }
 
 PR_TEST("Intersects Complex")
@@ -264,7 +264,7 @@ PR_TEST("Intersects Complex")
 
 	Vector3f p = ray.t(s.HitDistance);
 	PR_CHECK_NEARLY_EQ(p, point);
-	PR_CHECK_EQ(box.getIntersectionSide(p), BoundingBox::FS_Top);
+	PR_CHECK_EQ(box.getIntersectionSide(p), BoundingBox::FaceSide::Top);
 }
 
 PR_TEST("Intersects Range")
@@ -282,7 +282,7 @@ PR_TEST("Intersects Range")
 PR_TEST("Face Front")
 {
 	BoundingBox box(1, 2, 3);
-	Plane plane = box.getFace(BoundingBox::FS_Front);
+	Plane plane = box.getFace(BoundingBox::FaceSide::Front);
 	PR_CHECK_EQ(plane.normal(), Vector3f(0, 0, 1));
 	PR_CHECK_NEARLY_EQ(plane.position()(2), -3 / 2.0f);
 	PR_CHECK_EQ(plane.xAxis().norm(), 1);
@@ -292,7 +292,7 @@ PR_TEST("Face Front")
 PR_TEST("Face Back")
 {
 	BoundingBox box(1, 2, 3);
-	Plane plane = box.getFace(BoundingBox::FS_Back);
+	Plane plane = box.getFace(BoundingBox::FaceSide::Back);
 	PR_CHECK_EQ(plane.normal(), Vector3f(0, 0, -1));
 	PR_CHECK_NEARLY_EQ(plane.position()(2), 3 / 2.0f);
 	PR_CHECK_EQ(plane.xAxis().norm(), 1);
@@ -302,7 +302,7 @@ PR_TEST("Face Back")
 PR_TEST("Face Left")
 {
 	BoundingBox box(1, 2, 3);
-	Plane plane = box.getFace(BoundingBox::FS_Left);
+	Plane plane = box.getFace(BoundingBox::FaceSide::Left);
 	PR_CHECK_EQ(plane.normal(), Vector3f(1, 0, 0));
 	PR_CHECK_NEARLY_EQ(plane.position()(0), -1 / 2.0f);
 	PR_CHECK_EQ(plane.xAxis().norm(), 3);
@@ -312,7 +312,7 @@ PR_TEST("Face Left")
 PR_TEST("Face Right")
 {
 	BoundingBox box(1, 2, 3);
-	Plane plane = box.getFace(BoundingBox::FS_Right);
+	Plane plane = box.getFace(BoundingBox::FaceSide::Right);
 	PR_CHECK_EQ(plane.normal(), Vector3f(-1, 0, 0));
 	PR_CHECK_NEARLY_EQ(plane.position()(0), 1 / 2.0f);
 	PR_CHECK_EQ(plane.xAxis().norm(), 3);
@@ -322,7 +322,7 @@ PR_TEST("Face Right")
 PR_TEST("Face Top")
 {
 	BoundingBox box(1, 2, 3);
-	Plane plane = box.getFace(BoundingBox::FS_Top);
+	Plane plane = box.getFace(BoundingBox::FaceSide::Top);
 	PR_CHECK_EQ(plane.normal(), Vector3f(0, -1, 0));
 	PR_CHECK_NEARLY_EQ(plane.position()(1), 1);
 	PR_CHECK_EQ(plane.xAxis().norm(), 1);
@@ -332,7 +332,7 @@ PR_TEST("Face Top")
 PR_TEST("Face Bottom")
 {
 	BoundingBox box(1, 2, 3);
-	Plane plane = box.getFace(BoundingBox::FS_Bottom);
+	Plane plane = box.getFace(BoundingBox::FaceSide::Bottom);
 	PR_CHECK_EQ(plane.normal(), Vector3f(0, 1, 0));
 	PR_CHECK_NEARLY_EQ(plane.position()(1), -1);
 	PR_CHECK_EQ(plane.xAxis().norm(), 1);

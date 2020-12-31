@@ -70,8 +70,8 @@ public:
 
 		const uint32 pathLength = ip.Ray.IterationDepth + 1;
 
-		session.tile()->statistics().add(RST_EntityHitCount);
-		session.tile()->statistics().add(RST_CameraDepthCount);
+		session.tile()->statistics().add(RenderStatisticEntry::EntityHitCount);
+		session.tile()->statistics().add(RenderStatisticEntry::CameraDepthCount);
 
 		if (pathLength == 1)
 			session.pushSPFragment(ip, mCameraPath);
@@ -198,9 +198,9 @@ private:
 			return {};
 
 		// Setup ray flags
-		int rflags = RF_Bounce;
+		RayFlags rflags = RayFlag::Bounce;
 		if (sout.isHeroCollapsing())
-			rflags |= RF_Monochrome;
+			rflags |= RayFlag::Monochrome;
 
 		return std::make_optional(ip.nextRay(L, rflags, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX));
 	}
@@ -245,8 +245,8 @@ private:
 		if (mout.isDelta())
 			return;
 
-		const float bsdfWvlPdfS = (cameraIP.Ray.Flags & RF_Monochrome) ? mout.PDF_S[0] : mout.PDF_S.sum(); // Each wavelength could have generated the path
-		if (bsdfWvlPdfS <= PDF_EPS)																		   // Its impossible to sample the bsdf, so skip it
+		const float bsdfWvlPdfS = (cameraIP.Ray.Flags & RayFlag::Monochrome) ? mout.PDF_S[0] : mout.PDF_S.sum(); // Each wavelength could have generated the path
+		if (bsdfWvlPdfS <= PDF_EPS)																				 // Its impossible to sample the bsdf, so skip it
 			return;
 
 		// Check if a check between point and light is necessary
@@ -285,7 +285,7 @@ private:
 
 		// Trace shadow ray
 		const float distance = light->isInfinite() ? PR_INF : std::sqrt(sqrD);
-		const Ray shadow	 = cameraIP.nextRay(L, RF_Shadow, SHADOW_RAY_MIN, distance);
+		const Ray shadow	 = cameraIP.nextRay(L, RayFlag::Shadow, SHADOW_RAY_MIN, distance);
 		const bool isVisible = worthACheck && !session.traceShadowRay(shadow, distance);
 
 		// Calculate contribution (cosinus term already applied inside material)
@@ -295,10 +295,10 @@ private:
 		mCameraPath.addToken(mout.Type);
 
 		if (light->isInfinite()) {
-			session.tile()->statistics().add(RST_BackgroundHitCount);
+			session.tile()->statistics().add(RenderStatisticEntry::BackgroundHitCount);
 			mCameraPath.addToken(LightPathToken::Background());
 		} else {
-			session.tile()->statistics().add(RST_EntityHitCount);
+			session.tile()->statistics().add(RenderStatisticEntry::EntityHitCount);
 			mCameraPath.addToken(LightPathToken::Emissive());
 		}
 
@@ -374,7 +374,7 @@ private:
 	void handleInfLights(const RenderTileSession& session, TraversalContext& current, const Ray& ray) const
 	{
 		const uint32 cameraPathLength = ray.IterationDepth + 1;
-		session.tile()->statistics().add(RST_BackgroundHitCount);
+		session.tile()->statistics().add(RenderStatisticEntry::BackgroundHitCount);
 
 		// Evaluate radiance
 		float denom_mis		  = 0;
@@ -417,7 +417,7 @@ private:
 	/// Handle case where camera ray hits nothing and there is no inf-lights
 	inline void handleZero(const RenderTileSession& session, TraversalContext& current, const Ray& ray) const
 	{
-		session.tile()->statistics().add(RST_BackgroundHitCount);
+		session.tile()->statistics().add(RenderStatisticEntry::BackgroundHitCount);
 		session.pushSpectralFragment(1, current.Throughput, SpectralBlob::Zero(), ray, mCameraPath);
 	}
 
@@ -463,9 +463,9 @@ public:
 		std::string mode = params.getString("mis", "balance");
 		std::transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
 		if (mode == "power")
-			mMISMode = VCM::MM_Power;
+			mMISMode = VCM::MISMode::Power;
 		else
-			mMISMode = VCM::MM_Balance;
+			mMISMode = VCM::MISMode::Balance;
 
 		// Per default, do not scatter at emissive surfaces, as they introduce more noise than normal
 		// Keep in mind however, that it introduces (conceptional) bias, as we assume an emissive light surface is also a perfect black surface
@@ -476,16 +476,16 @@ public:
 	{
 		switch (mMISMode) {
 		default:
-		case VCM::MM_Balance:
+		case VCM::MISMode::Balance:
 			if (mEmissiveScatter)
-				return std::make_shared<IntDirect<VCM::MM_Balance, true>>(mParameters);
+				return std::make_shared<IntDirect<VCM::MISMode::Balance, true>>(mParameters);
 			else
-				return std::make_shared<IntDirect<VCM::MM_Balance, false>>(mParameters);
-		case VCM::MM_Power:
+				return std::make_shared<IntDirect<VCM::MISMode::Balance, false>>(mParameters);
+		case VCM::MISMode::Power:
 			if (mEmissiveScatter)
-				return std::make_shared<IntDirect<VCM::MM_Power, true>>(mParameters);
+				return std::make_shared<IntDirect<VCM::MISMode::Power, true>>(mParameters);
 			else
-				return std::make_shared<IntDirect<VCM::MM_Power, false>>(mParameters);
+				return std::make_shared<IntDirect<VCM::MISMode::Power, false>>(mParameters);
 		}
 	}
 

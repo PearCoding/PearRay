@@ -4,8 +4,8 @@ inline void StreamPipeline::enqueueCameraRay(const Ray& ray)
 {
 	mWriteRayStream->addRay(ray);
 #ifndef PR_NO_RAY_STATISTICS
-	mTile->statistics().add(RST_CameraRayCount);
-	mTile->statistics().add(RST_PrimaryRayCount);
+	mTile->statistics().add(RenderStatisticEntry::CameraRayCount);
+	mTile->statistics().add(RenderStatisticEntry::PrimaryRayCount);
 #endif
 }
 
@@ -13,8 +13,8 @@ inline void StreamPipeline::enqueueLightRay(const Ray& ray)
 {
 	mWriteRayStream->addRay(ray);
 #ifndef PR_NO_RAY_STATISTICS
-	mTile->statistics().add(RST_LightRayCount);
-	mTile->statistics().add(RST_PrimaryRayCount);
+	mTile->statistics().add(RenderStatisticEntry::LightRayCount);
+	mTile->statistics().add(RenderStatisticEntry::PrimaryRayCount);
 #endif
 }
 
@@ -22,11 +22,11 @@ inline void StreamPipeline::enqueueBounceRay(const Ray& ray)
 {
 	mWriteRayStream->addRay(ray);
 #ifndef PR_NO_RAY_STATISTICS
-	if (ray.Flags & RF_Camera)
-		mTile->statistics().add(RST_CameraRayCount);
-	else if (ray.Flags & RF_Light)
-		mTile->statistics().add(RST_LightRayCount);
-	mTile->statistics().add(RST_BounceRayCount);
+	if (ray.Flags & RayFlag::Camera)
+		mTile->statistics().add(RenderStatisticEntry::CameraRayCount);
+	else if (ray.Flags & RayFlag::Light)
+		mTile->statistics().add(RenderStatisticEntry::LightRayCount);
+	mTile->statistics().add(RenderStatisticEntry::BounceRayCount);
 #endif
 }
 

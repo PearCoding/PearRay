@@ -36,12 +36,12 @@ void setup_geometry(py::module& m)
 		.def("getFace", &BoundingBox::getFace);
 
 	py::enum_<BoundingBox::FaceSide>(scope, "FaceSide")
-		.value("LEFT", BoundingBox::FS_Left)
-		.value("RIGHT", BoundingBox::FS_Right)
-		.value("TOP", BoundingBox::FS_Top)
-		.value("BOTTOM", BoundingBox::FS_Bottom)
-		.value("FRONT", BoundingBox::FS_Front)
-		.value("BACK", BoundingBox::FS_Back);
+		.value("LEFT", BoundingBox::FaceSide::Left)
+		.value("RIGHT", BoundingBox::FaceSide::Right)
+		.value("TOP", BoundingBox::FaceSide::Top)
+		.value("BOTTOM", BoundingBox::FaceSide::Bottom)
+		.value("FRONT", BoundingBox::FaceSide::Front)
+		.value("BACK", BoundingBox::FaceSide::Back);
 
 	/////////////////////////////////////////////////////
 	auto scope2 = py::class_<Plane>(m, "Plane");

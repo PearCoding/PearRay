@@ -1,13 +1,15 @@
 #pragma once
 
+#include "Enum.h"
 #include "MaterialData.h"
 
 namespace PR {
 class RenderTileSession;
 
-enum MaterialFlags {
-	MF_OnlyDeltaDistribution = 0x1
+enum class MaterialFlag {
+	OnlyDeltaDistribution = 0x1
 };
+PR_MAKE_FLAGS(MaterialFlag, MaterialFlags)
 
 class PR_LIB_CORE IMaterial {
 public:
@@ -26,8 +28,8 @@ public:
 	/// The calculation and output is in shading space.
 	virtual void sample(const MaterialSampleInput& in, MaterialSampleOutput& out, const RenderTileSession& session) const = 0;
 
-	virtual int flags() const { return 0; }
-	inline bool hasOnlyDeltaDistribution() const { return flags() & MF_OnlyDeltaDistribution; }
+	virtual MaterialFlags flags() const { return 0; }
+	inline bool hasOnlyDeltaDistribution() const { return flags() & MaterialFlag::OnlyDeltaDistribution; }
 
 	inline bool canBeShaded() const;
 	inline void enableShading(bool b);

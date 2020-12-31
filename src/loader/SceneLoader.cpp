@@ -479,18 +479,11 @@ void SceneLoader::addEntity(const DL::DataGroup& group,
 		return;
 	}
 
-	if (localAreaD.type() == DL::DT_Bool) {
-		if (localAreaD.getBool())
-			entity->setFlags(entity->flags() | EF_LocalArea);
-		else
-			entity->setFlags(entity->flags() & ~(uint8)EF_LocalArea);
-	}
-
-	uint8 visFlags = 0;
-	visFlags |= (cameraVisibleD.type() != DL::DT_Bool || cameraVisibleD.getBool()) ? (uint8)EVF_Camera : 0;
-	visFlags |= (lightVisibleD.type() != DL::DT_Bool || lightVisibleD.getBool()) ? (uint8)EVF_Light : 0;
-	visFlags |= (bounceVisibleD.type() != DL::DT_Bool || bounceVisibleD.getBool()) ? (uint8)EVF_Bounce : 0;
-	visFlags |= (shadowVisibleD.type() != DL::DT_Bool || shadowVisibleD.getBool()) ? (uint8)EVF_Shadow : 0;
+	EntityVisibilityFlags visFlags = 0;
+	visFlags |= (cameraVisibleD.type() != DL::DT_Bool || cameraVisibleD.getBool()) ? (uint8)EntityVisibility::Camera : 0;
+	visFlags |= (lightVisibleD.type() != DL::DT_Bool || lightVisibleD.getBool()) ? (uint8)EntityVisibility::Light : 0;
+	visFlags |= (bounceVisibleD.type() != DL::DT_Bool || bounceVisibleD.getBool()) ? (uint8)EntityVisibility::Bounce : 0;
+	visFlags |= (shadowVisibleD.type() != DL::DT_Bool || shadowVisibleD.getBool()) ? (uint8)EntityVisibility::Shadow : 0;
 	entity->setVisibilityFlags(visFlags);
 
 	// Add to scene

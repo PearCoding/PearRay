@@ -61,20 +61,20 @@ bool RenderTileSession::traceSingleRay(const Ray& ray, Vector3f& pos, GeometryPo
 	PR_PROFILE_THIS;
 
 #ifndef PR_NO_RAY_STATISTICS
-	if (ray.Flags & RF_Camera)
-		mTile->statistics().add(RST_CameraRayCount);
-	else if (ray.Flags & RF_Light)
-		mTile->statistics().add(RST_LightRayCount);
+	if (ray.Flags & RayFlag::Camera)
+		mTile->statistics().add(RenderStatisticEntry::CameraRayCount);
+	else if (ray.Flags & RayFlag::Light)
+		mTile->statistics().add(RenderStatisticEntry::LightRayCount);
 
-	if (ray.Flags & RF_Bounce)
-		mTile->statistics().add(RST_BounceRayCount);
-	else if (ray.Flags & RF_Shadow) // Should not happen, but might for some bad written integrators
-		mTile->statistics().add(RST_ShadowRayCount);
+	if (ray.Flags & RayFlag::Bounce)
+		mTile->statistics().add(RenderStatisticEntry::BounceRayCount);
+	else if (ray.Flags & RayFlag::Shadow) // Should not happen, but might for some bad written integrators
+		mTile->statistics().add(RenderStatisticEntry::ShadowRayCount);
 	else
-		mTile->statistics().add(RST_PrimaryRayCount);
+		mTile->statistics().add(RenderStatisticEntry::PrimaryRayCount);
 
-	if (ray.Flags & RF_Monochrome)
-		mTile->statistics().add(RST_MonochromeRayCount);
+	if (ray.Flags & RayFlag::Monochrome)
+		mTile->statistics().add(RenderStatisticEntry::MonochromeRayCount);
 #endif
 
 	HitEntry entry;
@@ -105,7 +105,7 @@ bool RenderTileSession::traceShadowRay(const Ray& ray, float distance) const
 	PR_PROFILE_THIS;
 
 #ifndef PR_NO_RAY_STATISTICS
-	mTile->statistics().add(RST_ShadowRayCount);
+	mTile->statistics().add(RenderStatisticEntry::ShadowRayCount);
 #endif
 
 	return mTile->context()->scene()->traceShadowRay(ray, distance);
@@ -132,7 +132,7 @@ void RenderTileSession::pushSpectralFragment(float mis, const SpectralBlob& impo
 	auto coords		= localCoordinates(ray.PixelIndex);
 	const auto& grp = getRayGroup(ray);
 	mOutputQueue->pushSpectralFragment(coords, mis, grp.Importance * importance / grp.WavelengthPDF, radiance,
-									   ray.WavelengthNM, ray.Flags & RF_Monochrome, ray.GroupID, path);
+									   ray.WavelengthNM, ray.Flags & RayFlag::Monochrome, ray.GroupID, path);
 	if (mOutputQueue->isReadyToCommit())
 		mOutputQueue->commitAndFlush(mLocalSystem.get());
 }
@@ -161,7 +161,9 @@ void RenderTileSession::pushCustomSpectralFragment(uint32 queueID, const Ray& ra
 	PR_PROFILE_THIS;
 	auto coords		= localCoordinates(ray.PixelIndex);
 	const auto& grp = getRayGroup(ray);
-	mOutputQueue->pushCustomSpectralFragment(queueID, coords, grp.Importance * value / grp.WavelengthPDF, ray.WavelengthNM, ray.Flags & RF_Monochrome, ray.GroupID);
+	mOutputQueue->pushCustomSpectralFragment(queueID, coords,
+											 grp.Importance * value / grp.WavelengthPDF, ray.WavelengthNM,
+											 ray.Flags & RayFlag::Monochrome, ray.GroupID);
 	if (mOutputQueue->isReadyToCommit())
 		mOutputQueue->commitAndFlush(mLocalSystem.get());
 }

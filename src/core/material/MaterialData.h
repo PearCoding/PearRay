@@ -7,23 +7,15 @@
 
 namespace PR {
 
-enum MaterialScatterFlags {
-	MSF_Null			  = 0x1,
-	MSF_DeltaDistribution = 0x2,
-	MSF_SpectralVarying	  = 0x4,  // TODO
-	MSF_SpatialVarying	  = 0x8,  // TODO
-	MSF_TimeVarying		  = 0x10, // TODO
-};
-
 struct PR_LIB_CORE MaterialBaseOutput {
 	SpectralBlob PDF_S;
-	uint8 Flags = 0;
+	MaterialScatterFlags Flags = 0;
 
-	inline bool isNull() const { return Flags & MSF_Null; }
-	inline bool isDelta() const { return Flags & MSF_DeltaDistribution; }
-	inline bool isSpectralVarying() const { return Flags & MSF_SpectralVarying; }
-	inline bool isSpatialVarying() const { return Flags & MSF_SpatialVarying; }
-	inline bool isTimeVarying() const { return Flags & MSF_TimeVarying; }
+	inline bool isNull() const { return Flags & MaterialScatter::Null; }
+	inline bool isDelta() const { return Flags & MaterialScatter::DeltaDistribution; }
+	inline bool isSpectralVarying() const { return Flags & MaterialScatter::SpectralVarying; }
+	inline bool isSpatialVarying() const { return Flags & MaterialScatter::SpatialVarying; }
+	inline bool isTimeVarying() const { return Flags & MaterialScatter::TimeVarying; }
 
 	// When to reduce to hero wavelength only
 	inline bool isHeroCollapsing() const { return !isNull() && isDelta(); }
@@ -65,14 +57,14 @@ struct PR_LIB_CORE MaterialSampleOutput : public MaterialBaseOutput {
 	ShadingVector L;
 
 	SpectralBlob Weight;
-	MaterialScatteringType Type = MST_DiffuseReflection;
+	MaterialScatteringType Type = MaterialScatteringType::DiffuseReflection;
 
 	inline Vector3f globalL(const IntersectionPoint& ip) const
 	{
 		return Tangent::fromTangentSpace(ip.Surface.N, ip.Surface.Nx, ip.Surface.Ny, L).normalized();
 	}
 
-	static inline MaterialSampleOutput Reject(MaterialScatteringType type = MST_DiffuseReflection, uint8 flags = 0)
+	static inline MaterialSampleOutput Reject(MaterialScatteringType type = MaterialScatteringType::DiffuseReflection, uint8 flags = 0)
 	{
 		MaterialSampleOutput out;
 		out.L	   = Vector3f::Zero();

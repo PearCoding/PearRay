@@ -53,7 +53,7 @@ public:
 
 		const float dot = std::max(0.0f, in.Context.NdotL());
 		out.Weight		= calc(in.Context.L, dot, in.Context, in.ShadingContext);
-		out.Type		= MST_DiffuseReflection;
+		out.Type		= MaterialScatteringType::DiffuseReflection;
 		out.PDF_S		= Sampling::cos_hemi_pdf(dot);
 	}
 
@@ -75,7 +75,7 @@ public:
 
 		float NdotL = std::max(0.0f, out.L(2));
 		out.Weight	= calc(out.L, NdotL, in.Context, in.ShadingContext);
-		out.Type	= MST_DiffuseReflection;
+		out.Type	= MaterialScatteringType::DiffuseReflection;
 		out.PDF_S	= Sampling::cos_hemi_pdf(out.L(2));
 	}
 

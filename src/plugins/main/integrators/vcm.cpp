@@ -196,7 +196,7 @@ public:
 			ray.IterationDepth = 0;
 			ray.GroupID		   = 0;
 			ray.PixelIndex	   = 0;
-			ray.Flags		   = RF_Camera;
+			ray.Flags		   = RayFlag::Camera;
 
 			HitEntry entry;
 			if (!scene->traceSingleRay(ray, entry))
@@ -299,19 +299,19 @@ public:
 		std::string mode = params.getString("mis", "balance");
 		std::transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
 		if (mode == "power")
-			mMISMode = VCM::MM_Power;
+			mMISMode = VCM::MISMode::Power;
 		else
-			mMISMode = VCM::MM_Balance;
+			mMISMode = VCM::MISMode::Balance;
 	}
 
 	std::shared_ptr<IIntegrator> createInstance() const override
 	{
 		switch (mMISMode) {
 		default:
-		case VCM::MM_Balance:
-			return std::make_shared<IntVCM<VCM::MM_Balance>>(mParameters, mServiceObserver);
-		case VCM::MM_Power:
-			return std::make_shared<IntVCM<VCM::MM_Power>>(mParameters, mServiceObserver);
+		case VCM::MISMode::Balance:
+			return std::make_shared<IntVCM<VCM::MISMode::Balance>>(mParameters, mServiceObserver);
+		case VCM::MISMode::Power:
+			return std::make_shared<IntVCM<VCM::MISMode::Power>>(mParameters, mServiceObserver);
 		}
 	}
 

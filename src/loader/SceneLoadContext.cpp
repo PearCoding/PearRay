@@ -135,7 +135,7 @@ std::shared_ptr<INode> SceneLoadContext::getRawNode(const std::string& name) con
 void SceneLoadContext::getNode(const std::string& name, std::shared_ptr<FloatScalarNode>& node2) const
 {
 	const auto node = getRawNode(name);
-	if (node->type() == NT_FloatScalar)
+	if (node->type() == NodeType::FloatScalar)
 		node2 = std::reinterpret_pointer_cast<FloatScalarNode>(node);
 	else
 		node2 = nullptr;
@@ -144,7 +144,7 @@ void SceneLoadContext::getNode(const std::string& name, std::shared_ptr<FloatSca
 void SceneLoadContext::getNode(const std::string& name, std::shared_ptr<FloatSpectralNode>& node2) const
 {
 	const auto node = getRawNode(name);
-	if (node->type() == NT_FloatSpectral)
+	if (node->type() == NodeType::FloatSpectral)
 		node2 = std::reinterpret_pointer_cast<FloatSpectralNode>(node);
 	else
 		node2 = nullptr;
@@ -153,7 +153,7 @@ void SceneLoadContext::getNode(const std::string& name, std::shared_ptr<FloatSpe
 void SceneLoadContext::getNode(const std::string& name, std::shared_ptr<FloatVectorNode>& node2) const
 {
 	const auto node = getRawNode(name);
-	if (node->type() == NT_FloatVector)
+	if (node->type() == NodeType::FloatVector)
 		node2 = std::reinterpret_pointer_cast<FloatVectorNode>(node);
 	else
 		node2 = nullptr;
@@ -169,9 +169,9 @@ std::shared_ptr<INode> SceneLoadContext::lookupRawNode(const Parameter& paramete
 	switch (parameter.type()) {
 	default:
 		return nullptr;
-	case PT_Int:
-	case PT_UInt:
-	case PT_Number:
+	case ParameterType::Int:
+	case ParameterType::UInt:
+	case ParameterType::Number:
 		if (parameter.isArray()) {
 			if (parameter.arraySize() == 2)
 				return std::make_shared<ConstVectorNode>(
@@ -183,10 +183,10 @@ std::shared_ptr<INode> SceneLoadContext::lookupRawNode(const Parameter& paramete
 			return std::make_shared<ConstScalarNode>(parameter.getNumber(0.0f));
 		}
 		break;
-	case PT_Reference:
+	case ParameterType::Reference:
 		return getRawNode(parameter.getReference());
 		break;
-	case PT_String:
+	case ParameterType::String:
 		return getRawNode(parameter.getString(""));
 		break;
 	}
@@ -203,23 +203,23 @@ std::shared_ptr<FloatSpectralNode> SceneLoadContext::lookupSpectralNode(const Pa
 	switch (parameter.type()) {
 	default:
 		return std::make_shared<ConstSpectralNode>(def);
-	case PT_Int:
-	case PT_UInt:
-	case PT_Number:
+	case ParameterType::Int:
+	case ParameterType::UInt:
+	case ParameterType::Number:
 		if (parameter.isArray())
 			return std::make_shared<ConstSpectralNode>(def);
 		else
 			return std::make_shared<ConstSpectralNode>(SpectralBlob(parameter.getNumber(0.0f)));
-	case PT_Reference: {
+	case ParameterType::Reference: {
 		const auto node = getRawNode(parameter.getReference());
-		if (node->type() == NT_FloatSpectral)
+		if (node->type() == NodeType::FloatSpectral)
 			return std::reinterpret_pointer_cast<FloatSpectralNode>(node);
-		else if (node->type() == NT_FloatScalar)
+		else if (node->type() == NodeType::FloatScalar)
 			return std::make_shared<SplatSpectralNode>(std::reinterpret_pointer_cast<FloatScalarNode>(node));
 		else
 			return std::make_shared<ConstSpectralNode>(def);
 	}
-	case PT_String: {
+	case ParameterType::String: {
 		const std::string name = parameter.getString("");
 
 		if (hasNode(name)) {
@@ -238,21 +238,21 @@ std::shared_ptr<FloatScalarNode> SceneLoadContext::lookupScalarNode(const Parame
 	switch (parameter.type()) {
 	default:
 		return std::make_shared<ConstScalarNode>(def);
-	case PT_Int:
-	case PT_UInt:
-	case PT_Number:
+	case ParameterType::Int:
+	case ParameterType::UInt:
+	case ParameterType::Number:
 		if (parameter.isArray())
 			return std::make_shared<ConstScalarNode>(def);
 		else
 			return std::make_shared<ConstScalarNode>(parameter.getNumber(def));
-	case PT_Reference: {
+	case ParameterType::Reference: {
 		const auto node = getRawNode(parameter.getReference());
-		if (node->type() == NT_FloatScalar)
+		if (node->type() == NodeType::FloatScalar)
 			return std::reinterpret_pointer_cast<FloatScalarNode>(node);
 		else
 			return std::make_shared<ConstScalarNode>(def);
 	}
-	case PT_String: {
+	case ParameterType::String: {
 		const std::string name = parameter.getString("");
 
 		if (hasNode(name)) {
@@ -390,9 +390,9 @@ std::shared_ptr<IMaterial> SceneLoadContext::lookupMaterial(const Parameter& par
 	switch (parameter.type()) {
 	default:
 		return nullptr;
-	case PT_Reference: // TODO
+	case ParameterType::Reference: // TODO
 		return nullptr;
-	case PT_String:
+	case ParameterType::String:
 		return getMaterial(parameter.getString(""));
 	}
 }
@@ -402,9 +402,9 @@ uint32 SceneLoadContext::lookupMaterialID(const Parameter& parameter) const
 	switch (parameter.type()) {
 	default:
 		return PR_INVALID_ID;
-	case PT_Reference: // TODO
+	case ParameterType::Reference: // TODO
 		return PR_INVALID_ID;
-	case PT_String:
+	case ParameterType::String:
 		return environment()->sceneDatabase()->Materials->getID(parameter.getString(""));
 	}
 }
@@ -421,10 +421,10 @@ std::vector<uint32> SceneLoadContext::lookupMaterialIDArray(const Parameter& par
 			default:
 				id = PR_INVALID_ID;
 				break;
-			case PT_Reference: // TODO
+			case ParameterType::Reference: // TODO
 				id = PR_INVALID_ID;
 				break;
-			case PT_String:
+			case ParameterType::String:
 				id = environment()->sceneDatabase()->Materials->getID(parameter.getString(i, ""));
 				break;
 			}
@@ -444,9 +444,9 @@ std::shared_ptr<IEmission> SceneLoadContext::lookupEmission(const Parameter& par
 	switch (parameter.type()) {
 	default:
 		return nullptr;
-	case PT_Reference: // TODO
+	case ParameterType::Reference: // TODO
 		return nullptr;
-	case PT_String:
+	case ParameterType::String:
 		return getEmission(parameter.getString(""));
 	}
 }
@@ -456,9 +456,9 @@ uint32 SceneLoadContext::lookupEmissionID(const Parameter& parameter) const
 	switch (parameter.type()) {
 	default:
 		return PR_INVALID_ID;
-	case PT_Reference: // TODO
+	case ParameterType::Reference: // TODO
 		return PR_INVALID_ID;
-	case PT_String:
+	case ParameterType::String:
 		return environment()->sceneDatabase()->Emissions->getID(parameter.getString(""));
 	}
 }

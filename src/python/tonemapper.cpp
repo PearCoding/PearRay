@@ -146,9 +146,9 @@ void setup_tonemapper(py::module& m)
 		.def_property("scale", &ToneMapper::scale, &ToneMapper::setScale);
 
 	py::enum_<ToneColorMode>(m, "ToneColorMode")
-		.value("SRGB", TCM_SRGB)
-		.value("XYZ", TCM_XYZ)
-		.value("XYZ_NORM", TCM_XYZ_NORM)
-		.value("LUMINANCE", TCM_LUMINANCE);
+		.value("SRGB", ToneColorMode::SRGB)
+		.value("XYZ", ToneColorMode::XYZ)
+		.value("XYZ_NORM", ToneColorMode::XYZNorm)
+		.value("LUMINANCE", ToneColorMode::Luminance);
 }
 } // namespace PRPY

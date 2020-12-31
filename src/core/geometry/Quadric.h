@@ -159,40 +159,40 @@ public:
 	}
 
 	// http://mathworld.wolfram.com/QuadraticSurface.html
-	enum Classification {
-		C_CoincidentPlane = 0,
-		C_ImaginaryEllipsoid,
-		C_RealEllipsoid,
-		C_EllipticImaginaryCone,
-		C_EllipticRealCone,
-		C_EllipticImaginaryCylinder,
-		C_EllipticRealCylinder,
-		C_EllipticParaboloid,
-		C_HyperbolicCylinder,
-		C_HyperbolicParaboloid,
-		C_HyperboloidOne,
-		C_HyperboloidTwo,
-		C_ImaginaryPlane,
-		C_RealPlane,
-		C_ParabolicCylinder,
-		C_ParallelImaginaryPlane,
-		C_ParallelRealPlane,
-		C_Unknown
+	enum class Classification {
+		CoincidentPlane = 0,
+		ImaginaryEllipsoid,
+		RealEllipsoid,
+		EllipticImaginaryCone,
+		EllipticRealCone,
+		EllipticImaginaryCylinder,
+		EllipticRealCylinder,
+		EllipticParaboloid,
+		HyperbolicCylinder,
+		HyperbolicParaboloid,
+		HyperboloidOne,
+		HyperboloidTwo,
+		ImaginaryPlane,
+		RealPlane,
+		ParabolicCylinder,
+		ParallelImaginaryPlane,
+		ParallelRealPlane,
+		Unknown
 	};
 
 	inline static bool isParametrizationSupported(Classification classification)
 	{
 		switch (classification) {
-		case C_ImaginaryEllipsoid:
-		case C_EllipticImaginaryCone:
-		case C_EllipticImaginaryCylinder:
-		case C_ImaginaryPlane:
-		case C_ParallelImaginaryPlane:
-		case C_CoincidentPlane: // TODO: Add support for planes!
-		case C_RealPlane:
-		case C_ParabolicCylinder:
-		case C_ParallelRealPlane:
-		case C_Unknown:
+		case Classification::ImaginaryEllipsoid:
+		case Classification::EllipticImaginaryCone:
+		case Classification::EllipticImaginaryCylinder:
+		case Classification::ImaginaryPlane:
+		case Classification::ParallelImaginaryPlane:
+		case Classification::CoincidentPlane: // TODO: Add support for planes!
+		case Classification::RealPlane:
+		case Classification::ParabolicCylinder:
+		case Classification::ParallelRealPlane:
+		case Classification::Unknown:
 			return false;
 		default:
 			return true;
@@ -210,7 +210,7 @@ public:
 		if (solver_E.info() == Eigen::Success)
 			eigen_E = solver_E.eigenvalues();
 		else
-			return C_Unknown;
+			return Classification::Unknown;
 
 		Eigen::SelfAdjointEigenSolver<Eigen::Matrix3f> solver_e;
 		solver_e.compute(mat.block<3, 3>(0, 0), Eigen::EigenvaluesOnly);
@@ -219,7 +219,7 @@ public:
 		if (solver_e.info() == Eigen::Success)
 			eigen_e = solver_e.eigenvalues();
 		else
-			return C_Unknown;
+			return Classification::Unknown;
 
 		// Determine some facts
 		float det  = eigen_E(0) * eigen_E(1) * eigen_E(2) * eigen_E(3);
@@ -243,48 +243,48 @@ public:
 
 		if (rank_e <= 1) {
 			if (rank_E <= 1)
-				return C_CoincidentPlane;
+				return Classification::CoincidentPlane;
 			else if (rank_E == 2)
-				return C_ParallelRealPlane;
+				return Classification::ParallelRealPlane;
 			else if (rank_E == 3)
-				return C_ParabolicCylinder;
+				return Classification::ParabolicCylinder;
 		} else if (rank_e == 2) {
 			if (rank_E == 2) {
 				if (parameters[9] < 0)
-					return C_RealPlane;
+					return Classification::RealPlane;
 				else
-					return C_ImaginaryPlane;
+					return Classification::ImaginaryPlane;
 			} else if (rank_E == 3) {
 				if (sameSign) {
 					if (parameters[9] < 0)
-						return C_EllipticRealCylinder;
+						return Classification::EllipticRealCylinder;
 					else
-						return C_EllipticImaginaryCylinder;
+						return Classification::EllipticImaginaryCylinder;
 				} else
-					return C_HyperbolicCylinder;
+					return Classification::HyperbolicCylinder;
 			}
 		} else if (rank_e == 3) {
 			if (rank_E == 3) {
 				if (sameSign)
-					return C_EllipticImaginaryCone;
+					return Classification::EllipticImaginaryCone;
 				else
-					return C_EllipticRealCone;
+					return Classification::EllipticRealCone;
 			} else if (rank_E == 4) {
 				if (sameSign) {
 					if (det < 0)
-						return C_RealEllipsoid;
+						return Classification::RealEllipsoid;
 					else
-						return C_ImaginaryEllipsoid;
+						return Classification::ImaginaryEllipsoid;
 				} else {
 					if (det < 0)
-						return C_HyperboloidTwo;
+						return Classification::HyperboloidTwo;
 					else
-						return C_HyperboloidOne;
+						return Classification::HyperboloidOne;
 				}
 			}
 		}
 
-		return C_Unknown;
+		return Classification::Unknown;
 	}
 
 	inline static Vector3f fromEllipsoidParametrization(const ParameterArray& parameters, const Vector2f& uv)

@@ -15,16 +15,6 @@ inline bool ITransformable::isRenderable() const
 	return false;
 }
 
-inline void ITransformable::setFlags(uint8 f)
-{
-	mFlags = f;
-}
-
-inline uint8 ITransformable::flags() const
-{
-	return mFlags;
-}
-
 inline const Transformf& ITransformable::transform() const
 {
 	return mTransform;

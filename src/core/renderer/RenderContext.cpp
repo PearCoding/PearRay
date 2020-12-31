@@ -165,7 +165,7 @@ bool RenderContext::isFinished() const
 	PR_PROFILE_THIS;
 
 	for (const auto& thread : mThreads) {
-		if (thread->state() != Thread::S_Stopped)
+		if (thread->state() != Thread::State::Stopped)
 			return false;
 	}
 
@@ -305,18 +305,18 @@ RenderStatus RenderContext::status() const
 		status.setPercentage(mTileMap->percentage());
 
 	status.setField("global.ray_count", s.rayCount());
-	status.setField("global.camera_ray_count", s.entry(RST_CameraRayCount));
-	status.setField("global.light_ray_count", s.entry(RST_LightRayCount));
-	status.setField("global.primary_ray_count", s.entry(RST_PrimaryRayCount));
-	status.setField("global.bounce_ray_count", s.entry(RST_BounceRayCount));
-	status.setField("global.shadow_ray_count", s.entry(RST_ShadowRayCount));
-	status.setField("global.monochrome_ray_count", s.entry(RST_MonochromeRayCount));
-	status.setField("global.pixel_sample_count", s.entry(RST_PixelSampleCount));
-	status.setField("global.entity_hit_count", s.entry(RST_EntityHitCount));
-	status.setField("global.background_hit_count", s.entry(RST_BackgroundHitCount));
+	status.setField("global.camera_ray_count", s.entry(RenderStatisticEntry::CameraRayCount));
+	status.setField("global.light_ray_count", s.entry(RenderStatisticEntry::LightRayCount));
+	status.setField("global.primary_ray_count", s.entry(RenderStatisticEntry::PrimaryRayCount));
+	status.setField("global.bounce_ray_count", s.entry(RenderStatisticEntry::BounceRayCount));
+	status.setField("global.shadow_ray_count", s.entry(RenderStatisticEntry::ShadowRayCount));
+	status.setField("global.monochrome_ray_count", s.entry(RenderStatisticEntry::MonochromeRayCount));
+	status.setField("global.pixel_sample_count", s.entry(RenderStatisticEntry::PixelSampleCount));
+	status.setField("global.entity_hit_count", s.entry(RenderStatisticEntry::EntityHitCount));
+	status.setField("global.background_hit_count", s.entry(RenderStatisticEntry::BackgroundHitCount));
 	status.setField("global.depth_count", s.depthCount());
-	status.setField("global.camera_depth_count", s.entry(RST_CameraDepthCount));
-	status.setField("global.light_depth_count", s.entry(RST_LightDepthCount));
+	status.setField("global.camera_depth_count", s.entry(RenderStatisticEntry::CameraDepthCount));
+	status.setField("global.light_depth_count", s.entry(RenderStatisticEntry::LightDepthCount));
 	status.setField("global.iteration_count", (uint64)iter.Iteration);
 	status.setField("global.pass_count", (uint64)iter.Pass);
 

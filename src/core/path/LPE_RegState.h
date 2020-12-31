@@ -45,19 +45,19 @@ struct Token {
 	{
 		switch (Type) {
 		case 'C':
-			return t == ST_CAMERA;
+			return t == ScatteringType::Camera;
 		case 'E':
-			return t == ST_EMISSIVE;
+			return t == ScatteringType::Emissive;
 		case 'B':
-			return t == ST_BACKGROUND;
+			return t == ScatteringType::Background;
 		case 'L':
-			return t == ST_EMISSIVE || t == ST_BACKGROUND;
+			return t == ScatteringType::Emissive || t == ScatteringType::Background;
 		case 'R':
-			return t == ST_REFLECTION;
+			return t == ScatteringType::Reflection;
 		case 'T':
-			return t == ST_REFRACTION;
+			return t == ScatteringType::Refraction;
 		case '.':
-			return t == ST_REFLECTION || t == ST_REFRACTION;
+			return t == ScatteringType::Reflection || t == ScatteringType::Refraction;
 		default:
 			return false;
 		}
@@ -67,9 +67,9 @@ struct Token {
 	{
 		switch (Event) {
 		case 'D':
-			return e == SE_DIFFUSE;
+			return e == ScatteringEvent::Diffuse;
 		case 'S':
-			return e == SE_SPECULAR;
+			return e == ScatteringEvent::Specular;
 		case '.':
 			return true;
 		default:

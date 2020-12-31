@@ -14,10 +14,10 @@ constexpr float NEAR_DEFAULT = 0.000001f;
 constexpr float FAR_DEFAULT	 = PR_INF;
 
 // See https://en.wikipedia.org/wiki/Fisheye_lens
-enum MapType {
-	MT_Circular = 0,
-	MT_Cropped,
-	MT_Full
+enum class MapType {
+	Circular = 0,
+	Cropped,
+	Full
 };
 
 // A fisheye camera with equirectangular mapping
@@ -65,15 +65,15 @@ public:
 
 		switch (mMapType) {
 		default:
-		case MT_Circular:
+		case MapType::Circular:
 			xaspect = aspect < 1 ? 1 : aspect;
 			yaspect = aspect > 1 ? 1 : aspect;
 			break;
-		case MT_Cropped:
+		case MapType::Cropped:
 			xaspect = aspect < 1 ? 1 / aspect : 1;
 			yaspect = aspect > 1 ? 1 / aspect : 1;
 			break;
-		case MT_Full: {
+		case MapType::Full: {
 			const float diameter = std::sqrt(aspect * aspect + 1.0f) * sample.SensorSize.Height;
 			const float k		 = std::min<float>(sample.SensorSize.Width, sample.SensorSize.Height);
 			const float f		 = diameter / k;
@@ -143,11 +143,11 @@ static inline std::shared_ptr<ICamera> createCamera(const ParameterGroup& params
 	std::string mapTypeStr = params.getString("map", "circular");
 	std::transform(mapTypeStr.begin(), mapTypeStr.end(), mapTypeStr.begin(), ::tolower);
 
-	MapType mapType = MT_Circular;
+	MapType mapType = MapType::Circular;
 	if (mapTypeStr == "cropped")
-		mapType = MT_Cropped;
+		mapType = MapType::Cropped;
 	else if (mapTypeStr == "full")
-		mapType = MT_Full;
+		mapType = MapType::Full;
 
 	return std::make_shared<FisheyeCamera<ClipRange>>(name, transform,
 													  params.getNumber("fov", 180.0f * PR_DEG2RAD),

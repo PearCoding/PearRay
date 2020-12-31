@@ -13,13 +13,13 @@ constexpr float BoundingBoxPlanarEPS = 0.0001f;
  */
 class PR_LIB_CORE BoundingBox {
 public:
-	enum FaceSide {
-		FS_Left,
-		FS_Right,
-		FS_Top,
-		FS_Bottom,
-		FS_Front,
-		FS_Back
+	enum class FaceSide {
+		Left,
+		Right,
+		Top,
+		Bottom,
+		Front,
+		Back
 	};
 
 	inline BoundingBox();

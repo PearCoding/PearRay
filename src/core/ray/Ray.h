@@ -1,20 +1,22 @@
 #pragma once
 
+#include "Enum.h"
 #include "math/Transform.h"
 #include "spectral/SpectralBlob.h"
 
 namespace PR {
 
-enum RayFlags : uint32 {
-	RF_Camera	  = 0x01, // RF_Camera and RF_Light are exclusive
-	RF_Light	  = 0x02,
-	RF_Bounce	  = 0x04, // RF_Bounce and RF_Shadow are exclusive, if none of them is set its a primary ray
-	RF_Shadow	  = 0x08,
-	RF_Monochrome = 0x10,
+enum class RayFlag : uint32 {
+	Camera	   = 0x01, // RayFlags::Camera and RayFlags::Light are exclusive
+	Light	   = 0x02,
+	Bounce	   = 0x04, // Bounce and RayFlags::Shadow are exclusive, if none of them is set its a primary ray
+	Shadow	   = 0x08,
+	Monochrome = 0x10,
 
-	RF_SourceMask = RF_Camera | RF_Light,
-	RF_TypeMask	  = RF_Bounce | RF_Shadow,
+	SourceMask = Camera | Light,
+	TypeMask   = Bounce | Shadow,
 };
+PR_MAKE_FLAGS(RayFlag, RayFlags)
 
 struct PR_LIB_CORE Ray {
 	Vector3f Origin	   = Vector3f::Zero();
@@ -24,9 +26,9 @@ struct PR_LIB_CORE Ray {
 	float MaxT				  = PR_INF;
 	SpectralBlob WavelengthNM = SpectralBlob::Zero(); // Hero Quartett, first entry is hero wavelength
 	uint32 IterationDepth	  = 0;
-	uint32 Flags			  = 0;
-	uint32 PixelIndex		  = 0; // Tile local pixel index
-	uint32 GroupID			  = 0; // Group to corresponding ray group if available
+	RayFlags Flags			  = 0;
+	uint32 PixelIndex		  = 0;			   // Tile local pixel index
+	uint32 GroupID			  = PR_INVALID_ID; // Points to corresponding ray group if available
 
 public:
 	Ray()				  = default;
@@ -98,7 +100,7 @@ public:
 	}
 
 	inline Ray next(const Vector3f& o, const Vector3f& d,
-					uint32 vis_flags, float minT, float maxT) const
+					RayFlags vis_flags, float minT, float maxT) const
 	{
 		Ray other;
 		other = *this;
@@ -114,7 +116,7 @@ public:
 	}
 
 	inline Ray next(const Vector3f& o, const Vector3f& d, const Vector3f& N,
-					uint32 vis_flags, float minT, float maxT) const
+					RayFlags vis_flags, float minT, float maxT) const
 	{
 		return next(Transform::safePosition(o, d, N), d, vis_flags, minT, maxT);
 	}

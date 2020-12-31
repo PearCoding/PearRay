@@ -1,5 +1,6 @@
 set(PR_Src
   PR_Config.h.in
+  Enum.h
   Logger.cpp
   Logger.h
   PrettyPrint.h

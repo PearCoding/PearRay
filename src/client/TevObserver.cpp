@@ -316,23 +316,23 @@ void TevObserver::updateImageProtocol()
 				PR_OPT_LOOP
 				for (size_t iy = 0; iy < h; ++iy) {
 					for (size_t ix = 0; ix < w; ++ix) {
-						const auto p   = Point2i(sx + ix, sy + iy);
-						const auto fdb = fdb_channel->getFragment(p, 0);
+						const auto p				  = Point2i(sx + ix, sy + iy);
+						const OutputFeedbackFlags fdb = fdb_channel->getFragment(p, 0);
 
 						float r = 0;
-						if (fdb & OF_NaN)
+						if (fdb & OutputFeedback::NaN)
 							r = 1.0f;
-						else if (fdb & OF_Infinite)
+						else if (fdb & OutputFeedback::Infinite)
 							r = 0.5f;
-						else if (fdb & OF_Negative)
+						else if (fdb & OutputFeedback::Negative)
 							r = 0.25f;
 
 						float g = 0;
-						if (fdb & OF_MissingMaterial)
+						if (fdb & OutputFeedback::MissingMaterial)
 							g = 1.0f;
 
 						float b = 0;
-						if (fdb & OF_MissingEmission)
+						if (fdb & OutputFeedback::MissingEmission)
 							b = 1.0f;
 
 						mConnection->Data[UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * (0 + delta) + iy * w + ix] = r;

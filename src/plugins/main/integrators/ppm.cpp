@@ -72,9 +72,9 @@ struct PPMContext {
 	}
 };
 
-enum GatherMode {
-	GM_Sphere,
-	GM_Dome
+enum class GatherMode {
+	Sphere,
+	Dome
 };
 
 // TODO
@@ -167,7 +167,7 @@ public:
 
 		size_t found = 0;
 		SpectralBlob accum;
-		if constexpr (GM == GM_Dome)
+		if constexpr (GM == GatherMode::Dome)
 			accum = mContext->Map.estimateDome(query, accumFunc, found);
 		else
 			accum = mContext->Map.estimateSphere(query, accumFunc, found);
@@ -189,8 +189,8 @@ public:
 		mCameraPathWalker.traverseBSDF(
 			session, SpectralBlob::Ones(), spt, entity, material,
 			[&](const SpectralBlob& weight, const IntersectionPoint& ip, IEntity* entity_hit, IMaterial* material_hit) {
-				session.tile()->statistics().add(RST_EntityHitCount);
-				session.tile()->statistics().add(RST_CameraDepthCount);
+				session.tile()->statistics().add(RenderStatisticEntry::EntityHitCount);
+				session.tile()->statistics().add(RenderStatisticEntry::CameraDepthCount);
 
 				// If we hit a light evaluate it and stop
 				if (entity_hit->hasEmission()
@@ -236,7 +236,7 @@ public:
 				});
 
 				if (!illuminated) {
-					session.tile()->statistics().add(RST_BackgroundHitCount);
+					session.tile()->statistics().add(RenderStatisticEntry::BackgroundHitCount);
 					session.pushSpectralFragment(1, weight, SpectralBlob::Zero(), ray, path);
 				}
 
@@ -293,7 +293,7 @@ public:
 
 			Ray ray	   = Ray(lsout.LightPosition, -lsout.Outgoing);
 			ray.Origin = Transform::safePosition(ray.Origin, ray.Direction); // Make sure no self intersection happens
-			ray.Flags |= RF_Light;
+			ray.Flags |= RayFlag::Light;
 			ray.WavelengthNM = lsin.WavelengthNM;
 
 			const float pdf				= lsout.Direction_PDF_S * lsout.Position_PDF.Value;
@@ -302,8 +302,8 @@ public:
 			mLightPathWalker.traverseBSDFSimple(
 				session, radiance, ray,
 				[&](const SpectralBlob& weight, const IntersectionPoint& ip, IEntity* entity, IMaterial* material) {
-					session.tile()->statistics().add(RST_EntityHitCount);
-					session.tile()->statistics().add(RST_LightDepthCount);
+					session.tile()->statistics().add(RenderStatisticEntry::EntityHitCount);
+					session.tile()->statistics().add(RenderStatisticEntry::LightDepthCount);
 
 					if (entity->hasEmission()) // Stop at lights and do not save photons
 						return false;
@@ -315,7 +315,7 @@ public:
 						photon.Power		= weight;
 						photon.WavelengthNM = ray.WavelengthNM;
 
-						if (ray.Flags & RF_Monochrome) { // If monochrome, spread hero to each channel
+						if (ray.Flags & RayFlag::Monochrome) { // If monochrome, spread hero to each channel
 							photon.Power		= photon.Power[0] / PR_SPECTRAL_BLOB_SIZE;
 							photon.WavelengthNM = photon.WavelengthNM[0];
 						}
@@ -517,19 +517,19 @@ public:
 		std::string mode = params.getString("gather_mode", "dome");
 		std::transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
 		if (mode == "dome")
-			mGatherMode = GM_Dome;
+			mGatherMode = GatherMode::Dome;
 		else
-			mGatherMode = GM_Sphere;
+			mGatherMode = GatherMode::Sphere;
 	}
 
 	std::shared_ptr<IIntegrator> createInstance() const override
 	{
 		switch (mGatherMode) {
-		case GM_Dome:
-			return std::make_shared<IntPPM<GM_Dome>>(mParameters);
-		case GM_Sphere:
+		case GatherMode::Dome:
+			return std::make_shared<IntPPM<GatherMode::Dome>>(mParameters);
+		case GatherMode::Sphere:
 		default:
-			return std::make_shared<IntPPM<GM_Sphere>>(mParameters);
+			return std::make_shared<IntPPM<GatherMode::Sphere>>(mParameters);
 		}
 	}
 

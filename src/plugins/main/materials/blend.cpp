@@ -10,11 +10,11 @@
 
 namespace PR {
 
-enum MaterialDelta {
-	MD_None	  = 0,
-	MD_First  = 1,
-	MD_Second = 2,
-	MD_All
+enum class MaterialDelta {
+	None   = 0,
+	First  = 1,
+	Second = 2,
+	All
 };
 
 template <MaterialDelta Delta>
@@ -30,10 +30,10 @@ public:
 
 	virtual ~BlendMaterial() = default;
 
-	int flags() const override
+	MaterialFlags flags() const override
 	{
-		if constexpr (Delta == MD_All)
-			return MF_OnlyDeltaDistribution;
+		if constexpr (Delta == MaterialDelta::All)
+			return MaterialFlag::OnlyDeltaDistribution;
 		else
 			return 0;
 	}
@@ -43,18 +43,18 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		if constexpr (Delta == MD_All) {
+		if constexpr (Delta == MaterialDelta::All) {
 			PR_ASSERT(false, "Delta distribution materials should not be evaluated");
 			out.PDF_S  = 0.0f;
-			out.Type   = MST_SpecularTransmission;
+			out.Type   = MaterialScatteringType::SpecularTransmission;
 			out.Weight = SpectralBlob::Zero();
-		} else if constexpr (Delta == MD_First) {
+		} else if constexpr (Delta == MaterialDelta::First) {
 			mMaterials[1]->eval(in, out, session);
 
 			const float prob = std::min(1.0f, std::max(0.0f, mFactor->eval(in.ShadingContext)));
 			out.PDF_S *= prob;
 			out.Weight *= prob;
-		} else if constexpr (Delta == MD_Second) {
+		} else if constexpr (Delta == MaterialDelta::Second) {
 			mMaterials[0]->eval(in, out, session);
 
 			const float prob = std::min(1.0f, std::max(0.0f, mFactor->eval(in.ShadingContext)));
@@ -78,14 +78,14 @@ public:
 			 const RenderTileSession& session) const override
 	{
 		PR_PROFILE_THIS;
-		if constexpr (Delta == MD_All) {
+		if constexpr (Delta == MaterialDelta::All) {
 			PR_ASSERT(false, "Delta distribution materials should not be evaluated");
 			out.PDF_S = 0.0f;
-		} else if constexpr (Delta == MD_First) {
+		} else if constexpr (Delta == MaterialDelta::First) {
 			mMaterials[1]->pdf(in, out, session);
 			const float prob = std::min(1.0f, std::max(0.0f, mFactor->eval(in.ShadingContext)));
 			out.PDF_S *= prob;
-		} else if constexpr (Delta == MD_Second) {
+		} else if constexpr (Delta == MaterialDelta::Second) {
 			mMaterials[0]->pdf(in, out, session);
 			const float prob = std::min(1.0f, std::max(0.0f, mFactor->eval(in.ShadingContext)));
 			out.PDF_S *= (1 - prob);
@@ -162,14 +162,14 @@ public:
 		switch (deltaCount) {
 		case 0:
 		default:
-			return std::make_shared<BlendMaterial<MD_None>>(mat1, mat2, factor);
+			return std::make_shared<BlendMaterial<MaterialDelta::None>>(mat1, mat2, factor);
 		case 1:
 			if (mat1->hasOnlyDeltaDistribution())
-				return std::make_shared<BlendMaterial<MD_First>>(mat1, mat2, factor);
+				return std::make_shared<BlendMaterial<MaterialDelta::First>>(mat1, mat2, factor);
 			else
-				return std::make_shared<BlendMaterial<MD_Second>>(mat1, mat2, factor);
+				return std::make_shared<BlendMaterial<MaterialDelta::Second>>(mat1, mat2, factor);
 		case 2:
-			return std::make_shared<BlendMaterial<MD_All>>(mat1, mat2, factor);
+			return std::make_shared<BlendMaterial<MaterialDelta::All>>(mat1, mat2, factor);
 		}
 	}
 

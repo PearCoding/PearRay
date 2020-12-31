@@ -30,7 +30,7 @@ public:
 
 	virtual ~DielectricMaterial() = default;
 
-	int flags() const override { return MF_OnlyDeltaDistribution; }
+	MaterialFlags flags() const override { return MaterialFlag::OnlyDeltaDistribution; }
 
 	void eval(const MaterialEvalInput&, MaterialEvalOutput& out,
 			  const RenderTileSession&) const override
@@ -40,9 +40,9 @@ public:
 		PR_ASSERT(false, "Delta distribution materials should not be evaluated");
 
 		out.PDF_S  = 0.0f;
-		out.Type   = MST_SpecularTransmission;
+		out.Type   = MaterialScatteringType::SpecularTransmission;
 		out.Weight = SpectralBlob::Zero();
-		out.Flags  = MSF_DeltaDistribution;
+		out.Flags  = MaterialScatter::DeltaDistribution;
 	}
 
 	void pdf(const MaterialEvalInput&, MaterialPDFOutput& out,
@@ -53,7 +53,7 @@ public:
 		PR_ASSERT(false, "Delta distribution materials should not be evaluated");
 
 		out.PDF_S = 0.0f;
-		out.Flags = MSF_DeltaDistribution;
+		out.Flags = MaterialScatter::DeltaDistribution;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -75,7 +75,7 @@ public:
 
 		// Branch out
 		if (in.RND.getFloat() <= F) {
-			out.Type   = MST_SpecularReflection;
+			out.Type   = MaterialScatteringType::SpecularReflection;
 			out.L	   = Scattering::reflect(in.Context.V);
 			out.Weight = rWeight; // To make sure the pdf is 1, we do not apply the fresnel term to the outgoing weight
 		} else {
@@ -86,13 +86,13 @@ public:
 				tWeight = rWeight;
 
 			if constexpr (IsThin) {
-				out.Type   = MST_SpecularTransmission;
+				out.Type   = MaterialScatteringType::SpecularTransmission;
 				out.L	   = -in.Context.V; // Passthrough
 				out.Weight = tWeight;
 			} else {
 				// Only rays from lights are weighted by this factor
 				// as radiance flows in the opposite direction
-				if (in.Context.RayFlags & RF_Light) {
+				if (in.Context.RayFlags & RayFlag::Light) {
 					const float eta = in.Context.V.isPositiveHemisphere() ? AIR / n2[0] : n2[0] / AIR;
 					tWeight *= eta * eta;
 				}
@@ -100,16 +100,16 @@ public:
 				out.L = Scattering::refract(AIR / n2[0], in.Context.V);
 
 				if (out.L.sameHemisphere(in.Context.V)) { // TOTAL REFLECTION
-					out.Type   = MST_SpecularReflection;
+					out.Type   = MaterialScatteringType::SpecularReflection;
 					out.Weight = rWeight;
 				} else {
-					out.Type   = MST_SpecularTransmission;
+					out.Type   = MaterialScatteringType::SpecularTransmission;
 					out.Weight = tWeight;
 				}
 			}
 		}
 
-		out.Flags = MSF_DeltaDistribution;
+		out.Flags = MaterialScatter::DeltaDistribution;
 	}
 
 	std::string dumpInformation() const override

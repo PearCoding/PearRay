@@ -17,7 +17,7 @@ public:
 
 	virtual ~NullMaterial() = default;
 
-	int flags() const override { return MF_OnlyDeltaDistribution; }
+	MaterialFlags flags() const override { return MaterialFlag::OnlyDeltaDistribution; }
 
 	void eval(const MaterialEvalInput&, MaterialEvalOutput& out,
 			  const RenderTileSession&) const override
@@ -27,9 +27,9 @@ public:
 		PR_ASSERT(false, "Delta distribution materials should not be evaluated");
 
 		out.PDF_S  = 0.0f;
-		out.Type   = MST_SpecularTransmission;
+		out.Type   = MaterialScatteringType::SpecularTransmission;
 		out.Weight = SpectralBlob::Zero();
-		out.Flags  = MSF_Null | MSF_DeltaDistribution;
+		out.Flags  = MaterialScatter::Null | MaterialScatter::DeltaDistribution;
 	}
 
 	void pdf(const MaterialEvalInput&, MaterialPDFOutput& out,
@@ -39,7 +39,7 @@ public:
 
 		PR_ASSERT(false, "Delta distribution materials should not be evaluated");
 		out.PDF_S = 0.0f;
-		out.Flags = MSF_Null | MSF_DeltaDistribution;
+		out.Flags = MaterialScatter::Null | MaterialScatter::DeltaDistribution;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -49,9 +49,9 @@ public:
 
 		out.Weight = 1;
 		out.PDF_S  = 1;
-		out.Type   = MST_SpecularTransmission;
+		out.Type   = MaterialScatteringType::SpecularTransmission;
 		out.L	   = -in.Context.V;
-		out.Flags  = MSF_Null | MSF_DeltaDistribution;
+		out.Flags  = MaterialScatter::Null | MaterialScatter::DeltaDistribution;
 	}
 
 	std::string dumpInformation() const override

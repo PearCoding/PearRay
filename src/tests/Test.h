@@ -28,7 +28,17 @@ double _prt_diff(const T1& v1, const T2& v2)
 }
 
 template <typename T>
-std::string _prt_test_string(const T& val)
+typename std::enable_if<std::is_enum<T>::value, std::string>::type
+_prt_test_string(const T& val)
+{
+	std::stringstream stream;
+	stream << static_cast<std::underlying_type<T>::type>(val);
+	return stream.str();
+}
+
+template <typename T>
+typename std::enable_if<!std::is_enum<T>::value, std::string>::type
+_prt_test_string(const T& val)
 {
 	std::stringstream stream;
 	stream << val;

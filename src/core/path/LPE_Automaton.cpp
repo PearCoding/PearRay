@@ -5,7 +5,7 @@
 
 namespace PR {
 namespace LPE {
-#define INSIDE_BLOCK_INDEX(s, t, e) ((e)*_ST_COUNT * mSB_IsFinal.size() + (t)*mSB_IsFinal.size() + (s))
+#define INSIDE_BLOCK_INDEX(s, t, e) (((uint32)e) * (uint32)ScatteringType::_COUNT * mSB_IsFinal.size() + ((uint32)t) * mSB_IsFinal.size() + (s))
 
 constexpr size_t NO_EMPTY = std::numeric_limits<size_t>::max();
 
@@ -22,10 +22,10 @@ bool Automaton::build(const std::shared_ptr<RegExpr>& expr)
 	}
 	mSB_IsFinal.resize(idCounter, false);
 
-	mIB_Allowed.resize(idCounter * _ST_COUNT * _SE_COUNT, false);
-	mIB_EmptyNextState.resize(idCounter * _ST_COUNT * _SE_COUNT, NO_EMPTY);
-	mIB_LabelBlockSize.resize(idCounter * _ST_COUNT * _SE_COUNT, 0);
-	mIB_LabelBlockStart.resize(idCounter * _ST_COUNT * _SE_COUNT, 0);
+	mIB_Allowed.resize(idCounter * (uint32)ScatteringType::_COUNT * (uint32)ScatteringEvent::_COUNT, false);
+	mIB_EmptyNextState.resize(idCounter * (uint32)ScatteringType::_COUNT * (uint32)ScatteringEvent::_COUNT, NO_EMPTY);
+	mIB_LabelBlockSize.resize(idCounter * (uint32)ScatteringType::_COUNT * (uint32)ScatteringEvent::_COUNT, 0);
+	mIB_LabelBlockStart.resize(idCounter * (uint32)ScatteringType::_COUNT * (uint32)ScatteringEvent::_COUNT, 0);
 
 	mStartingState = 0;
 	for (const auto& s : table) {
@@ -36,8 +36,8 @@ bool Automaton::build(const std::shared_ptr<RegExpr>& expr)
 
 		mSB_IsFinal[id] = s->isFinal();
 
-		for (uint32 t = 0; t < _ST_COUNT; ++t) {
-			for (uint32 e = 0; e < _SE_COUNT; ++e) {
+		for (uint32 t = 0; t < (uint32)ScatteringType::_COUNT; ++t) {
+			for (uint32 e = 0; e < (uint32)ScatteringEvent::_COUNT; ++e) {
 				const size_t index	 = INSIDE_BLOCK_INDEX(id, t, e);
 				const size_t lblAddr = mLB_LabelIndices.size();
 				bool foundLabeled	 = false;
@@ -112,8 +112,8 @@ size_t Automaton::nextState(size_t currentState, const LightPathToken& token, bo
 }
 
 // Debug
-const char _st_char[_ST_COUNT] = { 'C', 'E', 'T', 'R', 'B' };
-const char _se_char[_SE_COUNT] = { 'D', 'S', 'N' };
+const char _st_char[(uint32)ScatteringType::_COUNT]	 = { 'C', 'E', 'T', 'R', 'B' };
+const char _se_char[(uint32)ScatteringEvent::_COUNT] = { 'D', 'S', 'N' };
 std::string Automaton::dumpTable() const
 {
 	std::stringstream stream;
@@ -125,8 +125,8 @@ std::string Automaton::dumpTable() const
 			stream << " F";
 		stream << std::endl;
 
-		for (uint32 t = 0; t < _ST_COUNT; ++t) {
-			for (uint32 e = 0; e < _SE_COUNT; ++e) {
+		for (uint32 t = 0; t < (uint32)ScatteringType::_COUNT; ++t) {
+			for (uint32 e = 0; e < (uint32)ScatteringEvent::_COUNT; ++e) {
 				stream << "  " << _st_char[t] << ", " << _se_char[e];
 
 				size_t index = INSIDE_BLOCK_INDEX(i, t, e);

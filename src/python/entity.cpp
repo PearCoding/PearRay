@@ -14,16 +14,11 @@ void setup_entity(py::module& m)
 		.def(py::init<std::string, Transformf>())
 		.def_property_readonly("name", &ITransformable::name)
 		.def_property_readonly("type", &ITransformable::type)
-		.def_property("flags", &ITransformable::flags, &ITransformable::setFlags)
 		.def_property_readonly("transform", &ITransformable::transform)
 		.def_property_readonly("invTransform", &ITransformable::invTransform)
 		.def_property_readonly("normalMatrix", &ITransformable::normalMatrix)
 		.def_property_readonly("invNormalMatrix", &ITransformable::invNormalMatrix)
 		.def("dumpInformation", &ITransformable::dumpInformation);
-
-	py::enum_<EntityFlags>(m, "EntityFlags")
-		.value("DEBUG", EF_Debug)
-		.value("LOCALAREA", EF_LocalArea);
 
 	py::class_<IEntity, std::shared_ptr<IEntity>, ITransformable>(m, "IEntity")
 		.def("hasEmission", &IEntity::hasEmission)

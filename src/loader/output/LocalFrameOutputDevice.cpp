@@ -124,7 +124,7 @@ void LocalFrameOutputDevice::commitSpectrals2(StreamPipeline* pipeline, const Ou
 		const auto& entry = entries[i];
 
 		const Point2i rp		   = entry.Position + filterSize;
-		const bool isMono		   = IsMono || (entry.Flags & OSEF_Mono);
+		const bool isMono		   = IsMono || (entry.Flags & OutputSpectralEntryFlag::Mono);
 		const RayGroup& grp		   = pipeline->getRayGroup(entry.RayGroupID);
 		const SpectralBlob factor  = isMono ? (SpectralBlobUtils::HeroOnly() * PR_SPECTRAL_BLOB_SIZE).eval() : SpectralBlob::Ones();
 		const SpectralBlob contrib = factor * entry.contribution();
@@ -137,9 +137,13 @@ void LocalFrameOutputDevice::commitSpectrals2(StreamPipeline* pipeline, const Ou
 		const bool isNeg	 = (contrib < -PR_EPSILON).any();
 		const bool isInvalid = isInf | isNaN | isNeg;
 		if (PR_UNLIKELY(isInvalid)) {
-			const uint32 feedback = (isNaN ? OF_NaN : 0)
-									| (isInf ? OF_Infinite : 0)
-									| (isNeg ? OF_Negative : 0);
+			OutputFeedbackFlags feedback = 0;
+			if (isNaN)
+				feedback |= OutputFeedback::NaN;
+			if (isInf)
+				feedback |= OutputFeedback::Infinite;
+			if (isNeg)
+				feedback |= OutputFeedback::Negative;
 
 			mData.getInternalChannel_Counter(AOV_Feedback)->getFragment(rp, 0) |= feedback;
 			continue;
@@ -359,7 +363,7 @@ void LocalFrameOutputDevice::commitCustomSpectrals2(FrameBufferFloat* aov, Strea
 		const auto& entry = entries[i];
 
 		const Point2i rp		   = entry.Position + filterSize;
-		const bool isMono		   = IsMono || (entry.Flags & OSEF_Mono);
+		const bool isMono		   = IsMono || (entry.Flags & OutputSpectralEntryFlag::Mono);
 		const RayGroup& grp		   = pipeline->getRayGroup(entry.RayGroupID);
 		const SpectralBlob factor  = isMono ? SpectralBlobUtils::HeroOnly() : SpectralBlob::Ones();
 		const SpectralBlob contrib = factor * grp.BlendWeight * entry.Value;

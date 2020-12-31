@@ -74,31 +74,31 @@ BoundingBox::FaceSide BoundingBox::getIntersectionSide(const Vector3f& intersect
 	const Vector3f minDist = (intersection - lowerBound()).cwiseAbs();
 	const Vector3f maxDist = (intersection - upperBound()).cwiseAbs();
 
-	BoundingBox::FaceSide side = FS_Left;
-	float f					   = minDist(0);
+	FaceSide side = FaceSide::Left;
+	float f		  = minDist(0);
 
 	if (maxDist(0) < f) {
-		side = FS_Right;
+		side = FaceSide::Right;
 		f	 = maxDist(0);
 	}
 
 	if (minDist(1) < f) {
-		side = FS_Bottom;
+		side = FaceSide::Bottom;
 		f	 = minDist(1);
 	}
 
 	if (maxDist(1) < f) {
-		side = FS_Top;
+		side = FaceSide::Top;
 		f	 = maxDist(1);
 	}
 
 	if (minDist(2) < f) {
-		side = FS_Front;
+		side = FaceSide::Front;
 		f	 = minDist(2);
 	}
 
 	if (maxDist(2) < f) {
-		side = FS_Back;
+		side = FaceSide::Back;
 	}
 
 	return side;
@@ -110,27 +110,27 @@ Plane BoundingBox::getFace(FaceSide side) const
 
 	switch (side) {
 	default:
-	case FS_Front:
+	case FaceSide::Front:
 		return Plane(lowerBound(),
 					 Vector3f(diff(0), 0, 0),
 					 Vector3f(0, diff(1), 0));
-	case FS_Back:
+	case FaceSide::Back:
 		return Plane(Vector3f(upperBound()(0), lowerBound()(1), upperBound()(2)),
 					 Vector3f(-diff(0), 0, 0),
 					 Vector3f(0, diff(1), 0));
-	case FS_Left:
+	case FaceSide::Left:
 		return Plane(Vector3f(lowerBound()(0), lowerBound()(1), upperBound()(2)),
 					 Vector3f(0, 0, -diff(2)),
 					 Vector3f(0, diff(1), 0));
-	case FS_Right:
+	case FaceSide::Right:
 		return Plane(Vector3f(upperBound()(0), lowerBound()(1), lowerBound()(2)),
 					 Vector3f(0, 0, diff(2)),
 					 Vector3f(0, diff(1), 0));
-	case FS_Top:
+	case FaceSide::Top:
 		return Plane(Vector3f(lowerBound()(0), upperBound()(1), lowerBound()(2)),
 					 Vector3f(diff(0), 0, 0),
 					 Vector3f(0, 0, diff(2)));
-	case FS_Bottom:
+	case FaceSide::Bottom:
 		return Plane(Vector3f(upperBound()(0), lowerBound()(1), lowerBound()(2)),
 					 Vector3f(-diff(0), 0, 0),
 					 Vector3f(0, 0, diff(2)));

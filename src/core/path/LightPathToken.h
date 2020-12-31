@@ -3,20 +3,20 @@
 #include "material/MaterialType.h"
 
 namespace PR {
-enum ScatteringType : uint8 {
-	ST_CAMERA = 0,
-	ST_EMISSIVE,
-	ST_REFRACTION,
-	ST_REFLECTION,
-	ST_BACKGROUND,
-	_ST_COUNT
+enum class ScatteringType : uint8 {
+	Camera = 0,
+	Emissive,
+	Refraction,
+	Reflection,
+	Background,
+	_COUNT
 };
 
-enum ScatteringEvent : uint8 {
-	SE_DIFFUSE = 0,
-	SE_SPECULAR,
-	SE_NONE,
-	_SE_COUNT
+enum class ScatteringEvent : uint8 {
+	Diffuse = 0,
+	Specular,
+	None,
+	_COUNT
 };
 
 struct PR_LIB_CORE LightPathToken {
@@ -35,7 +35,7 @@ public:
 	ScatteringEvent Event;
 	uint16 LabelIndex;
 
-	inline LightPathToken(ScatteringType type = ST_CAMERA, ScatteringEvent event = SE_NONE, uint16 labelIndex = 0)
+	inline LightPathToken(ScatteringType type = ScatteringType::Camera, ScatteringEvent event = ScatteringEvent::None, uint16 labelIndex = 0)
 		: Type(type)
 		, Event(event)
 		, LabelIndex(labelIndex)
@@ -46,21 +46,21 @@ public:
 		: LabelIndex(labelIndex)
 	{
 		switch (type) {
-		case MST_DiffuseReflection:
-			Type  = ST_REFLECTION;
-			Event = SE_DIFFUSE;
+		case MaterialScatteringType::DiffuseReflection:
+			Type  = ScatteringType::Reflection;
+			Event = ScatteringEvent::Diffuse;
 			break;
-		case MST_DiffuseTransmission:
-			Type  = ST_REFRACTION;
-			Event = SE_DIFFUSE;
+		case MaterialScatteringType::DiffuseTransmission:
+			Type  = ScatteringType::Refraction;
+			Event = ScatteringEvent::Diffuse;
 			break;
-		case MST_SpecularReflection:
-			Type  = ST_REFLECTION;
-			Event = SE_SPECULAR;
+		case MaterialScatteringType::SpecularReflection:
+			Type  = ScatteringType::Reflection;
+			Event = ScatteringEvent::Specular;
 			break;
-		case MST_SpecularTransmission:
-			Type  = ST_REFRACTION;
-			Event = SE_SPECULAR;
+		case MaterialScatteringType::SpecularTransmission:
+			Type  = ScatteringType::Refraction;
+			Event = ScatteringEvent::Specular;
 			break;
 		}
 	}
@@ -74,8 +74,8 @@ public:
 	inline uint32 toPacked() const
 	{
 		_LightPathTokenPacked packed;
-		packed._S.T = Type;
-		packed._S.E = Event;
+		packed._S.T = (uint8)Type;
+		packed._S.E = (uint8)Event;
 		packed._S.L = LabelIndex;
 		return packed._I;
 	}
@@ -87,8 +87,8 @@ public:
 		return LightPathToken((ScatteringType)packed._S.T, (ScatteringEvent)packed._S.E, packed._S.L);
 	}
 
-	static inline LightPathToken Camera() { return LightPathToken(ST_CAMERA, SE_NONE); }
-	static inline LightPathToken Background() { return LightPathToken(ST_BACKGROUND, SE_NONE); }
-	static inline LightPathToken Emissive() { return LightPathToken(ST_EMISSIVE, SE_NONE); }
+	static inline LightPathToken Camera() { return LightPathToken(ScatteringType::Camera, ScatteringEvent::None); }
+	static inline LightPathToken Background() { return LightPathToken(ScatteringType::Background, ScatteringEvent::None); }
+	static inline LightPathToken Emissive() { return LightPathToken(ScatteringType::Emissive, ScatteringEvent::None); }
 };
 } // namespace PR

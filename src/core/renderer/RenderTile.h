@@ -32,10 +32,10 @@ struct RenderIteration;
 class ISampler;
 class ISpectralMapper;
 
-enum RenderTileStatus {
-	RTS_Idle	= 0,
-	RTS_Working = 1,
-	RTS_Done	= 2
+enum class RenderTileStatus {
+	Idle	= 0,
+	Working = 1,
+	Done	= 2
 };
 
 class PR_LIB_CORE RenderTile {
@@ -53,10 +53,10 @@ public:
 	std::optional<CameraRay> constructCameraRay(const Point2i& p, const RenderIteration& iter);
 
 	inline RenderTileStatus status() const { return (RenderTileStatus)mStatus.load(); }
-	inline bool isWorking() const { return mStatus == RTS_Working; }
+	inline bool isWorking() const { return mStatus == static_cast<LockFreeAtomic::value_type>(RenderTileStatus::Working); }
 	bool accuire();
 	void release();
-	inline void makeIdle() { mStatus = RTS_Idle; }
+	inline void makeIdle() { mStatus = static_cast<LockFreeAtomic::value_type>(RenderTileStatus::Idle); }
 
 	inline const Point2i& start() const { return mStart; }
 	inline const Point2i& end() const { return mEnd; }
@@ -64,7 +64,7 @@ public:
 	inline const Size2i& imageSize() const { return mImageSize; }
 
 	inline bool isFinished() const { return maxPixelSamples() != 0 /* Progressive */ && pixelSamplesRendered() >= maxPixelSamples(); }
-	inline bool isMarkedDone() const { return mStatus == RTS_Done; } // Used by RenderContext to mark a full pass being done
+	inline bool isMarkedDone() const { return mStatus == static_cast<LockFreeAtomic::value_type>(RenderTileStatus::Done); } // Used by RenderContext to mark a full pass being done
 
 	inline uint64 maxPixelSamples() const { return mMaxPixelSamples; }
 	inline uint64 pixelSamplesRendered() const { return mContext.PixelSamplesRendered; }

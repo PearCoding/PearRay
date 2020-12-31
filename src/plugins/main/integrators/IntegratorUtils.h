@@ -17,8 +17,8 @@ public:
 	{
 		PR_PROFILE_THIS;
 		const LightPath cb = LightPath::createCB();
-		session.tile()->statistics().add(RST_CameraDepthCount, sg.size());
-		session.tile()->statistics().add(RST_BackgroundHitCount, sg.size());
+		session.tile()->statistics().add(RenderStatisticEntry::CameraDepthCount, sg.size());
+		session.tile()->statistics().add(RenderStatisticEntry::BackgroundHitCount, sg.size());
 
 		bool illuminated		= false;
 		const auto lightSampler = session.context()->lightSampler();
@@ -55,7 +55,7 @@ public:
 	template <typename Func>
 	static inline bool handleBackground(RenderTileSession& session, const Ray& ray, const Func& func)
 	{
-		session.tile()->statistics().add(RST_BackgroundHitCount);
+		session.tile()->statistics().add(RenderStatisticEntry::BackgroundHitCount);
 
 		bool illuminated		= false;
 		const auto lightSampler = session.context()->lightSampler();

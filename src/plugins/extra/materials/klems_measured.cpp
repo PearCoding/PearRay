@@ -637,7 +637,7 @@ public:
 		const bool refraction = !in.Context.V.sameHemisphere(in.Context.L);
 		out.Weight			  = mMeasurement.eval(oV, iV) /* std::abs(in.Context.NdotL())*/;
 		out.PDF_S			  = mMeasurement.pdf(oV, iV);
-		out.Type			  = refraction ? MST_DiffuseTransmission : MST_DiffuseReflection;
+		out.Type			  = refraction ? MaterialScatteringType::DiffuseTransmission : MaterialScatteringType::DiffuseReflection;
 
 		if constexpr (HasTint)
 			out.Weight *= mTint->eval(in.ShadingContext);
@@ -675,7 +675,7 @@ public:
 		const bool refraction = !in.Context.V.sameHemisphere(out.L);
 		out.Weight			  = weight /* std::abs(ectx.NdotL())*/;
 		out.PDF_S			  = pdf;
-		out.Type			  = refraction ? MST_DiffuseTransmission : MST_DiffuseReflection;
+		out.Type			  = refraction ? MaterialScatteringType::DiffuseTransmission : MaterialScatteringType::DiffuseReflection;
 
 		if constexpr (HasTint)
 			out.Weight *= mTint->eval(in.ShadingContext);

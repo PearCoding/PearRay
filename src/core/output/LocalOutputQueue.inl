@@ -26,7 +26,7 @@ inline void LocalOutputQueue::pushSpectralFragment(const Point2i& p, float mis, 
 #endif
 	PR_ASSERT(!mSpectralQueue.isFull(), "Spectral entries are exhausted");
 	const uint32* pathEntry = pushPath(path);
-	mSpectralQueue.add(OutputSpectralEntry{ p, mis, importance, radiance, wavelengths, isMono ? (uint32)OSEF_Mono : 0, rayGroupID, pathEntry });
+	mSpectralQueue.add(OutputSpectralEntry{ p, mis, importance, radiance, wavelengths, isMono ? (uint32)OutputSpectralEntryFlag::Mono : 0, rayGroupID, pathEntry });
 }
 
 inline void LocalOutputQueue::pushSPFragment(const Point2i& p, const IntersectionPoint& pt, const LightPath& path)
@@ -46,7 +46,7 @@ inline void LocalOutputQueue::pushCustomSpectralFragment(uint32 queueID, const P
 {
 	PR_ASSERT(queueID < mCustomSpectralQueues.size(), "Expected valid custom spectral queueID");
 	PR_ASSERT(!mCustomSpectralQueues[queueID].isFull(), "Custom spectral entries are exhausted");
-	mCustomSpectralQueues[queueID].add(OutputCustomSpectralEntry{ { p, value }, wavelengths, isMono ? (uint32)OSEF_Mono : 0, rayGroupID });
+	mCustomSpectralQueues[queueID].add(OutputCustomSpectralEntry{ { p, value }, wavelengths, isMono ? (uint32)OutputSpectralEntryFlag::Mono : 0, rayGroupID });
 }
 
 inline void LocalOutputQueue::pushCustom3DFragment(uint32 queueID, const Point2i& p, const Vector3f& value)

@@ -29,13 +29,13 @@ void setup_settings(py::module& m)
 		.def_readwrite("useAdaptiveTiling", &RenderSettings::useAdaptiveTiling);
 
 	py::enum_<TileMode>(m, "TileMode")
-		.value("LINEAR", TM_LINEAR)
-		.value("TILE", TM_TILE)
-		.value("SPIRAL", TM_SPIRAL);
+		.value("LINEAR", TileMode::Linear)
+		.value("TILE", TileMode::Tile)
+		.value("SPIRAL", TileMode::Spiral);
 
 	py::enum_<TimeMappingMode>(m, "TimeMappingMode")
-		.value("CENTER", TMM_CENTER)
-		.value("LEFT", TMM_LEFT)
-		.value("RIGHT", TMM_RIGHT);
+		.value("CENTER", TimeMappingMode::Center)
+		.value("LEFT", TimeMappingMode::Left)
+		.value("RIGHT", TimeMappingMode::Right);
 }
-}
+} // namespace PRPY

@@ -40,13 +40,13 @@ public:
 			  const RenderTileSession&) const override
 	{
 		PR_PROFILE_THIS;
-		out.Type = MST_SpecularReflection;
+		out.Type = MaterialScatteringType::SpecularReflection;
 
 		const auto closure = MicrofacetReflection(roughness(in.ShadingContext));
 		if (closure.isDelta()) { // Reject
 			out.PDF_S  = 0.0f;
 			out.Weight = SpectralBlob::Zero();
-			out.Flags  = MSF_DeltaDistribution;
+			out.Flags  = MaterialScatter::DeltaDistribution;
 			return;
 		}
 
@@ -69,7 +69,7 @@ public:
 		const auto closure = MicrofacetReflection(roughness(in.ShadingContext));
 		if (closure.isDelta()) {
 			out.PDF_S = 0.0f;
-			out.Flags = MSF_DeltaDistribution;
+			out.Flags = MaterialScatter::DeltaDistribution;
 			return;
 		}
 
@@ -85,10 +85,11 @@ public:
 		out.L			   = closure.sample(in.RND.get2D(), in.Context.V);
 
 		// Set flags
-		out.Flags = (closure.isDelta() ? MSF_DeltaDistribution : 0);
+		if (closure.isDelta())
+			out.Flags |= MaterialScatter::DeltaDistribution;
 
 		if (!in.Context.V.sameHemisphere(out.L)) { // No transmission
-			out = MaterialSampleOutput::Reject(MST_SpecularReflection, out.Flags);
+			out = MaterialSampleOutput::Reject(MaterialScatteringType::SpecularReflection, out.Flags);
 			return;
 		}
 
@@ -100,7 +101,7 @@ public:
 			factor[i] = closure.evalConductor(out.L, in.Context.V, eta[i], k[i]);
 
 		out.Weight = mSpecularity->eval(in.ShadingContext) * factor;
-		out.Type   = MST_SpecularReflection;
+		out.Type   = MaterialScatteringType::SpecularReflection;
 		out.PDF_S  = closure.pdf(out.L, in.Context.V);
 
 		// If we handle a delta case, make sure the outgoing pdf will be 1

@@ -6,11 +6,12 @@
 #include "ray/Ray.h"
 
 namespace PR {
-enum IntersectionPointFlags {
-	//IPF_Inside	 = 0x1,
-	IPF_IsSurface = 0x2,
-	IPF_IsMedium  = 0x4
+enum class IntersectionPointFlag : uint8 {
+	//Inside	 = 0x1,
+	IsSurface = 0x2,
+	IsMedium  = 0x4
 };
+PR_MAKE_FLAGS(IntersectionPointFlag, IntersectionPointFlags)
 
 class PR_LIB_CORE SurfaceIntersectionPoint {
 public:
@@ -46,8 +47,8 @@ public:
 	PR::Ray Ray;
 
 	// Some other utility variables
-	uint32 Flags = 0;
-	float Depth2 = 0.0f;
+	IntersectionPointFlags Flags = 0;
+	float Depth2				 = 0.0f;
 
 	inline void setForPoint(const Vector3f& p)
 	{
@@ -63,7 +64,7 @@ public:
 		Ray				 = ray;
 		Surface.Geometry = pt;
 		Depth2			 = (ray.Origin - P).squaredNorm();
-		Flags			 = IPF_IsSurface;
+		Flags			 = IntersectionPointFlag::IsSurface;
 
 		// TODO: Displacement?
 		Surface.P	  = p;
@@ -81,12 +82,12 @@ public:
 		P				= p;
 		Ray				= ray;
 		Depth2			= (ray.Origin - P).squaredNorm();
-		Flags			= IPF_IsMedium;
+		Flags			= IntersectionPointFlag::IsMedium;
 		Medium.MediumID = mediumID;
 	}
 
-	inline bool isAtMedium() const { return Flags & IPF_IsMedium; }
-	inline bool isAtSurface() const { return Flags & IPF_IsSurface; }
+	inline bool isAtMedium() const { return Flags & IntersectionPointFlag::IsMedium; }
+	inline bool isAtSurface() const { return Flags & IntersectionPointFlag::IsSurface; }
 
 	static inline IntersectionPoint forPoint(const Vector3f& p)
 	{
@@ -109,7 +110,7 @@ public:
 		return ip;
 	}
 
-	inline PR::Ray nextRay(const Vector3f& d, int ray_flags, float minT, float maxT) const
+	inline PR::Ray nextRay(const Vector3f& d, RayFlags ray_flags, float minT, float maxT) const
 	{
 		if (isAtSurface()) {
 			const Vector3f oN = d.dot(Surface.N) < 0 ? -Surface.N : Surface.N; // Offset normal used for safe positioning

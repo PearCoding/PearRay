@@ -8,15 +8,15 @@ std::atomic<uint32> Thread::sThreadCount(0);
 void Thread::start()
 {
 	//mThreadMutex.lock();
-	if (mState == S_Waiting && !mThread) {
+	if (mState == State::Waiting && !mThread) {
 		mShouldStop = false;
-		mState		= S_Running;
+		mState		= State::Running;
 		mThread		= new std::thread([](Thread* ptr) {
 			ptr->main();
-			ptr->mState = Thread::S_Stopped;
+			ptr->mState = State::Stopped;
 		},
 								  this);
 	}
 	//mThreadMutex.unlock();
 }
-}
+} // namespace PR

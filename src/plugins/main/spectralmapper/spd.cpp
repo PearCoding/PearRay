@@ -51,16 +51,16 @@ private:
 	const Distribution1D mDistribution;
 };
 
-enum WeightingMethod {
-	WM_None = 0,
-	WM_CIE_Y,
-	WM_CIE_XYZ,
-	WM_SRGB,
+enum class WeightingMethod {
+	None = 0,
+	CIE_Y,
+	CIE_XYZ,
+	SRGB,
 };
 
 struct SPDParameters {
 	uint32 NumberOfBins			= 256 /* This one can be high quality*/;
-	WeightingMethod Method		= WM_CIE_XYZ;
+	WeightingMethod Method		= WeightingMethod::CIE_XYZ;
 	bool UseNormalizedLights	= true;
 	bool EnsureCompleteSampling = true;
 	uint32 SmoothIterations		= 0; // How many times to apply moving average?
@@ -90,7 +90,7 @@ public:
 		WeightingMethod method = mParameters.Method;
 		// If the given spectral domain does not cross the cie domain, disable weighting
 		if (spectralStart > PR_CIE_WAVELENGTH_END || spectralEnd < PR_CIE_WAVELENGTH_START)
-			method = WM_None;
+			method = WeightingMethod::None;
 
 		const auto bin2wvl = [=](uint32 bin) { return spectralStart + (bin / float(mParameters.NumberOfBins - 1)) * (spectralEnd - spectralStart); };
 
@@ -141,17 +141,17 @@ public:
 
 			// Weight given spd entry by "camera" response
 			switch (method) {
-			case WM_None:
+			case WeightingMethod::None:
 				break;
-			case WM_CIE_Y:
+			case WeightingMethod::CIE_Y:
 				for (uint32 i = 0; i < mParameters.NumberOfBins; ++i)
 					fullPower[i] *= CIE::eval_y(bin2wvl(i));
 				break;
-			case WM_CIE_XYZ:
+			case WeightingMethod::CIE_XYZ:
 				for (uint32 i = 0; i < mParameters.NumberOfBins; ++i)
 					fullPower[i] *= CIE::eval(bin2wvl(i)).sum();
 				break;
-			case WM_SRGB:
+			case WeightingMethod::SRGB:
 				for (uint32 i = 0; i < mParameters.NumberOfBins; ++i) {
 					const CIETriplet tripletXYZ = CIE::eval(bin2wvl(i));
 					CIETriplet tripletRGB;
@@ -205,13 +205,13 @@ public:
 		std::string weighting = ctx.parameters().getString("weighting", "xyz");
 		std::transform(weighting.begin(), weighting.end(), weighting.begin(), ::tolower);
 		if (weighting == "none")
-			parameters.Method = WM_None;
+			parameters.Method = WeightingMethod::None;
 		else if (weighting == "y")
-			parameters.Method = WM_CIE_Y;
+			parameters.Method = WeightingMethod::CIE_Y;
 		else if (weighting == "rgb" || weighting == "srgb")
-			parameters.Method = WM_SRGB;
+			parameters.Method = WeightingMethod::SRGB;
 		else
-			parameters.Method = WM_CIE_XYZ;
+			parameters.Method = WeightingMethod::CIE_XYZ;
 
 		parameters.EnsureCompleteSampling = ctx.parameters().getBool("complete", parameters.EnsureCompleteSampling);
 		parameters.UseNormalizedLights	  = ctx.parameters().getBool("normalized", parameters.UseNormalizedLights);

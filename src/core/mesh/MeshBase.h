@@ -4,8 +4,8 @@
 #include "mesh/MeshInfo.h"
 #include "serialization/ISerializable.h"
 
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 namespace PR {
 class Normal;
@@ -34,12 +34,12 @@ public:
 	inline void setUVs(const std::vector<float>& uvs);
 	inline void setUVs(std::vector<float>&& uvs);
 	inline const std::vector<float>& uvs() const { return mUVs; }
-	inline Vector2f uv(size_t ind) const { return (features() & MF_HAS_UV) ? Vector2f(mUVs[2 * ind], mUVs[2 * ind + 1]) : Vector2f(0, 0); }
+	inline Vector2f uv(size_t ind) const { return (features() & MeshFeature::UV) ? Vector2f(mUVs[2 * ind], mUVs[2 * ind + 1]) : Vector2f(0, 0); }
 
 	inline void setVelocities(const std::vector<float>& velocities);
 	inline void setVelocities(std::vector<float>&& velocities);
 	inline const std::vector<float>& velocities() const { return mVelocities; }
-	inline Vector3f velocity(size_t ind) const { return (features() & MF_HAS_VELOCITY) ? Vector3f(mVelocities[3 * ind], mVelocities[3 * ind + 1], mVelocities[3 * ind + 2]) : Vector3f(0, 0, 0); }
+	inline Vector3f velocity(size_t ind) const { return (features() & MeshFeature::Velocity) ? Vector3f(mVelocities[3 * ind], mVelocities[3 * ind + 1], mVelocities[3 * ind + 2]) : Vector3f(0, 0, 0); }
 
 	inline void setIndices(const std::vector<uint32>& indices);
 	inline void setIndices(std::vector<uint32>&& indices);
@@ -58,10 +58,10 @@ public:
 	inline void setMaterialSlots(const std::vector<uint32>& f);
 	inline void setMaterialSlots(std::vector<uint32>&& f);
 	inline const std::vector<uint32>& materialSlots() const { return mMaterialSlots; }
-	inline uint32 materialSlot(size_t index) const { return (features() & MF_HAS_MATERIAL) ? mMaterialSlots.at(index) : 0; }
+	inline uint32 materialSlot(size_t index) const { return (features() & MeshFeature::Material) ? mMaterialSlots.at(index) : 0; }
 
 	inline const MeshInfo& info() const { return mInfo; }
-	inline uint32 features() const { return mInfo.Features; }
+	inline MeshFeatures features() const { return mInfo.Features; }
 	inline size_t nodeCount() const { return mInfo.NodeCount; }
 	inline size_t triangleCount() const { return mInfo.TriangleCount; }
 	inline size_t quadCount() const { return mInfo.QuadCount; }

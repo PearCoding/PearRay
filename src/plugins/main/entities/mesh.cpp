@@ -227,7 +227,7 @@ public:
 				mOriginalMesh[mesh.get()] = mesh_p;
 			}
 
-			if (mesh->features() & MF_HAS_UV)
+			if (mesh->features() & MeshFeature::UV)
 				return std::make_shared<MeshEntity<true>>(name, ctx.transform(),
 														  mesh_p,
 														  materials, emsID);

@@ -15,7 +15,7 @@ public:
 
 	inline uint32 pathLength() const { return IP.Ray.IterationDepth + 1; }
 	inline const Vector3f& position() const { return IP.P; }
-	inline bool fromLight() const { return IP.Ray.Flags & RF_Light; }
+	inline bool fromLight() const { return IP.Ray.Flags & RayFlag::Light; }
 };
 } // namespace VCM
 } // namespace PR

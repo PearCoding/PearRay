@@ -2,14 +2,11 @@
 
 #include "HitEntry.h"
 #include "shader/ShadingGroupBlock.h"
+
 #include <array>
 #include <vector>
 
 namespace PR {
-
-enum HitFlags {
-	HF_SUCCESSFUL = 0x1
-};
 
 class PR_LIB_CORE HitStream {
 public:

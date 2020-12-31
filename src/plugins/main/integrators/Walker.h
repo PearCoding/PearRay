@@ -138,9 +138,9 @@ private:
 				if (sout.isHeroCollapsing())
 					weight *= SpectralBlobUtils::HeroOnly();
 
-				int rflags = RF_Bounce;
+				RayFlags rflags = RayFlag::Bounce;
 				if (sout.isHeroCollapsing())
-					rflags |= RF_Monochrome;
+					rflags |= RayFlag::Monochrome;
 
 				if (!sout.isDelta())
 					weight /= sout.PDF_S[0];

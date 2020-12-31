@@ -327,7 +327,7 @@ struct PrincipledClosure {
 
 				// Only rays from lights are weighted by this factor
 				// as radiance flows in the opposite direction
-				if (ctx.RayFlags & RF_Light) {
+				if (ctx.RayFlags & RayFlag::Light) {
 					const SpectralBlob eta = HdotL < 0.0f ? (IOR / AIR).eval() : (AIR / IOR).eval();
 					weight *= eta * eta;
 				}
@@ -504,21 +504,21 @@ public:
 		if (closure.isDelta()) { // Reject
 			out.Weight = 0;
 			out.PDF_S  = 0;
-			out.Flags  = MSF_DeltaDistribution;
+			out.Flags  = MaterialScatter::DeltaDistribution;
 			return;
 		}
 
 		// Set type based on sampling result
 		if (in.Context.V.sameHemisphere(in.Context.L)) {
 			if (closure.Roughness < 0.5f)
-				out.Type = MST_SpecularReflection;
+				out.Type = MaterialScatteringType::SpecularReflection;
 			else
-				out.Type = MST_DiffuseReflection;
+				out.Type = MaterialScatteringType::DiffuseReflection;
 		} else {
 			if (closure.Roughness < 0.5f)
-				out.Type = MST_SpecularTransmission;
+				out.Type = MaterialScatteringType::SpecularTransmission;
 			else
-				out.Type = MST_DiffuseTransmission;
+				out.Type = MaterialScatteringType::DiffuseTransmission;
 		}
 
 		out.Weight = closure.eval(in.Context);
@@ -536,7 +536,7 @@ public:
 		const auto closure = createClosure(in.ShadingContext);
 		if (closure.isDelta()) { // Reject
 			out.PDF_S = 0;
-			out.Flags = MSF_DeltaDistribution;
+			out.Flags = MaterialScatter::DeltaDistribution;
 			return;
 		}
 
@@ -554,24 +554,25 @@ public:
 		out.L			   = closure.sample(in.RND, in.Context);
 
 		// Set flags
-		out.Flags = (closure.isDelta() ? MSF_DeltaDistribution : 0);
+		if (closure.isDelta())
+			out.Flags |= MaterialScatter::DeltaDistribution;
 
 		if (PR_UNLIKELY(out.L.isZero())) {
-			out = MaterialSampleOutput::Reject(MST_DiffuseReflection, out.Flags);
+			out = MaterialSampleOutput::Reject(MaterialScatteringType::DiffuseReflection, out.Flags);
 			return;
 		}
 
 		// Set type based on sampling result (TODO)
 		if (in.Context.V.sameHemisphere(out.L)) {
 			if (closure.Roughness < 0.5f)
-				out.Type = MST_SpecularReflection;
+				out.Type = MaterialScatteringType::SpecularReflection;
 			else
-				out.Type = MST_DiffuseReflection;
+				out.Type = MaterialScatteringType::DiffuseReflection;
 		} else {
 			if (closure.Roughness < 0.5f)
-				out.Type = MST_SpecularTransmission;
+				out.Type = MaterialScatteringType::SpecularTransmission;
 			else
-				out.Type = MST_DiffuseTransmission;
+				out.Type = MaterialScatteringType::DiffuseTransmission;
 		}
 
 		const auto ectx = in.Context.expand(out.L);

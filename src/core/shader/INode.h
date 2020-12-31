@@ -4,10 +4,10 @@
 
 namespace PR {
 
-enum NodeType {
-	NT_FloatScalar	 = 0,
-	NT_FloatSpectral = 1,
-	NT_FloatVector	 = 2
+enum class NodeType {
+	FloatScalar	  = 0,
+	FloatSpectral = 1,
+	FloatVector	  = 2
 };
 
 class INode {
@@ -31,7 +31,7 @@ private:
 class FloatScalarNode : public INode {
 public:
 	inline FloatScalarNode()
-		: INode(NT_FloatScalar)
+		: INode(NodeType::FloatScalar)
 	{
 	}
 	virtual ~FloatScalarNode() = default;
@@ -43,7 +43,7 @@ public:
 class FloatSpectralNode : public INode {
 public:
 	inline FloatSpectralNode()
-		: INode(NT_FloatSpectral)
+		: INode(NodeType::FloatSpectral)
 	{
 	}
 	virtual ~FloatSpectralNode() = default;
@@ -56,7 +56,7 @@ public:
 class FloatVectorNode : public INode {
 public:
 	inline FloatVectorNode()
-		: INode(NT_FloatVector)
+		: INode(NodeType::FloatVector)
 	{
 	}
 	virtual ~FloatVectorNode() = default;

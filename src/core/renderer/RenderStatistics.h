@@ -6,20 +6,20 @@
 #include <atomic>
 
 namespace PR {
-enum RenderStatisticTypes {
-	RST_CameraRayCount = 0,
-	RST_LightRayCount,
-	RST_PrimaryRayCount,
-	RST_BounceRayCount,
-	RST_ShadowRayCount,
-	RST_MonochromeRayCount,
-	RST_PixelSampleCount,
-	RST_EntityHitCount,
-	RST_BackgroundHitCount,
-	RST_CameraDepthCount,
-	RST_LightDepthCount,
+enum class RenderStatisticEntry {
+	CameraRayCount = 0,
+	LightRayCount,
+	PrimaryRayCount,
+	BounceRayCount,
+	ShadowRayCount,
+	MonochromeRayCount,
+	PixelSampleCount,
+	EntityHitCount,
+	BackgroundHitCount,
+	CameraDepthCount,
+	LightDepthCount,
 
-	_RST_COUNT_
+	_COUNT
 };
 
 class PR_LIB_CORE RenderStatistics {
@@ -30,15 +30,21 @@ public:
 	RenderStatistics& operator=(const RenderStatistics& other);
 	RenderStatistics& operator+=(const RenderStatistics& other);
 
-	inline uint64 rayCount() const { return entry(RST_PrimaryRayCount) + entry(RST_BounceRayCount) + entry(RST_ShadowRayCount); }
-	inline uint64 depthCount() const { return entry(RST_CameraDepthCount) + entry(RST_LightDepthCount); }
+	inline uint64 rayCount() const
+	{
+		return entry(RenderStatisticEntry::PrimaryRayCount) + entry(RenderStatisticEntry::BounceRayCount) + entry(RenderStatisticEntry::ShadowRayCount);
+	}
+	inline uint64 depthCount() const
+	{
+		return entry(RenderStatisticEntry::CameraDepthCount) + entry(RenderStatisticEntry::LightDepthCount);
+	}
 
-	inline void add(RenderStatisticTypes rst, uint64 i = 1) { mCounters[rst] += i; }
-	inline uint64 entry(RenderStatisticTypes rst) const { return mCounters[rst]; }
+	inline void add(RenderStatisticEntry rse, uint64 i = 1) { mCounters[(uint32)rse] += i; }
+	inline uint64 entry(RenderStatisticEntry rse) const { return mCounters[(uint32)rse]; }
 
 	RenderStatistics half() const;
 
 private:
-	std::array<std::atomic<uint64>, _RST_COUNT_> mCounters;
+	std::array<std::atomic<uint64>, (uint32)RenderStatisticEntry::_COUNT> mCounters;
 };
 } // namespace PR

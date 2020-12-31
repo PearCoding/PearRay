@@ -14,19 +14,19 @@ PR_TEST("[CD*L]")
 
 	LightPath path; // CDE
 	path.addToken(LightPathToken::Camera());
-	path.addToken(LightPathToken(ST_REFLECTION, SE_DIFFUSE));
-	path.addToken(LightPathToken(ST_EMISSIVE, SE_DIFFUSE));
+	path.addToken(LightPathToken(ScatteringType::Reflection, ScatteringEvent::Diffuse));
+	path.addToken(LightPathToken(ScatteringType::Emissive, ScatteringEvent::Diffuse));
 	PR_CHECK_TRUE(expr.match(path));
 
 	LightPath path2; // CE
 	path2.addToken(LightPathToken::Camera());
-	path2.addToken(LightPathToken(ST_EMISSIVE, SE_DIFFUSE));
+	path2.addToken(LightPathToken(ScatteringType::Emissive, ScatteringEvent::Diffuse));
 	PR_CHECK_TRUE(expr.match(path2));
 
 	LightPath path3; // CSE
 	path3.addToken(LightPathToken::Camera());
-	path3.addToken(LightPathToken(ST_REFLECTION, SE_SPECULAR));
-	path3.addToken(LightPathToken(ST_EMISSIVE, SE_DIFFUSE));
+	path3.addToken(LightPathToken(ScatteringType::Reflection, ScatteringEvent::Specular));
+	path3.addToken(LightPathToken(ScatteringType::Emissive, ScatteringEvent::Diffuse));
 	PR_CHECK_FALSE(expr.match(path3));
 }
 PR_TEST("[RD*L] (Invalid)")
@@ -41,32 +41,32 @@ PR_TEST("[C(DS)+D?E]")
 
 	LightPath path; // CDSE
 	path.addToken(LightPathToken::Camera());
-	path.addToken(LightPathToken(ST_REFLECTION, SE_DIFFUSE));
-	path.addToken(LightPathToken(ST_REFRACTION, SE_SPECULAR));
-	path.addToken(LightPathToken(ST_EMISSIVE, SE_DIFFUSE));
+	path.addToken(LightPathToken(ScatteringType::Reflection, ScatteringEvent::Diffuse));
+	path.addToken(LightPathToken(ScatteringType::Refraction, ScatteringEvent::Specular));
+	path.addToken(LightPathToken(ScatteringType::Emissive, ScatteringEvent::Diffuse));
 	PR_CHECK_TRUE(expr.match(path));
 
 	LightPath path2; // CDSDSDE
 	path2.addToken(LightPathToken::Camera());
-	path2.addToken(LightPathToken(ST_REFLECTION, SE_DIFFUSE));
-	path2.addToken(LightPathToken(ST_REFRACTION, SE_SPECULAR));
-	path2.addToken(LightPathToken(ST_REFLECTION, SE_DIFFUSE));
-	path2.addToken(LightPathToken(ST_REFRACTION, SE_SPECULAR));
-	path2.addToken(LightPathToken(ST_REFLECTION, SE_DIFFUSE));
-	path2.addToken(LightPathToken(ST_EMISSIVE, SE_DIFFUSE));
+	path2.addToken(LightPathToken(ScatteringType::Reflection, ScatteringEvent::Diffuse));
+	path2.addToken(LightPathToken(ScatteringType::Refraction, ScatteringEvent::Specular));
+	path2.addToken(LightPathToken(ScatteringType::Reflection, ScatteringEvent::Diffuse));
+	path2.addToken(LightPathToken(ScatteringType::Refraction, ScatteringEvent::Specular));
+	path2.addToken(LightPathToken(ScatteringType::Reflection, ScatteringEvent::Diffuse));
+	path2.addToken(LightPathToken(ScatteringType::Emissive, ScatteringEvent::Diffuse));
 	PR_CHECK_TRUE(expr.match(path2));
 
 	LightPath path3; // CSE
 	path3.addToken(LightPathToken::Camera());
-	path3.addToken(LightPathToken(ST_REFLECTION, SE_SPECULAR));
-	path3.addToken(LightPathToken(ST_EMISSIVE, SE_DIFFUSE));
+	path3.addToken(LightPathToken(ScatteringType::Reflection, ScatteringEvent::Specular));
+	path3.addToken(LightPathToken(ScatteringType::Emissive, ScatteringEvent::Diffuse));
 	PR_CHECK_FALSE(expr.match(path3));
 
 	LightPath path4; // CSDE
 	path4.addToken(LightPathToken::Camera());
-	path4.addToken(LightPathToken(ST_REFLECTION, SE_SPECULAR));
-	path4.addToken(LightPathToken(ST_REFLECTION, SE_DIFFUSE));
-	path4.addToken(LightPathToken(ST_EMISSIVE, SE_DIFFUSE));
+	path4.addToken(LightPathToken(ScatteringType::Reflection, ScatteringEvent::Specular));
+	path4.addToken(LightPathToken(ScatteringType::Reflection, ScatteringEvent::Diffuse));
+	path4.addToken(LightPathToken(ScatteringType::Emissive, ScatteringEvent::Diffuse));
 	PR_CHECK_FALSE(expr.match(path4));
 }
 PR_TEST("[C[DS]+D?B]")
@@ -76,23 +76,23 @@ PR_TEST("[C[DS]+D?B]")
 
 	LightPath path; // CDSB
 	path.addToken(LightPathToken::Camera());
-	path.addToken(LightPathToken(ST_REFLECTION, SE_DIFFUSE));
-	path.addToken(LightPathToken(ST_REFRACTION, SE_SPECULAR));
+	path.addToken(LightPathToken(ScatteringType::Reflection, ScatteringEvent::Diffuse));
+	path.addToken(LightPathToken(ScatteringType::Refraction, ScatteringEvent::Specular));
 	path.addToken(LightPathToken::Background());
 	PR_CHECK_TRUE(expr.match(path));
 
 	LightPath path2; // CDSDDB
 	path2.addToken(LightPathToken::Camera());
-	path2.addToken(LightPathToken(ST_REFLECTION, SE_DIFFUSE));
-	path2.addToken(LightPathToken(ST_REFRACTION, SE_SPECULAR));
-	path2.addToken(LightPathToken(ST_REFLECTION, SE_DIFFUSE));
-	path2.addToken(LightPathToken(ST_REFLECTION, SE_DIFFUSE));
+	path2.addToken(LightPathToken(ScatteringType::Reflection, ScatteringEvent::Diffuse));
+	path2.addToken(LightPathToken(ScatteringType::Refraction, ScatteringEvent::Specular));
+	path2.addToken(LightPathToken(ScatteringType::Reflection, ScatteringEvent::Diffuse));
+	path2.addToken(LightPathToken(ScatteringType::Reflection, ScatteringEvent::Diffuse));
 	path2.addToken(LightPathToken::Background());
 	PR_CHECK_TRUE(expr.match(path2));
 
 	LightPath path3; // CEB
 	path3.addToken(LightPathToken::Camera());
-	path3.addToken(LightPathToken(ST_EMISSIVE, SE_SPECULAR));
+	path3.addToken(LightPathToken(ScatteringType::Emissive, ScatteringEvent::Specular));
 	path3.addToken(LightPathToken::Background());
 	PR_CHECK_FALSE(expr.match(path3));
 }
@@ -106,35 +106,35 @@ PR_TEST("[C(DS+)+.*L]")
 
 	LightPath path; // CDSB
 	path.addToken(LightPathToken::Camera());
-	path.addToken(LightPathToken(ST_REFLECTION, SE_DIFFUSE));
-	path.addToken(LightPathToken(ST_REFRACTION, SE_SPECULAR));
+	path.addToken(LightPathToken(ScatteringType::Reflection, ScatteringEvent::Diffuse));
+	path.addToken(LightPathToken(ScatteringType::Refraction, ScatteringEvent::Specular));
 	path.addToken(LightPathToken::Background());
 	PR_CHECK_TRUE(expr.match(path));
 
 	LightPath path2; // CDSDDB
 	path2.addToken(LightPathToken::Camera());
-	path2.addToken(LightPathToken(ST_REFLECTION, SE_DIFFUSE));
-	path2.addToken(LightPathToken(ST_REFRACTION, SE_SPECULAR));
-	path2.addToken(LightPathToken(ST_REFLECTION, SE_DIFFUSE));
-	path2.addToken(LightPathToken(ST_REFLECTION, SE_DIFFUSE));
+	path2.addToken(LightPathToken(ScatteringType::Reflection, ScatteringEvent::Diffuse));
+	path2.addToken(LightPathToken(ScatteringType::Refraction, ScatteringEvent::Specular));
+	path2.addToken(LightPathToken(ScatteringType::Reflection, ScatteringEvent::Diffuse));
+	path2.addToken(LightPathToken(ScatteringType::Reflection, ScatteringEvent::Diffuse));
 	path2.addToken(LightPathToken::Background());
 	PR_CHECK_TRUE(expr.match(path2)); //f
 
 	LightPath path3; // CDSSDSDDB
 	path3.addToken(LightPathToken::Camera());
-	path3.addToken(LightPathToken(ST_REFLECTION, SE_DIFFUSE));
-	path3.addToken(LightPathToken(ST_REFRACTION, SE_SPECULAR));
-	path3.addToken(LightPathToken(ST_REFRACTION, SE_SPECULAR));
-	path3.addToken(LightPathToken(ST_REFLECTION, SE_DIFFUSE));
-	path3.addToken(LightPathToken(ST_REFRACTION, SE_SPECULAR));
-	path3.addToken(LightPathToken(ST_REFLECTION, SE_DIFFUSE));
-	path3.addToken(LightPathToken(ST_REFLECTION, SE_DIFFUSE));
+	path3.addToken(LightPathToken(ScatteringType::Reflection, ScatteringEvent::Diffuse));
+	path3.addToken(LightPathToken(ScatteringType::Refraction, ScatteringEvent::Specular));
+	path3.addToken(LightPathToken(ScatteringType::Refraction, ScatteringEvent::Specular));
+	path3.addToken(LightPathToken(ScatteringType::Reflection, ScatteringEvent::Diffuse));
+	path3.addToken(LightPathToken(ScatteringType::Refraction, ScatteringEvent::Specular));
+	path3.addToken(LightPathToken(ScatteringType::Reflection, ScatteringEvent::Diffuse));
+	path3.addToken(LightPathToken(ScatteringType::Reflection, ScatteringEvent::Diffuse));
 	path3.addToken(LightPathToken::Background());
 	PR_CHECK_TRUE(expr.match(path3));
 
 	LightPath path4; // CEB
 	path4.addToken(LightPathToken::Camera());
-	path4.addToken(LightPathToken(ST_EMISSIVE, SE_SPECULAR));
+	path4.addToken(LightPathToken(ScatteringType::Emissive, ScatteringEvent::Specular));
 	path4.addToken(LightPathToken::Background());
 	PR_CHECK_FALSE(expr.match(path4));
 }
@@ -144,8 +144,8 @@ PR_TEST("Add/Pop")
 	PR_CHECK_TRUE(path.isEmpty());
 
 	path.addToken(LightPathToken::Camera());
-	path.addToken(LightPathToken(ST_REFLECTION, SE_DIFFUSE));
-	path.addToken(LightPathToken(ST_REFRACTION, SE_SPECULAR));
+	path.addToken(LightPathToken(ScatteringType::Reflection, ScatteringEvent::Diffuse));
+	path.addToken(LightPathToken(ScatteringType::Refraction, ScatteringEvent::Specular));
 	path.addToken(LightPathToken::Background());
 
 	PR_CHECK_EQ(path.currentSize(), 4);
@@ -163,7 +163,7 @@ PR_TEST("Add/Pop")
 	PR_CHECK_TRUE(path.isEmpty());
 
 	path.addToken(LightPathToken::Camera());
-	path.addToken(LightPathToken(ST_REFLECTION, SE_DIFFUSE));
+	path.addToken(LightPathToken(ScatteringType::Reflection, ScatteringEvent::Diffuse));
 	PR_CHECK_EQ(path.currentSize(), 2);
 	PR_CHECK_EQ(path.containerSize(), 4);
 	PR_CHECK_FALSE(path.isEmpty());
@@ -179,8 +179,8 @@ PR_TEST("Pop Until")
 	PR_CHECK_TRUE(path.isEmpty());
 
 	path.addToken(LightPathToken::Camera());
-	path.addToken(LightPathToken(ST_REFLECTION, SE_DIFFUSE));
-	path.addToken(LightPathToken(ST_REFRACTION, SE_SPECULAR));
+	path.addToken(LightPathToken(ScatteringType::Reflection, ScatteringEvent::Diffuse));
+	path.addToken(LightPathToken(ScatteringType::Refraction, ScatteringEvent::Specular));
 	path.addToken(LightPathToken::Background());
 
 	PR_CHECK_EQ(path.currentSize(), 4);
@@ -211,8 +211,8 @@ PR_TEST("Packed")
 {
 	LightPath path; // CDSB
 	path.addToken(LightPathToken::Camera());
-	path.addToken(LightPathToken(ST_REFLECTION, SE_DIFFUSE));
-	path.addToken(LightPathToken(ST_REFRACTION, SE_SPECULAR));
+	path.addToken(LightPathToken(ScatteringType::Reflection, ScatteringEvent::Diffuse));
+	path.addToken(LightPathToken(ScatteringType::Refraction, ScatteringEvent::Specular));
 	path.addToken(LightPathToken::Background());
 
 	size_t size = path.currentSize();

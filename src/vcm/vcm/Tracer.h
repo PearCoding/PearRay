@@ -65,8 +65,8 @@ public:
 			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
 				current.LightPathID		 = pickClosestLightPath(initial_hit.Ray.WavelengthNM[i]);
 				const PathVertex* vertex = lightVertex(current.LightPathID, 0);
-				if (!checkWavelengthSupport(initial_hit.Ray.WavelengthNM, initial_hit.Ray.Flags & RF_Monochrome,
-											vertex->IP.Ray.WavelengthNM, vertex->IP.Ray.Flags & RF_Monochrome,
+				if (!checkWavelengthSupport(initial_hit.Ray.WavelengthNM, initial_hit.Ray.Flags & RayFlag::Monochrome,
+											vertex->IP.Ray.WavelengthNM, vertex->IP.Ray.Flags & RayFlag::Monochrome,
 											current.Permutation))
 					break; // Nothing found
 			}
@@ -167,7 +167,7 @@ public:
 		// Construct direction
 		Ray ray	   = Ray(lsout.LightPosition, -lsout.Outgoing);
 		ray.Origin = Transform::safePosition(ray.Origin, ray.Direction); // Make sure no self intersection happens
-		ray.Flags |= RF_Light;
+		ray.Flags |= RayFlag::Light;
 		ray.WavelengthNM = lsin.WavelengthNM;
 
 		mLightWalker.traverse(
@@ -365,9 +365,9 @@ private:
 		}
 
 		// Setup ray flags
-		int rflags = RF_Bounce;
+		RayFlags rflags = RayFlag::Bounce;
 		if (sout.isHeroCollapsing())
-			rflags |= RF_Monochrome;
+			rflags |= RayFlag::Monochrome;
 
 		return std::make_optional(ip.nextRay(L, rflags, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX));
 	}
@@ -377,8 +377,8 @@ private:
 	{
 		PR_ASSERT(entity, "Expected valid entity");
 
-		tctx.Session.tile()->statistics().add(RST_EntityHitCount);
-		tctx.Session.tile()->statistics().add(RST_LightDepthCount);
+		tctx.Session.tile()->statistics().add(RenderStatisticEntry::EntityHitCount);
+		tctx.Session.tile()->statistics().add(RenderStatisticEntry::LightDepthCount);
 
 		const uint32 pathLength = ip.Ray.IterationDepth + 1;
 
@@ -428,8 +428,8 @@ private:
 	{
 		PR_ASSERT(entity, "Expected valid entity");
 
-		tctx.Session.tile()->statistics().add(RST_EntityHitCount);
-		tctx.Session.tile()->statistics().add(RST_CameraDepthCount);
+		tctx.Session.tile()->statistics().add(RenderStatisticEntry::EntityHitCount);
+		tctx.Session.tile()->statistics().add(RenderStatisticEntry::CameraDepthCount);
 
 		// Update the MIS quantities before computing the vertex.
 		current.MIS_VCM *= mis_term<Mode>(ip.Depth2);
@@ -493,7 +493,7 @@ private:
 		MaterialPDFOutput pout;
 		material->pdf(in, pout, tctx.Session);
 
-		if (ip.Ray.Flags & RF_Monochrome) {
+		if (ip.Ray.Flags & RayFlag::Monochrome) {
 			forwardPDF_S  = out.PDF_S[0];
 			backwardPDF_S = pout.PDF_S[0];
 			out.Weight *= SpectralBlobUtils::HeroOnly();
@@ -590,7 +590,7 @@ private:
 
 		// Trace shadow ray
 		const float distance = light->isInfinite() ? PR_INF : std::sqrt(sqrD);
-		const Ray shadow	 = cameraIP.nextRay(L, RF_Shadow, SHADOW_RAY_MIN, distance);
+		const Ray shadow	 = cameraIP.nextRay(L, RayFlag::Shadow, SHADOW_RAY_MIN, distance);
 
 		const bool isVisible	  = front2front && !tctx.Session.traceShadowRay(shadow, distance);
 		const SpectralBlob lightW = lsout.Radiance;
@@ -606,10 +606,10 @@ private:
 		tctx.ThreadContext.TmpPath.addToken(cameraScatteringType);
 
 		if (light->isInfinite()) {
-			tctx.Session.tile()->statistics().add(RST_BackgroundHitCount);
+			tctx.Session.tile()->statistics().add(RenderStatisticEntry::BackgroundHitCount);
 			tctx.ThreadContext.TmpPath.addToken(LightPathToken::Background());
 		} else {
-			tctx.Session.tile()->statistics().add(RST_EntityHitCount);
+			tctx.Session.tile()->statistics().add(RenderStatisticEntry::EntityHitCount);
 			tctx.ThreadContext.TmpPath.addToken(LightPathToken::Emissive());
 		}
 
@@ -697,7 +697,7 @@ private:
 		PR_ASSERT(mis <= 1.0f, "MIS must be between 0 and 1");
 
 		// Construct ray
-		const Ray shadow = cameraIP.nextRay(cD, RF_Shadow, SHADOW_RAY_MIN, dist);
+		const Ray shadow = cameraIP.nextRay(cD, RayFlag::Shadow, SHADOW_RAY_MIN, dist);
 
 		// Extract visible and geometry term
 		const bool isVisible = worthACheck && !tctx.Session.traceShadowRay(shadow, dist);
@@ -838,7 +838,7 @@ private:
 	void handleInfLights(const IterationContext& tctx, CameraTraversalContext& current, const Ray& ray) const
 	{
 		const uint32 cameraPathLength = ray.IterationDepth + 1;
-		tctx.Session.tile()->statistics().add(RST_BackgroundHitCount);
+		tctx.Session.tile()->statistics().add(RenderStatisticEntry::BackgroundHitCount);
 
 		// Evaluate radiance
 		float misDenom		  = 0;

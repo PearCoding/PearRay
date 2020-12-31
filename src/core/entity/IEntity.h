@@ -1,16 +1,18 @@
 #pragma once
 
+#include "Enum.h"
 #include "ITransformable.h"
 #include "geometry/BoundingBox.h"
 
 namespace PR {
-enum EntityVisibilityFlag : uint8 {
-	EVF_Camera = 0x1,
-	EVF_Light  = 0x2,
-	EVF_Bounce = 0x4,
-	EVF_Shadow = 0x8,
-	EVF_All	   = EVF_Camera | EVF_Light | EVF_Bounce | EVF_Shadow
+enum class EntityVisibility : uint8 {
+	Camera = (uint8)RayFlag::Camera,
+	Light  = (uint8)RayFlag::Light,
+	Bounce = (uint8)RayFlag::Bounce,
+	Shadow = (uint8)RayFlag::Shadow,
+	All	   = Camera | Light | Bounce | Shadow
 };
+PR_MAKE_FLAGS(EntityVisibility, EntityVisibilityFlags)
 
 struct GeometryPoint;
 struct GeometryRepr;
@@ -54,8 +56,8 @@ public:
 
 	bool isRenderable() const override;
 
-	inline uint8 visibilityFlags() const;
-	inline void setVisibilityFlags(uint8 flags);
+	inline EntityVisibilityFlags visibilityFlags() const;
+	inline void setVisibilityFlags(EntityVisibilityFlags flags);
 
 	// Optional Interface
 	virtual bool isCollidable() const;
@@ -100,7 +102,7 @@ public:
 	inline uint32 emissionID() const { return mEmissionID; }
 
 private:
-	uint8 mVisibilityFlags;
+	EntityVisibilityFlags mVisibilityFlags;
 	const uint32 mEmissionID;
 };
 } // namespace PR

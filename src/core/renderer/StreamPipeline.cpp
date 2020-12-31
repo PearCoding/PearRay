@@ -124,7 +124,7 @@ void StreamPipeline::fillWithCameraRays()
 			ray.IterationDepth = 0;
 			ray.GroupID		   = grp_id;
 			ray.PixelIndex	   = p(1) * slice + p(0);
-			ray.Flags		   = (camera_ray.value().IsMonochrome ? (uint32)RF_Monochrome : 0) | RF_Camera;
+			ray.Flags		   = (camera_ray.value().IsMonochrome ? (uint32)RayFlag::Monochrome : 0) | (uint32)RayFlag::Camera;
 
 			enqueueCameraRay(ray);
 		}

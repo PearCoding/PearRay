@@ -16,7 +16,7 @@
 #include "Logger.h"
 
 namespace PR {
-constexpr RayFlags UsedRayType = RF_Bounce; // Do not use RF_Shadow, as most lights will be visible. We don't want that
+constexpr RayFlags UsedRayType = RayFlag::Bounce; // Do not use RayFlags::Shadow, as most lights will be visible. We don't want that
 class IntAOInstance : public IIntegratorInstance {
 public:
 	explicit IntAOInstance(size_t sample_count)
@@ -31,8 +31,8 @@ public:
 		Random& random			= session.random();
 		const LightPath stdPath = LightPath::createCDL(1);
 
-		session.tile()->statistics().add(RST_EntityHitCount, grp.size());
-		session.tile()->statistics().add(RST_CameraDepthCount, grp.size());
+		session.tile()->statistics().add(RenderStatisticEntry::EntityHitCount, grp.size());
+		session.tile()->statistics().add(RenderStatisticEntry::CameraDepthCount, grp.size());
 		for (size_t i = 0; i < grp.size(); ++i) {
 			IntersectionPoint spt;
 			grp.computeShadingPoint(i, spt);
@@ -66,7 +66,7 @@ public:
 			while (session.pipeline()->hasShadingGroup()) {
 				auto sg = session.pipeline()->popShadingGroup(session);
 				if (sg.isBackground())
-					session.tile()->statistics().add(RST_BackgroundHitCount, sg.size());
+					session.tile()->statistics().add(RenderStatisticEntry::BackgroundHitCount, sg.size());
 				else
 					handleShadingGroup(session, sg);
 			}

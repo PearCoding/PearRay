@@ -38,7 +38,7 @@ public:
 		PR_PROFILE_THIS;
 
 		const auto& sctx = in.ShadingContext;
-		out.Type		 = MST_DiffuseReflection;
+		out.Type		 = MaterialScatteringType::DiffuseReflection;
 
 		// Ward is only defined in the positive hemisphere
 		if (in.Context.NdotV() <= PR_EPSILON || in.Context.NdotL() <= PR_EPSILON) {
@@ -104,7 +104,7 @@ public:
 		out.L	   = Sampling::cos_hemi(in.RND.getFloat(), in.RND.getFloat());
 		out.PDF_S  = Sampling::cos_hemi_pdf(out.L(2));
 		out.Weight = mAlbedo->eval(sctx) * out.L[2];
-		out.Type   = MST_DiffuseReflection;
+		out.Type   = MaterialScatteringType::DiffuseReflection;
 	}
 
 	void sampleSpecularPath(const MaterialSampleInput& in, const ShadingContext& sctx, MaterialSampleOutput& out) const
@@ -152,7 +152,7 @@ public:
 
 		Vector3f H = Spherical::cartesian(sinTheta, cosTheta, sinPhi, cosPhi);
 		out.L	   = Scattering::reflect(in.Context.V, H);
-		out.Type   = MST_SpecularReflection;
+		out.Type   = MaterialScatteringType::SpecularReflection;
 		out.Weight = mSpecularity->eval(sctx) * out.PDF_S * std::max(0.0f, out.L[2]);
 	}
 

@@ -4,10 +4,10 @@
 #include "shader/INodePlugin.h"
 
 namespace PR {
-enum ScaleType {
-	ST_None,
-	ST_Isotropic,
-	ST_Anisotropic
+enum class ScaleType {
+	None,
+	Isotropic,
+	Anisotropic
 };
 
 template <ScaleType ST>
@@ -26,9 +26,9 @@ public:
 
 	inline bool check(const ShadingContext& ctx) const
 	{
-		if constexpr (ST == ST_None) {
+		if constexpr (ST == ScaleType::None) {
 			return check(ctx.UV);
-		} else if constexpr (ST == ST_Isotropic) {
+		} else if constexpr (ST == ScaleType::Isotropic) {
 			const float scale = mScaleU->eval(ctx);
 			return check(ctx.UV * scale);
 		} else {
@@ -78,11 +78,11 @@ public:
 		const auto scaleV = ctx.lookupScalarNode(ctx.parameters().getParameter(3), 5);
 
 		if (ctx.parameters().positionalParameterCount() == 2)
-			return std::make_shared<CheckerboardNode<ST_None>>(op1, op2, scaleU, scaleU);
+			return std::make_shared<CheckerboardNode<ScaleType::None>>(op1, op2, scaleU, scaleU);
 		else if (ctx.parameters().positionalParameterCount() == 3)
-			return std::make_shared<CheckerboardNode<ST_Isotropic>>(op1, op2, scaleU, scaleU);
+			return std::make_shared<CheckerboardNode<ScaleType::Isotropic>>(op1, op2, scaleU, scaleU);
 		else
-			return std::make_shared<CheckerboardNode<ST_Anisotropic>>(op1, op2, scaleU, scaleV);
+			return std::make_shared<CheckerboardNode<ScaleType::Anisotropic>>(op1, op2, scaleU, scaleV);
 	}
 
 	const std::vector<std::string>& getNames() const override

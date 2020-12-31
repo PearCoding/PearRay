@@ -18,36 +18,36 @@
 #include "Logger.h"
 
 namespace PR {
-enum VisualFeedbackMode {
-	VFM_ColoredEntityID,
-	VFM_ColoredMaterialID,
-	VFM_ColoredEmissionID,
-	VFM_ColoredDisplaceID,
-	VFM_ColoredPrimitiveID,
-	VFM_ColoredRayID,
-	VFM_RayDirection,
-	VFM_Parameter,
-	VFM_Inside,
-	VFM_NdotV,
-	VFM_ValidateMaterial
+enum class VisualFeedbackMode {
+	ColoredEntityID,
+	ColoredMaterialID,
+	ColoredEmissionID,
+	ColoredDisplaceID,
+	ColoredPrimitiveID,
+	ColoredRayID,
+	RayDirection,
+	Parameter,
+	Inside,
+	NdotV,
+	ValidateMaterial
 };
 
 static struct {
 	const char* Name;
 	VisualFeedbackMode Mode;
 } _mode[] = {
-	{ "colored_entity_id", VFM_ColoredEntityID },
-	{ "colored_material_id", VFM_ColoredMaterialID },
-	{ "colored_emission_id", VFM_ColoredEmissionID },
-	{ "colored_displace_id", VFM_ColoredDisplaceID },
-	{ "colored_primitive_id", VFM_ColoredPrimitiveID },
-	{ "colored_ray_id", VFM_ColoredRayID },
-	{ "ray_direction", VFM_RayDirection },
-	{ "parameter", VFM_Parameter },
-	{ "inside", VFM_Inside },
-	{ "ndotv", VFM_NdotV },
-	{ "validate_material", VFM_ValidateMaterial },
-	{ "", VFM_ColoredEntityID }
+	{ "colored_entity_id", VisualFeedbackMode::ColoredEntityID },
+	{ "colored_material_id", VisualFeedbackMode::ColoredMaterialID },
+	{ "colored_emission_id", VisualFeedbackMode::ColoredEmissionID },
+	{ "colored_displace_id", VisualFeedbackMode::ColoredDisplaceID },
+	{ "colored_primitive_id", VisualFeedbackMode::ColoredPrimitiveID },
+	{ "colored_ray_id", VisualFeedbackMode::ColoredRayID },
+	{ "ray_direction", VisualFeedbackMode::RayDirection },
+	{ "parameter", VisualFeedbackMode::Parameter },
+	{ "inside", VisualFeedbackMode::Inside },
+	{ "ndotv", VisualFeedbackMode::NdotV },
+	{ "validate_material", VisualFeedbackMode::ValidateMaterial },
+	{ "", VisualFeedbackMode::ColoredEntityID }
 };
 
 using RGB = std::array<float, 3>;
@@ -109,7 +109,7 @@ public:
 	{
 		LightPath stdPath = LightPath::createCDL(1);
 		Random random(42);
-		session.tile()->statistics().add(RST_EntityHitCount, grp.size());
+		session.tile()->statistics().add(RenderStatisticEntry::EntityHitCount, grp.size());
 		for (size_t i = 0; i < grp.size(); ++i) {
 			IntersectionPoint spt;
 			grp.computeShadingPoint(i, spt);
@@ -119,49 +119,49 @@ public:
 			SpectralBlob radiance = SpectralBlob::Zero();
 			SpectralBlob weight	  = SpectralBlob::Ones() * abs(spt.Surface.NdotV);
 			switch (mMode) {
-			case VFM_ColoredEntityID:
+			case VisualFeedbackMode::ColoredEntityID:
 				radiance = SpectralUpsampler::compute(
 					mParametric.RandomColors[spt.Surface.Geometry.EntityID % RANDOM_COLOR_COUNT],
 					spt.Ray.WavelengthNM);
 				if (mApplyDot)
 					radiance *= weight;
 				break;
-			case VFM_ColoredMaterialID:
+			case VisualFeedbackMode::ColoredMaterialID:
 				radiance = SpectralUpsampler::compute(
 					mParametric.RandomColors[spt.Surface.Geometry.MaterialID % RANDOM_COLOR_COUNT],
 					spt.Ray.WavelengthNM);
 				if (mApplyDot)
 					radiance *= weight;
 				break;
-			case VFM_ColoredEmissionID:
+			case VisualFeedbackMode::ColoredEmissionID:
 				radiance = SpectralUpsampler::compute(
 					mParametric.RandomColors[spt.Surface.Geometry.EmissionID % RANDOM_COLOR_COUNT],
 					spt.Ray.WavelengthNM);
 				if (mApplyDot)
 					radiance *= weight;
 				break;
-			case VFM_ColoredDisplaceID:
+			case VisualFeedbackMode::ColoredDisplaceID:
 				radiance = SpectralUpsampler::compute(
 					mParametric.RandomColors[spt.Surface.Geometry.DisplaceID % RANDOM_COLOR_COUNT],
 					spt.Ray.WavelengthNM);
 				if (mApplyDot)
 					radiance *= weight;
 				break;
-			case VFM_ColoredPrimitiveID:
+			case VisualFeedbackMode::ColoredPrimitiveID:
 				radiance = SpectralUpsampler::compute(
 					mParametric.RandomColors[spt.Surface.Geometry.PrimitiveID % RANDOM_COLOR_COUNT],
 					spt.Ray.WavelengthNM);
 				if (mApplyDot)
 					radiance *= weight;
 				break;
-			case VFM_ColoredRayID:
+			case VisualFeedbackMode::ColoredRayID:
 				radiance = SpectralUpsampler::compute(
 					mParametric.RandomColors[hitEntry.RayID % RANDOM_COLOR_COUNT],
 					spt.Ray.WavelengthNM);
 				if (mApplyDot)
 					radiance *= weight;
 				break;
-			case VFM_RayDirection: {
+			case VisualFeedbackMode::RayDirection: {
 				Vector3f rescaledDir = 0.5f * (spt.Ray.Direction + Vector3f(1, 1, 1));
 				const auto r		 = SpectralUpsampler::compute(mParametric.Red, spt.Ray.WavelengthNM);
 				const auto g		 = SpectralUpsampler::compute(mParametric.Green, spt.Ray.WavelengthNM);
@@ -170,7 +170,7 @@ public:
 				if (mApplyDot)
 					radiance *= weight;
 			} break;
-			case VFM_Parameter: {
+			case VisualFeedbackMode::Parameter: {
 				const auto r = SpectralUpsampler::compute(mParametric.Red, spt.Ray.WavelengthNM);
 				const auto g = SpectralUpsampler::compute(mParametric.Green, spt.Ray.WavelengthNM);
 				const auto b = SpectralUpsampler::compute(mParametric.Blue, spt.Ray.WavelengthNM);
@@ -178,14 +178,14 @@ public:
 				if (mApplyDot)
 					radiance *= weight;
 			} break;
-			case VFM_Inside:
+			case VisualFeedbackMode::Inside:
 				radiance = SpectralUpsampler::compute(
 					!std::signbit(spt.Surface.NdotV) ? mParametric.True : mParametric.False,
 					spt.Ray.WavelengthNM);
 				if (mApplyDot)
 					radiance *= weight;
 				break;
-			case VFM_NdotV: {
+			case VisualFeedbackMode::NdotV: {
 				const float originalNdotV = spt.Ray.Direction.dot(spt.Surface.Geometry.N);
 				if (originalNdotV < 0) {
 					const auto g = SpectralUpsampler::compute(mParametric.Green, spt.Ray.WavelengthNM);
@@ -195,7 +195,7 @@ public:
 					radiance	 = r * originalNdotV;
 				}
 			} break;
-			case VFM_ValidateMaterial: {
+			case VisualFeedbackMode::ValidateMaterial: {
 				IMaterial* mat = session.getMaterial(spt.Surface.Geometry.MaterialID);
 				if (mat) {
 					MaterialSampleInput samp_in(spt, session.threadID(), random);
@@ -239,9 +239,9 @@ public:
 			session.pipeline()->runPipeline();
 			while (session.pipeline()->hasShadingGroup()) {
 				auto sg = session.pipeline()->popShadingGroup(session);
-				session.tile()->statistics().add(RST_CameraDepthCount, sg.size());
+				session.tile()->statistics().add(RenderStatisticEntry::CameraDepthCount, sg.size());
 				if (sg.isBackground())
-					session.tile()->statistics().add(RST_BackgroundHitCount, sg.size());
+					session.tile()->statistics().add(RenderStatisticEntry::BackgroundHitCount, sg.size());
 				else
 					handleShadingGroup(session, sg);
 			}
@@ -291,7 +291,7 @@ public:
 		std::transform(modeS.begin(), modeS.end(), modeS.begin(),
 					   [](unsigned char c) { return std::tolower(c); });
 
-		VisualFeedbackMode mode = VFM_Parameter;
+		VisualFeedbackMode mode = VisualFeedbackMode::Parameter;
 		for (int i = 0; _mode[i].Name; ++i) {
 			if (_mode[i].Name == modeS) {
 				mode = _mode[i].Mode;

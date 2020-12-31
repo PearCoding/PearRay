@@ -3,11 +3,11 @@
 #include "buffer/FrameBuffer.h"
 
 namespace PR {
-enum ToneColorMode {
-	TCM_SRGB,
-	TCM_XYZ,
-	TCM_XYZ_NORM,
-	TCM_LUMINANCE
+enum class ToneColorMode {
+	SRGB,
+	XYZ,
+	XYZNorm,
+	Luminance
 };
 
 /// Maps CIE XYZ triplets to another arbitary color space

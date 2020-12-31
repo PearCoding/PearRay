@@ -48,7 +48,7 @@ public:
 
 		out.Weight = mTint->eval(in.ShadingContext) * eval(wi, wo, in.Context.WavelengthNM);
 		out.PDF_S  = mBRDF.pdf(wi, wo);
-		out.Type   = MST_DiffuseReflection;
+		out.Type   = MaterialScatteringType::DiffuseReflection;
 	}
 
 	void pdf(const MaterialEvalInput& in, MaterialPDFOutput& out,
@@ -74,7 +74,7 @@ public:
 		mBRDF.sample(u, wi, &wo, &pdf);
 
 		out.Weight = mTint->eval(in.ShadingContext) * eval(wi, wo, in.Context.WavelengthNM);
-		out.Type   = MST_DiffuseReflection;
+		out.Type   = MaterialScatteringType::DiffuseReflection;
 		out.L	   = Vector3f(wo[0], wo[1], wo[2]);
 		out.PDF_S  = pdf;
 	}

@@ -4,20 +4,21 @@
 #include "trace/IntersectionPoint.h"
 
 namespace PR {
-enum LightPathBufferEntryFlags : uint32 {
-	LPBEF_SCATTER_REFLECTION = 0x1,
-	LPBEF_EVENT_DIFFUSE		 = 0x2
+enum class LightPathBufferEntryFlag : uint32 {
+	ScatterReflection = 0x1,
+	EventDiffuse	  = 0x2
 };
+PR_MAKE_FLAGS(LightPathBufferEntryFlag, LightPathBufferEntryFlags)
 
 struct PR_LIB_CORE LightPathBufferEntry {
-	uint32 Flags;
+	LightPathBufferEntryFlags Flags;
 	uint32 LabelIndex;
 
 	inline LightPathToken tokenize() const
 	{
 		return LightPathToken(
-			(Flags & LPBEF_SCATTER_REFLECTION) ? ST_REFLECTION : ST_REFRACTION,
-			(Flags & LPBEF_EVENT_DIFFUSE) ? SE_DIFFUSE : SE_SPECULAR,
+			(Flags & LightPathBufferEntryFlag::ScatterReflection) ? ScatteringType::Reflection : ScatteringType::Refraction,
+			(Flags & LightPathBufferEntryFlag::EventDiffuse) ? ScatteringEvent::Diffuse : ScatteringEvent::Specular,
 			LabelIndex);
 	}
 };

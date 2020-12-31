@@ -4,7 +4,7 @@
 
 namespace PR {
 ToneMapper::ToneMapper()
-	: mColorMode(TCM_SRGB)
+	: mColorMode(ToneColorMode::SRGB)
 	, mScale(1.0f)
 {
 }
@@ -16,10 +16,10 @@ void ToneMapper::map(const float* PR_RESTRICT xyzIn, const float* PR_RESTRICT we
 	PR_ASSERT(xyzIn != rgbOut, "Inplace tonemapping is not supported");
 
 	switch (mColorMode) {
-	case TCM_SRGB:
+	case ToneColorMode::SRGB:
 		RGBConverter::fromXYZ(xyzIn, rgbOut, outElems, pixelCount);
 		break;
-	case TCM_XYZ:
+	case ToneColorMode::XYZ:
 		if (outElems == 3) {
 			memcpy(rgbOut, xyzIn, sizeof(float) * pixelCount * 3);
 		} else {
@@ -31,7 +31,7 @@ void ToneMapper::map(const float* PR_RESTRICT xyzIn, const float* PR_RESTRICT we
 			}
 		}
 		break;
-	case TCM_XYZ_NORM:
+	case ToneColorMode::XYZNorm:
 		PR_OPT_LOOP
 		for (size_t i = 0; i < pixelCount; ++i) {
 			const float X = xyzIn[i * IElems + 0];
@@ -44,7 +44,7 @@ void ToneMapper::map(const float* PR_RESTRICT xyzIn, const float* PR_RESTRICT we
 			rgbOut[i * outElems + 2] *= F;
 		}
 		break;
-	case TCM_LUMINANCE:
+	case ToneColorMode::Luminance:
 		PR_OPT_LOOP
 		for (size_t i = 0; i < pixelCount; ++i) {
 			const float Y			 = xyzIn[i * IElems + 1];

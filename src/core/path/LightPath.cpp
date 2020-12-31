@@ -14,7 +14,7 @@ LightPath LightPath::createCDL(size_t diffuseCount)
 	path.addToken(LightPathToken::Camera());
 
 	for (size_t i = 0; i < diffuseCount; ++i)
-		path.addToken(LightPathToken(ST_REFLECTION, SE_DIFFUSE));
+		path.addToken(LightPathToken(ScatteringType::Reflection, ScatteringEvent::Diffuse));
 
 	path.addToken(LightPathToken::Emissive());
 	return path;

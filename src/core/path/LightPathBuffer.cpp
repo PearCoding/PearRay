@@ -54,7 +54,7 @@ LightPath LightPathBuffer::getPath(size_t ray_id, size_t maxLength) const
 	const size_t len					= std::min(header->Entries, maxLength);
 
 	LightPath path(1 + len);
-	path.addToken(LightPathToken(ST_CAMERA, SE_NONE));
+	path.addToken(LightPathToken(ScatteringType::Camera, ScatteringEvent::None));
 
 	for (size_t i = 0; i < len; ++i) {
 		path.addToken(entries[i].tokenize());

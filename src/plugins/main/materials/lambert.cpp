@@ -38,7 +38,7 @@ public:
 		const float dot = in.Context.V.sameHemisphere(in.Context.L) ? culling(in.Context.NdotL()) : 0;
 		out.Weight		= mAlbedo->eval(in.ShadingContext) * dot * PR_INV_PI;
 		out.PDF_S		= Sampling::cos_hemi_pdf(dot);
-		out.Type		= MST_DiffuseReflection;
+		out.Type		= MaterialScatteringType::DiffuseReflection;
 	}
 
 	void pdf(const MaterialEvalInput& in, MaterialPDFOutput& out,
@@ -57,7 +57,7 @@ public:
 
 		if constexpr (!TwoSided) {
 			if (in.Context.NdotV() < 0.0f) {
-				out = MaterialSampleOutput::Reject(MST_DiffuseReflection);
+				out = MaterialSampleOutput::Reject(MaterialScatteringType::DiffuseReflection);
 				return;
 			}
 		}
@@ -66,7 +66,7 @@ public:
 
 		out.Weight = mAlbedo->eval(in.ShadingContext) * out.L(2) * PR_INV_PI;
 		out.PDF_S  = Sampling::cos_hemi_pdf(out.L(2));
-		out.Type   = MST_DiffuseReflection;
+		out.Type   = MaterialScatteringType::DiffuseReflection;
 
 		// Make sure the output direction is on the same side
 		out.L = in.Context.V.makeSameHemisphere(out.L);

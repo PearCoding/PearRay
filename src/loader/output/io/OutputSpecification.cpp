@@ -283,16 +283,16 @@ void OutputSpecification::parse(Environment*, const DL::DataGroup& entry)
 			std::string type = typeD.getString();
 			std::transform(type.begin(), type.end(), type.begin(), ::tolower);
 
-			ToneColorMode tcm = TCM_SRGB;
+			ToneColorMode tcm = ToneColorMode::SRGB;
 			if (colorD.type() == DL::DT_String) {
 				std::string color = colorD.getString();
 				std::transform(color.begin(), color.end(), color.begin(), ::tolower);
 				if (color == "xyz")
-					tcm = TCM_XYZ;
+					tcm = ToneColorMode::XYZ;
 				else if (color == "norm_xyz")
-					tcm = TCM_XYZ_NORM;
+					tcm = ToneColorMode::XYZNorm;
 				else if (color == "lum" || color == "luminance" || color == "gray")
-					tcm = TCM_LUMINANCE;
+					tcm = ToneColorMode::Luminance;
 			}
 
 			std::string lpe = "";
@@ -378,16 +378,16 @@ void OutputSpecification::parse(Environment*, const DL::DataGroup& entry)
 			std::string type = typeD.getString();
 			std::transform(type.begin(), type.end(), type.begin(), ::tolower);
 
-			ToneColorMode tcm = TCM_SRGB;
+			ToneColorMode tcm = ToneColorMode::SRGB;
 			if (colorD.type() == DL::DT_String) {
 				std::string color = colorD.getString();
 				std::transform(color.begin(), color.end(), color.begin(), ::tolower);
 				if (color == "xyz")
-					tcm = TCM_XYZ;
+					tcm = ToneColorMode::XYZ;
 				else if (color == "norm_xyz")
-					tcm = TCM_XYZ_NORM;
+					tcm = ToneColorMode::XYZNorm;
 				else if (color == "lum" || color == "luminance" || color == "gray")
-					tcm = TCM_LUMINANCE;
+					tcm = ToneColorMode::Luminance;
 			}
 
 			std::string name = "";

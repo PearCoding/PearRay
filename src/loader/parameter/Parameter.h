@@ -4,14 +4,15 @@
 #include <vector>
 
 namespace PR {
-enum ParameterType : uint8 {
-	PT_Invalid = 0,
-	PT_Bool,
-	PT_Int,
-	PT_UInt,
-	PT_Number,
-	PT_String,
-	PT_Reference // Uses uint
+enum class ParameterType : uint8 {
+	Invalid = 0,
+	Bool,
+	Int,
+	UInt,
+	Number,
+	String,
+	Reference, // Uses uint
+	Group // TODO
 };
 
 constexpr uint32 P_INVALID_REFERENCE = (uint32)-1;
