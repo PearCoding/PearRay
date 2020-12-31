@@ -69,17 +69,17 @@ void StatusObserver::update(const UpdateInfo& info)
 			std::cout << std::setw(PERC_OUTPUT_FIELD_SIZE) << std::setprecision(4) << std::fixed << status.percentage() << "% | ";
 
 		if (status.hasField("int.feedback"))
-			std::cout << status.getField("int.feedback").getString() << " | ";
+			std::cout << std::get<std::string>(status.getField("int.feedback")) << " | ";
 
 		std::cout << "I: " << std::setw(ITER_OUTPUT_FIELD_SIZE) << info.CurrentIteration;
-		
+
 		if (mHasPasses)
 			std::cout << " P: " << std::setw(ITER_OUTPUT_FIELD_SIZE / 2) << info.CurrentPass;
 
-		std::cout << " | S: " << std::setw(VALUE_OUTPUT_FIELD_SIZE) << status.getField("global.pixel_sample_count").getUInt()
-				  << " R: " << std::setw(VALUE_OUTPUT_FIELD_SIZE) << status.getField("global.ray_count").getUInt()
-				  << " EH: " << std::setw(VALUE_OUTPUT_FIELD_SIZE) << status.getField("global.entity_hit_count").getUInt()
-				  << " BH: " << std::setw(VALUE_OUTPUT_FIELD_SIZE) << status.getField("global.background_hit_count").getUInt()
+		std::cout << " | S: " << std::setw(VALUE_OUTPUT_FIELD_SIZE) << std::get<uint64>(status.getField("global.pixel_sample_count"))
+				  << " R: " << std::setw(VALUE_OUTPUT_FIELD_SIZE) << std::get<uint64>(status.getField("global.ray_count"))
+				  << " EH: " << std::setw(VALUE_OUTPUT_FIELD_SIZE) << std::get<uint64>(status.getField("global.entity_hit_count"))
+				  << " BH: " << std::setw(VALUE_OUTPUT_FIELD_SIZE) << std::get<uint64>(status.getField("global.background_hit_count"))
 				  << " | RT: " << std::setw(TIME_OUTPUT_FIELD_SIZE) << timestr(fullDuration.count());
 
 		if (!mRenderContext->settings().progressive) {

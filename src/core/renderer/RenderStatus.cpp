@@ -16,7 +16,7 @@ double RenderStatus::percentage() const
 	return mPercentage;
 }
 
-void RenderStatus::setField(const std::string& unique_name, const Variant& v)
+void RenderStatus::setField(const std::string& unique_name, const Field& v)
 {
 	mFields[unique_name] = v;
 }
@@ -26,7 +26,7 @@ bool RenderStatus::hasField(const std::string& unique_name) const
 	return mFields.count(unique_name) != 0;
 }
 
-Variant RenderStatus::getField(const std::string& unique_name) const
+RenderStatus::Field RenderStatus::getField(const std::string& unique_name) const
 {
 	PR_ASSERT(hasField(unique_name), "Couldn't return status field due to missing entry.");
 	return mFields.at(unique_name);

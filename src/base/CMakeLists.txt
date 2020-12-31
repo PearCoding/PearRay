@@ -7,7 +7,6 @@ set(PR_Src
   Platform.cpp
   Profiler.h
   Profiler.cpp
-  Variant.h
   arch/FileLock.cpp
   arch/FileLock.h
   arch/SharedLibrary.cpp

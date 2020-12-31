@@ -239,7 +239,7 @@ void handle_stop(const Arguments&)
 	if (!ensureConnection())
 		return;
 
-	Protocol::writeHeader(sConnection.Out, PT_StopRequest);
+	Protocol::writeHeader(sConnection.Out, ProtocolType::StopRequest);
 	sConnection.Out.flush();
 }
 
@@ -249,7 +249,7 @@ void handle_ping(const Arguments&)
 		return;
 
 	auto start = std::chrono::high_resolution_clock::now();
-	Protocol::writeHeader(sConnection.Out, PT_PingRequest);
+	Protocol::writeHeader(sConnection.Out, ProtocolType::PingRequest);
 	sConnection.Out.flush();
 
 	ProtocolType type;
@@ -257,10 +257,10 @@ void handle_ping(const Arguments&)
 		std::cout << "Could not get protocol header" << std::endl;
 	} else {
 		auto end = std::chrono::high_resolution_clock::now();
-		if (type == PT_PingResponse)
+		if (type == ProtocolType::PingResponse)
 			std::cout << "Successful [" << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms]" << std::endl;
 		else
-			std::cout << "Got unexpected response " << type << std::endl;
+			std::cout << "Got unexpected response " << (uint8)type << std::endl;
 	}
 	notifyDisonnection();
 }
@@ -270,19 +270,19 @@ void handle_status(const Arguments&)
 	if (!ensureConnection())
 		return;
 
-	Protocol::writeHeader(sConnection.Out, PT_StatusRequest);
+	Protocol::writeHeader(sConnection.Out, ProtocolType::StatusRequest);
 	sConnection.Out.flush();
 
 	ProtocolType type;
 	if (!Protocol::readHeader(sConnection.In, type)) {
 		std::cout << "Could not get protocol header" << std::endl;
 	} else {
-		if (type == PT_StatusResponse) {
+		if (type == ProtocolType::StatusResponse) {
 			ProtocolStatus status;
 			Protocol::readStatus(sConnection.In, status);
 			std::cout << status.Percentage << "% " << status.Iteration << std::endl;
 		} else
-			std::cout << "Got unexpected response " << type << std::endl;
+			std::cout << "Got unexpected response " << (uint8)type << std::endl;
 	}
 	notifyDisonnection();
 }
@@ -292,14 +292,14 @@ void handle_save(const Arguments& args)
 	if (!ensureConnection())
 		return;
 
-	Protocol::writeHeader(sConnection.Out, PT_ImageRequest);
+	Protocol::writeHeader(sConnection.Out, ProtocolType::ImageRequest);
 	sConnection.Out.flush();
 
 	ProtocolType type;
 	if (!Protocol::readHeader(sConnection.In, type)) {
 		std::cout << "Could not get protocol header" << std::endl;
 	} else {
-		if (type == PT_ImageResponse) {
+		if (type == ProtocolType::ImageResponse) {
 			ProtocolImage image;
 			if (!Protocol::readImageHeader(sConnection.In, image)) {
 				std::cout << "Could not get image header" << std::endl;
@@ -322,7 +322,7 @@ void handle_save(const Arguments& args)
 				}
 			}
 		} else
-			std::cout << "Got unexpected response " << type << std::endl;
+			std::cout << "Got unexpected response " << (uint8)type << std::endl;
 	}
 	notifyDisonnection();
 }

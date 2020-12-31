@@ -36,25 +36,25 @@ void printStatistics(const RenderStatus& status)
 	auto& out = PR_LOG(L_INFO);
 	out << "Statistics:" << std::endl;
 
-	const auto raycount	  = status.getField("global.ray_count").getUInt();
-	const auto pixelcount = status.getField("global.pixel_sample_count").getUInt();
+	const auto raycount	  = std::get<uint64>(status.getField("global.ray_count"));
+	const auto pixelcount = std::get<uint64>(status.getField("global.pixel_sample_count"));
 
 	out << "  Ray Count:         " << std::setw(OUTPUT_FIELD_SIZE) << raycount << std::endl
 		<< "  │ Sources:" << std::endl
-		<< "  │ ├ Camera Share:  " << std::setw(OUTPUT_FIELD_SIZE) << 100 * status.getField("global.camera_ray_count").getUInt() / (double)raycount << " %" << std::endl
-		<< "  │ └ Light Share:   " << std::setw(OUTPUT_FIELD_SIZE) << 100 * status.getField("global.light_ray_count").getUInt() / (double)raycount << " %" << std::endl
+		<< "  │ ├ Camera Share:  " << std::setw(OUTPUT_FIELD_SIZE) << 100 * std::get<uint64>(status.getField("global.camera_ray_count")) / (double)raycount << " %" << std::endl
+		<< "  │ └ Light Share:   " << std::setw(OUTPUT_FIELD_SIZE) << 100 * std::get<uint64>(status.getField("global.light_ray_count")) / (double)raycount << " %" << std::endl
 		<< "  ├ Types:" << std::endl
-		<< "  │ ├ Primary Share: " << std::setw(OUTPUT_FIELD_SIZE) << 100 * status.getField("global.primary_ray_count").getUInt() / (double)raycount << " %" << std::endl
-		<< "  │ ├ Bounce Share:  " << std::setw(OUTPUT_FIELD_SIZE) << 100 * status.getField("global.bounce_ray_count").getUInt() / (double)raycount << " %" << std::endl
-		<< "  │ └ Shadow Share:  " << std::setw(OUTPUT_FIELD_SIZE) << 100 * status.getField("global.shadow_ray_count").getUInt() / (double)raycount << " %" << std::endl
-		<< "  └ Monochrome:      " << std::setw(OUTPUT_FIELD_SIZE) << 100 * status.getField("global.monochrome_ray_count").getUInt() / (double)raycount << " %" << std::endl
+		<< "  │ ├ Primary Share: " << std::setw(OUTPUT_FIELD_SIZE) << 100 * std::get<uint64>(status.getField("global.primary_ray_count")) / (double)raycount << " %" << std::endl
+		<< "  │ ├ Bounce Share:  " << std::setw(OUTPUT_FIELD_SIZE) << 100 * std::get<uint64>(status.getField("global.bounce_ray_count")) / (double)raycount << " %" << std::endl
+		<< "  │ └ Shadow Share:  " << std::setw(OUTPUT_FIELD_SIZE) << 100 * std::get<uint64>(status.getField("global.shadow_ray_count")) / (double)raycount << " %" << std::endl
+		<< "  └ Monochrome:      " << std::setw(OUTPUT_FIELD_SIZE) << 100 * std::get<uint64>(status.getField("global.monochrome_ray_count")) / (double)raycount << " %" << std::endl
 		<< "  Pixel Count:       " << std::setw(OUTPUT_FIELD_SIZE) << pixelcount << std::endl
-		<< "  Entity Hits:       " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.entity_hit_count").getUInt() << std::endl
-		<< "  Background Hits:   " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.background_hit_count").getUInt() << std::endl
-		<< "  Mean Ray Depth:    " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.depth_count").getUInt() / (double)pixelcount << std::endl
-		<< "  ├ Camera:          " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.camera_depth_count").getUInt() / (double)pixelcount << std::endl
-		<< "  └ Light:           " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.light_depth_count").getUInt() / (double)pixelcount << std::endl
-		<< "  Iterations:        " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.iteration_count").getUInt() << std::endl;
+		<< "  Entity Hits:       " << std::setw(OUTPUT_FIELD_SIZE) << std::get<uint64>(status.getField("global.entity_hit_count")) << std::endl
+		<< "  Background Hits:   " << std::setw(OUTPUT_FIELD_SIZE) << std::get<uint64>(status.getField("global.background_hit_count")) << std::endl
+		<< "  Mean Ray Depth:    " << std::setw(OUTPUT_FIELD_SIZE) << std::get<uint64>(status.getField("global.depth_count")) / (double)pixelcount << std::endl
+		<< "  ├ Camera:          " << std::setw(OUTPUT_FIELD_SIZE) << std::get<uint64>(status.getField("global.camera_depth_count")) / (double)pixelcount << std::endl
+		<< "  └ Light:           " << std::setw(OUTPUT_FIELD_SIZE) << std::get<uint64>(status.getField("global.light_depth_count")) / (double)pixelcount << std::endl
+		<< "  Iterations:        " << std::setw(OUTPUT_FIELD_SIZE) << std::get<uint64>(status.getField("global.iteration_count")) << std::endl;
 }
 
 static uint32 sForceStop			 = 0;

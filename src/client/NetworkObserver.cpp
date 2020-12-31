@@ -12,7 +12,7 @@
 namespace PR {
 bool handle_ping(Serializer& out)
 {
-	return Protocol::writeHeader(out, PT_PingResponse);
+	return Protocol::writeHeader(out, ProtocolType::PingResponse);
 }
 
 bool handle_status(NetworkObserver* observer, Serializer& out);
@@ -27,16 +27,16 @@ bool handle_protocol(NetworkObserver* observer, BufferedNetworkSerializer& in, B
 
 	bool good = false;
 	switch (in_type) {
-	case PT_PingRequest:
+	case ProtocolType::PingRequest:
 		good = handle_ping(out);
 		break;
-	case PT_StatusRequest:
+	case ProtocolType::StatusRequest:
 		good = handle_status(observer, out);
 		break;
-	case PT_ImageRequest:
+	case ProtocolType::ImageRequest:
 		good = handle_image(observer, out);
 		break;
-	case PT_StopRequest:
+	case ProtocolType::StopRequest:
 		PR_LOG(L_INFO) << "Stop request by client" << std::endl;
 		observer->context()->requestStop();
 		return false; // We can stop the client after this request
@@ -60,7 +60,7 @@ bool handle_status(NetworkObserver* observer, Serializer& out)
 	out_status.Percentage = status.percentage();
 	out_status.Iteration  = observer->currentIteration();
 
-	if (Protocol::writeHeader(out, PT_StatusResponse))
+	if (Protocol::writeHeader(out, ProtocolType::StatusResponse))
 		return Protocol::writeStatus(out, out_status);
 	else
 		return false;
@@ -79,7 +79,7 @@ bool handle_image(NetworkObserver* observer, Serializer& out)
 
 	size_t size = channel->size().area() * 3;
 
-	if (Protocol::writeHeader(out, PT_ImageResponse))
+	if (Protocol::writeHeader(out, ProtocolType::ImageResponse))
 		return Protocol::writeImage(out, out_img, channel->ptr(), size);
 	else
 		return false;

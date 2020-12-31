@@ -6,21 +6,21 @@ bool Protocol::readHeader(Serializer& in, ProtocolType& type)
 {
 	uint8 type_field;
 	in.read(type_field);
-	if (type_field < PT_MAX) {
+	if ((ProtocolType)type_field < ProtocolType::MAX) {
 		type = (ProtocolType)type_field;
 		return in.isValid();
 	} else {
-		type = PT_Invalid;
+		type = ProtocolType::Invalid;
 		return false;
 	}
 }
 
 bool Protocol::writeHeader(Serializer& in, ProtocolType type)
 {
-	if (type >= PT_MAX)
+	if (type >= ProtocolType::MAX)
 		return false;
 
-	uint8 type_field = type;
+	uint8 type_field = (uint8)type;
 	in.write(type_field);
 	return in.isValid();
 }

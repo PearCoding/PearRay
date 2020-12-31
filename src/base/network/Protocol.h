@@ -22,19 +22,19 @@ namespace PR {
  * [float*Width*Height*3] Data
  */
 
-enum ProtocolType : uint8 {
-	PT_PingRequest	  = 0x0,  // Dataless
-	PT_PingResponse	  = 0x1,  // Dataless
-	PT_InfoRequest	  = 0x2,  // TODO
-	PT_InfoResponse	  = 0x3,  // TODO
-	PT_StopRequest	  = 0x4,  // Dataless
-	PT_StatusRequest  = 0x10, // Dataless
-	PT_StatusResponse = 0x11,
-	PT_ImageRequest	  = 0x12, // Dataless
-	PT_ImageResponse  = 0x13,
+enum class ProtocolType : uint8 {
+	PingRequest	   = 0x0,  // Dataless
+	PingResponse   = 0x1,  // Dataless
+	InfoRequest	   = 0x2,  // TODO
+	InfoResponse   = 0x3,  // TODO
+	StopRequest	   = 0x4,  // Dataless
+	StatusRequest  = 0x10, // Dataless
+	StatusResponse = 0x11,
+	ImageRequest   = 0x12, // Dataless
+	ImageResponse  = 0x13,
 
-	PT_MAX,
-	PT_Invalid = 0xFF
+	MAX,
+	Invalid = 0xFF
 };
 
 struct PR_LIB_BASE ProtocolStatus {
