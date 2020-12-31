@@ -158,7 +158,7 @@ private:
 		current.LastNormal	 = ip.Surface.N;
 
 		// Russian roulette
-		const auto roulette = mCameraRR.check(session.random(), ip.Ray.IterationDepth + 1);
+		const auto roulette = mCameraRR.check(session.random(), ip.Ray.IterationDepth + 1, material && material->hasOnlyDeltaDistribution());
 		if (!roulette.has_value())
 			return {};
 

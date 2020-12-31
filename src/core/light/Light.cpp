@@ -33,6 +33,17 @@ std::string Light::name() const
 
 bool Light::hasDeltaDistribution() const { return isInfinite() && reinterpret_cast<IInfiniteLight*>(mEntity)->hasDeltaDistribution(); }
 
+SpectralBlob Light::averagePower(const SpectralBlob& wavelengths) const
+{
+	if (isInfinite()) {
+		IInfiniteLight* infL = reinterpret_cast<IInfiniteLight*>(mEntity);
+		return infL->power(wavelengths);
+	} else {
+		PR_ASSERT(mEmission, "Invalid light given!");
+		return mEmission->power(wavelengths);
+	}
+}
+
 void Light::eval(const LightEvalInput& in, LightEvalOutput& out, const RenderTileSession& session) const
 {
 	if (isInfinite()) {

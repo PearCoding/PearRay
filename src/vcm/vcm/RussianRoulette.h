@@ -9,17 +9,19 @@ class RussianRoulette {
 private:
 	const size_t mMinRayDepth;
 	const float mFactor;
+	const bool mIgnoreDelta;
 
 public:
-	inline explicit RussianRoulette(size_t minRayDepth, float factor = 0.9f)
+	inline explicit RussianRoulette(size_t minRayDepth, float factor = 0.9f, bool ignoreDelta = true)
 		: mMinRayDepth(minRayDepth)
 		, mFactor(factor)
+		, mIgnoreDelta(ignoreDelta)
 	{
 	}
 
-	inline float probability(uint32 path_length) const
+	inline float probability(uint32 path_length, bool delta = false) const
 	{
-		if (path_length == 0)
+		if (path_length == 0 || (mIgnoreDelta && delta))
 			return 1.0f;
 
 		if (path_length >= mMinRayDepth) {
@@ -31,9 +33,9 @@ public:
 		}
 	}
 
-	inline std::optional<float> check(Random& rnd, uint32 path_length) const
+	inline std::optional<float> check(Random& rnd, uint32 path_length, bool delta = false) const
 	{
-		const float scatProb = probability(path_length);
+		const float scatProb = probability(path_length, delta);
 		if (scatProb <= PR_EPSILON) {
 			return {};
 		} else if (scatProb < 1.0f) {

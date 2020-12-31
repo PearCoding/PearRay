@@ -59,6 +59,13 @@ public:
 	template <typename Func>
 	inline void generate(Func func, float* integral = nullptr);
 
+	/// Reduce pdf by v. Negative values will be clamped to zero. Everything will be normalized
+	inline void reducePDFBy(float v, float* integral = nullptr);
+	/// Increase pdf by v. Everything will be normalized
+	inline void increasePDFBy(float v, float* integral = nullptr);
+	/// Clamp pdf on the lower side by v. Everything will be normalized
+	inline void clampPDFBy(float v, float* integral = nullptr);
+
 	inline float sampleContinuous(float u, float& pdf, size_t* offset = nullptr) const;
 	inline float continuousPdf(float x, size_t* offset = nullptr) const;
 	inline float evalContinuous(float u) const;
@@ -66,9 +73,6 @@ public:
 	inline size_t sampleDiscrete(float u, float& pdf, float* remainder = nullptr) const;
 	inline float discretePdf(size_t x) const;
 	inline float evalDiscrete(float u) const;
-
-	/// Reduce pdf by v. Negative values will be clamped to zero
-	inline void reducePDFBy(float v, float* integral = nullptr);
 
 	// The given CDF is assumed to be normalized such that its last entry is exactly 1
 	inline static float sampleContinuous(float u, float& pdf, const float* cdf, size_t size, size_t* offset = nullptr);
