@@ -5,7 +5,6 @@
 #include "archives/MtsSerializedLoader.h"
 #include "archives/PlyLoader.h"
 #include "archives/WavefrontLoader.h"
-#include "cache/Cache.h"
 #include "camera/CameraManager.h"
 #include "camera/ICamera.h"
 #include "camera/ICameraPlugin.h"
@@ -99,7 +98,7 @@ std::shared_ptr<Environment> SceneLoader::createEnvironment(const std::vector<DL
 			} catch (const BadRenderEnvironment&) {
 				return nullptr;
 			}
-			
+
 			env->renderSettings().progressive = opts.Progressive;
 
 			if (renderWidthD.type() == DL::DT_Integer)
@@ -137,8 +136,6 @@ std::shared_ptr<Environment> SceneLoader::createEnvironment(const std::vector<DL
 
 			if (spectralHeroD.type() == DL::DT_Bool)
 				env->renderSettings().spectralHero = spectralHeroD.getBool();
-
-			env->cache()->setMode(static_cast<CacheMode>(opts.CacheMode));
 
 			std::vector<DL::DataGroup> inner_groups;
 			for (size_t i = 0; i < top.anonymousCount(); ++i) {
@@ -755,8 +752,6 @@ void SceneLoader::addMesh(const DL::DataGroup& group, SceneLoadContext& ctx)
 		return;
 	}
 
-	ctx.environment()->cache()->unloadAll(); // Make sure there is enough space
-
 	std::unique_ptr<MeshBase> mesh;
 	try {
 		mesh = MeshParser::parse(group);
@@ -802,7 +797,6 @@ void SceneLoader::addSubGraph(const DL::DataGroup& group, SceneLoadContext& ctx)
 		loader = "obj";
 	}
 
-	ctx.environment()->cache()->unloadAll(); // Make sure there is enough space
 	if (loader == "obj") {
 		DL::Data nameD		 = group.getFromKey("name");
 		DL::Data flipNormalD = group.getFromKey("flipNormal");
@@ -812,9 +806,6 @@ void SceneLoader::addSubGraph(const DL::DataGroup& group, SceneLoadContext& ctx)
 
 		if (flipNormalD.type() == DL::DT_Bool)
 			loader.flipNormal(flipNormalD.getBool());
-
-		if (cacheD.type() == DL::DT_Bool)
-			loader.setCacheMode(cacheD.getBool() ? CM_All : CM_None);
 
 		try {
 			loader.load(file, ctx);
@@ -831,9 +822,6 @@ void SceneLoader::addSubGraph(const DL::DataGroup& group, SceneLoadContext& ctx)
 		if (flipNormalD.type() == DL::DT_Bool)
 			loader.flipNormal(flipNormalD.getBool());
 
-		if (cacheD.type() == DL::DT_Bool)
-			loader.setCacheMode(cacheD.getBool() ? CM_All : CM_None);
-
 		try {
 			loader.load(file, ctx);
 		} catch (const std::bad_alloc& ex) {
@@ -848,9 +836,6 @@ void SceneLoader::addSubGraph(const DL::DataGroup& group, SceneLoadContext& ctx)
 
 		if (flipNormalD.type() == DL::DT_Bool)
 			loader.flipNormal(flipNormalD.getBool());
-
-		if (cacheD.type() == DL::DT_Bool)
-			loader.setCacheMode(cacheD.getBool() ? CM_All : CM_None);
 
 		try {
 			loader.load(file, ctx);

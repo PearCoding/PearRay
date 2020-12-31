@@ -1,6 +1,5 @@
 #include "ProgramSettings.h"
 #include "EnumOption.h"
-#include "cache/Cache.h"
 #include "config/Build.h"
 
 #include <cxxopts.hpp>
@@ -60,9 +59,6 @@ bool ProgramSettings::parse(int argc, char** argv)
 
 			("itx", "Amount of horizontal image tiles used in rendering", cxxopts::value<uint32>())
 			("ity", "Amount of vertical image tiles used in rendering", cxxopts::value<uint32>())
-
-			("force-cache", "Use cache for everything")
-			("no-cache", "Do not use cache")
 		;
 		// clang-format on
 
@@ -192,13 +188,6 @@ bool ProgramSettings::parse(int argc, char** argv)
 			ImageTileXCount = std::max<uint32>(1, vm["itx"].as<uint32>());
 		if (vm.count("ity"))
 			ImageTileYCount = std::max<uint32>(1, vm["ity"].as<uint32>());
-
-		if (vm.count("no-cache"))
-			CacheMode = CM_None;
-		else if (vm.count("force-cache"))
-			CacheMode = CM_All;
-		else
-			CacheMode = CM_Auto;
 
 		Progressive = (vm.count("progressive") != 0);
 	} catch (const cxxopts::OptionException& e) {

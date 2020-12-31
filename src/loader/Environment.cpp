@@ -3,7 +3,6 @@
 #include "ResourceManager.h"
 #include "SceneLoadContext.h"
 #include "ServiceObserver.h"
-#include "cache/Cache.h"
 #include "camera/CameraManager.h"
 #include "camera/ICamera.h"
 #include "emission/EmissionManager.h"
@@ -63,7 +62,6 @@ Environment::Environment(const std::filesystem::path& workdir,
 	, mSpectralMapperManager(std::make_shared<SpectralMapperManager>())
 	, mDefaultSpectralUpsampler(DefaultSRGB::loadSpectralUpsampler())
 	, mResourceManager(std::make_shared<ResourceManager>(workdir))
-	, mCache(std::make_shared<Cache>(workdir))
 	, mTextureSystem(nullptr)
 	, mOutputSpecification(workdir)
 {

@@ -11,11 +11,6 @@ set(PR_Src
   buffer/PixelLock.h
   buffer/VarianceEstimator.h
   buffer/VarianceEstimator.inl
-  cache/Cache.cpp
-  cache/Cache.h
-  cache/ICachable.h
-  cache/ISerializeCachable.cpp
-  cache/ISerializeCachable.h
   camera/ICamera.cpp
   camera/ICamera.h
   container/HashGrid.h

@@ -10,7 +10,6 @@ public:
 
 	inline void setScale(float f) { mScale = f; }
 	inline void flipNormal(bool b) { mFlipNormal = b; }
-	inline void setCacheMode(int cm) { mCacheMode = cm; }
 
 	void load(const std::filesystem::path& file, SceneLoadContext& ctx) override;
 
@@ -18,6 +17,5 @@ private:
 	std::string mName;
 	float mScale;
 	bool mFlipNormal;
-	int mCacheMode;
 };
 } // namespace PR

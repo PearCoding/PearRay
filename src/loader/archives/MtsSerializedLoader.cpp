@@ -3,7 +3,6 @@
 #include "Logger.h"
 #include "Platform.h"
 #include "SceneLoadContext.h"
-#include "cache/Cache.h"
 #include "mesh/MeshBase.h"
 
 #include <climits>
@@ -16,7 +15,6 @@ MtsSerializedLoader::MtsSerializedLoader(const std::string& name)
 	: mName(name)
 	, mScale(1)
 	, mFlipNormal(false)
-	, mCacheMode(CM_Auto)
 {
 }
 

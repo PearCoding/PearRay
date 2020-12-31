@@ -14,7 +14,6 @@ inline std::shared_ptr<Environment> Environment::createQueryEnvironment(const st
 }
 
 inline std::shared_ptr<ResourceManager> Environment::resourceManager() const { return mResourceManager; }
-inline std::shared_ptr<Cache> Environment::cache() const { return mCache; }
 inline std::shared_ptr<SceneDatabase> Environment::sceneDatabase() const { return mSceneDatabase; }
 
 inline void* Environment::textureSystem() { return mTextureSystem; }

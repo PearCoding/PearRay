@@ -52,7 +52,6 @@ void setup_environment(py::module& m)
 			"WorkingDir",
 			[](SceneLoader::LoadOptions& ops) { return ops.WorkingDir; },
 			[](SceneLoader::LoadOptions& ops, const std::string& st) { ops.WorkingDir = st; })
-		.def_readwrite("CacheMode", &SceneLoader::LoadOptions::CacheMode)
 		.def_readwrite("Progressive", &SceneLoader::LoadOptions::Progressive);
 }
 } // namespace PRPY

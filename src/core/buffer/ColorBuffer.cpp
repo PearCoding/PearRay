@@ -9,7 +9,7 @@ ColorBuffer::_Data::_Data(size_t width, size_t height, ColorBufferMode mode)
 	, Mode(mode)
 	, Ptr(nullptr)
 {
-	size_t elems = (mode == CBM_RGB ? 3 : 4);
+	size_t elems = (mode == ColorBufferMode::RGB ? 3 : 4);
 	Ptr			 = new float[width * height * elems];
 
 	std::fill_n(Ptr, width * height * elems, 1.0f);

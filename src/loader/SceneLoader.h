@@ -24,7 +24,6 @@ public:
 	struct LoadOptions {
 		std::filesystem::path WorkingDir;
 		std::filesystem::path PluginPath;
-		uint32 CacheMode = 0;
 		bool Progressive = false;
 	};
 

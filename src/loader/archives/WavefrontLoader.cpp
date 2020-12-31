@@ -3,7 +3,6 @@
 #include "Logger.h"
 #include "Platform.h"
 #include "SceneLoadContext.h"
-#include "cache/Cache.h"
 #include "mesh/MeshBase.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
@@ -14,7 +13,6 @@ WavefrontLoader::WavefrontLoader(const std::string& override_name)
 	: mName(override_name)
 	, mScale(1)
 	, mFlipNormal(false)
-	, mCacheMode(CM_Auto)
 {
 }
 

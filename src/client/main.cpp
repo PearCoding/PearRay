@@ -133,7 +133,6 @@ int main(int argc, char** argv)
 	SceneLoader::LoadOptions opts;
 	opts.WorkingDir	 = options.OutputDir.generic_wstring();
 	opts.PluginPath	 = options.PluginPath.generic_wstring();
-	opts.CacheMode	 = options.CacheMode;
 	opts.Progressive = options.Progressive;
 
 	const std::shared_ptr<Environment> env = SceneLoader::loadFromFile(

@@ -48,7 +48,6 @@ public:
 	uint32 ImageTileXCount;
 	uint32 ImageTileYCount;
 
-	uint32 CacheMode;
 	bool Progressive;
 
 	bool parse(int argc, char** argv);

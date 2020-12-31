@@ -34,7 +34,7 @@ static void checkWeightBuffer(const py::buffer_info& info, size_t width, size_t 
 {
 	check3DBuffer(info, width, height);
 	if (info.shape[2] != (ssize_t)1)
-		throw std::runtime_error("Incompatible descriptor:  Expected only one channel");
+		throw std::runtime_error("Incompatible descriptor: Expected only one channel");
 }
 
 PR_NO_SANITIZE_ADDRESS
@@ -43,12 +43,12 @@ void setup_tonemapper(py::module& m)
 	typedef py::array_t<float, py::array::c_style | py::array::forcecast> Array;
 
 	py::enum_<ColorBufferMode>(m, "ColorBufferMode")
-		.value("RGB", CBM_RGB)
-		.value("RGBA", CBM_RGBA);
+		.value("RGB", ColorBufferMode::RGB)
+		.value("RGBA", ColorBufferMode::RGBA);
 
 	py::class_<ColorBuffer>(m, "ColorBuffer", py::buffer_protocol())
 		.def(py::init<uint32, uint32, ColorBufferMode>(),
-			 py::arg("width"), py::arg("height"), py::arg("mode") = CBM_RGBA)
+			 py::arg("width"), py::arg("height"), py::arg("mode") = ColorBufferMode::RGBA)
 		.def_buffer([](ColorBuffer& s) -> py::buffer_info { // Allow buffer use
 			return py::buffer_info(
 				s.ptr(),

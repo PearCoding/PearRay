@@ -11,7 +11,6 @@
 #include <variant>
 
 namespace PR {
-class Cache;
 class FrameOutputDevice;
 class IEmission;
 class IIntegrator;
@@ -55,7 +54,6 @@ public:
 	virtual ~Environment();
 
 	inline std::shared_ptr<ResourceManager> resourceManager() const;
-	inline std::shared_ptr<Cache> cache() const;
 	inline std::shared_ptr<SceneDatabase> sceneDatabase() const;
 
 	inline void* textureSystem();
@@ -130,7 +128,6 @@ private:
 	std::shared_ptr<SpectralUpsampler> mDefaultSpectralUpsampler;
 
 	std::shared_ptr<ResourceManager> mResourceManager;
-	std::shared_ptr<Cache> mCache;
 
 	void* mTextureSystem;
 	OutputSpecification mOutputSpecification;
