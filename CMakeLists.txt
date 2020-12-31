@@ -23,7 +23,7 @@ endif()
 
 # Setup project
 project(PearRay
-	VERSION 0.13
+	VERSION 0.14
 	DESCRIPTION "Experimental high accurate spectral path and ray tracer")
 
 set(PR_PLUGIN_VERSION "1.0")
