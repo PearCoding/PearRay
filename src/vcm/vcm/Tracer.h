@@ -21,7 +21,7 @@ namespace PR {
 namespace VCM {
 
 // This is based on http://www.smallvcm.com/
-template <bool UseMerging, MISMode Mode = MM_Balance>
+template <bool UseMerging, MISMode Mode = MISMode::Balance>
 class Tracer {
 public:
 	using IterationContext = TracerIterationContext<UseMerging, Mode>;
