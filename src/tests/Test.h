@@ -254,6 +254,20 @@ private:
 		_test->check(!_prt_test_eq((value), (expected)), _stream.str(), PR_FUNCTION_NAME, __LINE__); \
 	} while (false)
 
+#define PR_CHECK_NOT_NULLPTR(value)                                       \
+	do {                                                                  \
+		std::stringstream _stream;                                        \
+		_stream << "Not expected null pointer but got it";                \
+		_test->check((value), _stream.str(), PR_FUNCTION_NAME, __LINE__); \
+	} while (false)
+
+#define PR_CHECK_NULLPTR(value)                                            \
+	do {                                                                   \
+		std::stringstream _stream;                                         \
+		_stream << "Expected null pointer but did not get it";             \
+		_test->check(!(value), _stream.str(), PR_FUNCTION_NAME, __LINE__); \
+	} while (false)
+
 #define PR_CHECK_LESS(value, expected)                                                                                                          \
 	do {                                                                                                                                        \
 		std::stringstream _stream;                                                                                                              \

@@ -36,6 +36,7 @@ public:
 		, mPDF(Sampling::uniform_cone_pdf(mCosTheta))
 		, mSceneRadius(0)
 		, mServiceObserver(so)
+		, mCBID(0)
 	{
 		Tangent::frame(mDirection, mDx, mDy);
 
@@ -147,6 +148,7 @@ public:
 		, mDirection((normalMatrix() * ea.toDirection()).normalized())
 		, mSceneRadius(0)
 		, mServiceObserver(so)
+		, mCBID(0)
 	{
 		Tangent::frame(mDirection, mDx, mDy);
 

@@ -255,7 +255,7 @@ public:
 		if (type_name == "cylinder") {
 			const float radius	 = params.getNumber("radius", 1);
 			const float height	 = params.getNumber("height", 1);
-			const bool center_on = params.getNumber("center_on", true);
+			const bool center_on = params.getBool("center_on", true);
 
 			const float a2 = 1 / (radius * radius);
 
@@ -273,7 +273,7 @@ public:
 		} else if (type_name == "cone") {
 			const float radius	 = params.getNumber("radius", 1);
 			const float height	 = params.getNumber("height", 1);
-			const bool center_on = params.getNumber("center_on", true);
+			const bool center_on = params.getBool("center_on", true);
 
 			const float a2 = 1 / (radius * radius);
 			const float h2 = 1 / (height * height);

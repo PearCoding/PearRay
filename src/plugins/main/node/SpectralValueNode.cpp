@@ -11,7 +11,7 @@ class SpectralValuePlugin : public INodePlugin {
 public:
 	std::shared_ptr<INode> create(const std::string& type_name, const SceneLoadContext& ctx) override
 	{
-		SpectralUpsampler* upsampler = ctx.environment()->defaultSpectralUpsampler().get();
+		const auto upsampler = ctx.environment()->defaultSpectralUpsampler();
 
 		if (type_name == "refl" || type_name == "reflection") {
 			ParametricBlob input = ParametricBlob(

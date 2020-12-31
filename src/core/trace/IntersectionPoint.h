@@ -23,7 +23,7 @@ public:
 	Vector3f Ny;
 
 	// Cached member
-	float NdotV;
+	float NdotV = 0.0f;
 };
 
 class PR_LIB_CORE MediumIntersectionPoint {
@@ -46,8 +46,8 @@ public:
 	PR::Ray Ray;
 
 	// Some other utility variables
-	uint32 Flags;
-	float Depth2;
+	uint32 Flags = 0;
+	float Depth2 = 0.0f;
 
 	inline void setForPoint(const Vector3f& p)
 	{

@@ -15,6 +15,8 @@ public:
 	{
 	}
 
+	virtual ~DiffuseEmission() = default;
+
 	// Given in radiance (W/(sr m^2))
 	void eval(const EmissionEvalInput& in, EmissionEvalOutput& out,
 			  const RenderTileSession&) const override

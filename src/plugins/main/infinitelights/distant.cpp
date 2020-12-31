@@ -25,6 +25,7 @@ public:
 		, mOutgoing_Cache((normalMatrix() * mDirection).normalized())
 		, mSceneRadius(0)
 		, mServiceObserver(so)
+		, mCBID(0)
 	{
 		Tangent::frame(mOutgoing_Cache, mDx, mDy);
 

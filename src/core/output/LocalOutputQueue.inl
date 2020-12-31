@@ -46,7 +46,7 @@ inline void LocalOutputQueue::pushCustomSpectralFragment(uint32 queueID, const P
 {
 	PR_ASSERT(queueID < mCustomSpectralQueues.size(), "Expected valid custom spectral queueID");
 	PR_ASSERT(!mCustomSpectralQueues[queueID].isFull(), "Custom spectral entries are exhausted");
-	mCustomSpectralQueues[queueID].add(OutputCustomSpectralEntry{ p, value, wavelengths, isMono ? (uint32)OSEF_Mono : 0, rayGroupID });
+	mCustomSpectralQueues[queueID].add(OutputCustomSpectralEntry{ { p, value }, wavelengths, isMono ? (uint32)OSEF_Mono : 0, rayGroupID });
 }
 
 inline void LocalOutputQueue::pushCustom3DFragment(uint32 queueID, const Point2i& p, const Vector3f& value)

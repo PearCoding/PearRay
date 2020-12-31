@@ -63,7 +63,7 @@ SpectralBlob PhotonMap::estimate(const PhotonSphere& sphere,
 	SpectralBlob spec = SpectralBlob::Zero();
 
 	search<false>(sphere.Center, sphere.Distance2, [&](const Photon& pht) {
-		float dist2;
+		float dist2 = 0;
 		if (checkFunc(pht, sphere, dist2)) { // Found a photon!
 			found++;
 			accumFunc(spec, pht, sphere, dist2);

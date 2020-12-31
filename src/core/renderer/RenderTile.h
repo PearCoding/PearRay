@@ -128,6 +128,6 @@ private:
 	float mTimeBeta;
 
 	RenderContext* mRenderContext;
-	const ICamera* const mCamera;
+	const std::shared_ptr<ICamera> mCamera;
 };
 } // namespace PR

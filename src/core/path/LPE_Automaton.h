@@ -51,7 +51,7 @@ private:
 	// {State Block} = States
 	std::vector<bool> mSB_IsFinal;
 
-	size_t mStartingState;
+	size_t mStartingState = 0;
 };
 } // namespace LPE
 } // namespace PR

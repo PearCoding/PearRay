@@ -45,9 +45,9 @@ struct SharedLibraryInternal {
 
 SharedLibrary::SharedLibrary() {}
 
-SharedLibrary::SharedLibrary(const std::wstring& file)
+SharedLibrary::SharedLibrary(const std::filesystem::path& file)
 {
-	const std::string u8 = std::string(file.begin(), file.end());
+	const std::string u8 = file.u8string();
 
 #ifdef PR_OS_LINUX
 	try {

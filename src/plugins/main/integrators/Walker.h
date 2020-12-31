@@ -13,8 +13,8 @@ namespace PR {
 template <bool ApplyRussianRoulette>
 class Walker {
 public:
-	size_t MaxRayDepthHard;
-	size_t MaxRayDepthSoft;
+	size_t MaxRayDepthHard	  = 64;
+	size_t MaxRayDepthSoft	  = 4;
 	float RussianRouletteRate = 0.80f;
 
 	template <typename OnHitF, typename OnNonHitF>

@@ -17,10 +17,10 @@ struct PR_LIB_CORE GeometryPoint {
 	Vector2f UV;
 	Vector2f dUV; // Pixel footprint
 
-	uint32 EntityID; // Will be set automatically
-	uint32 PrimitiveID;
-	uint32 MaterialID;
-	uint32 EmissionID;
-	uint32 DisplaceID;// TODO
+	uint32 EntityID	   = PR_INVALID_ID; // Will be set automatically
+	uint32 PrimitiveID = PR_INVALID_ID;
+	uint32 MaterialID  = PR_INVALID_ID;
+	uint32 EmissionID  = PR_INVALID_ID;
+	uint32 DisplaceID  = PR_INVALID_ID; // TODO
 };
 } // namespace PR

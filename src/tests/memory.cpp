@@ -12,7 +12,7 @@ PR_TEST("Allocate")
 
 	PR_CHECK_EQ(pool.usedMemory(), 0);
 	uint32* value = pool.create<uint32>();
-	PR_CHECK_NOT_EQ(value, NULL);
+	PR_CHECK_NOT_NULLPTR(value);
 	PR_CHECK_EQ(pool.usedMemory(), pool.blockSize());
 	pool.freeAll();
 	PR_CHECK_EQ(pool.usedMemory(), 0);
@@ -23,13 +23,13 @@ PR_TEST("Deallocate")
 
 	PR_CHECK_EQ(pool.usedMemory(), 0);
 	uint32* value = pool.create<uint32>();
-	PR_CHECK_NOT_EQ(value, NULL);
+	PR_CHECK_NOT_NULLPTR(value);
 	PR_CHECK_EQ(pool.usedMemory(), pool.blockSize());
 	pool.destroy(value);
 	value = nullptr;
 	PR_CHECK_EQ(pool.usedMemory(), 0);
 	value = pool.create<uint32>();
-	PR_CHECK_NOT_EQ(value, NULL);
+	PR_CHECK_NOT_NULLPTR(value);
 	PR_CHECK_EQ(pool.usedMemory(), pool.blockSize());
 	pool.destroy(value);
 	PR_CHECK_EQ(pool.usedMemory(), 0);
@@ -41,12 +41,12 @@ PR_TEST("Full")
 	PR_CHECK_TRUE(pool.isEmpty());
 	PR_CHECK_FALSE(pool.isFull());
 	uint32* value = pool.create<uint32>();
-	PR_CHECK_NOT_EQ(value, NULL);
+	PR_CHECK_NOT_NULLPTR(value);
 	PR_CHECK_FALSE(pool.isEmpty());
 	PR_CHECK_FALSE(pool.isFull());
 	for (int i = 0; i < 63; ++i) {
 		value = pool.create<uint32>();
-		PR_CHECK_NOT_EQ(value, NULL);
+		PR_CHECK_NOT_NULLPTR(value);
 	}
 	PR_CHECK_FALSE(pool.isEmpty());
 	PR_CHECK_TRUE(pool.isFull());
@@ -61,7 +61,7 @@ PR_TEST("Allocate")
 
 	PR_CHECK_EQ(stack.usedMemory(), 0);
 	uint32* value = stack.create<uint32>();
-	PR_CHECK_NOT_EQ(value, NULL);
+	PR_CHECK_NOT_NULLPTR(value);
 	PR_CHECK_EQ(stack.usedMemory(), sizeof(uint32));
 	stack.freeAll();
 	PR_CHECK_EQ(stack.usedMemory(), 0);
@@ -73,13 +73,13 @@ PR_TEST("Marker")
 	PR_CHECK_EQ(stack.markerCount(), 0);
 	PR_CHECK_EQ(stack.usedMemory(), 0);
 	uint32* value = stack.create<uint32>();
-	PR_CHECK_NOT_EQ(value, NULL);
+	PR_CHECK_NOT_NULLPTR(value);
 	PR_CHECK_EQ(stack.markerCount(), 0);
 	PR_CHECK_EQ(stack.usedMemory(), sizeof(uint32));
 	stack.mark();
 	PR_CHECK_EQ(stack.markerCount(), 1);
 	uint32* value2 = stack.create<uint32>();
-	PR_CHECK_NOT_EQ(value2, NULL);
+	PR_CHECK_NOT_NULLPTR(value2);
 	PR_CHECK_GREAT(stack.usedMemory(), sizeof(uint32));
 	stack.freeUntilMarker();
 	PR_CHECK_EQ(stack.markerCount(), 0);
@@ -95,7 +95,7 @@ PR_TEST("Full")
 	PR_CHECK_TRUE(stack.isEmpty());
 	PR_CHECK_FALSE(stack.isFull());
 	void* ptr = stack.allocate(1024);
-	PR_CHECK_NOT_EQ(ptr, NULL);
+	PR_CHECK_NOT_NULLPTR(ptr);
 	PR_CHECK_FALSE(stack.isEmpty());
 	PR_CHECK_TRUE(stack.isFull());
 	stack.freeAll();
@@ -109,7 +109,7 @@ PR_TEST("Exception")
 	PR_CHECK_TRUE(stack.isEmpty());
 	PR_CHECK_FALSE(stack.isFull());
 	void* ptr = stack.allocate(1020);
-	PR_CHECK_NOT_EQ(ptr, NULL);
+	PR_CHECK_NOT_NULLPTR(ptr);
 	PR_CHECK_FALSE(stack.isEmpty());
 	PR_CHECK_FALSE(stack.isFull());
 	PR_CHECK_THROW(stack.create<uint64>());

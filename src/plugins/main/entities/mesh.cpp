@@ -21,7 +21,8 @@ namespace PR {
 class Mesh {
 public:
 	explicit Mesh(const std::shared_ptr<MeshBase>& mesh)
-		: mBase(mesh)
+		: mScene()
+		, mBase(mesh)
 		, mWasGenerated(false)
 	{
 	}
@@ -118,7 +119,7 @@ public:
 		RTCGeometry geom = rtcNewGeometry(dev, RTC_GEOMETRY_TYPE_INSTANCE);
 		rtcSetGeometryInstancedScene(geom, original);
 
-		const auto M = transform();
+		const Transformf& M = transform();
 		rtcSetGeometryTransform(geom, 0, RTC_FORMAT_FLOAT4X4_COLUMN_MAJOR, M.data());
 		rtcCommitGeometry(geom);
 
@@ -188,7 +189,7 @@ public:
 		pt.N.normalize();
 		pt.Nx.normalize();
 		pt.Ny.normalize();
-		
+
 		pt.PrimitiveID = query.PrimitiveID;
 		pt.EmissionID  = emissionID();
 		pt.DisplaceID  = PR_INVALID_ID;
@@ -212,7 +213,7 @@ public:
 		std::string mesh_name = params.getString("mesh", "");
 
 		const std::vector<uint32> materials = ctx.lookupMaterialIDArray(params.getParameter("materials"));
-		const uint32 emsID = ctx.lookupEmissionID(params.getParameter("emission"));
+		const uint32 emsID					= ctx.lookupEmissionID(params.getParameter("emission"));
 
 		if (!ctx.hasMesh(mesh_name)) {
 			PR_LOG(L_ERROR) << "Could not find a mesh named " << mesh_name << std::endl;

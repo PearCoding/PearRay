@@ -38,7 +38,7 @@ public:
 private:
 	struct ElementWrapper {
 		T Element;
-		uint8 Axis;
+		uint8 Axis = 0;
 	};
 
 	// KD-tree utils

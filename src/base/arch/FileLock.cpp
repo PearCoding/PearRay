@@ -20,9 +20,9 @@ struct FileLockInternal {
 	std::filesystem::path Filename;
 
 #ifndef PR_OS_WINDOWS
-	int Handle;
+	int Handle = -1;
 #else
-	HANDLE Handle;
+	HANDLE Handle = INVALID_HANDLE_VALUE;
 #endif
 };
 
@@ -30,11 +30,6 @@ FileLock::FileLock(const std::filesystem::path& filepath)
 	: mInternal(new FileLockInternal())
 {
 	mInternal->Filename = filepath;
-#ifndef PR_OS_WINDOWS
-	mInternal->Handle = -1;
-#else
-	mInternal->Handle = INVALID_HANDLE_VALUE;
-#endif
 }
 
 FileLock::~FileLock()

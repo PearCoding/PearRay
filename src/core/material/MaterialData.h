@@ -65,7 +65,7 @@ struct PR_LIB_CORE MaterialSampleOutput : public MaterialBaseOutput {
 	ShadingVector L;
 
 	SpectralBlob Weight;
-	MaterialScatteringType Type;
+	MaterialScatteringType Type = MST_DiffuseReflection;
 
 	inline Vector3f globalL(const IntersectionPoint& ip) const
 	{

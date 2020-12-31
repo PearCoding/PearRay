@@ -13,7 +13,7 @@ namespace PR {
        --------
          Base
     */
-class PR_LIB_UI Cone {
+class PR_LIB_CORE Cone {
 public:
 	static void triangulate(const Vector3f& basePos, const Vector3f& tipPos, float baseRadius, uint32 sectionCount, std::vector<float>& vertices);
 	static void triangulateIndices(uint32 baseID, uint32 tipID, uint32 sectionCount, std::vector<uint32>& indices, uint32 off = 2);

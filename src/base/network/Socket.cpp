@@ -189,12 +189,12 @@ Socket::~Socket()
 		closeSocket(mInternal->Socket);
 }
 
-Socket::Socket(Socket&& other)
+Socket::Socket(Socket&& other) noexcept
 	: mInternal(std::move(other.mInternal))
 {
 }
 
-Socket& Socket::operator=(Socket&& other)
+Socket& Socket::operator=(Socket&& other) noexcept
 {
 	mInternal = std::move(other.mInternal);
 	return *this;

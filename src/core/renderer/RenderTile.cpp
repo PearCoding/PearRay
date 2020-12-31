@@ -21,7 +21,7 @@ RenderTile::RenderTile(const Point2i& start, const Point2i& end,
 	, mLastWorkTime()
 	, mRandom(context->settings().seed + start(0) + start(1))
 	, mRenderContext(context)
-	, mCamera(context->scene()->activeCamera().get())
+	, mCamera(context->scene()->activeCamera())
 {
 	PR_ASSERT(mViewSize.isValid(), "Invalid tile size");
 

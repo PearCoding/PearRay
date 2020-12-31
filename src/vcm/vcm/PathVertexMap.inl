@@ -66,7 +66,7 @@ SpectralBlob PathVertexMap::estimate(const QuerySphere& sphere,
 
 	search<true>(sphere.Center, sphere.Distance2, [&](size_t id) {
 		const PathVertex& pht = mVertices[id]; // Bad Hack?
-		float dist2;
+		float dist2			  = 0;
 		if (checkFunc(pht, sphere, dist2)) { // Found a photon!
 			found++;
 			accumFunc(spec, pht, dist2);

@@ -8,8 +8,8 @@ public:
 	Socket();
 	virtual ~Socket();
 
-	Socket(Socket&& other);
-	Socket& operator=(Socket&& other);
+	Socket(Socket&& other) noexcept;
+	Socket& operator=(Socket&& other) noexcept;
 
 	// Client
 	bool connect(uint16 port, const std::string& ip);

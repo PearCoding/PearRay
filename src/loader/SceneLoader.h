@@ -24,8 +24,8 @@ public:
 	struct LoadOptions {
 		std::filesystem::path WorkingDir;
 		std::filesystem::path PluginPath;
-		uint32 CacheMode;
-		bool Progressive;
+		uint32 CacheMode = 0;
+		bool Progressive = false;
 	};
 
 	static std::shared_ptr<Environment> loadFromFile(const std::filesystem::path& path, const LoadOptions& opts);

@@ -2,11 +2,13 @@
 
 #include "PR_Config.h"
 
+#include <filesystem>
+
 namespace PR {
 class PR_LIB_BASE SharedLibrary {
 public:
 	SharedLibrary();
-	SharedLibrary(const std::wstring& file);
+	SharedLibrary(const std::filesystem::path& file);
 	~SharedLibrary();
 
 	void* symbol(const std::string& name) const;

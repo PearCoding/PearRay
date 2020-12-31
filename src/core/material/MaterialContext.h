@@ -14,7 +14,7 @@ public:
 	Vector3f P;		 // Global space
 	ShadingVector V; // Outgoing (NOT INCIDENT) view vector in shading space
 	Vector2f UV;
-	uint32 PrimitiveID; // Useful for PTex
+	uint32 PrimitiveID = PR_INVALID_ID; // Useful for PTex
 	SpectralBlob WavelengthNM;
 	uint32 RayFlags = 0;
 

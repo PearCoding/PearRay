@@ -40,6 +40,10 @@ public:
 	inline size_t commitCount() const { return mCommitCount; }
 	inline size_t flushCount() const { return mFlushCount; }
 
+	inline size_t maxEntries() const { return mMaxEntries; }
+	inline size_t entryTriggerThreshold() const { return mTriggerThreshold; }
+	inline size_t memoryTriggerThreshold() const { return mMemTriggerThreshold; }
+
 private:
 	inline const uint32* pushPath(const LightPath& path);
 

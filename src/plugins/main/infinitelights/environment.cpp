@@ -36,6 +36,7 @@ public:
 		, mBackground(background)
 		, mSceneRadius(0)
 		, mServiceObserver(so)
+		, mCBID(0)
 	{
 		if (mServiceObserver)
 			mCBID = mServiceObserver->registerAfterSceneBuild([this](Scene* scene) {
