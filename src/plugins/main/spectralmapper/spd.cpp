@@ -64,6 +64,7 @@ struct SPDParameters {
 	bool UseNormalizedLights	= true;
 	bool EnsureCompleteSampling = true;
 	uint32 SmoothIterations		= 0; // How many times to apply moving average?
+	bool Verbose				= false;
 };
 
 static void movingAverage(std::vector<float>& inout)
@@ -85,101 +86,12 @@ public:
 	{
 	}
 
-	std::shared_ptr<ISpectralMapper> createInstance(float spectralStart, float spectralEnd, RenderContext* ctx) const override
+	std::shared_ptr<ISpectralMapper> createInstance(float spectralStart, float spectralEnd, RenderContext* ctx) override
 	{
-		WeightingMethod method = mParameters.Method;
-		// If the given spectral domain does not cross the cie domain, disable weighting
-		if (spectralStart > PR_CIE_WAVELENGTH_END || spectralEnd < PR_CIE_WAVELENGTH_START)
-			method = WeightingMethod::None;
-
-		const auto bin2wvl = [=](uint32 bin) { return spectralStart + (bin / float(mParameters.NumberOfBins - 1)) * (spectralEnd - spectralStart); };
-
 		// TODO: We assume spectralStart, spectralEnd and ctx to never change. This is probably ok, but it should be better to check for special cases!
 		mMutex.lock();
 		if (!mAlreadBuilt) {
-			const auto lightSampler = ctx->lightSampler();
-
-			// Temporary arrays
-			std::vector<float> fullPower(mParameters.NumberOfBins, 0.0f);
-			std::vector<float> lightPower(mParameters.NumberOfBins, 0.0f);
-
-			for (const auto& light : lightSampler->lights()) {
-				// Calculate average power per spectral band
-				for (uint32 i = 0; i < mParameters.NumberOfBins; i += PR_SPECTRAL_BLOB_SIZE) {
-					const uint32 k = std::min<uint32>(mParameters.NumberOfBins - i, PR_SPECTRAL_BLOB_SIZE);
-
-					SpectralBlob wavelengths = SpectralBlob::Zero();
-					for (uint32 j = 0; j < k; ++j)
-						wavelengths(j) = bin2wvl(i + j);
-					// Let non active wavelengths at least have some reasonable garbage
-					for (uint32 j = k; j < PR_SPECTRAL_BLOB_SIZE; ++j)
-						wavelengths(j) = wavelengths(0);
-
-					const SpectralBlob output = light->averagePower(wavelengths);
-
-					for (uint32 j = 0; j < k; ++j)
-						lightPower[i + j] = output(j);
-				}
-
-				// Normalize the given spd if necessary
-				if (mParameters.UseNormalizedLights) {
-					const float dt = 1.0f / (mParameters.NumberOfBins - 1);
-					float integral = 0;
-					for (float f : lightPower)
-						integral += f * dt;
-					if (integral > PR_EPSILON) {
-						const float invnorm = 1 / integral;
-						for (float& f : lightPower)
-							f *= invnorm;
-					}
-				}
-
-				// Add it to the full spd
-				for (uint32 i = 0; i < mParameters.NumberOfBins; ++i)
-					fullPower[i] += lightPower[i];
-			}
-
-			// Weight given spd entry by "camera" response
-			switch (method) {
-			case WeightingMethod::None:
-				break;
-			case WeightingMethod::CIE_Y:
-				for (uint32 i = 0; i < mParameters.NumberOfBins; ++i)
-					fullPower[i] *= CIE::eval_y(bin2wvl(i));
-				break;
-			case WeightingMethod::CIE_XYZ:
-				for (uint32 i = 0; i < mParameters.NumberOfBins; ++i)
-					fullPower[i] *= CIE::eval(bin2wvl(i)).sum();
-				break;
-			case WeightingMethod::SRGB:
-				for (uint32 i = 0; i < mParameters.NumberOfBins; ++i) {
-					const CIETriplet tripletXYZ = CIE::eval(bin2wvl(i));
-					CIETriplet tripletRGB;
-					RGBConverter::fromXYZ(tripletXYZ.data(), tripletRGB.data(), 3, 1);
-					fullPower[i] *= tripletRGB.sum();
-				}
-				break;
-			}
-
-			// Smooth spd if necessary
-			for (uint32 i = 0; i < mParameters.SmoothIterations; ++i)
-				movingAverage(fullPower);
-
-			// Ensure that all wavelengths will be sampled if necessary
-			if (mParameters.EnsureCompleteSampling) {
-				constexpr float MIN_POWER = 1e-3f;
-				for (float& f : fullPower)
-					f = std::max(MIN_POWER, f);
-			}
-
-			// Debug
-			for (uint32 i = 0; i < mParameters.NumberOfBins - 1; ++i)
-				std::cout << fullPower[i] << " ";
-			std::cout << fullPower.back() << std::endl;
-
-			// Generate actual distribution
-			mDistribution.generate([&](uint32 bin) { return fullPower[bin]; });
-
+			buildDistribution(spectralStart, spectralEnd, ctx);
 			mAlreadBuilt = true;
 		}
 		mMutex.unlock();
@@ -188,11 +100,104 @@ public:
 	}
 
 private:
+	void buildDistribution(float spectralStart, float spectralEnd, RenderContext* ctx)
+	{
+		WeightingMethod method = mParameters.Method;
+		// If the given spectral domain does not cross the cie domain, disable weighting
+		if (spectralStart > PR_CIE_WAVELENGTH_END || spectralEnd < PR_CIE_WAVELENGTH_START)
+			method = WeightingMethod::None;
+
+		const auto bin2wvl		= [=](uint32 bin) { return spectralStart + (bin / float(mParameters.NumberOfBins - 1)) * (spectralEnd - spectralStart); };
+		const auto lightSampler = ctx->lightSampler();
+
+		// Temporary arrays
+		std::vector<float> fullPower(mParameters.NumberOfBins, 0.0f);
+		std::vector<float> lightPower(mParameters.NumberOfBins, 0.0f);
+
+		for (const auto& light : lightSampler->lights()) {
+			// Calculate average power per spectral band
+			for (uint32 i = 0; i < mParameters.NumberOfBins; i += PR_SPECTRAL_BLOB_SIZE) {
+				const uint32 k = std::min<uint32>(mParameters.NumberOfBins - i, PR_SPECTRAL_BLOB_SIZE);
+
+				SpectralBlob wavelengths = SpectralBlob::Zero();
+				for (uint32 j = 0; j < k; ++j)
+					wavelengths(j) = bin2wvl(i + j);
+				// Let non active wavelengths at least have some reasonable garbage
+				for (uint32 j = k; j < PR_SPECTRAL_BLOB_SIZE; ++j)
+					wavelengths(j) = wavelengths(0);
+
+				const SpectralBlob output = light->averagePower(wavelengths);
+
+				for (uint32 j = 0; j < k; ++j)
+					lightPower[i + j] = output(j);
+			}
+
+			// Normalize the given spd if necessary
+			if (mParameters.UseNormalizedLights) {
+				const float dt = 1.0f / (mParameters.NumberOfBins - 1);
+				float integral = 0;
+				for (float f : lightPower)
+					integral += f * dt;
+				if (integral > PR_EPSILON) {
+					const float invnorm = 1 / integral;
+					for (float& f : lightPower)
+						f *= invnorm;
+				}
+			}
+
+			// Add it to the full spd
+			for (uint32 i = 0; i < mParameters.NumberOfBins; ++i)
+				fullPower[i] += lightPower[i];
+		}
+
+		// Weight given spd entry by "camera" response
+		switch (method) {
+		case WeightingMethod::None:
+			break;
+		case WeightingMethod::CIE_Y:
+			for (uint32 i = 0; i < mParameters.NumberOfBins; ++i)
+				fullPower[i] *= CIE::eval_y(bin2wvl(i));
+			break;
+		case WeightingMethod::CIE_XYZ:
+			for (uint32 i = 0; i < mParameters.NumberOfBins; ++i)
+				fullPower[i] *= CIE::eval(bin2wvl(i)).sum();
+			break;
+		case WeightingMethod::SRGB:
+			for (uint32 i = 0; i < mParameters.NumberOfBins; ++i) {
+				const CIETriplet tripletXYZ = CIE::eval(bin2wvl(i));
+				CIETriplet tripletRGB;
+				RGBConverter::fromXYZ(tripletXYZ.data(), tripletRGB.data(), 3, 1);
+				fullPower[i] *= tripletRGB.sum();
+			}
+			break;
+		}
+
+		// Smooth spd if necessary
+		for (uint32 i = 0; i < mParameters.SmoothIterations; ++i)
+			movingAverage(fullPower);
+
+		// Ensure that all wavelengths will be sampled if necessary
+		if (mParameters.EnsureCompleteSampling) {
+			constexpr float MIN_POWER = 1e-3f;
+			for (float& f : fullPower)
+				f = std::max(MIN_POWER, f);
+		}
+
+		if (mParameters.Verbose) {
+			// Debug
+			for (uint32 i = 0; i < mParameters.NumberOfBins - 1; ++i)
+				std::cout << fullPower[i] << " ";
+			std::cout << fullPower.back() << std::endl;
+		}
+
+		// Generate actual distribution
+		mDistribution.generate([&](uint32 bin) { return fullPower[bin]; });
+	}
 	const SPDParameters mParameters;
 
-	mutable Distribution1D mDistribution;
-	mutable bool mAlreadBuilt;
-	mutable std::mutex mMutex;
+	Distribution1D mDistribution;
+	bool mAlreadBuilt;
+	std::mutex mMutex;
 };
 
 class SPDSpectralMapperPlugin : public ISpectralMapperPlugin {
@@ -216,6 +221,7 @@ public:
 		parameters.EnsureCompleteSampling = ctx.parameters().getBool("complete", parameters.EnsureCompleteSampling);
 		parameters.UseNormalizedLights	  = ctx.parameters().getBool("normalized", parameters.UseNormalizedLights);
 		parameters.SmoothIterations		  = ctx.parameters().getUInt("smooth_iterations", parameters.SmoothIterations);
+		parameters.Verbose				  = ctx.parameters().getBool("verbose", parameters.Verbose);
 
 		return std::make_shared<SPDSpectralMapperFactory>(parameters);
 	}

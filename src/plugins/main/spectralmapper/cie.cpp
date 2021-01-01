@@ -68,7 +68,7 @@ public:
 
 class CIESpectralMapperFactory : public ISpectralMapperFactory {
 public:
-	std::shared_ptr<ISpectralMapper> createInstance(float spectralStart, float spectralEnd, RenderContext*) const override
+	std::shared_ptr<ISpectralMapper> createInstance(float spectralStart, float spectralEnd, RenderContext*) override
 	{
 		if (spectralStart == PR_CIE_WAVELENGTH_START && spectralEnd == PR_CIE_WAVELENGTH_END)
 			return std::make_shared<FullCIESpectralMapper>();

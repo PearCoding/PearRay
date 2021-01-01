@@ -248,8 +248,7 @@ public:
 
 	inline uint32 pickClosestLightPath(float wvl) const
 	{
-		if constexpr (!UseMerging)
-			PR_ASSERT(false, "Picking closest lightpath is disabled for bdpt, as it has its light path already associated with the camera path");
+		PR_ASSERT(UseMerging, "Picking closest lightpath is disabled for bdpt, as it has its light path already associated with the camera path");
 
 		// Select closest pick based on the given wavelength
 		int pick = Interval::binary_search(mLightPathCounter, [&](size_t index) {

@@ -96,7 +96,7 @@ public:
 template <bool YOnly>
 class VisibleSpectralMapperFactory : public ISpectralMapperFactory {
 public:
-	std::shared_ptr<ISpectralMapper> createInstance(float spectralStart, float spectralEnd, RenderContext*) const override
+	std::shared_ptr<ISpectralMapper> createInstance(float spectralStart, float spectralEnd, RenderContext*) override
 	{
 		if (spectralStart == PR_VISIBLE_WAVELENGTH_START && spectralEnd == PR_VISIBLE_WAVELENGTH_END)
 			return std::make_shared<FullVisibleSpectralMapper<YOnly>>();
