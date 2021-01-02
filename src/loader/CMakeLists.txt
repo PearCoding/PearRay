@@ -133,7 +133,7 @@ endif()
 target_compile_definitions(pr_lib_loader PRIVATE "PR_LIB_LOADER_BUILD")
 
 if(PR_COMPRESS_SPEC_FILES)
-target_compile_definitions(pr_lib_loader PRIVATE "PR_COMPRESS_SPEC_FILES")
+  target_compile_definitions(pr_lib_loader PRIVATE "PR_COMPRESS_SPEC_FILES")
 endif()
 
 include(SetupEmbeddedPlugins)

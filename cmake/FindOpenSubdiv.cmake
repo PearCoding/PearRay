@@ -130,13 +130,12 @@ foreach(component ${OpenSubdiv_FIND_COMPONENTS})
     set_target_properties(OpenSubdiv::${component} PROPERTIES
       IMPORTED_LOCATION_RELEASE         "${OpenSubdiv_${component}_LIBRARY_RELEASE}"
       IMPORTED_LOCATION_MINSIZEREL      "${OpenSubdiv_${component}_LIBRARY_RELEASE}"
-      IMPORTED_LOCATION_RELWITHDEBINFO  "${OpenSubdiv_${component}_LIBRARY_DEBUG}"
+      IMPORTED_LOCATION_RELWITHDEBINFO  "${OpenSubdiv_${component}_LIBRARY_RELEASE}"
       IMPORTED_LOCATION_DEBUG           "${OpenSubdiv_${component}_LIBRARY_DEBUG}"
-      IMPORTED_LOCATION                 "${OpenSubdiv_${component}_LIBRARY}"
       ## TODO: Set this to a proper value (on windows -> dll)
       IMPORTED_IMPLIB_RELEASE           "${OpenSubdiv_${component}_LIBRARY_RELEASE}"
       IMPORTED_IMPLIB_MINSIZEREL        "${OpenSubdiv_${component}_LIBRARY_RELEASE}"
-      IMPORTED_IMPLIB_RELWITHDEBINFO    "${OpenSubdiv_${component}_LIBRARY_DEBUG}"
+      IMPORTED_IMPLIB_RELWITHDEBINFO    "${OpenSubdiv_${component}_LIBRARY_RELEASE}"
       IMPORTED_IMPLIB_DEBUG             "${OpenSubdiv_${component}_LIBRARY_DEBUG}"
       INTERFACE_LINK_LIBRARIES          "${_deps}"
       INTERFACE_INCLUDE_DIRECTORIES     "${OpenSubdiv_INCLUDE_DIRS}"

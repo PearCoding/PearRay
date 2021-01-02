@@ -123,13 +123,12 @@ foreach(component ${SeExpr2_FIND_COMPONENTS})
     set_target_properties(SeExpr2::${component} PROPERTIES
       IMPORTED_LOCATION_RELEASE         "${SeExpr2_${component}_LIBRARY_RELEASE}"
       IMPORTED_LOCATION_MINSIZEREL      "${SeExpr2_${component}_LIBRARY_RELEASE}"
-      IMPORTED_LOCATION_RELWITHDEBINFO  "${SeExpr2_${component}_LIBRARY_DEBUG}"
+      IMPORTED_LOCATION_RELWITHDEBINFO  "${SeExpr2_${component}_LIBRARY_RELEASE}"
       IMPORTED_LOCATION_DEBUG           "${SeExpr2_${component}_LIBRARY_DEBUG}"
-      IMPORTED_LOCATION                 "${SeExpr2_${component}_LIBRARY}"
       ## TODO: Set this to a proper value (on windows -> dll)
       IMPORTED_IMPLIB_RELEASE           "${SeExpr2_${component}_LIBRARY_RELEASE}"
       IMPORTED_IMPLIB_MINSIZEREL        "${SeExpr2_${component}_LIBRARY_RELEASE}"
-      IMPORTED_IMPLIB_RELWITHDEBINFO    "${SeExpr2_${component}_LIBRARY_DEBUG}"
+      IMPORTED_IMPLIB_RELWITHDEBINFO    "${SeExpr2_${component}_LIBRARY_RELEASE}"
       IMPORTED_IMPLIB_DEBUG             "${SeExpr2_${component}_LIBRARY_DEBUG}"
       INTERFACE_LINK_LIBRARIES          "${_deps}"
       INTERFACE_INCLUDE_DIRECTORIES     "${SeExpr2_INCLUDE_DIRS};${LLVM_INCLUDE_DIR}"

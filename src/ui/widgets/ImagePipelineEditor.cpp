@@ -43,7 +43,7 @@ ImagePipeline ImagePipelineEditor::constructPipeline() const
 		mapper.setMaxRange(ui->rangeSlider->rightValue());
 	}
 
-	mapper.setToneMapping((ToneMapping)ui->toneMapperCB->currentIndex());
+	mapper.setToneMapping((ToneMappingMode)ui->toneMapperCB->currentIndex());
 
 	mapper.setTripletFormat((ColorFormat)ui->formatFromCB->currentIndex(),
 							(ColorFormat)ui->formatToCB->currentIndex());

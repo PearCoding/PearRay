@@ -8,12 +8,12 @@
 namespace PR {
 namespace UI {
 // Mapping mostly based on http://www.brucelindbloom.com/
-enum ColorFormat {
-	CF_XYZ = 0,
-	CF_SRGB,
-	CF_AdobeRGB,
-	CF_LAB,
-	CF_LUV
+enum class ColorFormat {
+	XYZ = 0,
+	SRGB,
+	AdobeRGB,
+	LAB,
+	LUV
 };
 
 // TODO: Maybe make it adaptable?
@@ -29,11 +29,11 @@ constexpr float REF_WHITE_Z = 0.35827f;
 constexpr float CIE_ETA	  = 0.008856f;
 constexpr float CIE_KAPPA = 903.3f;
 
-enum ToneMapping {
-	TM_None = 0,
-	TM_Reinhard,
-	TM_ModifiedReinhard,
-	TM_ACES
+enum class ToneMappingMode {
+	None = 0,
+	Reinhard,
+	ModifiedReinhard,
+	ACES
 };
 
 /* Pipeline:
@@ -51,9 +51,9 @@ public:
 		, mOffset(0)
 		, mMinRange(1) // Disabled if min > max
 		, mMaxRange(0)
-		, mTripletFormatSrc(CF_XYZ)
-		, mTripletFormatDst(CF_XYZ)
-		, mToneMapping(TM_None)
+		, mTripletFormatSrc(ColorFormat::XYZ)
+		, mTripletFormatDst(ColorFormat::XYZ)
+		, mToneMapping(ToneMappingMode::None)
 		, mGamma(-1)
 	{
 	}
@@ -63,7 +63,7 @@ public:
 	inline void setOffset(float offset) { mOffset = offset; }
 	inline void setMaxRange(float f) { mMaxRange = f; }
 	inline void setMinRange(float f) { mMinRange = f; }
-	inline void setToneMapping(ToneMapping tm) { mToneMapping = tm; }
+	inline void setToneMapping(ToneMappingMode tm) { mToneMapping = tm; }
 
 	inline void setTripletFormat(ColorFormat formatFrom, ColorFormat formatTo)
 	{
@@ -111,22 +111,22 @@ private:
 	{
 		switch (format) {
 		default:
-		case CF_XYZ:
+		case ColorFormat::XYZ:
 			x = r;
 			y = g;
 			z = b;
 			break;
-		case CF_SRGB:
+		case ColorFormat::SRGB:
 			x = +4.123908e-01f * r + 3.575843e-01f * g + 1.804808e-01f * b;
 			y = +2.126390e-01f * r + 7.151687e-01f * g + 7.219232e-02f * b;
 			z = +1.933082e-02f * r + 1.191948e-01f * g + 9.505322e-01f * b;
 			break;
-		case CF_AdobeRGB:
+		case ColorFormat::AdobeRGB:
 			x = 0.5767309 * r + 0.1855540 * g + 0.1881852 * b;
 			y = 0.2973769 * r + 0.6273491 * g + 0.0752741 * b;
 			z = 0.0270343 * r + 0.0706872 * g + 0.9911085 * b;
 			break;
-		case CF_LAB: {
+		case ColorFormat::LAB: {
 			// Maybe from 0,1 to common range?
 			const float L = r;
 			const float A = g;
@@ -147,7 +147,7 @@ private:
 			y = REF_WHITE_Y * yr;
 			z = REF_WHITE_Z * zr;
 		} break;
-		case CF_LUV: {
+		case ColorFormat::LUV: {
 			// Maybe from 0,1 to common range?
 			const float L = r;
 			const float U = g;
@@ -175,22 +175,22 @@ private:
 	{
 		switch (format) {
 		default:
-		case CF_XYZ:
+		case ColorFormat::XYZ:
 			r = x;
 			g = y;
 			b = z;
 			break;
-		case CF_SRGB:
+		case ColorFormat::SRGB:
 			r = +3.240970e+00f * x - 1.537383e+00f * y - 4.986108e-01f * z;
 			g = -9.692436e-01f * x + 1.875968e+00f * y + 4.155506e-02f * z;
 			b = +5.563008e-02f * x - 2.039770e-01f * y + 1.056972e+00f * z;
 			break;
-		case CF_AdobeRGB:
+		case ColorFormat::AdobeRGB:
 			r = +2.0413690 * x - 0.5649464 * y - 0.3446944 * z;
 			g = -0.9692660 * x + 1.8760108 * y + 0.0415560 * z;
 			b = +0.0134474 * x - 0.1183897 * y + 1.0154096 * z;
 			break;
-		case CF_LAB: {
+		case ColorFormat::LAB: {
 			const float xr = x / REF_WHITE_X;
 			const float yr = y / REF_WHITE_Y;
 			const float zr = z / REF_WHITE_Z;
@@ -207,7 +207,7 @@ private:
 			g = (A + 128) / 255.0f; // [-128, 127] => [0, 1]
 			b = (B + 128) / 255.0f; // [-128, 127] => [0, 1]
 		} break;
-		case CF_LUV: {
+		case ColorFormat::LUV: {
 			const float yr = y / REF_WHITE_Y;
 			const float fy = yr <= CIE_ETA ? (CIE_KAPPA * yr + 16) / 116.0f : std::cbrt(yr);
 			const float L  = 116 * fy - 16;
@@ -251,13 +251,13 @@ private:
 	{
 		switch (mToneMapping) {
 		default:
-		case TM_None:
+		case ToneMappingMode::None:
 			return x;
-		case TM_Reinhard:
+		case ToneMappingMode::Reinhard:
 			return tm_reinhard(x);
-		case TM_ModifiedReinhard:
+		case ToneMappingMode::ModifiedReinhard:
 			return tm_modified_reinhard(x);
-		case TM_ACES:
+		case ToneMappingMode::ACES:
 			return tm_aces(x);
 		}
 	}
@@ -289,7 +289,7 @@ private:
 	float mMaxRange;
 	ColorFormat mTripletFormatSrc;
 	ColorFormat mTripletFormatDst;
-	ToneMapping mToneMapping;
+	ToneMappingMode mToneMapping;
 	float mGamma;
 };
 } // namespace UI

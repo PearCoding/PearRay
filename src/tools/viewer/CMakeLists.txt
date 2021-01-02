@@ -30,7 +30,7 @@ set(GenFiles ${Hdr_Moc} ${Fms_Hdr} ${Res_Rcc})
 SOURCE_GROUP("Generated Files" FILES ${GenFiles})
 
 add_executable(prviewer ${Src} ${Hdr} ${GenFiles})
-target_link_libraries(prviewer PRIVATE pr_lib_loader pr_lib_ui)
+target_link_libraries(prviewer PRIVATE pr_lib_ui)
 add_lto(prviewer)
 strip_binary(prviewer)
 target_setup_deploy(prviewer QT RECURSIVE)

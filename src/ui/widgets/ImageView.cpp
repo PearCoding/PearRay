@@ -347,7 +347,7 @@ void ImageView::updateImage()
 
 QPoint ImageView::mapToPixel(const QPoint& pos) const
 {
-	const QPointF gp = QPointF(pos.x(), pos.y() - barHeight());
+	const QPointF gp = QPointF(pos.x(), pos.y() - (float)barHeight());
 	const QPointF lp = mInvTransform.map(gp);
 	return QPoint(std::floor(lp.x()), std::floor(lp.y()));
 }

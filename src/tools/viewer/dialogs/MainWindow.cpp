@@ -53,7 +53,7 @@ void MainWindow::closeEvent(QCloseEvent* event)
 {
 	if (mProject && mProject->isRendering()) {
 		if (QMessageBox::question(this, tr("Close ongoing project?"),
-								  tr("Project is still rendering. Stop the rendering and close?"),
+								  tr("Project is still rendering.\nStop rendering and close?"),
 								  QMessageBox::Yes, QMessageBox::No)
 			== QMessageBox::No) {
 			event->ignore();
@@ -122,7 +122,7 @@ void MainWindow::openFile(const QString& file)
 
 	if (mProject) {
 		if (QMessageBox::question(this, tr("Close current project?"),
-								  tr("There is already a project loaded. Close current one?"),
+								  tr("There is already a project loaded.\nClose current one?"),
 								  QMessageBox::Yes, QMessageBox::No)
 			== QMessageBox::No)
 			return;

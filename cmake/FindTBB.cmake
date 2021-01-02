@@ -148,13 +148,12 @@ foreach(component ${TBB_FIND_COMPONENTS})
     set_target_properties(TBB::${component} PROPERTIES
       IMPORTED_LOCATION_RELEASE         "${TBB_${component}_LIBRARY_RELEASE}"
       IMPORTED_LOCATION_MINSIZEREL      "${TBB_${component}_LIBRARY_RELEASE}"
-      IMPORTED_LOCATION_RELWITHDEBINFO  "${TBB_${component}_LIBRARY_DEBUG}"
+      IMPORTED_LOCATION_RELWITHDEBINFO  "${TBB_${component}_LIBRARY_RELEASE}"
       IMPORTED_LOCATION_DEBUG           "${TBB_${component}_LIBRARY_DEBUG}"
-      IMPORTED_LOCATION                 "${TBB_${component}_LIBRARY}"
       ## TODO: Set this to a proper value (on windows -> dll)
       IMPORTED_IMPLIB_RELEASE           "${TBB_${component}_LIBRARY_RELEASE}"
       IMPORTED_IMPLIB_MINSIZEREL        "${TBB_${component}_LIBRARY_RELEASE}"
-      IMPORTED_IMPLIB_RELWITHDEBINFO    "${TBB_${component}_LIBRARY_DEBUG}"
+      IMPORTED_IMPLIB_RELWITHDEBINFO    "${TBB_${component}_LIBRARY_RELEASE}"
       IMPORTED_IMPLIB_DEBUG             "${TBB_${component}_LIBRARY_DEBUG}"
       INTERFACE_LINK_LIBRARIES          "${_deps}"
       INTERFACE_INCLUDE_DIRECTORIES     "${TBB_INCLUDE_DIRS}"

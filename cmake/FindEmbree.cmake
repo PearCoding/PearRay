@@ -121,13 +121,12 @@ foreach(component ${EMBREE_FIND_COMPONENTS})
     set_target_properties(Embree::${component} PROPERTIES
       IMPORTED_LOCATION_RELEASE         "${EMBREE_${component}_LIBRARY_RELEASE}"
       IMPORTED_LOCATION_MINSIZEREL      "${EMBREE_${component}_LIBRARY_RELEASE}"
-      IMPORTED_LOCATION_RELWITHDEBINFO  "${EMBREE_${component}_LIBRARY_DEBUG}"
+      IMPORTED_LOCATION_RELWITHDEBINFO  "${EMBREE_${component}_LIBRARY_RELEASE}"
       IMPORTED_LOCATION_DEBUG           "${EMBREE_${component}_LIBRARY_DEBUG}"
-      IMPORTED_LOCATION                 "${EMBREE_${component}_LIBRARY}"
       ## TODO: Set this to a proper value (on windows -> dll)
       IMPORTED_IMPLIB_RELEASE           "${EMBREE_${component}_LIBRARY_RELEASE}"
       IMPORTED_IMPLIB_MINSIZEREL        "${EMBREE_${component}_LIBRARY_RELEASE}"
-      IMPORTED_IMPLIB_RELWITHDEBINFO    "${EMBREE_${component}_LIBRARY_DEBUG}"
+      IMPORTED_IMPLIB_RELWITHDEBINFO    "${EMBREE_${component}_LIBRARY_RELEASE}"
       IMPORTED_IMPLIB_DEBUG             "${EMBREE_${component}_LIBRARY_DEBUG}"
       INTERFACE_LINK_LIBRARIES          "${_deps}"
       INTERFACE_INCLUDE_DIRECTORIES     "${EMBREE_INCLUDE_DIRS}"

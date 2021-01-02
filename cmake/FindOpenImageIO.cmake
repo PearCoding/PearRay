@@ -131,13 +131,12 @@ foreach(component ${OpenImageIO_FIND_COMPONENTS})
     set_target_properties(OpenImageIO::${component} PROPERTIES
       IMPORTED_LOCATION_RELEASE         "${OpenImageIO_${component}_LIBRARY_RELEASE}"
       IMPORTED_LOCATION_MINSIZEREL      "${OpenImageIO_${component}_LIBRARY_RELEASE}"
-      IMPORTED_LOCATION_RELWITHDEBINFO  "${OpenImageIO_${component}_LIBRARY_DEBUG}"
+      IMPORTED_LOCATION_RELWITHDEBINFO  "${OpenImageIO_${component}_LIBRARY_RELEASE}"
       IMPORTED_LOCATION_DEBUG           "${OpenImageIO_${component}_LIBRARY_DEBUG}"
-      IMPORTED_LOCATION                 "${OpenImageIO_${component}_LIBRARY}"
       ## TODO: Set this to a proper value (on windows -> dll)
       IMPORTED_IMPLIB_RELEASE           "${OpenImageIO_${component}_LIBRARY_RELEASE}"
       IMPORTED_IMPLIB_MINSIZEREL        "${OpenImageIO_${component}_LIBRARY_RELEASE}"
-      IMPORTED_IMPLIB_RELWITHDEBINFO    "${OpenImageIO_${component}_LIBRARY_DEBUG}"
+      IMPORTED_IMPLIB_RELWITHDEBINFO    "${OpenImageIO_${component}_LIBRARY_RELEASE}"
       IMPORTED_IMPLIB_DEBUG             "${OpenImageIO_${component}_LIBRARY_DEBUG}"
       INTERFACE_LINK_LIBRARIES          "${_deps}"
       INTERFACE_INCLUDE_DIRECTORIES     "${OpenImageIO_INCLUDE_DIRS}"
