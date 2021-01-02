@@ -26,6 +26,8 @@ public:
 public slots:
 	void zoomToFit();
 	void zoomToOriginal();
+	void centerImage();
+	void updateImage();
 
 protected:
 	void paintEvent(QPaintEvent* event) override;
@@ -40,8 +42,8 @@ private slots:
 
 private:
 	void renderBackground(const QSize& size);
-	void updateImage();
-	
+
+	int barHeight() const;
 	QSize viewSize() const;
 
 	QPoint mapToPixel(const QPoint& pos) const;

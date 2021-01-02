@@ -6,7 +6,6 @@
 #include <QSplashScreen>
 #include <QSurfaceFormat>
 
-// We do not link to the library, only include the configuration file!
 #include "config/Version.h"
 
 int main(int argc, char** argv)
@@ -21,13 +20,13 @@ int main(int argc, char** argv)
 
 	QApplication app(argc, argv);
 
-	app.setApplicationName("PearRayDiagnostic");
+	app.setApplicationName("PearRayViewer");
 	app.setApplicationVersion(PR_VERSION_STRING);
 	app.setOrganizationName(PR_VENDOR_STRING);
 
 	// Command Line
 	QCommandLineParser parser;
-	parser.setApplicationDescription("PearRay diagnose tool");
+	parser.setApplicationDescription("PearRay viewer");
 	parser.addHelpOption();
 	parser.addVersionOption();
 	parser.addPositionalArgument("input", QApplication::translate("main", "Input file"));
@@ -55,11 +54,9 @@ int main(int argc, char** argv)
 	app.processEvents();
 
 	if (!parser.positionalArguments().empty()) {
-		for (const auto& arg : parser.positionalArguments()) {
-			QFileInfo info(arg);
-			if (info.exists())
-				w.openFile(info.filePath());
-		}
+		QFileInfo info(parser.positionalArguments().first());
+		if (info.exists())
+			w.openFile(info.filePath());
 	}
 
 	w.raise();

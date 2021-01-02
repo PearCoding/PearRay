@@ -9,14 +9,14 @@
 
 namespace PR {
 namespace UI {
-constexpr int BAR_HEIGHT = 20;
-constexpr int BAR_POS_W	 = 100;
-constexpr int MIN_S		 = 400;
+constexpr int BAR_POS_W = 100;
+constexpr int MIN_S		= 400;
 
 constexpr float PAN_W  = 0.4f;
 constexpr float ZOOM_W = 1.05f;
 
-constexpr int GRID_S = 10;
+// Grid size in inches
+constexpr int GRID_S = 20;
 
 ImageView::ImageView(QWidget* parent)
 	: QWidget(parent)
@@ -43,17 +43,35 @@ void ImageView::zoomToFit()
 		return;
 
 	// Scale
-	const float zw = viewSize().width() / (float)mImage.width();
-	const float zh = viewSize().height() / (float)mImage.height();
+	const float zw	 = viewSize().width() / (float)mImage.width();
+	const float zh	 = viewSize().height() / (float)mImage.height();
+	const float zoom = std::min(zw, zh);
 
-	const float zoom = zw < zh ? zw : zh;
-
-	mTransform = QTransform::fromScale(zoom, zoom);
+	mTransform	  = QTransform::fromScale(zoom, zoom);
+	mInvTransform = QTransform::fromScale(1 / zoom, 1 / zoom);
 
 	// Shift to center
-	QPoint imgCenter   = mTransform.map(QPoint(mImage.width() / 2, mImage.height() / 2));
-	QPoint viewCenter  = QPoint(viewSize().width() / 2, viewSize().height() / 2);
-	QPoint deltaCenter = viewCenter - imgCenter;
+	centerImage();
+}
+
+void ImageView::zoomToOriginal()
+{
+	if (mImage.isNull())
+		return;
+
+	// No scale
+	mTransform	  = QTransform();
+	mInvTransform = QTransform();
+
+	// Shift to center
+	centerImage();
+}
+
+void ImageView::centerImage()
+{
+	const QPointF imgCenter	  = QPointF(mImage.width() / 2.0f, mImage.height() / 2.0f);
+	const QPointF viewCenter  = mInvTransform.map(QPointF(viewSize().width() / 2.0f, viewSize().height() / 2.0f));
+	const QPointF deltaCenter = viewCenter - imgCenter;
 
 	mTransform.translate(deltaCenter.x(), deltaCenter.y());
 	mInvTransform = mTransform.inverted();
@@ -61,26 +79,16 @@ void ImageView::zoomToFit()
 	repaint();
 }
 
-void ImageView::zoomToOriginal()
+int ImageView::barHeight() const
 {
-	if (mImage.isNull())
-		return;
-	// No scale
-
-	// Shift to center
-	QPoint imgCenter   = QPoint(mImage.width() / 2, mImage.height() / 2);
-	QPoint viewCenter  = QPoint(viewSize().width() / 2, viewSize().height() / 2);
-	QPoint deltaCenter = viewCenter - imgCenter;
-
-	mTransform	  = QTransform::fromTranslate(deltaCenter.x(), deltaCenter.y());
-	mInvTransform = mTransform.inverted();
-
-	repaint();
+	constexpr int PADDING	   = 2;
+	const QFontMetrics metrics = this->fontMetrics();
+	return metrics.height() + PADDING * 2;
 }
 
 QSize ImageView::viewSize() const
 {
-	return QSize(width(), height() - BAR_HEIGHT);
+	return QSize(width(), height() - barHeight());
 }
 
 void ImageView::setView(const std::shared_ptr<ImageBufferView>& view)
@@ -106,16 +114,16 @@ void ImageView::exportImage(const QString& path) const
 QSize ImageView::minimumSizeHint() const
 {
 	if (!mImage.isNull()) {
-		return QSize(qMin(mImage.width(), MIN_S), BAR_HEIGHT + qMin(mImage.height(), MIN_S));
+		return QSize(qMin(mImage.width(), MIN_S), barHeight() + qMin(mImage.height(), MIN_S));
 	} else {
-		return QSize(MIN_S, BAR_HEIGHT + MIN_S);
+		return QSize(MIN_S, barHeight() + MIN_S);
 	}
 }
 
 QSize ImageView::sizeHint() const
 {
 	if (!mImage.isNull()) {
-		return QSize(mImage.width(), BAR_HEIGHT + mImage.height());
+		return QSize(mImage.width(), barHeight() + mImage.height());
 	} else {
 		return minimumSizeHint();
 	}
@@ -123,6 +131,8 @@ QSize ImageView::sizeHint() const
 
 void ImageView::paintEvent(QPaintEvent* event)
 {
+	const int bar_height = barHeight();
+
 	QPainter painter(this);
 	painter.setRenderHint(QPainter::SmoothPixmapTransform, false);
 	painter.setRenderHint(QPainter::TextAntialiasing, true);
@@ -132,33 +142,36 @@ void ImageView::paintEvent(QPaintEvent* event)
 
 	// Position Field
 	painter.setBrush(QBrush(Qt::white));
-	painter.drawText(QRect(0, 0, BAR_POS_W / 2 - 1, BAR_HEIGHT - 1),
+	painter.drawText(QRect(0, 0, BAR_POS_W / 2 - 1, bar_height - 1),
 					 QString::number(mLastPixel.x()),
 					 QTextOption(Qt::AlignCenter));
-	painter.drawText(QRect(BAR_POS_W / 2 + 1, 0, BAR_POS_W / 2 - 1, BAR_HEIGHT - 1),
+	painter.drawText(QRect(BAR_POS_W / 2 + 1, 0, BAR_POS_W / 2 - 1, bar_height - 1),
 					 QString::number(mLastPixel.y()),
 					 QTextOption(Qt::AlignCenter));
 
-	const bool additionalField = mView->viewChannelCount() == 1;
-	if (additionalField) {
-		painter.drawText(QRect(BAR_POS_W + 1, 0, BAR_POS_W / 2 - 1, BAR_HEIGHT - 1),
-						 QString::number(mChannelOffset),
-						 QTextOption(Qt::AlignCenter));
+	// Only populate if there is an active view
+	if (mView) {
+		const bool additionalField = mView->viewChannelCount() == 1;
+		if (additionalField) {
+			painter.drawText(QRect(BAR_POS_W + 1, 0, BAR_POS_W / 2 - 1, bar_height - 1),
+							 QString::number(mChannelOffset),
+							 QTextOption(Qt::AlignCenter));
 
-		painter.drawLine(BAR_POS_W + BAR_POS_W / 2, 0,
-						 BAR_POS_W + BAR_POS_W / 2, BAR_HEIGHT - 1);
+			painter.drawLine(BAR_POS_W + BAR_POS_W / 2, 0,
+							 BAR_POS_W + BAR_POS_W / 2, bar_height - 1);
+		}
+
+		// Value Field
+		QString valS = valueAt(mLastPixel);
+		painter.drawText(QRect(BAR_POS_W + (additionalField ? BAR_POS_W / 2 : 0), 0,
+							   width() - BAR_POS_W - 1, bar_height - 1),
+						 valS, QTextOption(Qt::AlignCenter));
 	}
 
-	// Value Field
-	QString valS = valueAt(mLastPixel);
-	painter.drawText(QRect(BAR_POS_W + (additionalField ? BAR_POS_W / 2 : 0), 0,
-						   width() - BAR_POS_W - 1, BAR_HEIGHT - 1),
-					 valS, QTextOption(Qt::AlignCenter));
-
 	// Image
-	painter.setClipRect(0, BAR_HEIGHT, width(), height() - BAR_HEIGHT);
+	painter.setClipRect(0, bar_height, width(), height() - bar_height);
 	painter.setClipping(true);
-	painter.translate(0, BAR_HEIGHT);
+	painter.translate(0, bar_height);
 	painter.setTransform(mTransform, true);
 
 	painter.drawPixmap(0, 0, mPixmap);
@@ -174,6 +187,8 @@ void ImageView::resizeEvent(QResizeEvent* event)
 
 void ImageView::renderBackground(const QSize& size)
 {
+	const int bar_height = barHeight();
+
 	QPainter painter;
 	mBackground = QPixmap(size);
 
@@ -182,32 +197,33 @@ void ImageView::renderBackground(const QSize& size)
 
 	// Bar
 	painter.setBrush(QBrush(Qt::darkGray));
-	painter.drawRect(0, 0, mBackground.width() - 1, BAR_HEIGHT - 1);
+	painter.drawRect(0, 0, mBackground.width() - 1, bar_height - 1);
 
 	// Separators
 	painter.drawLine(BAR_POS_W / 2, 0,
-					 BAR_POS_W / 2, BAR_HEIGHT - 1);
+					 BAR_POS_W / 2, bar_height - 1);
 	painter.drawLine(BAR_POS_W, 0,
-					 BAR_POS_W, BAR_HEIGHT - 1);
+					 BAR_POS_W, bar_height - 1);
 
 	// Background
-	const int gx = (mBackground.width() / (2 * GRID_S) + 1);
-	const int gy = (mBackground.height() - BAR_HEIGHT) / GRID_S + 1;
+	const float grid_s = GRID_S * std::ceil(std::max(logicalDpiX() / (float)width(), logicalDpiY() / (float)height()));
+	const int gx	   = (mBackground.width() / (2 * grid_s) + 1);
+	const int gy	   = (mBackground.height() - bar_height) / grid_s + 1;
 
 	painter.setPen(Qt::NoPen);
 	for (int y = 0; y < gy; ++y) {
-		int dx = (y % 2) ? 0 : GRID_S;
-		int py = BAR_HEIGHT + y * GRID_S;
+		int dx = (y % 2) ? 0 : grid_s;
+		int py = bar_height + y * grid_s;
 
 		painter.setBrush(QBrush(Qt::white));
 		for (int x = 0; x < gx; ++x)
-			painter.drawRect(dx + x * GRID_S * 2, py,
-							 GRID_S, GRID_S);
+			painter.drawRect(dx + x * grid_s * 2, py,
+							 grid_s, grid_s);
 
 		painter.setBrush(QBrush(Qt::lightGray));
 		for (int x = 0; x < gx; ++x)
-			painter.drawRect(GRID_S - dx + x * GRID_S * 2, py,
-							 GRID_S, GRID_S);
+			painter.drawRect(grid_s - dx + x * grid_s * 2, py,
+							 grid_s, grid_s);
 	}
 	painter.end();
 }
@@ -319,15 +335,19 @@ void ImageView::onContextMenuClick(QObject* obj)
 
 void ImageView::updateImage()
 {
-	mView->fillImage(mImage, mPipeline, mChannelOffset, mChannelMask);
-	mPixmap = QPixmap::fromImage(mImage);
-
+	if (mView) {
+		mView->fillImage(mImage, mPipeline, mChannelOffset, mChannelMask);
+		mPixmap = QPixmap::fromImage(mImage);
+	} else {
+		mImage	= QImage();
+		mPixmap = QPixmap();
+	}
 	repaint();
 }
 
 QPoint ImageView::mapToPixel(const QPoint& pos) const
 {
-	const QPointF gp = QPointF(pos.x(), pos.y() - BAR_HEIGHT);
+	const QPointF gp = QPointF(pos.x(), pos.y() - barHeight());
 	const QPointF lp = mInvTransform.map(gp);
 	return QPoint(std::floor(lp.x()), std::floor(lp.y()));
 }

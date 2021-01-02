@@ -27,7 +27,7 @@ public:
 	int height() const override { return mHeight; }
 	int channelCount() const override { return mChannelNames.size(); }
 	int viewChannelCount() const override { return channelCount(); }
-	const QString& channelName(int c) const override { return mChannelNames.at((int)c); }
+	QString channelName(int c) const override { return mChannelNames.at((int)c); }
 
 	float value(int x, int y, int channel) const override
 	{

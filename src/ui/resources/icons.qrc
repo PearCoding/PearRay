@@ -3,20 +3,20 @@
         <file alias="scene_icon">category-24px.svg</file>
         <file alias="image_icon">image-24px.svg</file>
         <file alias="timeline_icon">timeline-24px.svg</file>
-        <file>ic_pan_tool_black_24dp_2x.png</file>
-        <file>ic_play_arrow_black_24dp_2x.png</file>
-        <file>ic_stop_black_24dp_2x.png</file>
-        <file>ic_zoom_in_black_24dp_2x.png</file>
-        <file>ic_zoom_out_black_24dp_2x.png</file>
-        <file>ic_aspect_ratio_black_24dp_2x.png</file>
-        <file>ic_colorize_black_24dp_2x.png</file>
-        <file>ic_file_download_black_24dp_2x.png</file>
-        <file>ic_home_black_24dp_2x.png</file>
-        <file>ic_nature_people_black_24dp_2x.png</file>
-        <file>ic_search_black_24dp_2x.png</file>
-        <file>ic_settings_overscan_black_24dp_2x.png</file>
-        <file>ic_crop_black_24dp_2x.png</file>
-        <file>ic_replay_black_24dp_2x.png</file>
+        <file alias="pan_icon">ic_pan_tool_black_24dp_2x.png</file>
+        <file alias="play_icon">ic_play_arrow_black_24dp_2x.png</file>
+        <file alias="stop_icon">ic_stop_black_24dp_2x.png</file>
+        <file alias="zoom_in_icon">ic_zoom_in_black_24dp_2x.png</file>
+        <file alias="zoom_out_icon">ic_zoom_out_black_24dp_2x.png</file>
+        <file alias="aspect_ratio_icon">ic_aspect_ratio_black_24dp_2x.png</file>
+        <file alias="colorize_icon">ic_colorize_black_24dp_2x.png</file>
+        <file alias="download_icon">ic_file_download_black_24dp_2x.png</file>
+        <file alias="home_icon">ic_home_black_24dp_2x.png</file>
+        <file alias="people_icon">ic_nature_people_black_24dp_2x.png</file>
+        <file alias="search_icon">ic_search_black_24dp_2x.png</file>
+        <file alias="overscan_icon">ic_settings_overscan_black_24dp_2x.png</file>
+        <file alias="crop_icon">ic_crop_black_24dp_2x.png</file>
+        <file alias="replay_icon">ic_replay_black_24dp_2x.png</file>
         <file>zoom_cursor.png</file>
         <file>icon.png</file>
         <file>splash.svg</file>

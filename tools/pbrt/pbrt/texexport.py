@@ -57,7 +57,7 @@ def export(operator, op):
 
         mapper = op.parameters['wrap'] if 'wrap' in op.parameters else "repeat"
         if not mapper in WRAP_MAP:
-            print("Unknown wrap method '%'" % mapper)
+            print("Unknown wrap method '%s'" % mapper)
 
         operator.w.write("(texture")
         operator.w.goIn()

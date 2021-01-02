@@ -1,0 +1,398 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindowClass</class>
+ <widget class="QMainWindow" name="MainWindowClass">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>520</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>PearRay Viewer</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="../../../ui/resources/icons.qrc">
+    <normaloff>:/icon.png</normaloff>:/icon.png</iconset>
+  </property>
+  <widget class="PR::UI::ImageView" name="imageView"/>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>800</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <widget class="QMenu" name="menuRecentFiles">
+     <property name="title">
+      <string>Open Recent</string>
+     </property>
+     <addaction name="separator"/>
+    </widget>
+    <addaction name="actionOpenFile"/>
+    <addaction name="menuRecentFiles"/>
+    <addaction name="separator"/>
+    <addaction name="actionSettings"/>
+    <addaction name="separator"/>
+    <addaction name="actionQuit"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <widget class="QMenu" name="menuExternal_Links">
+     <property name="title">
+      <string>External Links</string>
+     </property>
+     <addaction name="actionWebsite"/>
+    </widget>
+    <addaction name="actionShortcuts"/>
+    <addaction name="actionQuickGuide"/>
+    <addaction name="actionManual"/>
+    <addaction name="separator"/>
+    <addaction name="menuExternal_Links"/>
+    <addaction name="separator"/>
+    <addaction name="actionAbout"/>
+    <addaction name="actionAboutQt"/>
+   </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>View</string>
+    </property>
+    <widget class="QMenu" name="menuDocks">
+     <property name="title">
+      <string>Docks</string>
+     </property>
+     <addaction name="actionShow_All"/>
+     <addaction name="actionHide_All"/>
+     <addaction name="separator"/>
+    </widget>
+    <widget class="QMenu" name="menuToolbars">
+     <property name="title">
+      <string>Toolbars</string>
+     </property>
+     <addaction name="actionShow_All_2"/>
+     <addaction name="actionHide_All_2"/>
+     <addaction name="separator"/>
+    </widget>
+    <addaction name="menuDocks"/>
+    <addaction name="menuToolbars"/>
+   </widget>
+   <widget class="QMenu" name="menuEngine">
+    <property name="title">
+     <string>Engine</string>
+    </property>
+    <addaction name="actionStart"/>
+   </widget>
+   <widget class="QMenu" name="menuImage">
+    <property name="title">
+     <string>Image</string>
+    </property>
+    <widget class="QMenu" name="menuScale">
+     <property name="title">
+      <string>Scale</string>
+     </property>
+     <addaction name="actionFit"/>
+     <addaction name="action100"/>
+    </widget>
+    <addaction name="actionExport"/>
+    <addaction name="menuScale"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuEngine"/>
+   <addaction name="menuImage"/>
+   <addaction name="menuView"/>
+   <addaction name="menuHelp"/>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+  <widget class="QToolBar" name="controlToolBar">
+   <property name="windowTitle">
+    <string>Control</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionStart"/>
+  </widget>
+  <widget class="QDockWidget" name="imagePipelineDW">
+   <property name="windowTitle">
+    <string>Pipeline</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents">
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <widget class="PR::UI::ImagePipelineEditor" name="imagePipeline" native="true"/>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="outlineDW">
+   <property name="windowTitle">
+    <string>Outline</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_2">
+    <layout class="QVBoxLayout" name="verticalLayout_3">
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QTreeView" name="outlineTV"/>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QToolBar" name="imageToolBar">
+   <property name="windowTitle">
+    <string>Image</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionFit"/>
+   <addaction name="action100"/>
+   <addaction name="actionExport"/>
+  </widget>
+  <widget class="QDockWidget" name="logDW">
+   <property name="windowTitle">
+    <string>Log</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>8</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_3">
+    <layout class="QVBoxLayout" name="verticalLayout_2">
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QListWidget" name="logLW">
+       <property name="editTriggers">
+        <set>QAbstractItemView::NoEditTriggers</set>
+       </property>
+       <property name="alternatingRowColors">
+        <bool>true</bool>
+       </property>
+       <property name="selectionMode">
+        <enum>QAbstractItemView::ContiguousSelection</enum>
+       </property>
+       <property name="selectionBehavior">
+        <enum>QAbstractItemView::SelectRows</enum>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="propertiesDW">
+   <property name="windowTitle">
+    <string>Properties</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_4"/>
+  </widget>
+  <action name="actionOpenFile">
+   <property name="text">
+    <string>Open File...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
+  </action>
+  <action name="actionQuit">
+   <property name="text">
+    <string>Quit</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="text">
+    <string>About</string>
+   </property>
+   <property name="shortcut">
+    <string>F5</string>
+   </property>
+  </action>
+  <action name="actionAboutQt">
+   <property name="text">
+    <string>About Qt</string>
+   </property>
+   <property name="shortcut">
+    <string>F6</string>
+   </property>
+  </action>
+  <action name="actionManual">
+   <property name="text">
+    <string>Manual</string>
+   </property>
+   <property name="shortcut">
+    <string>F1</string>
+   </property>
+  </action>
+  <action name="actionQuickGuide">
+   <property name="text">
+    <string>Quick Guide</string>
+   </property>
+   <property name="shortcut">
+    <string>F3</string>
+   </property>
+  </action>
+  <action name="actionShortcuts">
+   <property name="text">
+    <string>Shortcuts</string>
+   </property>
+   <property name="shortcut">
+    <string>F4</string>
+   </property>
+  </action>
+  <action name="actionWebsite">
+   <property name="icon">
+    <iconset resource="../../../ui/resources/icons.qrc">
+     <normaloff>:/ic_home_black_24dp_2x.png</normaloff>:/ic_home_black_24dp_2x.png</iconset>
+   </property>
+   <property name="text">
+    <string>Website</string>
+   </property>
+   <property name="shortcut">
+    <string>F2</string>
+   </property>
+  </action>
+  <action name="actionShow_All">
+   <property name="text">
+    <string>Show All</string>
+   </property>
+  </action>
+  <action name="actionHide_All">
+   <property name="text">
+    <string>Hide All</string>
+   </property>
+  </action>
+  <action name="actionShow_All_2">
+   <property name="text">
+    <string>Show All</string>
+   </property>
+  </action>
+  <action name="actionHide_All_2">
+   <property name="text">
+    <string>Hide All</string>
+   </property>
+  </action>
+  <action name="actionStart">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Start</string>
+   </property>
+    <property name="icon">
+      <iconset resource="../../../ui/resources/icons.qrc">
+        <normaloff>:/play_icon</normaloff>:/play_icon
+      </iconset>
+    </property>
+  </action>
+  <action name="actionExport">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Export</string>
+   </property>
+    <property name="icon">
+      <iconset resource="../../../ui/resources/icons.qrc">
+        <normaloff>:/download_icon</normaloff>:/download_icon
+      </iconset>
+    </property>
+  </action>
+  <action name="actionFit">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Fit</string>
+   </property>
+    <property name="icon">
+      <iconset resource="../../../ui/resources/icons.qrc">
+        <normaloff>:/overscan_icon</normaloff>:/overscan_icon
+      </iconset>
+    </property>
+  </action>
+  <action name="action100">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>100%</string>
+   </property>
+    <property name="icon">
+      <iconset resource="../../../ui/resources/icons.qrc">
+        <normaloff>:/aspect_ratio_icon</normaloff>:/aspect_ratio_icon
+      </iconset>
+    </property>
+  </action>
+  <action name="actionSettings">
+   <property name="text">
+    <string>Settings</string>
+   </property>
+  </action>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>PR::UI::ImageView</class>
+   <extends>QWidget</extends>
+   <header>widgets/ImageView.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>PR::UI::ImagePipelineEditor</class>
+   <extends>QWidget</extends>
+   <header>widgets/ImagePipelineEditor.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="../../../ui/resources/icons.qrc"/>
+ </resources>
+ <connections/>
+</ui>

@@ -2,10 +2,6 @@ MESSAGE(STATUS "Building prdiag")
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-if(CMAKE_COMPILER_IS_GNUCXX)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
-endif()
-
 set(Src
   main.cpp
   cnt/Container.cpp
