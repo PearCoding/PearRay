@@ -1,6 +1,8 @@
 #pragma once
 
 #include "PR_Config.h"
+
+#include <variant>
 #include <vector>
 
 namespace PR {
@@ -11,14 +13,18 @@ enum class ParameterType : uint8 {
 	UInt,
 	Number,
 	String,
-	Reference, // Uses uint
-	Group // TODO
+	Reference // Uses uint
 };
 
-constexpr uint32 P_INVALID_REFERENCE = (uint32)-1;
+constexpr uint64 P_INVALID_REFERENCE = (uint64)-1;
 
+class ParameterGroup;
 class PR_LIB_LOADER Parameter final {
 public:
+	using Int	 = int64;
+	using UInt	 = uint64;
+	using Number = float;
+
 	inline Parameter();
 
 	Parameter(const Parameter&) = default;
@@ -28,16 +34,16 @@ public:
 	Parameter& operator=(Parameter&&) = default;
 
 	static Parameter fromBool(bool v);
-	static Parameter fromInt(int64 v);
-	static Parameter fromUInt(uint64 v);
-	static Parameter fromNumber(float v);
+	static Parameter fromInt(Int v);
+	static Parameter fromUInt(UInt v);
+	static Parameter fromNumber(Number v);
 	static Parameter fromString(const std::string& v);
-	static Parameter fromReference(uint64 id);
+	static Parameter fromReference(UInt id);
 
 	static Parameter fromBoolArray(const std::vector<bool>& v);
-	static Parameter fromIntArray(const std::vector<int64> v);
-	static Parameter fromUIntArray(const std::vector<uint64> v);
-	static Parameter fromNumberArray(const std::vector<float> v);
+	static Parameter fromIntArray(const std::vector<Int>& v);
+	static Parameter fromUIntArray(const std::vector<UInt>& v);
+	static Parameter fromNumberArray(const std::vector<Number>& v);
 	static Parameter fromStringArray(const std::vector<std::string>& v);
 
 	inline bool isValid() const;
@@ -49,47 +55,39 @@ public:
 	inline bool canBeNumber() const;
 
 	inline bool getBool(bool def) const;
-	inline int64 getInt(int64 def) const;
-	inline int64 getExactInt(int64 def) const;
-	inline uint64 getUInt(uint64 def) const;
-	inline uint64 getExactUInt(uint64 def) const;
-	inline float getNumber(float def) const;
-	inline float getExactNumber(float def) const;
+	inline Int getInt(Int def) const;
+	inline Int getExactInt(Int def) const;
+	inline UInt getUInt(UInt def) const;
+	inline UInt getExactUInt(UInt def) const;
+	inline Number getNumber(Number def) const;
+	inline Number getExactNumber(Number def) const;
 	inline std::string getString(const std::string& def) const;
-	inline uint64 getReference(uint64 def = P_INVALID_REFERENCE) const;
+	inline UInt getReference(UInt def = P_INVALID_REFERENCE) const;
 
 	inline bool getBool(size_t ind, bool def) const;
-	inline int64 getInt(size_t ind, int64 def) const;
-	inline int64 getExactInt(size_t ind, int64 def) const;
-	inline uint64 getUInt(size_t ind, uint64 def) const;
-	inline uint64 getExactUInt(size_t ind, uint64 def) const;
-	inline float getNumber(size_t ind, float def) const;
-	inline float getExactNumber(size_t ind, float def) const;
+	inline Int getInt(size_t ind, Int def) const;
+	inline Int getExactInt(size_t ind, Int def) const;
+	inline UInt getUInt(size_t ind, UInt def) const;
+	inline UInt getExactUInt(size_t ind, UInt def) const;
+	inline Number getNumber(size_t ind, Number def) const;
+	inline Number getExactNumber(size_t ind, Number def) const;
 	inline std::string getString(size_t ind, const std::string& def) const;
 
 	inline std::vector<bool> getBoolArray() const;
-	inline std::vector<int64> getIntArray() const;
-	inline std::vector<int64> getExactIntArray() const;
-	inline std::vector<uint64> getUIntArray() const;
-	inline std::vector<uint64> getExactUIntArray() const;
-	inline std::vector<float> getNumberArray() const;
-	inline std::vector<float> getExactNumberArray() const;
+	inline std::vector<Int> getIntArray() const;
+	inline std::vector<Int> getExactIntArray() const;
+	inline std::vector<UInt> getUIntArray() const;
+	inline std::vector<UInt> getExactUIntArray() const;
+	inline std::vector<Number> getNumberArray() const;
+	inline std::vector<Number> getExactNumberArray() const;
 	inline std::vector<std::string> getStringArray() const;
 
 private:
-	struct ParameterData {
-		std::string String;
-		union {
-			bool Bool;
-			int64 Int;
-			uint64 UInt;
-			float Number;
-		};
-	};
-	inline Parameter(ParameterType t, const std::vector<ParameterData>& dt);
+	using Variant = std::variant<bool, Int, UInt, Number, std::string>;
+	inline Parameter(ParameterType t, const std::vector<Variant>& dt);
 
 	ParameterType mType;
-	std::vector<ParameterData> mData;
+	std::vector<Variant> mData;
 };
 
 } // namespace PR

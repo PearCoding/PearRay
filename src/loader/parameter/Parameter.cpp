@@ -2,105 +2,83 @@
 
 namespace PR {
 
- Parameter Parameter::fromBool(bool v)
+Parameter Parameter::fromBool(bool v)
 {
-	ParameterData data;
-	data.Bool = v;
-	return Parameter(ParameterType::Bool, { data });
+	return Parameter(ParameterType::Bool, { v });
 }
 
- Parameter Parameter::fromInt(int64 v)
+Parameter Parameter::fromInt(Int v)
 {
-	ParameterData data;
-	data.Int = v;
-	return Parameter(ParameterType::Int, { data });
+	return Parameter(ParameterType::Int, { v });
 }
 
- Parameter Parameter::fromUInt(uint64 v)
+Parameter Parameter::fromUInt(UInt v)
 {
-	ParameterData data;
-	data.UInt = v;
-	return Parameter(ParameterType::UInt, { data });
+	return Parameter(ParameterType::UInt, { v });
 }
 
- Parameter Parameter::fromNumber(float v)
+Parameter Parameter::fromNumber(Number v)
 {
-	ParameterData data;
-	data.Number = v;
-	return Parameter(ParameterType::Number, { data });
+	return Parameter(ParameterType::Number, { v });
 }
 
- Parameter Parameter::fromString(const std::string& v)
+Parameter Parameter::fromString(const std::string& v)
 {
-	ParameterData data;
-	data.String = v;
-	return Parameter(ParameterType::String, { data });
+	return Parameter(ParameterType::String, { v });
 }
 
- Parameter Parameter::fromReference(uint64 v)
+Parameter Parameter::fromReference(UInt v)
 {
-	ParameterData data;
-	data.UInt = v;
-	return Parameter(ParameterType::Reference, { data });
+	return Parameter(ParameterType::Reference, { v });
 }
 
- Parameter Parameter::fromBoolArray(const std::vector<bool>& v)
+Parameter Parameter::fromBoolArray(const std::vector<bool>& v)
 {
-	std::vector<ParameterData> data;
+	std::vector<Variant> data;
 	data.reserve(v.size());
-	for (auto b : v) {
-		ParameterData p;
-		p.Bool = b;
-		data.emplace_back(p);
-	}
+	for (auto b : v)
+		data.emplace_back(b);
+
 	return Parameter(ParameterType::Bool, data);
 }
 
- Parameter Parameter::fromIntArray(const std::vector<int64> v)
+Parameter Parameter::fromIntArray(const std::vector<Int>& v)
 {
-	std::vector<ParameterData> data;
+	std::vector<Variant> data;
 	data.reserve(v.size());
-	for (auto b : v) {
-		ParameterData p;
-		p.Int = b;
-		data.emplace_back(p);
-	}
+	for (auto b : v)
+		data.emplace_back(b);
+
 	return Parameter(ParameterType::Int, data);
 }
 
- Parameter Parameter::fromUIntArray(const std::vector<uint64> v)
+Parameter Parameter::fromUIntArray(const std::vector<uint64>& v)
 {
-	std::vector<ParameterData> data;
+	std::vector<Variant> data;
 	data.reserve(v.size());
-	for (auto b : v) {
-		ParameterData p;
-		p.UInt = b;
-		data.emplace_back(p);
-	}
+	for (auto b : v)
+		data.emplace_back(b);
+
 	return Parameter(ParameterType::UInt, data);
 }
 
- Parameter Parameter::fromNumberArray(const std::vector<float> v)
+Parameter Parameter::fromNumberArray(const std::vector<Number>& v)
 {
-	std::vector<ParameterData> data;
+	std::vector<Variant> data;
 	data.reserve(v.size());
-	for (auto b : v) {
-		ParameterData p;
-		p.Number = b;
-		data.emplace_back(p);
-	}
+	for (auto b : v)
+		data.emplace_back(b);
+
 	return Parameter(ParameterType::Number, data);
 }
 
- Parameter Parameter::fromStringArray(const std::vector<std::string>& v)
+Parameter Parameter::fromStringArray(const std::vector<std::string>& v)
 {
-	std::vector<ParameterData> data;
+	std::vector<Variant> data;
 	data.reserve(v.size());
-	for (auto b : v) {
-		ParameterData p;
-		p.String = b;
-		data.emplace_back(p);
-	}
+	for (auto b : v)
+		data.emplace_back(b);
+
 	return Parameter(ParameterType::String, data);
 }
 
