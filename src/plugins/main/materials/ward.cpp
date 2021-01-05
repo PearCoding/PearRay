@@ -198,7 +198,7 @@ private:
 
 class WardMaterialPlugin : public IMaterialPlugin {
 public:
-	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx) override
 	{
 		const ParameterGroup& params = ctx.parameters();
 
@@ -220,7 +220,7 @@ public:
 											  roughnessX, roughnessY);
 	}
 
-	const std::vector<std::string>& getNames() const
+	const std::vector<std::string>& getNames() const override
 	{
 		const static std::vector<std::string> names({ "ward" });
 		return names;
@@ -245,7 +245,7 @@ public:
 			.get();
 	}
 
-	bool init()
+	bool init() override
 	{
 		return true;
 	}

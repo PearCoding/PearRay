@@ -114,7 +114,7 @@ private:
 
 class RGLMeasuredMaterialPlugin : public IMaterialPlugin {
 public:
-	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx) override
 	{
 		const ParameterGroup& params = ctx.parameters();
 		const auto path				 = ctx.escapePath(params.getString("filename", ""));
@@ -126,7 +126,7 @@ public:
 		return std::make_shared<RGLMeasuredMaterial>(path, ctx.lookupSpectralNode("tint", 1));
 	}
 
-	const std::vector<std::string>& getNames() const
+	const std::vector<std::string>& getNames() const override
 	{
 		const static std::vector<std::string> names({ "rgl", "rgl_measured", "rgl-measured" });
 		return names;
@@ -143,7 +143,7 @@ public:
 			.get();
 	}
 
-	bool init()
+	bool init() override
 	{
 		return true;
 	}

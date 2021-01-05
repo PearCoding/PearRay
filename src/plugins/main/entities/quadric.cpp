@@ -244,7 +244,7 @@ static void userOccludedFuncN(const RTCOccludedFunctionNArguments* args)
 
 class QuadricEntityPlugin : public IEntityPlugin {
 public:
-	std::shared_ptr<IEntity> create(const std::string& type_name, const SceneLoadContext& ctx)
+	std::shared_ptr<IEntity> create(const std::string& type_name, const SceneLoadContext& ctx) override
 	{
 		const ParameterGroup& params = ctx.parameters();
 
@@ -312,7 +312,7 @@ public:
 		}
 	}
 
-	const std::vector<std::string>& getNames() const
+	const std::vector<std::string>& getNames() const override
 	{
 		static std::vector<std::string> names({ "quadric", "cone", "cylinder" });
 		return names;

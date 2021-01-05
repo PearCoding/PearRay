@@ -138,7 +138,7 @@ private:
 
 class PerspectiveCameraPlugin : public ICameraPlugin {
 public:
-	std::shared_ptr<ICamera> create(const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<ICamera> create(const std::string&, const SceneLoadContext& ctx) override
 	{
 		const ParameterGroup& params = ctx.parameters();
 		std::string name			 = params.getString("name", "__unnamed__");
@@ -162,7 +162,7 @@ public:
 			return std::make_shared<PerspectiveCamera<false>>(name, ctx.transform(), w, h, fstop, apr, nT, fT, ld, lr, lu);
 	}
 
-	const std::vector<std::string>& getNames() const
+	const std::vector<std::string>& getNames() const override
 	{
 		static std::vector<std::string> names({ "standard_camera", "standard", "default", "perspective" });
 		return names;

@@ -677,7 +677,7 @@ inline static std::shared_ptr<IMaterial> createPrincipled3(const SceneLoadContex
 
 class PrincipledMaterialPlugin : public IMaterialPlugin {
 public:
-	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx) override
 	{
 		const bool use_vndf = ctx.parameters().getBool("vndf", true);
 
@@ -687,7 +687,7 @@ public:
 			return createPrincipled3<false>(ctx);
 	}
 
-	const std::vector<std::string>& getNames() const
+	const std::vector<std::string>& getNames() const override
 	{
 		const static std::vector<std::string> names({ "principled" });
 		return names;
@@ -717,7 +717,7 @@ public:
 			.get();
 	}
 	
-	bool init()
+	bool init() override
 	{
 		return true;
 	}

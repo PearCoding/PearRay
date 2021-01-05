@@ -322,12 +322,12 @@ static std::shared_ptr<IMaterial> createMaterial3(const SceneLoadContext& ctx)
 
 class RoughDielectricMaterialPlugin : public IMaterialPlugin {
 public:
-	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx) override
 	{
 		return createMaterial3(ctx);
 	}
 
-	const std::vector<std::string>& getNames() const
+	const std::vector<std::string>& getNames() const override
 	{
 		const static std::vector<std::string> names({ "roughglass", "roughdielectric", "rough_glass", "rough_dielectric" });
 		return names;
@@ -353,7 +353,7 @@ public:
 			.get();
 	}
 	
-	bool init()
+	bool init() override
 	{
 		return true;
 	}

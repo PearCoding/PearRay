@@ -154,7 +154,7 @@ private:
 
 class SphereEntityPlugin : public IEntityPlugin {
 public:
-	std::shared_ptr<IEntity> create(const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<IEntity> create(const std::string&, const SceneLoadContext& ctx) override
 	{
 		const ParameterGroup& params = ctx.parameters();
 		std::string name			 = params.getString("name", "__unnamed__");
@@ -168,7 +168,7 @@ public:
 		return obj;
 	}
 
-	const std::vector<std::string>& getNames() const
+	const std::vector<std::string>& getNames() const override
 	{
 		static std::vector<std::string> names({ "sphere" });
 		return names;

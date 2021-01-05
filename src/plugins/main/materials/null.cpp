@@ -67,12 +67,12 @@ public:
 
 class NullMaterialPlugin : public IMaterialPlugin {
 public:
-	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext&)
+	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext&) override
 	{
 		return std::make_shared<NullMaterial>();
 	}
 
-	const std::vector<std::string>& getNames() const
+	const std::vector<std::string>& getNames() const override
 	{
 		const static std::vector<std::string> names({ "null" });
 		return names;
@@ -85,7 +85,7 @@ public:
 			.get();
 	}
 
-	bool init()
+	bool init() override
 	{
 		return true;
 	}
