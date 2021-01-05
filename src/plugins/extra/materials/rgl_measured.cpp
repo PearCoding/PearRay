@@ -132,6 +132,17 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("RGL BSDF", "RGL measured BSDF")
+			.Identifiers(getNames())
+			.Inputs()
+			.Filename("filename", "A path to a file from the RGL database")
+			.SpectralNode("tint", "Tint", true)
+			.Specification()
+			.get();
+	}
+
 	bool init()
 	{
 		return true;

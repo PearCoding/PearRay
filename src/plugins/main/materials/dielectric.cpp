@@ -180,6 +180,19 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Delta Dielectric BSDF", "A perfectly smooth dielectric")
+			.Identifiers(getNames())
+			.Inputs()
+			.SpectralNodeV({ "index", "eta", "ior" }, "Index of refraction", 1.55f)
+			.SpectralNode("specularity", "Tint", 1.0f)
+			.SpectralNode("transmission", "Tint", 1.0f)
+			.Bool("thin", "Use thin approximation", false)
+			.Specification()
+			.get();
+	}
+	
 	bool init()
 	{
 		return true;

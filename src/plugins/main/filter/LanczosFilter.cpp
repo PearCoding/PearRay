@@ -97,6 +97,16 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Lanczos Filter", "Simple filter based on the lanczos/sinc funtion")
+			.Identifiers(getNames())
+			.Inputs()
+			.UInt("radius", "Radius of filter", 3)
+			.Specification()
+			.get();
+	}
+
 	bool init() override
 	{
 		return true;

@@ -219,6 +219,23 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string& type_name) const override
+	{
+		PluginSpecificationBuilder builder("Scalar '" + type_name + "' Node", "A scalar math node");
+		builder.Identifiers({ type_name });
+
+		if (type_name == "add"
+			|| type_name == "sub" || type_name == "subtract"
+			|| type_name == "mul" || type_name == "multiply"
+			|| type_name == "div" || type_name == "divide"
+			|| type_name == "atan2" || type_name == "max" || type_name == "min")
+			builder.Inputs().ScalarNode("op1", "First operand", 0.0f).ScalarNode("op2", "Second operand", 0.0f);
+		else
+			builder.Inputs().ScalarNode("op", "Operand", 0.0f);
+
+		return builder.get();
+	}
+
 	bool init() override
 	{
 		return true;

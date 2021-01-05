@@ -200,6 +200,17 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("MERL BSDF", "A measured BSDF from the MERL database")
+			.Identifiers(getNames())
+			.Inputs()
+			.Filename("filename", "File from the MERL database")
+			.SpectralNode("tint", "Tint", 1.0f)
+			.Specification()
+			.get();
+	}
+
 	bool init() override
 	{
 		return true;

@@ -175,6 +175,17 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("View Blend BSDF", "Blend two bsdfs together based on the viewing direction")
+			.Identifiers(getNames())
+			.Inputs()
+			.MaterialReference("material1", "First material")
+			.MaterialReference("material2", "Second material")
+			.Specification()
+			.get();
+	}
+
 	bool init()
 	{
 		return true;

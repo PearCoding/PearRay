@@ -174,6 +174,19 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Sphere Entity", "A solid sphere")
+			.Identifiers(getNames())
+			.Inputs()
+			.Number("radius", "Radius of the sphere", 1)
+			.MaterialReference("material", "Material")
+			.EmissionReference("emission", "Emission", true)
+			.Bool("optimize_sampling", "Should view dependent sampling be used?", true)
+			.Specification()
+			.get();
+	}
+
 	bool init()
 	{
 		return true;

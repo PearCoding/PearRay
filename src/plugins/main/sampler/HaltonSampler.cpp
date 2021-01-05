@@ -8,6 +8,10 @@
 #include <vector>
 
 namespace PR {
+constexpr uint32 DEF_SAMPLE_COUNT = 128;
+constexpr uint32 DEF_BASE_X		  = 13;
+constexpr uint32 DEF_BASE_Y		  = 47;
+
 static inline float halton(uint32 index, uint32 base)
 {
 	float result = 0;
@@ -124,13 +128,13 @@ public:
 
 	uint32 requestedSampleCount() const override
 	{
-		return mParams.getUInt("sample_count", 128);
+		return mParams.getUInt("sample_count", DEF_SAMPLE_COUNT);
 	}
 
 	std::shared_ptr<ISampler> createInstance(uint32 sample_count, Random&) const override
 	{
-		uint32 baseX  = (uint32)mParams.getUInt("base_x", 13);
-		uint32 baseY  = (uint32)mParams.getUInt("base_y", 47);
+		uint32 baseX  = (uint32)mParams.getUInt("base_x", DEF_BASE_X);
+		uint32 baseY  = (uint32)mParams.getUInt("base_y", DEF_BASE_Y);
 		uint32 burnin = (uint32)mParams.getUInt("burnin", std::max(baseX, baseY));
 		return std::make_shared<HaltonSampler>(sample_count, baseX, baseY, burnin);
 	}
@@ -148,12 +152,12 @@ public:
 
 	uint32 requestedSampleCount() const override
 	{
-		return mParams.getUInt("sample_count", 128);
+		return mParams.getUInt("sample_count", DEF_SAMPLE_COUNT);
 	}
 
 	std::shared_ptr<ISampler> createInstance(uint32 sample_count, Random&) const override
 	{
-		uint32 baseX  = (uint32)mParams.getUInt("base_x", 13);
+		uint32 baseX  = (uint32)mParams.getUInt("base_x", DEF_BASE_X);
 		uint32 burnin = (uint32)mParams.getUInt("burnin", baseX);
 		return std::make_shared<HammersleySampler>(sample_count, baseX, burnin);
 	}
@@ -182,6 +186,29 @@ public:
 	{
 		const static std::vector<std::string> names({ "halton", "hammersley" });
 		return names;
+	}
+
+	PluginSpecification specification(const std::string& type_name) const override
+	{
+		if (type_name == "halton")
+			return PluginSpecificationBuilder("Halton Sampler", "A quasi-random sampler based on the halton sequence in two dimensions with is not suited for progressive rendering")
+				.Identifiers(getNames())
+				.Inputs()
+				.UInt("sample_count", "Sample count requested", DEF_SAMPLE_COUNT)
+				.UInt("base_x", "Basis for x dimension", DEF_BASE_X)
+				.UInt("base_y", "Basis for y dimension", DEF_BASE_Y)
+				.UInt("burnin", "Burnin shift", std::max(DEF_BASE_X, DEF_BASE_Y))
+				.Specification()
+				.get();
+		else
+			return PluginSpecificationBuilder("Hammersley Sampler", "A quasi-random sampler based on the halton sequence in one dimension with is not suited for progressive rendering")
+				.Identifiers(getNames())
+				.Inputs()
+				.UInt("sample_count", "Sample count requested", DEF_SAMPLE_COUNT)
+				.UInt("base_x", "Basis for x dimension", DEF_BASE_X)
+				.UInt("burnin", "Burnin shift", DEF_BASE_X)
+				.Specification()
+				.get();
 	}
 
 	bool init() override

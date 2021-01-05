@@ -291,7 +291,7 @@ public:
 		mParameters.MaxLightSamples	   = std::max<size_t>(100, params.getUInt("max_light_samples", mParameters.MaxLightSamples));
 		mParameters.GatherRadiusFactor = std::max(0.00001f, params.getNumber("gather_radius_factor", mParameters.GatherRadiusFactor));
 
-		mParameters.SqueezeWeight2 = std::max(0.0f, std::min(1.0f, params.getNumber("squeeze_weight", mParameters.SqueezeWeight2)));
+		mParameters.SqueezeWeight2 = std::max(0.0f, std::min(1.0f, params.getNumber("squeeze_weight", std::sqrt(mParameters.SqueezeWeight2))));
 		mParameters.SqueezeWeight2 *= mParameters.SqueezeWeight2;
 
 		mParameters.ContractRatio = std::max(0.0f, std::min(1.0f, params.getNumber("contract_ratio", mParameters.ContractRatio)));
@@ -332,6 +332,26 @@ public:
 	{
 		const static std::vector<std::string> names({ "vcm", "merging" });
 		return names;
+	}
+
+	PluginSpecification specification(const std::string&) const override
+	{
+		const VCM::Options parameters;
+		return PluginSpecificationBuilder("VCM", "Vertex Connection and Merging")
+			.Identifiers(getNames())
+			.Inputs()
+			.UInt("max_ray_depth", "Maximum ray depth allowed for both camera and light rays", parameters.MaxCameraRayDepthHard)
+			.UInt("max_camera_ray_depth", "Maximum ray depth allowed for camera rays", parameters.MaxCameraRayDepthHard)
+			.UInt("soft_max_camera_ray_depth", "Maximum ray depth after which russian roulette for camera rays starts", parameters.MaxCameraRayDepthSoft)
+			.UInt("max_light_ray_depth", "Maximum ray depth allowed for light rays", parameters.MaxLightRayDepthHard)
+			.UInt("soft_max_light_ray_depth", "Maximum ray depth after which russian roulette for light rays starts", parameters.MaxLightRayDepthSoft)
+			.UInt("max_light_samples", "Maximum number of light samples to trace", parameters.MaxLightSamples)
+			.Number("gather_radius_factor", "Factor for automatic initial gather radius calculation", parameters.GatherRadiusFactor)
+			.Number("squeeze_weight", "Squeeze weight to prevent surface leaks", std::sqrt(parameters.SqueezeWeight2))
+			.Number("contract_ratio", "Contract ratio", parameters.ContractRatio)
+			.Option("mis", "MIS mode", "balance", { "balance", "power" })
+			.Specification()
+			.get();
 	}
 
 	bool init() override

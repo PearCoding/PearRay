@@ -266,6 +266,45 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		//TODO: Make sun location a a function to be shared with sky.cpp
+		TimePoint timepoint;
+		MapLocation location;
+		return PluginSpecificationBuilder("Sun", "Simple sun model")
+			.Identifiers(getNames())
+			.Inputs()
+			.Number("radius", "Radius of sun in respect to image space", 1.0f)
+			.Number("turbidity", "Sky turbidity", 3.0f)
+			.Number("power_scale", "Amount of scale applied to the power of the sun", 1.0f)
+			.BeginBlock("Location", PluginParamDescBlockOp::OneOf)
+			.BeginBlock("")
+			.Vector("direction", "Direction the light is coming from", Vector3f(0, 0, 1))
+			.EndBlock()
+			.BeginBlock("")
+			.Number("theta", "Sun theta in radians", 0.0f)
+			.Number("phi", "Sun phi in radians", 0.0f)
+			.EndBlock()
+			.BeginBlock("")
+			.Number("elevation", "Sun elevation in radians", 0.0f)
+			.Number("azimuth", "Sun azimuth in radians", 0.0f)
+			.EndBlock()
+			.BeginBlock("")
+			.UInt("year", "Year", timepoint.Year)
+			.UInt("month", "Month", timepoint.Month)
+			.UInt("day", "Day", timepoint.Day)
+			.UInt("hour", "Hour", timepoint.Hour)
+			.UInt("minute", "Minute", timepoint.Minute)
+			.Number("seconds", "Seconds", timepoint.Seconds)
+			.Number("latitude", "Latitude", location.Latitude)
+			.Number("longitude", "Longitude", location.Longitude)
+			.Number("timezone", "Timezone", location.Timezone)
+			.EndBlock()
+			.EndBlock()
+			.Specification()
+			.get();
+	}
+
 	bool init() override
 	{
 		return true;

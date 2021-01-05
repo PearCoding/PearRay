@@ -402,6 +402,85 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string& type_name) const override
+	{
+		if (type_name == "cauchy_index") {
+			return PluginSpecificationBuilder("Cauchy Index Node", "A spectral value based on the cauchy index")
+				.Identifier(type_name)
+				.Inputs()
+				.Number("0", "First entry", 0.0f)
+				.Number("1", "Second entry", 0.0f)
+				.Number("2", "Third entry", 0.0f, true)
+				.Number("3", "Fourth entry", 0.0f, true)
+				.Number("4", "Fifth entry", 0.0f, true)
+				.Number("5", "Sixth entry", 0.0f, true)
+				.Number("6", "Seventh entry", 0.0f, true)
+				.Specification()
+				.get();
+		} else if (type_name == "sellmeier_index") {
+			return PluginSpecificationBuilder("Sellmeier Index Node", "A spectral value based on the sellmeier index")
+				.Identifier(type_name)
+				.Inputs()
+				.Number("0", "First entry", 0.0f)
+				.Number("1", "Second entry", 0.0f)
+				.Number("2", "Third entry", 0.0f, true)
+				.Number("3", "Fourth entry", 0.0f, true)
+				.Number("4", "Fifth entry", 0.0f, true)
+				.Number("5", "Sixth entry", 0.0f, true)
+				.Number("6", "Seventh entry", 0.0f, true)
+				.Specification()
+				.get();
+		} else if (type_name == "sellmeier2_index") {
+			return PluginSpecificationBuilder("Squared Sellmeier Index Node", "A spectral value based on the squard sellmeier index")
+				.Identifier(type_name)
+				.Inputs()
+				.Number("0", "First entry", 0.0f)
+				.Number("1", "Second entry", 0.0f)
+				.Number("2", "Third entry", 0.0f, true)
+				.Number("3", "Fourth entry", 0.0f, true)
+				.Number("4", "Fifth entry", 0.0f, true)
+				.Number("5", "Sixth entry", 0.0f, true)
+				.Number("6", "Seventh entry", 0.0f, true)
+				.Specification()
+				.get();
+		} else if (type_name == "poly_index") {
+			return PluginSpecificationBuilder("Polynomial Node", "A spectral value based on a polynomial")
+				.Identifier(type_name)
+				.Inputs()
+				.Number("0", "First entry", 0.0f)
+				.Number("1", "Second entry", 0.0f)
+				.Number("2", "Third entry", 0.0f, true)
+				.Number("3", "Fourth entry", 0.0f, true)
+				.Number("4", "Fifth entry", 0.0f, true)
+				.Specification()
+				.get();
+		} else if (type_name == "poly2_index") {
+			return PluginSpecificationBuilder("Squared Polynomial Node", "A spectral value based on a squard polynomial")
+				.Identifier(type_name)
+				.Inputs()
+				.Number("0", "First entry", 0.0f)
+				.Number("1", "Second entry", 0.0f)
+				.Number("2", "Third entry", 0.0f, true)
+				.Number("3", "Fourth entry", 0.0f, true)
+				.Number("4", "Fifth entry", 0.0f, true)
+				.Specification()
+				.get();
+		} else if (type_name == "lookup_index") {
+			std::vector<std::string> lookups;
+			for (int i = 0; _lookups[i].Name; ++i)
+				lookups.emplace_back(_lookups[i].Name);
+			return PluginSpecificationBuilder("Lookup Node", "A spectral value based on predefined distributions")
+				.Identifier(type_name)
+				.Inputs()
+				.Option("name", "Name of the given lookup distribution", "bk7", lookups)
+				.Specification()
+				.get();
+		} else {
+			PR_ASSERT(false, "ReflectiveNode plugin does not handle all offered types of operations!");
+			return PluginSpecification("INVALID", "INVALID");
+		}
+	}
+
 	bool init() override
 	{
 		return true;

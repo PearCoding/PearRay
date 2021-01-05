@@ -226,6 +226,25 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("OrenNayar BSDF", "A not so perfectly diffuse BSDF")
+			.Identifiers(getNames())
+			.Inputs()
+			.SpectralNodeV({ "albedo", "base", "diffuse" }, "Amount of light which is reflected", 1.0f)
+			.SpectralNode("specularity", "Tint", 1.0f)
+			.ScalarNode("reflectivity", "Amount of reflection", 0.5f)
+			.BeginBlock("Roughness", PluginParamDescBlockOp::OneOf)
+			.ScalarNode("roughness", "Isotropic roughness", 0.0f)
+			.BeginBlock("")
+			.ScalarNode("roughness_x", "Anisotropic x roughness", 0.0f)
+			.ScalarNode("roughness_y", "Anisotropic y roughness", 0.0f)
+			.EndBlock()
+			.EndBlock()
+			.Specification()
+			.get();
+	}
+
 	bool init()
 	{
 		return true;

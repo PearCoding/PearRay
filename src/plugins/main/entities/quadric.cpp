@@ -318,6 +318,53 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string& type_name) const override
+	{
+		if (type_name == "quadric") {
+			return PluginSpecificationBuilder("Generic Quadric Entity", "A generic quadric")
+				.Identifiers(getNames())
+				.Inputs()
+				.Vector("min", "Local lower bound of the box containing the quadric", Vector3f(-1, -1, -1))
+				.Vector("max", "Local upper bound of the box containing the quadric", Vector3f(1, 1, 1))
+				.Number("0", "0", 0)
+				.Number("1", "1", 0)
+				.Number("2", "2", 0)
+				.Number("3", "3", 0, true)
+				.Number("4", "4", 0, true)
+				.Number("5", "5", 0, true)
+				.Number("6", "6", 0, true)
+				.Number("7", "7", 0, true)
+				.Number("8", "8", 0, true)
+				.Number("9", "9", 0, true)
+				.MaterialReference("material", "Material")
+				.EmissionReference("emission", "Emission", true)
+				.Specification()
+				.get();
+		} else if (type_name == "cone") {
+			return PluginSpecificationBuilder("Cone Quadric Entity", "A cone based on quadric parametrization")
+				.Identifiers(getNames())
+				.Inputs()
+				.Number("radius", "Local radius of the cone", 1)
+				.Number("height", "Local height of the cone", 1)
+				.MaterialReference("material", "Material")
+				.EmissionReference("emission", "Emission", true)
+				.Bool("center_on", "Set origin of the box in the center", false)
+				.Specification()
+				.get();
+		} else { // TODO: Merge with cone?
+			return PluginSpecificationBuilder("Cylinder Quadric Entity", "A cylinder based on quadric parametrization")
+				.Identifiers(getNames())
+				.Inputs()
+				.Number("radius", "Local radius of the cylinder", 1)
+				.Number("height", "Local height of the cylinder", 1)
+				.MaterialReference("material", "Material")
+				.EmissionReference("emission", "Emission", true)
+				.Bool("center_on", "Set origin of the box in the center", false)
+				.Specification()
+				.get();
+		}
+	}
+
 	bool init()
 	{
 		return true;

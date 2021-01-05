@@ -1,8 +1,8 @@
 #include "Environment.h"
 #include "Logger.h"
 #include "SceneLoadContext.h"
-#include "shader/INodePlugin.h"
 #include "shader/ConstNode.h"
+#include "shader/INodePlugin.h"
 #include "spectral/SpectralUpsampler.h"
 
 namespace PR {
@@ -56,6 +56,18 @@ public:
 		const static std::vector<std::string> names({ "refl", "reflection",
 													  "illum", "illumination" });
 		return names;
+	}
+
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Spectral Value Node", "A constant spectral value")
+			.Identifiers(getNames())
+			.Inputs()
+			.Number("value1", "First value", 0.0f)
+			.Number("value2", "Second value", 0.0f)
+			.Number("value3", "Third value", 0.0f)
+			.Specification()
+			.get();
 	}
 
 	bool init() override

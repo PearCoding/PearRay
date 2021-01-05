@@ -751,6 +751,26 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Klems BSDF", "Klems BSDF")
+			.Identifiers(getNames())
+			.Inputs()
+			.Bool("no_front_reflection", "No front reflection", false)
+			.Bool("no_front_transmission", "No front transmission", false)
+			.Bool("no_back_reflection", "No back reflection", false)
+			.Bool("no_back_transmission", "No back transmission", false)
+			.Bool("no_front", "No front reflection or transmission", false)
+			.Bool("no_back", "No back reflection or transmission", false)
+			.Bool("no_reflection", "No reflection", false)
+			.Bool("no_transmission", "No transmission", false)
+			.Bool("swap_side", "Swap front and back", false)
+			.Filename("filename", "A path to a file given as a Radiance type XML")
+			.SpectralNode("tint", "Tint", true)
+			.Specification()
+			.get();
+	}
+
 	bool init() override
 	{
 		return true;

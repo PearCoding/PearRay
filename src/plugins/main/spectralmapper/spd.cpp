@@ -29,9 +29,8 @@ public:
 
 		PR_OPT_LOOP
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
-			float pdf;
-			S.WavelengthNM(i) = mDistribution.sampleContinuous(u, pdf) * (wavelengthEnd() - wavelengthStart()) + wavelengthStart();
-			S.PDF(i)		  = pdf;
+			const float k	  = std::fmod(u + i / (float)PR_SPECTRAL_BLOB_SIZE, 1.0f);
+			S.WavelengthNM(i) = mDistribution.sampleContinuous(k, S.PDF(i)) * (wavelengthEnd() - wavelengthStart()) + wavelengthStart();
 		}
 
 		return S;
@@ -59,7 +58,8 @@ enum class WeightingMethod {
 };
 
 struct SPDParameters {
-	uint32 NumberOfBins			= 256 /* This one can be high quality*/;
+	/* This one can be high quality, as we sample each single wavelength!*/
+	uint32 NumberOfBins			= PR_VISIBLE_WAVELENGTH_END - PR_VISIBLE_WAVELENGTH_START;
 	WeightingMethod Method		= WeightingMethod::CIE_XYZ;
 	bool UseNormalizedLights	= true;
 	bool EnsureCompleteSampling = true;
@@ -230,6 +230,22 @@ public:
 	{
 		const static std::vector<std::string> names({ "spd", "default" });
 		return names;
+	}
+
+	PluginSpecification specification(const std::string&) const override
+	{
+		const SPDParameters params;
+		return PluginSpecificationBuilder("SPD Spectral Mapper", "Default, on spectral power distribution based spectral mapper")
+			.Identifiers(getNames())
+			.Inputs()
+			.UInt("bins", "Number of bins in the histogram", params.NumberOfBins)
+			.Option("weighting", "Weighting method", "xyz", { "none", "y", "rgb", "srgb", "xyz" })
+			.Bool("complete", "Make sure all the wavelengths have a possibility to be sampled", params.EnsureCompleteSampling)
+			.Bool("normalized", "Use normalized SPD for each light", params.UseNormalizedLights)
+			.UInt("smooth_iterations", "Iteration count of smooth operation on accumulated histogram", params.SmoothIterations)
+			.Bool("verbose", "Dump information regarding the accumulated SPD", params.Verbose)
+			.Specification()
+			.get();
 	}
 
 	bool init() override

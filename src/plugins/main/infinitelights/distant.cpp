@@ -129,6 +129,17 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Distant Light", "An infinitly far away light from one direction")
+			.Identifiers(getNames())
+			.Inputs()
+			.Vector("direction", "Direction the light is coming from", Vector3f(0, 0, 1))
+			.SpectralNode("irradiance", "Irradiance", 1.0f)
+			.Specification()
+			.get();
+	}
+
 	bool init() override
 	{
 		return true;

@@ -125,6 +125,16 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Ambient Occlusion", "Simple integrator to calculate ambient_occlusion")
+			.Identifiers(getNames())
+			.Inputs()
+			.UInt("sample_count", "Samples used to determine ambient_occlusion", 10)
+			.Specification()
+			.get();
+	}
+
 	bool init() override
 	{
 		return true;

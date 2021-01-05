@@ -154,6 +154,22 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		const VCM::Options parameters;
+		return PluginSpecificationBuilder("BDPT", "Bidirectional Path Tracing")
+			.Identifiers(getNames())
+			.Inputs()
+			.UInt("max_ray_depth", "Maximum ray depth allowed for both camera and light rays", parameters.MaxCameraRayDepthHard)
+			.UInt("max_camera_ray_depth", "Maximum ray depth allowed for camera rays", parameters.MaxCameraRayDepthHard)
+			.UInt("soft_max_camera_ray_depth", "Maximum ray depth after which russian roulette for camera rays starts", parameters.MaxCameraRayDepthSoft)
+			.UInt("max_light_ray_depth", "Maximum ray depth allowed for light rays", parameters.MaxLightRayDepthHard)
+			.UInt("soft_max_light_ray_depth", "Maximum ray depth after which russian roulette for light rays starts", parameters.MaxLightRayDepthSoft)
+			.Option("mis", "MIS mode", "balance", { "balance", "power" })
+			.Specification()
+			.get();
+	}
+
 	bool init() override
 	{
 		return true;

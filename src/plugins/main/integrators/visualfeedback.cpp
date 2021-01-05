@@ -331,6 +331,21 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		std::vector<std::string> modes;
+		for (int i = 0; _mode[i].Name; ++i)
+			modes.push_back(_mode[i].Name);
+
+		return PluginSpecificationBuilder("Visual Feedback", "Computes specific visual relationships. Note that most stuff can be calculated with AOVs alongside as well")
+			.Identifiers(getNames())
+			.Inputs()
+			.Bool("weighting", "Apply cosine term weigting", true)
+			.Option("mode", "The feature to compute", "parameter", modes)
+			.Specification()
+			.get();
+	}
+
 	bool init() override
 	{
 		return true;

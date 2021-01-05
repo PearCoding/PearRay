@@ -136,6 +136,17 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Illuminant Node", "Illuminates the world with standard illuminants")
+			.Identifiers(getNames())
+			.Inputs()
+			.Option("spectrum", "Illuminant", "d65",
+					{ "d65", "d50", "d55", "d75", "a", "c", "e", "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "f10", "f11", "f12" })
+			.Specification()
+			.get();
+	}
+
 	bool init() override
 	{
 		return true;

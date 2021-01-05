@@ -104,6 +104,17 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Diffuse BSDF", "A perfect diffuse BSDF")
+			.Identifiers(getNames())
+			.Inputs()
+			.SpectralNodeV({ "albedo", "base", "diffuse" }, "Amount of light which is reflected", 1.0f)
+			.Bool("two_sided", "Specify BSDF as two sided", true)
+			.Specification()
+			.get();
+	}
+
 	bool init()
 	{
 		return true;

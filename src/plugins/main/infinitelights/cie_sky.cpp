@@ -164,6 +164,18 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string& type_name) const override
+	{
+		return PluginSpecificationBuilder(type_name == "uniform_sky" ? "CIE Uniform Sky" : "CIE Cloudy Sky", "Simple CIE based sky")
+			.Identifier(type_name )
+			.Inputs()
+			.SpectralNode("zenith", "Zenith tint", 1.0f)
+			.SpectralNode("ground_tint", "Ground tint", 0.0f)
+			.ScalarNode("ground_brightness", "Brightness of the ground", 0.2f)
+			.Specification()
+			.get();
+	}
+
 	bool init() override
 	{
 		return true;

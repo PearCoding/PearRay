@@ -509,7 +509,7 @@ public:
 
 		mParameters.MaxGatherRadius = std::max(0.00001f, params.getNumber("max_gather_radius", mParameters.MaxGatherRadius));
 
-		mParameters.SqueezeWeight2 = std::max(0.0f, std::min(1.0f, params.getNumber("squeeze_weight", mParameters.SqueezeWeight2)));
+		mParameters.SqueezeWeight2 = std::max(0.0f, std::min(1.0f, params.getNumber("squeeze_weight", std::sqrt(mParameters.SqueezeWeight2))));
 		mParameters.SqueezeWeight2 *= mParameters.SqueezeWeight2;
 
 		mParameters.ContractRatio = std::max(0.0f, std::min(1.0f, params.getNumber("contract_ratio", mParameters.ContractRatio)));
@@ -549,6 +549,25 @@ public:
 	{
 		const static std::vector<std::string> names({ "ppm", "sppm", "pppm", "photon" });
 		return names;
+	}
+
+	PluginSpecification specification(const std::string&) const override
+	{
+		const PPMParameters parameters;
+		return PluginSpecificationBuilder("PPM", "Progressive Photon Mapper")
+			.Identifiers(getNames())
+			.Inputs()
+			.UInt("max_ray_depth", "Maximum ray depth allowed for both camera and light rays", parameters.MaxCameraRayDepthHard)
+			.UInt("max_camera_ray_depth", "Maximum ray depth allowed for camera rays", parameters.MaxCameraRayDepthHard)
+			.UInt("soft_max_camera_ray_depth", "Maximum ray depth after which russian roulette for camera rays starts", parameters.MaxCameraRayDepthSoft)
+			.UInt("max_light_ray_depth", "Maximum ray depth allowed for light rays", parameters.MaxLightRayDepthHard)
+			.UInt("soft_max_light_ray_depth", "Maximum ray depth after which russian roulette for light rays starts", parameters.MaxLightRayDepthSoft)
+			.Number("max_gather_radius", "Initial gather radius", parameters.MaxGatherRadius)
+			.Number("squeeze_weight", "Squeeze weight to prevent surface leaks", std::sqrt(parameters.SqueezeWeight2))
+			.Number("contract_ratio", "Contract ratio", parameters.ContractRatio)
+			.Option("gather_mode", "Gathering mode", "dome", { "dome", "sphere" })
+			.Specification()
+			.get();
 	}
 
 	bool init() override

@@ -328,6 +328,23 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string& type_name) const override
+	{
+		PluginSpecificationBuilder builder("Spectral '" + type_name + "' Node", "A spectral math node");
+		builder.Identifiers({ type_name });
+
+		if (type_name == "sneg" || type_name == "sabs")
+			builder.Inputs().SpectralNode("op", "Operand", 0.0f);
+		else if (type_name == "sblend")
+			builder.Inputs().ScalarNode("factor", "Factor", 1.0f).SpectralNode("op1", "First operand", 0.0f).SpectralNode("op2", "Second operand", 0.0f);
+		else if (type_name == "sbrightnesscontrast")
+			builder.Inputs().SpectralNode("color", "Color", 0.0f).SpectralNode("brightness", "Brightness", 0.0f).SpectralNode("contrast", "Contrast", 0.0f);
+		else
+			builder.Inputs().SpectralNode("op1", "First operand", 0.0f).SpectralNode("op2", "Second operand", 0.0f);
+
+		return builder.get();
+	}
+
 	bool init() override
 	{
 		return true;

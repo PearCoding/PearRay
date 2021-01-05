@@ -94,6 +94,17 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Triangle Peak Node", "A constructive spectral node with a peak in spectral range")
+			.Identifiers(getNames())
+			.Inputs()
+			.ScalarNode("wavelength", "Central wavelength", 520.0f)
+			.ScalarNode("radius", "Radius of triangle filter", 2.0f)
+			.Specification()
+			.get();
+	}
+
 	bool init() override
 	{
 		return true;

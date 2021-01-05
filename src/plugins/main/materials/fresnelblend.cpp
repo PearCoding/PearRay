@@ -212,6 +212,18 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Fresnel Blend BSDF", "Blend two bsdfs together based on the fresnel term")
+			.Identifiers(getNames())
+			.Inputs()
+			.MaterialReference("material1", "First material")
+			.MaterialReference("material2", "Second material")
+			.SpectralNodeV({ "index", "eta", "ior" }, "Index of refraction", 1.55f)
+			.Specification()
+			.get();
+	}
+
 	bool init()
 	{
 		return true;

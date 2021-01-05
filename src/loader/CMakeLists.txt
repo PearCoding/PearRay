@@ -55,6 +55,7 @@ set(PR_Src
   parameter/Parameter.cpp
   parameter/Parameter.h
   parameter/Parameter.inl
+  parameter/ParameterDesc.h
   parameter/ParameterGroup.h
   parameter/ParameterGroup.inl
   parser/CurveParser.cpp
@@ -69,6 +70,7 @@ set(PR_Src
   plugin/Plugin.h
   plugin/PluginManager.cpp
   plugin/PluginManager.h
+  plugin/PluginSpecification.h
   sampler/ISamplerPlugin.h
   sampler/SamplerManager.cpp
   sampler/SamplerManager.h

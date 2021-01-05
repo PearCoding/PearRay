@@ -3,7 +3,6 @@
 #include "filter/IFilterFactory.h"
 #include "filter/IFilterPlugin.h"
 
-
 namespace PR {
 class BlockFilter : public IFilter {
 public:
@@ -47,6 +46,16 @@ public:
 	{
 		const static std::vector<std::string> names({ "block", "blur" });
 		return names;
+	}
+
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Block Filter", "Simple filter based on the block funtion")
+			.Identifiers(getNames())
+			.Inputs()
+			.UInt("radius", "Radius of filter", 3)
+			.Specification()
+			.get();
 	}
 
 	bool init() override

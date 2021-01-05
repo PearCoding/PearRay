@@ -114,6 +114,18 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Delta Conductor BSDF", "A perfectly smooth conductor")
+			.Identifiers(getNames())
+			.Inputs()
+			.SpectralNodeV({ "index", "eta", "ior" }, "Index of refraction", 1.2f)
+			.SpectralNodeV({ "k", "kappa" }, "Absorption index of conductor", 2.605f)
+			.SpectralNode("specularity", "Tint", 1.0f)
+			.Specification()
+			.get();
+	}
+
 	bool init()
 	{
 		return true;

@@ -9,6 +9,7 @@
 #include <vector>
 
 namespace PR {
+constexpr uint32 DEF_SAMPLE_COUNT = 128;
 
 #include "SobolSamplerData.inl"
 
@@ -90,7 +91,7 @@ public:
 
 	uint32 requestedSampleCount() const override
 	{
-		return mParams.getUInt("sample_count", 128);
+		return mParams.getUInt("sample_count", DEF_SAMPLE_COUNT);
 	}
 
 	std::shared_ptr<ISampler> createInstance(uint32 sample_count, Random& rnd) const override
@@ -119,6 +120,16 @@ public:
 	{
 		const static std::vector<std::string> names({ "sobol" });
 		return names;
+	}
+
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Sobol Sampler", "A quasi-random sampler with is not suited for progressive rendering")
+			.Identifiers(getNames())
+			.Inputs()
+			.UInt("sample_count", "Sample count requested", DEF_SAMPLE_COUNT)
+			.Specification()
+			.get();
 	}
 
 	bool init() override

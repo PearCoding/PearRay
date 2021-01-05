@@ -360,7 +360,7 @@ public:
 			if (expr_str.empty())
 				expr_str = ctx.parameters().getString(0, "");
 		} else {
-			std::string path = ctx.parameters().getString("file", "");
+			std::string path = ctx.parameters().getString("filename", "");
 			if (path.empty())
 				path = ctx.parameters().getString(0, "");
 
@@ -433,6 +433,22 @@ public:
 	{
 		const static std::vector<std::string> names({ "expr", "vexpr", "fexpr", "fvexpr" });
 		return names;
+	}
+
+	PluginSpecification specification(const std::string& type_name) const override
+	{
+		PluginSpecificationBuilder builder("Expression Node", "SeExpr based node");
+		builder.Identifier(type_name);
+		if (type_name == "expr" || type_name == "vexpr")
+			return builder.Inputs()
+				.String("expression", "Expression in SeExpr syntax")
+				.Specification()
+				.get();
+		else
+			return builder.Inputs()
+				.Filename("filename", "Path to a file containing SeExpr expressions")
+				.Specification()
+				.get();
 	}
 
 	bool init() override

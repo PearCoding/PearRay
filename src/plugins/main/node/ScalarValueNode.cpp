@@ -19,6 +19,16 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Scalar Value Node", "A scalar value")
+			.Identifiers(getNames())
+			.Inputs()
+			.ScalarNode("value", "Value", 0.8f) // Why not number instead of scalarnode?
+			.Specification()
+			.get();
+	}
+
 	bool init() override
 	{
 		return true;

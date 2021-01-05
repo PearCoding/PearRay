@@ -104,6 +104,22 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Orthogonal Camera", "Camera based on the orthographic projection")
+			.Identifiers(getNames())
+			.Inputs()
+			.Number("width", "Width of the image plane", 1)
+			.Number("height", "Height of the image plane", 1)
+			.Number("near", "Near", NEAR_DEFAULT)
+			.Number("far", "Far", FAR_DEFAULT)
+			.Vector("local_direction", "Local view direction", ICamera::DefaultDirection)
+			.Vector("local_right", "Local right direction", ICamera::DefaultRight)
+			.Vector("local_up", "Local up direction", ICamera::DefaultUp)
+			.Specification()
+			.get();
+	}
+
 	bool init()
 	{
 		return true;

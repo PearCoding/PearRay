@@ -199,6 +199,16 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Spectral Convert Node", "A node to convert between different spaces. Keep in mind that the raytracer is a full spectral one!")
+			.Identifiers(getNames())
+			.Inputs()
+			.SpectralNode("op", "Operand", 0.0f)
+			.Specification()
+			.get();
+	}
+
 	bool init() override
 	{
 		return true;

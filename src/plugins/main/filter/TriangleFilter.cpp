@@ -93,6 +93,16 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Triangle Filter", "Simple filter based on the triangle funtion")
+			.Identifiers(getNames())
+			.Inputs()
+			.UInt("radius", "Radius of filter", 3)
+			.Specification()
+			.get();
+	}
+
 	bool init() override
 	{
 		return true;

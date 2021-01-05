@@ -78,6 +78,13 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Null BSDF", "Does nothing, is nothing.")
+			.Identifiers(getNames())
+			.get();
+	}
+
 	bool init()
 	{
 		return true;

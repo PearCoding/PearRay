@@ -185,6 +185,26 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Rough Conductor BSDF", "A rough conductor BSDF")
+			.Identifiers(getNames())
+			.Inputs()
+			.BeginBlock("Roughness", PluginParamDescBlockOp::OneOf)
+			.ScalarNode("roughness", "Isotropic roughness", 0.0f)
+			.BeginBlock("")
+			.ScalarNode("roughness_x", "Anisotropic x roughness", 0.0f)
+			.ScalarNode("roughness_y", "Anisotropic y roughness", 0.0f)
+			.EndBlock()
+			.EndBlock()
+			.SpectralNodeV({ "index", "eta", "ior" }, "Index of refraction", 1.2f)
+			.SpectralNodeV({ "k", "kappa" }, "Absorption index of conductor", 2.605f)
+			.SpectralNode("specularity", "Tint", 1.0f)
+			.Bool("vndf", "Use sampling method based on the viewing normal", true)
+			.Specification()
+			.get();
+	}
+
 	bool init()
 	{
 		return true;

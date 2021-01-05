@@ -244,6 +244,18 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Plane Entity", "A solid plane")
+			.Identifiers(getNames())
+			.Inputs()
+			.MeshReference("mesh", "Mesh")
+			.MaterialReferenceV({ "material", "materials" }, "Material")
+			.EmissionReference("emission", "Emission", true)
+			.Specification()
+			.get();
+	}
+
 	bool init()
 	{
 		return true;

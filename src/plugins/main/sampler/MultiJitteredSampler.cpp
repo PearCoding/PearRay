@@ -7,6 +7,8 @@
 #include <vector>
 
 namespace PR {
+constexpr uint32 DEF_SAMPLE_COUNT = 128;
+
 #define PR_MJS_USE_RANDOM
 #define PR_MJS_CLIP
 
@@ -166,7 +168,7 @@ public:
 
 	uint32 requestedSampleCount() const override
 	{
-		return mParams.getUInt("sample_count", 128);
+		return mParams.getUInt("sample_count", DEF_SAMPLE_COUNT);
 	}
 
 	std::shared_ptr<ISampler> createInstance(uint32 sample_count, Random& rnd) const override
@@ -194,6 +196,18 @@ public:
 													  "multijitter", "multi_jitter", "jitter",
 													  "mjitt", "jitt" });
 		return names;
+	}
+
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Multijittered Sampler", "A progressive sampler with good quality")
+			.Identifiers(getNames())
+			.Inputs()
+			.UInt("sample_count", "Sample count requested", DEF_SAMPLE_COUNT)
+			.UInt("bins", "Bins used for jittering", DEF_SAMPLE_COUNT)
+			.UInt("seed", "Seed", 0)
+			.Specification()
+			.get();
 	}
 
 	bool init() override

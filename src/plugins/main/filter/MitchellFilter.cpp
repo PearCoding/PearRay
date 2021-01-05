@@ -106,6 +106,16 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Mitchell Filter", "Simple filter based on the mitchell funtion")
+			.Identifiers(getNames())
+			.Inputs()
+			.UInt("radius", "Radius of filter", 3)
+			.Specification()
+			.get();
+	}
+
 	bool init() override
 	{
 		return true;

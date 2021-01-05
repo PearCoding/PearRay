@@ -122,6 +122,28 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Spherical Camera", "Camera based on spherical projection")
+			.Identifiers(getNames())
+			.Inputs()
+			.BeginBlock("Theta")
+			.Number("theta_start", "Start of theta in radians", 0, 0, PR_PI_2)
+			.Number("theta_end", "End of theta in radians", PR_PI_2, 0, PR_PI_2)
+			.EndBlock()
+			.BeginBlock("Phi")
+			.Number("phi_start", "Start of theta in radians", -PR_PI, -PR_PI, PR_PI)
+			.Number("phi_end", "End of theta in radians", PR_PI, -PR_PI, PR_PI)
+			.EndBlock()
+			.Number("near", "Near", NEAR_DEFAULT)
+			.Number("far", "Far", FAR_DEFAULT)
+			.Vector("local_direction", "Local view direction", ICamera::DefaultDirection)
+			.Vector("local_right", "Local right direction", ICamera::DefaultRight)
+			.Vector("local_up", "Local up direction", ICamera::DefaultUp)
+			.Specification()
+			.get();
+	}
+
 	bool init()
 	{
 		return true;

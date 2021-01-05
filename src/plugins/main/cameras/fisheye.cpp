@@ -176,6 +176,23 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Fisheye Camera", "Fishy")
+			.Identifiers(getNames())
+			.Inputs()
+			.Option("map", "Map Method", "circular", { "circular", "cropped", "full" })
+			.Number("fov", "Field of view in radians", 180.0f * PR_DEG2RAD)
+			.Number("near", "Near", NEAR_DEFAULT)
+			.Number("far", "Far", FAR_DEFAULT)
+			.Vector("local_direction", "Local view direction", ICamera::DefaultDirection)
+			.Vector("local_right", "Local right direction", ICamera::DefaultRight)
+			.Vector("local_up", "Local up direction", ICamera::DefaultUp)
+			.Bool("clip_range", "Filter out rays not inside the range", true)
+			.Specification()
+			.get();
+	}
+
 	bool init()
 	{
 		return true;

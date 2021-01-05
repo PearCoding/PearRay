@@ -156,8 +156,8 @@ public:
 
 		const auto radP				 = params.getParameter("radiance");
 		const auto backgroundP		 = params.getParameter("background");
-		const bool allowDistribution = params.getBool("distribution", false);
-		const bool allowCompensation = params.getBool("compensation", false); // Disabled per default, due to some bugs
+		const bool allowDistribution = params.getBool("distribution", true);
+		const bool allowCompensation = params.getBool("compensation", false);
 
 		std::shared_ptr<FloatSpectralNode> radiance;
 		std::shared_ptr<FloatSpectralNode> background;
@@ -219,6 +219,19 @@ public:
 	{
 		static std::vector<std::string> names({ "env", "environment", "background" });
 		return names;
+	}
+
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Environment Light", "An infinitly far away light from every direction")
+			.Identifiers(getNames())
+			.Inputs()
+			.SpectralNode("radiance", "Power the environment is emitting", 1.0f)
+			.SpectralNode("background", "Radiance to use if environment is directly visible by camera", 1.0f, true /* If not specified, radiance will be used */)
+			.Bool("distribution", "Compute distribution if necessary", true)
+			.Bool("compensation", "Allow MIS compensation if necessary", false)
+			.Specification()
+			.get();
 	}
 
 	bool init() override

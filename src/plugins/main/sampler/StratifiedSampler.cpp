@@ -7,6 +7,8 @@
 #include <vector>
 
 namespace PR {
+constexpr uint32 DEF_SAMPLE_COUNT = 128;
+
 class PR_LIB_BASE StratifiedSampler : public ISampler {
 public:
 	StratifiedSampler(Random& random, uint32 samples, uint32 groups)
@@ -50,7 +52,7 @@ public:
 
 	uint32 requestedSampleCount() const override
 	{
-		return mParams.getUInt("sample_count", 128);
+		return mParams.getUInt("sample_count", DEF_SAMPLE_COUNT);
 	}
 
 	std::shared_ptr<ISampler> createInstance(uint32 sample_count, Random& rnd) const override
@@ -75,6 +77,17 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Stratified Sampler", "A progressive sampler with medium quality")
+			.Identifiers(getNames())
+			.Inputs()
+			.UInt("sample_count", "Sample count requested", DEF_SAMPLE_COUNT)
+			.UInt("bins", "Bins used for jittering", DEF_SAMPLE_COUNT)
+			.Specification()
+			.get();
+	}
+	
 	bool init() override
 	{
 		return true;

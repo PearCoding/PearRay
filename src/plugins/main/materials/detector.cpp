@@ -127,6 +127,23 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Detector BSDF", "Based on incoming vector categorization calculated reflection")
+			.Identifiers(getNames())
+			.Inputs()
+			.BeginBlock("Front")
+			.SpectralNode("front_reflection", "Front reflection value", 1)
+			.SpectralNode("front_transmission", "Front transmission value", 0.75f)
+			.EndBlock()
+			.BeginBlock("Back")
+			.SpectralNode("back_reflection", "Back reflection value", 0.5f)
+			.SpectralNode("back_transmission", "Back transmission value", 0.25f)
+			.EndBlock()
+			.Specification()
+			.get();
+	}
+
 	bool init()
 	{
 		return true;

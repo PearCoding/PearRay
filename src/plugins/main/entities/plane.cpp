@@ -268,7 +268,7 @@ public:
 		Vector3f yAxis	 = params.getVector3f("y_axis", Vector3f(0, 1, 0));
 		float width		 = params.getNumber("width", 1);
 		float height	 = params.getNumber("height", 1);
-		
+
 		const uint32 matID = ctx.lookupMaterialID(params.getParameter("material"));
 		const uint32 emsID = ctx.lookupEmissionID(params.getParameter("emission"));
 
@@ -283,6 +283,22 @@ public:
 	{
 		static std::vector<std::string> names({ "plane" });
 		return names;
+	}
+
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Plane Entity", "A solid plane")
+			.Identifiers(getNames())
+			.Inputs()
+			.Number("width", "Local width", 1)
+			.Number("height", "Local height", 1)
+			.VectorV({ "x_axis", "axis_x" }, "Local x axis", Vector3f(1, 0, 0))
+			.VectorV({ "y_axis", "axis_y" }, "Local y axis", Vector3f(0, 1, 0))
+			.MaterialReference("material", "Material")
+			.EmissionReference("emission", "Emission", true)
+			.Bool("centering", "Set origin of the plane at the center of the constructed plane. Useful for area lights", false)
+			.Specification()
+			.get();
 	}
 
 	bool init()

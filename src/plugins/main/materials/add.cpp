@@ -164,6 +164,17 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Add BSDF", "Add two bsdfs together")
+			.Identifiers(getNames())
+			.Inputs()
+			.MaterialReference("material1", "First material")
+			.MaterialReference("material2", "Second material")
+			.Specification()
+			.get();
+	}
+
 	bool init()
 	{
 		return true;

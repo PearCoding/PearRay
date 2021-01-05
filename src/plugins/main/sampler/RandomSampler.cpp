@@ -6,6 +6,8 @@
 #include "sampler/ISamplerPlugin.h"
 
 namespace PR {
+constexpr uint32 DEF_SAMPLE_COUNT = 128;
+
 class RandomSampler : public ISampler {
 public:
 	RandomSampler(Random& random, uint32 samples)
@@ -32,7 +34,7 @@ public:
 
 	uint32 requestedSampleCount() const override
 	{
-		return mParams.getUInt("sample_count", 128);
+		return mParams.getUInt("sample_count", DEF_SAMPLE_COUNT);
 	}
 
 	std::shared_ptr<ISampler> createInstance(uint32 sample_count, Random& rnd) const override
@@ -55,6 +57,16 @@ public:
 	{
 		const static std::vector<std::string> names({ "random" });
 		return names;
+	}
+
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Random Sampler", "A progressive uniform sampler with bad quality")
+			.Identifiers(getNames())
+			.Inputs()
+			.UInt("sample_count", "Sample count requested", DEF_SAMPLE_COUNT)
+			.Specification()
+			.get();
 	}
 
 	bool init() override

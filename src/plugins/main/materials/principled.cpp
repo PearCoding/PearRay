@@ -693,6 +693,30 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Principled BSDF", "Principled BSDF based on the Disney implementation")
+			.Identifiers(getNames())
+			.Inputs()
+			.SpectralNode("base", "Base color", 0.8f)
+			.SpectralNode("eta", "Index of refraction", 1.55f)
+			.ScalarNode("roughness", "Roughness", 0.5f)
+			.ScalarNode("anisotropic", "Amount of anisotropy", 0.0f)
+			.ScalarNode("diffuse_transmission", "Diffuse transmission strength", 0.0f)
+			.ScalarNode("specular_transmission", "Specular transmission strength", 0.0f)
+			.ScalarNode("specular_tint", "Specular tint towards base color", 0.0f)
+			.ScalarNode("flatness", "Flatness of surface. Nonzero value applies subsurface scattering", 0.0f)
+			.ScalarNode("metallic", "Amount of metallic appeal", 0.0f)
+			.ScalarNode("sheen", "Amount of sheen to apply", 0.0f)
+			.ScalarNode("sheen_tint", "Sheen tint towards base color", 0.0f)
+			.ScalarNode("clearcoat", "Amount of clearcoat to apply", 0.0f)
+			.ScalarNode("clearcoat_gloss", "Glossyness of the clearcoat", 0.0f)
+			.Bool("vndf", "Use sampling method based on the viewing normal", true)
+			.Bool("thin", "Thin approximation", false)
+			.Specification()
+			.get();
+	}
+	
 	bool init()
 	{
 		return true;

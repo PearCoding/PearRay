@@ -179,6 +179,18 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Blend BSDF", "Blend two bsdfs together")
+			.Identifiers(getNames())
+			.Inputs()
+			.MaterialReference("material1", "First material")
+			.MaterialReference("material2", "Second material")
+			.ScalarNode("factor", "Strenght of the blending between material1 and material2. Zero means only material1 will be used", 0.5f)
+			.Specification()
+			.get();
+	}
+
 	bool init()
 	{
 		return true;

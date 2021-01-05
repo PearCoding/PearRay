@@ -72,8 +72,8 @@ class CheckerboardPlugin : public INodePlugin {
 public:
 	std::shared_ptr<INode> create(const std::string&, const SceneLoadContext& ctx) override
 	{
-		const auto op1	  = ctx.lookupSpectralNode(ctx.parameters().getParameter(0), 1);
-		const auto op2	  = ctx.lookupSpectralNode(ctx.parameters().getParameter(1), 0);
+		const auto op1	  = ctx.lookupSpectralNode(ctx.parameters().getParameter(0), 0.8f);
+		const auto op2	  = ctx.lookupSpectralNode(ctx.parameters().getParameter(1), 0.2f);
 		const auto scaleU = ctx.lookupScalarNode(ctx.parameters().getParameter(2), 5);
 		const auto scaleV = ctx.lookupScalarNode(ctx.parameters().getParameter(3), 5);
 
@@ -89,6 +89,19 @@ public:
 	{
 		const static std::vector<std::string> names({ "grid", "checkerboard" });
 		return names;
+	}
+
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Checkerboard Node", "A cheeky checkerboard node")
+			.Identifiers(getNames())
+			.Inputs()
+			.SpectralNode("color1", "First color node", 0.8f)
+			.SpectralNode("color2", "Second color node", 0.2f)
+			.SpectralNode("scale_u", "U scale", 5)
+			.SpectralNode("scale_v", "V scale", 5)
+			.Specification()
+			.get();
 	}
 
 	bool init() override

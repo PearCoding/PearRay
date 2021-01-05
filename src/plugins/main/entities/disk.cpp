@@ -128,6 +128,18 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Disk Entity", "A solid plane with circular boundary")
+			.Identifiers(getNames())
+			.Inputs()
+			.Number("radius", "Radius of the disk", 1)
+			.MaterialReference("material", "Material")
+			.EmissionReference("emission", "Emission", true)
+			.Specification()
+			.get();
+	}
+
 	bool init()
 	{
 		return true;

@@ -88,6 +88,16 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Delta Mirror BSDF", "A perfectly smooth mirror (~ silver conductor)")
+			.Identifiers(getNames())
+			.Inputs()
+			.SpectralNode("specularity", "Tint", 1.0f)
+			.Specification()
+			.get();
+	}
+
 	bool init()
 	{
 		return true;

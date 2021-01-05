@@ -54,6 +54,13 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Random Spectral Mapper", "A pure random spectral mapper")
+			.Identifiers(getNames())
+			.get();
+	}
+
 	bool init() override
 	{
 		return true;

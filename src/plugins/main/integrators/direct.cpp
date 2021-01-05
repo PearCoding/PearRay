@@ -467,9 +467,7 @@ public:
 		else
 			mMISMode = VCM::MISMode::Balance;
 
-		// Per default, do not scatter at emissive surfaces, as they introduce more noise than normal
-		// Keep in mind however, that it introduces (conceptional) bias, as we assume an emissive light surface is also a perfect black surface
-		mEmissiveScatter = params.getBool("emissive_scatter", false);
+		mEmissiveScatter = params.getBool("emissive_scatter", true);
 	}
 
 	std::shared_ptr<IIntegrator> createInstance() const override
@@ -506,6 +504,20 @@ public:
 	{
 		const static std::vector<std::string> names({ "direct", "standard", "default" });
 		return names;
+	}
+
+	PluginSpecification specification(const std::string&) const override
+	{
+		const DiParameters parameters;
+		return PluginSpecificationBuilder("PT", "Unidirectional Path Tracing")
+			.Identifiers(getNames())
+			.Inputs()
+			.UInt("max_ray_depth", "Maximum ray depth allowed", parameters.MaxCameraRayDepthHard)
+			.UInt("soft_max_ray_depth", "Maximum ray depth after which russian roulette tarts", parameters.MaxCameraRayDepthSoft)
+			.Option("mis", "MIS mode", "balance", { "balance", "power" })
+			.Bool("emissive_scatter", "Allow emissive surfaces to scatter", true)
+			.Specification()
+			.get();
 	}
 
 	bool init() override

@@ -53,6 +53,16 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Diffuse Emission", "Standard emission for lights")
+			.Identifiers(getNames())
+			.Inputs()
+			.SpectralNode("radiance", "Emitted energy in radiance", 1)
+			.Specification()
+			.get();
+	}
+
 	bool init() override
 	{
 		return true;

@@ -110,6 +110,17 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("OrenNayar BSDF", "A not so perfectly diffuse BSDF")
+			.Identifiers(getNames())
+			.Inputs()
+			.SpectralNodeV({ "albedo", "base", "diffuse" }, "Amount of light which is reflected", 1.0f)
+			.ScalarNode("roughness", "Roughness", 0.5f)
+			.Specification()
+			.get();
+	}
+
 	bool init()
 	{
 		return true;

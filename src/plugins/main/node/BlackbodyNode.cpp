@@ -80,6 +80,16 @@ public:
 		return names;
 	}
 
+	PluginSpecification specification(const std::string&) const override
+	{
+		return PluginSpecificationBuilder("Blackbody Node", "A temperature based blackbody node")
+			.Identifiers(getNames())
+			.Inputs()
+			.ScalarNode("temperature", "Temperature of the blackbody in Kelvin", 6500.0f)
+			.Specification()
+			.get();
+	}
+
 	bool init() override
 	{
 		return true;

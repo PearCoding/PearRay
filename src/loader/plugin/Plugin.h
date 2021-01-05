@@ -1,7 +1,6 @@
 #pragma once
 
-#include "PR_Config.h"
-#include <vector>
+#include "PluginSpecification.h"
 
 namespace PR {
 
@@ -36,16 +35,18 @@ struct PR_LIB_LOADER PluginInterface {
 };
 } // namespace PR
 
-#define PR_INTERNAL_PLUGIN_DEFINE_FACTORY(className, entityType, typeStr)                                                \
-	class entityType;                                                                                                    \
-	class SceneLoadContext;                                                                                              \
-	class PR_LIB_LOADER className : public IPlugin {                                                                     \
-	public:                                                                                                              \
-		className()																							  = default; \
-		virtual ~className()																				  = default; \
-		virtual std::shared_ptr<entityType> create(const std::string& type_name, const SceneLoadContext& ctx) = 0;       \
-		virtual const std::vector<std::string>& getNames() const											  = 0;       \
-		inline const char* type() const override { return typeStr; }                                                     \
+#define PR_INTERNAL_PLUGIN_DEFINE_FACTORY(className, entityType, typeStr)                                                                   \
+	class entityType;                                                                                                                       \
+	class SceneLoadContext;                                                                                                                 \
+	class PR_LIB_LOADER className : public IPlugin {                                                                                        \
+	public:                                                                                                                                 \
+		using InputSpec																						  = std::vector<ParameterDesc>; \
+		className()																							  = default;                    \
+		virtual ~className()																				  = default;                    \
+		virtual std::shared_ptr<entityType> create(const std::string& type_name, const SceneLoadContext& ctx) = 0;                          \
+		virtual const std::vector<std::string>& getNames() const											  = 0;                          \
+		virtual PluginSpecification specification(const std::string& /*type_name*/) const					  = 0;                          \
+		inline const char* type() const override { return typeStr; }                                                                        \
 	}
 
 #define PR_PLUGIN_INIT(classType, pluginName, pluginVersion)                          \
