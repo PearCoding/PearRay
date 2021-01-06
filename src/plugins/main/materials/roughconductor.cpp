@@ -174,12 +174,12 @@ static std::shared_ptr<IMaterial> createMaterial2(const SceneLoadContext& ctx)
 
 class RoughConductorMaterialPlugin : public IMaterialPlugin {
 public:
-	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx) override
 	{
 		return createMaterial2(ctx);
 	}
 
-	const std::vector<std::string>& getNames() const
+	const std::vector<std::string>& getNames() const override
 	{
 		const static std::vector<std::string> names({ "roughconductor", "roughmirror", "roughmetal" });
 		return names;
@@ -205,7 +205,7 @@ public:
 			.get();
 	}
 
-	bool init()
+	bool init() override
 	{
 		return true;
 	}

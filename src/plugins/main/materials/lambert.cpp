@@ -90,7 +90,7 @@ private:
 
 class LambertMaterialPlugin : public IMaterialPlugin {
 public:
-	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx) override
 	{
 		if (ctx.parameters().getBool("two_sided", true))
 			return std::make_shared<LambertMaterial<true>>(ctx.lookupSpectralNode("albedo", 1));
@@ -98,7 +98,7 @@ public:
 			return std::make_shared<LambertMaterial<false>>(ctx.lookupSpectralNode("albedo", 1));
 	}
 
-	const std::vector<std::string>& getNames() const
+	const std::vector<std::string>& getNames() const override
 	{
 		const static std::vector<std::string> names({ "diffuse", "lambert" });
 		return names;
@@ -115,7 +115,7 @@ public:
 			.get();
 	}
 
-	bool init()
+	bool init() override
 	{
 		return true;
 	}

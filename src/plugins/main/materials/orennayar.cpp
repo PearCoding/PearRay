@@ -98,13 +98,13 @@ private:
 
 class OrenNayarMaterialPlugin : public IMaterialPlugin {
 public:
-	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx) override
 	{
 		return std::make_shared<OrenNayarMaterial>(ctx.lookupSpectralNode("albedo", 1),
 												   ctx.lookupScalarNode("roughness", 0.5f));
 	}
 
-	const std::vector<std::string>& getNames() const
+	const std::vector<std::string>& getNames() const override
 	{
 		const static std::vector<std::string> names({ "orennayar", "oren", "rough" });
 		return names;
@@ -121,7 +121,7 @@ public:
 			.get();
 	}
 
-	bool init()
+	bool init() override
 	{
 		return true;
 	}

@@ -109,7 +109,7 @@ private:
 
 class DiskEntityPlugin : public IEntityPlugin {
 public:
-	std::shared_ptr<IEntity> create(const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<IEntity> create(const std::string&, const SceneLoadContext& ctx) override
 	{
 		const ParameterGroup& params = ctx.parameters();
 
@@ -122,7 +122,7 @@ public:
 		return std::make_shared<DiskEntity>(name, ctx.transform(), radius, matID, emsID);
 	}
 
-	const std::vector<std::string>& getNames() const
+	const std::vector<std::string>& getNames() const override
 	{
 		static std::vector<std::string> names({ "disk" });
 		return names;

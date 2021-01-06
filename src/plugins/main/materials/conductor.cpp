@@ -93,7 +93,7 @@ private:
 
 class ConductorMaterialPlugin : public IMaterialPlugin {
 public:
-	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx) override
 	{
 		// Construct rough conductor instead
 		if (ctx.parameters().hasParameter("roughness")
@@ -108,7 +108,7 @@ public:
 		return std::make_shared<ConductorMaterial>(eta, k, spec);
 	}
 
-	const std::vector<std::string>& getNames() const
+	const std::vector<std::string>& getNames() const override
 	{
 		const static std::vector<std::string> names({ "conductor", "metal" });
 		return names;
@@ -126,7 +126,7 @@ public:
 			.get();
 	}
 
-	bool init()
+	bool init() override
 	{
 		return true;
 	}

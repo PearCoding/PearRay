@@ -259,7 +259,7 @@ private:
 
 class PlaneEntityPlugin : public IEntityPlugin {
 public:
-	std::shared_ptr<IEntity> create(const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<IEntity> create(const std::string&, const SceneLoadContext& ctx) override
 	{
 		const ParameterGroup& params = ctx.parameters();
 
@@ -279,7 +279,7 @@ public:
 		return obj;
 	}
 
-	const std::vector<std::string>& getNames() const
+	const std::vector<std::string>& getNames() const override
 	{
 		static std::vector<std::string> names({ "plane" });
 		return names;

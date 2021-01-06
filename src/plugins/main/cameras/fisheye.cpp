@@ -161,7 +161,7 @@ static inline std::shared_ptr<ICamera> createCamera(const ParameterGroup& params
 
 class FisheyeCameraPlugin : public ICameraPlugin {
 public:
-	std::shared_ptr<ICamera> create(const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<ICamera> create(const std::string&, const SceneLoadContext& ctx) override
 	{
 		bool clip_range = ctx.parameters().getBool("clip_range", true);
 		if (clip_range)
@@ -170,7 +170,7 @@ public:
 			return createCamera<false>(ctx.parameters(), ctx.transform());
 	}
 
-	const std::vector<std::string>& getNames() const
+	const std::vector<std::string>& getNames() const override
 	{
 		static std::vector<std::string> names({ "fisheye" });
 		return names;

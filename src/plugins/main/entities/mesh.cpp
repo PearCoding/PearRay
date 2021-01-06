@@ -204,7 +204,7 @@ class MeshEntityPlugin : public IEntityPlugin {
 public:
 	std::unordered_map<MeshBase*, std::shared_ptr<Mesh>> mOriginalMesh;
 
-	std::shared_ptr<IEntity> create(const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<IEntity> create(const std::string&, const SceneLoadContext& ctx) override
 	{
 		const ParameterGroup& params = ctx.parameters();
 
@@ -238,7 +238,7 @@ public:
 		}
 	}
 
-	const std::vector<std::string>& getNames() const
+	const std::vector<std::string>& getNames() const override
 	{
 		static std::vector<std::string> names({ "mesh" });
 		return names;
