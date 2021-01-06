@@ -1,4 +1,5 @@
-#include "EXRFile.h"
+#include "ImageFile.h"
+#include "ImageLayer.h"
 
 #include <OpenImageIO/imageio.h>
 
@@ -7,41 +8,13 @@
 
 namespace PR {
 namespace UI {
-EXRLayer::EXRLayer(const QString& name, const QString& lpe, int channels,
-				   int width, int height)
-	: ImageBufferView()
-	, mName(name)
-	, mLPE(lpe)
-	, mData((int)channels)
-	, mChannelNames((int)channels)
-	, mWidth(width)
-	, mHeight(height)
-{
-}
-
-EXRLayer::~EXRLayer()
-{
-}
-
-void EXRLayer::ensureRightOrder()
-{
-	if (mChannelNames.size() != 3)
-		return;
-
-	if (mChannelNames[0] != "B" || mChannelNames[2] != "R")
-		return;
-
-	std::swap(mChannelNames[0], mChannelNames[2]);
-	std::swap(mData[0], mData[2]);
-}
-
-EXRFile::EXRFile()
+ImageFile::ImageFile()
 	: mWidth(0)
 	, mHeight(0)
 {
 }
 
-EXRFile::~EXRFile()
+ImageFile::~ImageFile()
 {
 }
 
@@ -75,7 +48,7 @@ static void splitChannelString(const QString& str, QString& parent, QString& lpe
 	}
 }
 
-bool EXRFile::open(const QString& filename)
+bool ImageFile::open(const QString& filename)
 {
 	static const QString SPEC_NAME = "Color";
 
@@ -121,7 +94,7 @@ bool EXRFile::open(const QString& filename)
 
 	// Iterate through each layer and load them separately
 	for (auto it = layerMap.constBegin(); it != layerMap.constEnd(); ++it) {
-		std::shared_ptr<EXRLayer> layer = std::make_shared<EXRLayer>(
+		std::shared_ptr<ImageLayer> layer = std::make_shared<ImageLayer>(
 			it.key().first, it.key().second, it.value().size(),
 			mWidth, mHeight);
 

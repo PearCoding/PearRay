@@ -1,22 +1,22 @@
 #pragma once
 
-#include "ui_EXRWindow.h"
+#include "ui_ImageWindow.h"
 #include <QWidget>
 
 #include <memory>
 
 namespace PR {
 namespace UI {
-class EXRFile;
+class ImageFile;
 }
 } // namespace PR
 
-class EXRWindow : public QWidget {
+class ImageWindow : public QWidget {
 	Q_OBJECT
 
 public:
-	EXRWindow(QWidget* parent = 0);
-	~EXRWindow();
+	ImageWindow(QWidget* parent = 0);
+	~ImageWindow();
 
 	void openFile(const QString& str);
 
@@ -28,7 +28,7 @@ private slots:
 private:
 	void updateImage(int layerID);
 
-	Ui::EXRWindowClass ui;
+	Ui::ImageWindowClass ui;
 
-	std::unique_ptr<PR::UI::EXRFile> mFile;
+	std::unique_ptr<PR::UI::ImageFile> mFile;
 };

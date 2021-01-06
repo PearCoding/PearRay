@@ -7,10 +7,10 @@
 
 namespace PR {
 namespace UI {
-class PR_LIB_UI EXRLayer : public ImageBufferView {
+class PR_LIB_UI ImageLayer : public ImageBufferView {
 public:
-	EXRLayer(const QString& name, const QString& lpe, int channels, int width, int height);
-	virtual ~EXRLayer();
+	ImageLayer(const QString& name, const QString& lpe, int channels, int width, int height);
+	virtual ~ImageLayer();
 
 	inline QVector<QVector<float>>& data() { return mData; }
 	inline QVector<QString>& channelNames() { return mChannelNames; }
@@ -34,6 +34,9 @@ public:
 		return mData[(int)channel][static_cast<int>(y * mWidth + x)];
 	}
 
+	void fillImage(QImage& image, const ImagePipeline& mapper,
+				   quint32 channelOffset = 0, quint8 channelMask = 0xFF) const override;
+
 	void ensureRightOrder();
 
 private:
@@ -44,24 +47,6 @@ private:
 
 	int mWidth;
 	int mHeight;
-};
-
-class EXRFile {
-public:
-	EXRFile();
-	~EXRFile();
-
-	bool open(const QString& file);
-
-	inline int width() const { return mWidth; }
-	inline int height() const { return mHeight; }
-
-	inline const QVector<std::shared_ptr<EXRLayer>>& layers() const { return mLayers; }
-
-private:
-	int mWidth;
-	int mHeight;
-	QVector<std::shared_ptr<EXRLayer>> mLayers;
 };
 } // namespace UI
 } // namespace PR

@@ -15,7 +15,7 @@
   </property>
   <property name="windowIcon">
    <iconset resource="../../../ui/resources/icons.qrc">
-    <normaloff>:/icon.png</normaloff>:/icon.png</iconset>
+    <normaloff>:/icon_viewer</normaloff>:/icon_viewer</iconset>
   </property>
   <widget class="PR::UI::ImageView" name="imageView"/>
   <widget class="QMenuBar" name="menuBar">

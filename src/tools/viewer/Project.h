@@ -4,6 +4,7 @@
 
 #include <QObject>
 #include <QTimer>
+#include <QRect>
 
 namespace PR {
 class Environment;
@@ -21,6 +22,7 @@ public:
 	bool isRendering() const;
 
 	inline std::shared_ptr<PR::FrameOutputDevice> frame() const { return mFrame; }
+	inline const QVector<QRect>& currentUpdateRegions() const { return mUpdateRegions; }
 
 public slots:
 	void startRendering(int threads = 0);
@@ -40,4 +42,6 @@ private:
 	std::shared_ptr<PR::RenderFactory> mFactory;
 	std::shared_ptr<PR::RenderContext> mContext;
 	std::shared_ptr<PR::FrameOutputDevice> mFrame;
+
+	QVector<QRect> mUpdateRegions;
 };

@@ -1,5 +1,5 @@
 #include "MainWindow.h"
-#include "EXRWindow.h"
+#include "ImageWindow.h"
 #include "ProfWindow.h"
 
 #include <fstream>
@@ -96,7 +96,7 @@ void MainWindow::openFile(const QString& file)
 
 	QApplication::setOverrideCursor(Qt::WaitCursor);
 	if (info.suffix() == "exr") {
-		EXRWindow* w	   = new EXRWindow(ui.mdiArea);
+		ImageWindow* w	   = new ImageWindow(ui.mdiArea);
 		QMdiSubWindow* win = ui.mdiArea->addSubWindow(w);
 
 		win->setWindowIcon(QIcon(":/image_icon"));

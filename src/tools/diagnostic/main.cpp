@@ -42,7 +42,7 @@ int main(int argc, char** argv)
 	format.setProfile(QSurfaceFormat::CoreProfile);
 	QSurfaceFormat::setDefaultFormat(format);
 
-	QPixmap pixmap(":/splash.svg");
+	QPixmap pixmap(":/splash_diag");
 	QSplashScreen splash(pixmap);
 	splash.show();
 

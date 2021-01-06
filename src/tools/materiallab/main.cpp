@@ -2,6 +2,7 @@
 
 #include <QApplication>
 #include <QCommandLineParser>
+#include <QSplashScreen>
 #include <QSurfaceFormat>
 
 #include "config/Version.h"
@@ -38,6 +39,10 @@ int main(int argc, char** argv)
 	format.setVersion(3, 2);
 	format.setProfile(QSurfaceFormat::CoreProfile);
 	QSurfaceFormat::setDefaultFormat(format);
+
+	QPixmap pixmap(":/splash_materiallab");
+	QSplashScreen splash(pixmap);
+	splash.show();
 
 	// Main Window
 	MainWindow w;

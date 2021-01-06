@@ -23,6 +23,7 @@ ImageView::ImageView(QWidget* parent)
 	, mChannelMask(0xFF)
 	, mChannelOffset(0)
 	, mLastPixel(0, 0)
+	, mShowUpdateRegions(true)
 {
 	zoomToOriginal();
 
@@ -79,6 +80,12 @@ void ImageView::centerImage()
 	repaint();
 }
 
+void ImageView::showUpdateRegions(bool b)
+{
+	mShowUpdateRegions = b;
+	repaint();
+}
+
 int ImageView::barHeight() const
 {
 	constexpr int PADDING	   = 2;
@@ -98,6 +105,12 @@ void ImageView::setView(const std::shared_ptr<ImageBufferView>& view)
 	mView		   = view;
 	updateImage();
 	updateGeometry();
+}
+
+void ImageView::setUpdateRegions(const QVector<QRect>& rects)
+{
+	mUpdateRegions = rects;
+	repaint();
 }
 
 void ImageView::setPipeline(const ImagePipeline& pipeline)
@@ -175,6 +188,13 @@ void ImageView::paintEvent(QPaintEvent* event)
 	painter.setTransform(mTransform, true);
 
 	painter.drawPixmap(0, 0, mPixmap);
+
+	// Update Rects
+	if (mShowUpdateRegions) {
+		painter.setPen(QPen(Qt::darkRed));
+		painter.setBrush(Qt::NoBrush);
+		painter.drawRects(mUpdateRegions);
+	}
 
 	event->accept();
 }

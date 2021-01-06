@@ -76,4 +76,12 @@ void Project::checkContext()
 		emit renderingFinished();
 		return;
 	}
+
+	mUpdateRegions.clear();
+	const auto regions = mContext->currentTiles();
+	if (!regions.empty()) {
+		mUpdateRegions.reserve(regions.size());
+		for (const auto& r : regions)
+			mUpdateRegions.append(QRect(QPoint(r.Origin(0), r.Origin(1)), QSize(r.Size.Width, r.Size.Height)));
+	}
 }

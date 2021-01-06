@@ -5,7 +5,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(Src
   main.cpp
   cnt/Container.cpp
-  dialogs/EXRWindow.cpp
+  dialogs/ImageWindow.cpp
   dialogs/MainWindow.cpp
   dialogs/ProfWindow.cpp
   io/ProfFile.cpp
@@ -16,7 +16,7 @@ set(Src
 
 set(Hdr
   cnt/Container.h
-  dialogs/EXRWindow.h
+  dialogs/ImageWindow.h
   dialogs/MainWindow.h
   dialogs/ProfWindow.h
   io/ProfFile.h
@@ -26,7 +26,7 @@ set(Hdr
   widgets/ProfPlotWidget.h)
 
 set(Fms
-  ui/EXRWindow.ui
+  ui/ImageWindow.ui
   ui/MainWindow.ui
   ui/ProfWindow.ui
   ui/SpecWindow.ui)

@@ -5,6 +5,7 @@
 #include <QDesktopServices>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QScreen>
 #include <QSettings>
 #include <QThread>
 
@@ -18,11 +19,28 @@ constexpr int MAX_LAST_FILES = 10;
 MainWindow::MainWindow(QWidget* parent)
 	: QMainWindow(parent)
 	, mImageTimer(this)
-	, mImageUpdateIntervalMSecs(500)
+	, mRenderingStatus(nullptr)
+	, mRenderingProgress(nullptr)
+	, mImageUpdateIntervalMSecs(1000)
 {
 	ui.setupUi(this);
 
 	mImageTimer.setTimerType(Qt::CoarseTimer);
+
+	// Setup status bar
+	mRenderingStatus = new QLabel(this);
+
+	// TODO: Make use of this
+	mRenderingProgress = new QProgressBar(this);
+	mRenderingProgress->setRange(0, 100);
+	mRenderingProgress->setTextVisible(false);
+	mRenderingProgress->setMaximumWidth(150 * devicePixelRatio());
+
+	ui.statusBar->addPermanentWidget(mRenderingProgress);
+	ui.statusBar->addPermanentWidget(mRenderingStatus);
+
+	updateStatus(false);
+	updateProgress(0);
 
 	connect(ui.actionOpenFile, &QAction::triggered, this, QOverload<>::of(&MainWindow::openFile));
 	connect(ui.actionAbout, &QAction::triggered, this, &MainWindow::about);
@@ -37,7 +55,7 @@ MainWindow::MainWindow(QWidget* parent)
 	connect(ui.actionExport, &QAction::triggered, this, &MainWindow::exportImage);
 	connect(ui.imagePipeline, &PR::UI::ImagePipelineEditor::changed, this, &MainWindow::updatePipeline);
 
-	connect(&mImageTimer, &QTimer::timeout, ui.imageView, &PR::UI::ImageView::updateImage);
+	connect(&mImageTimer, &QTimer::timeout, this, &MainWindow::updateImage);
 
 	setupRecentMenu();
 	setupDockWidgets();
@@ -81,6 +99,7 @@ void MainWindow::readSettings()
 				   .toString();
 	mLastFiles				  = settings.value("last_files").toStringList();
 	mImageUpdateIntervalMSecs = settings.value("image_update_interval_msecs", mImageUpdateIntervalMSecs).toInt();
+	ui.imageView->showUpdateRegions(settings.value("show_update_regions", true).toBool());
 	settings.endGroup();
 
 	updateRecentFiles();
@@ -96,6 +115,7 @@ void MainWindow::writeSettings()
 	settings.setValue("last_dir", mLastDir);
 	settings.setValue("last_files", mLastFiles);
 	settings.setValue("image_update_interval_msecs", mImageUpdateIntervalMSecs);
+	settings.setValue("show_update_regions", ui.imageView->isUpdateRegionsVisible());
 	settings.endGroup();
 }
 
@@ -168,24 +188,6 @@ void MainWindow::about()
 void MainWindow::openWebsite()
 {
 	QDesktopServices::openUrl(QUrl("http://pearcoding.eu/projects/pearray"));
-}
-
-void MainWindow::exportImage()
-{
-	if (!ui.imageView->view())
-		return;
-
-	const QString file = QFileDialog::getSaveFileName(this, tr("Save Image"),
-													  mLastDir,
-													  tr("Images (*.png *.xpm *.jpg *.ppm)"));
-
-	if (!file.isEmpty())
-		ui.imageView->exportImage(file);
-}
-
-void MainWindow::updatePipeline()
-{
-	ui.imageView->setPipeline(ui.imagePipeline->constructPipeline());
 }
 
 void MainWindow::setupDockWidgets()
@@ -286,6 +288,31 @@ void MainWindow::closeProject()
 	setupProjectContext();
 }
 
+void MainWindow::exportImage()
+{
+	if (!ui.imageView->view())
+		return;
+
+	const QString file = QFileDialog::getSaveFileName(this, tr("Save Image"),
+													  mLastDir,
+													  tr("Images (*.png *.xpm *.jpg *.ppm)"));
+
+	if (!file.isEmpty())
+		ui.imageView->exportImage(file);
+}
+
+void MainWindow::updatePipeline()
+{
+	ui.imageView->setPipeline(ui.imagePipeline->constructPipeline());
+}
+
+void MainWindow::updateImage()
+{
+	const auto& regions = mProject->currentUpdateRegions();
+	ui.imageView->setUpdateRegions(regions);
+	ui.imageView->updateImage();
+}
+
 void MainWindow::startStopRender()
 {
 	if (!mProject)
@@ -302,8 +329,7 @@ void MainWindow::startStopRender()
 void MainWindow::renderingStarted()
 {
 	ui.statusBar->showMessage(tr("Started rendering"), 10);
-	ui.actionStart->setText(tr("Stop"));
-	ui.actionStart->setIcon(QIcon(":/stop_icon"));
+	updateStatus(true);
 
 	ui.imageView->setView(std::make_shared<FrameBufferView>(mProject->frame()));
 	ui.imageView->zoomToFit();
@@ -315,8 +341,43 @@ void MainWindow::renderingFinished()
 {
 	mImageTimer.stop();
 	//ui.imageView->setView(nullptr);
+	ui.imageView->setUpdateRegions({});
 
 	ui.statusBar->showMessage(tr("Finished rendering"), 10);
-	ui.actionStart->setText(tr("Start"));
-	ui.actionStart->setIcon(QIcon(":/play_icon"));
+	updateStatus(false);
+}
+
+void MainWindow::updateStatus(bool running)
+{
+	if (running) {
+		ui.actionStart->setText(tr("Stop"));
+		ui.actionStart->setIcon(QIcon(":/stop_icon"));
+		mRenderingStatus->setPixmap(pixmapFromSVG(":/status_on", QSize(16, 16)));
+		mRenderingStatus->setToolTip(tr("Rendering"));
+
+		// TODO: This depends if we do progressive rendering or not
+		mRenderingProgress->setRange(0, 0); // Busy
+	} else {
+		ui.actionStart->setText(tr("Start"));
+		ui.actionStart->setIcon(QIcon(":/play_icon"));
+		mRenderingStatus->setPixmap(pixmapFromSVG(":/status_off", QSize(16, 16)));
+		mRenderingStatus->setToolTip(tr("Idle"));
+
+		mRenderingProgress->setRange(0, 100);
+	}
+}
+
+void MainWindow::updateProgress(float f)
+{
+	mRenderingProgress->setValue(100 * f);
+}
+
+QPixmap MainWindow::pixmapFromSVG(const QString& filename, const QSize& baseSize)
+{
+	const qreal pixelRatio = qApp->primaryScreen()->devicePixelRatio();
+	QIcon icon(filename);
+	QPixmap pixmap = icon.pixmap(baseSize * pixelRatio);
+	pixmap.setDevicePixelRatio(pixelRatio);
+
+	return pixmap;
 }

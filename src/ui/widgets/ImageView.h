@@ -16,6 +16,7 @@ public:
 
 	inline std::shared_ptr<ImageBufferView> view() const { return mView; }
 	void setView(const std::shared_ptr<ImageBufferView>& view);
+	void setUpdateRegions(const QVector<QRect>& rects);
 	void setPipeline(const ImagePipeline& mapper);
 
 	void exportImage(const QString& path) const;
@@ -23,11 +24,14 @@ public:
 	QSize minimumSizeHint() const override;
 	QSize sizeHint() const override;
 
+	inline bool isUpdateRegionsVisible() const { return mShowUpdateRegions; }
+
 public slots:
 	void zoomToFit();
 	void zoomToOriginal();
 	void centerImage();
 	void updateImage();
+	void showUpdateRegions(bool b = true);
 
 protected:
 	void paintEvent(QPaintEvent* event) override;
@@ -64,6 +68,9 @@ private:
 
 	std::shared_ptr<ImageBufferView> mView;
 	ImagePipeline mPipeline;
+
+	bool mShowUpdateRegions;
+	QVector<QRect> mUpdateRegions;
 };
 } // namespace UI
 } // namespace PR

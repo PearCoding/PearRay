@@ -15,7 +15,7 @@
   </property>
   <property name="windowIcon">
    <iconset resource="../resources/icons.qrc">
-    <normaloff>:/icon.png</normaloff>:/icon.png</iconset>
+    <normaloff>:/icon_diag</normaloff>:/icon_diag</iconset>
   </property>
   <widget class="QMdiArea" name="mdiArea">
    <property name="viewMode">

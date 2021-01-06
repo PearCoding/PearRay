@@ -25,10 +25,16 @@ public:
 	{
 	}
 
-	template <typename U>
+	template <typename U = T>
 	inline static FrameBuffer sameAs(const FrameBuffer<U>& other, const T& clear_value = T())
 	{
-		return FrameBuffer(other.mSize, other.mChannels, clear_value, other.mNeverClear);
+		return FrameBuffer(other.mChannels, other.mSize, clear_value, other.mNeverClear);
+	}
+
+	template <typename U = T>
+	inline static std::shared_ptr<FrameBuffer> sameAsPtr(const FrameBuffer<U>& other, const T& clear_value = T())
+	{
+		return std::make_shared<FrameBuffer>(other.mChannels, other.mSize, clear_value, other.mNeverClear);
 	}
 
 	inline bool isSameSizeAs(const FrameBuffer<T>& other) const

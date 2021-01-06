@@ -27,8 +27,9 @@ set(Src
   3d/shader/Shader.cpp
   3d/shader/ShaderProgram.cpp
   3d/shader/WireframeShader.cpp
-  io/EXRFile.cpp
   io/ImageBufferView.cpp
+  io/ImageFile.cpp
+  io/ImageLayer.cpp
   properties/BoolProperty.cpp
   properties/ColorProperty.cpp
   properties/DoubleProperty.cpp
@@ -75,8 +76,10 @@ set(Hdr
   3d/shader/Shader.h
   3d/shader/ShaderProgram.h
   3d/shader/WireframeShader.h
-  io/EXRFile.h
+  io/ImageBufferIOView.h
   io/ImageBufferView.h
+  io/ImageFile.h
+  io/ImageLayer.h
   mapper/ImagePipeline.h
   properties/BoolProperty.h
   properties/ColorProperty.h

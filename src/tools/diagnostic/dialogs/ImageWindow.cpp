@@ -1,28 +1,29 @@
-#include "EXRWindow.h"
-#include "io/EXRFile.h"
+#include "ImageWindow.h"
+#include "io/ImageFile.h"
+#include "io/ImageLayer.h"
 
 #include <QFileDialog>
 #include <QStandardPaths>
 
-EXRWindow::EXRWindow(QWidget* parent)
+ImageWindow::ImageWindow(QWidget* parent)
 	: QWidget(parent)
 {
 	ui.setupUi(this);
 
-	connect(ui.layerList, &QListWidget::itemSelectionChanged, this, &EXRWindow::layerChanged);
+	connect(ui.layerList, &QListWidget::itemSelectionChanged, this, &ImageWindow::layerChanged);
 	connect(ui.resetViewButton, &QToolButton::clicked, ui.imageWidget, &PR::UI::ImageView::zoomToFit);
 	connect(ui.originalScaleButton, &QToolButton::clicked, ui.imageWidget, &PR::UI::ImageView::zoomToOriginal);
-	connect(ui.exportImageButton, &QToolButton::clicked, this, &EXRWindow::exportImage);
-	connect(ui.imagePipelineEditor, &PR::UI::ImagePipelineEditor::changed, this, &EXRWindow::updateMapper);
+	connect(ui.exportImageButton, &QToolButton::clicked, this, &ImageWindow::exportImage);
+	connect(ui.imagePipelineEditor, &PR::UI::ImagePipelineEditor::changed, this, &ImageWindow::updateMapper);
 
-	mFile = std::make_unique<PR::UI::EXRFile>();
+	mFile = std::make_unique<PR::UI::ImageFile>();
 }
 
-EXRWindow::~EXRWindow()
+ImageWindow::~ImageWindow()
 {
 }
 
-void EXRWindow::openFile(const QString& str)
+void ImageWindow::openFile(const QString& str)
 {
 	if (mFile->open(str)) {
 		ui.sizeLabel->setText(QString("%1x%2").arg(mFile->width()).arg(mFile->height()));
@@ -40,7 +41,7 @@ void EXRWindow::openFile(const QString& str)
 	}
 }
 
-void EXRWindow::layerChanged()
+void ImageWindow::layerChanged()
 {
 	auto list = ui.layerList->selectedItems();
 	if (list.empty())
@@ -51,12 +52,12 @@ void EXRWindow::layerChanged()
 	updateImage(row);
 }
 
-void EXRWindow::updateMapper()
+void ImageWindow::updateMapper()
 {
 	ui.imageWidget->setPipeline(ui.imagePipelineEditor->constructPipeline());
 }
 
-void EXRWindow::updateImage(int layerID)
+void ImageWindow::updateImage(int layerID)
 {
 	if (layerID >= mFile->layers().size())
 		return;
@@ -67,7 +68,7 @@ void EXRWindow::updateImage(int layerID)
 	updateMapper();
 }
 
-void EXRWindow::exportImage()
+void ImageWindow::exportImage()
 {
 	const QStringList loc = QStandardPaths::standardLocations(
 		QStandardPaths::PicturesLocation);

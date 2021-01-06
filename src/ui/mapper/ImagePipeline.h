@@ -3,7 +3,12 @@
 #include <algorithm>
 #include <cmath>
 
-#include "PR_Config.h"
+#ifndef PR_DIAG_NO_TBB
+#include "tbb/blocked_range.h"
+#include "tbb/parallel_for.h"
+#endif
+
+#include "io/ImageBufferIOView.h"
 
 namespace PR {
 namespace UI {
@@ -72,6 +77,27 @@ public:
 	}
 
 	inline void setGamma(float gamma) { mGamma = gamma; }
+
+	inline void mapTriplet(const ImageBufferIOView& input, const ImageBufferIOView& output) const
+	{
+		PR_ASSERT(input.Size == output.Size, "Expected input and output to be of the same size");
+#ifndef PR_DIAG_NO_TBB
+		tbb::parallel_for(tbb::blocked_range<Size1i>(0, input.Size), [&](const tbb::blocked_range<Size1i>& r) {
+			const Size1i si = r.begin();
+			const Size1i ei = r.end();
+#else
+		const Size1i si = 0;
+		const Size1i ei = input.Size;
+		PR_OPT_LOOP
+#endif
+			for (Size1i i = si; i < ei; ++i) {
+				mapTriplet(input.R[i * input.RStride], input.G[i * input.GStride], input.B[i * input.BStride],
+						   output.R[i * output.RStride], output.G[i * output.GStride], output.B[i * output.BStride]);
+			}
+#ifndef PR_DIAG_NO_TBB
+		});
+#endif
+	}
 
 	inline void mapTriplet(float x, float y, float z, float& r, float& g, float& b) const
 	{

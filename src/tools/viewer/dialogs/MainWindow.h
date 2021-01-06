@@ -1,8 +1,10 @@
 #pragma once
 
 #include "ui_MainWindow.h"
+#include <QLabel>
 #include <QMainWindow>
 #include <QPointer>
+#include <QProgressBar>
 #include <QTimer>
 
 class Project;
@@ -28,6 +30,7 @@ private slots:
 
 	void exportImage();
 	void updatePipeline();
+	void updateImage();
 
 	void startStopRender();
 
@@ -48,6 +51,11 @@ private:
 	void setupProjectContext();
 	void closeProject();
 
+	void updateStatus(bool running);
+	void updateProgress(float f);
+
+	static QPixmap pixmapFromSVG(const QString& filename, const QSize& baseSize);
+
 	Ui::MainWindowClass ui;
 	QString mLastDir;
 
@@ -56,6 +64,9 @@ private:
 
 	QTimer mImageTimer;
 	QPointer<Project> mProject;
+
+	QLabel* mRenderingStatus;
+	QProgressBar* mRenderingProgress;
 
 	// Some settings
 	int mImageUpdateIntervalMSecs;

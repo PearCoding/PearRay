@@ -18,7 +18,13 @@
         <file alias="crop_icon">ic_crop_black_24dp_2x.png</file>
         <file alias="replay_icon">ic_replay_black_24dp_2x.png</file>
         <file>zoom_cursor.png</file>
-        <file>icon.png</file>
-        <file>splash.svg</file>
+        <file alias="icon_diag">icon_diag.svg</file>
+        <file alias="icon_materiallab">icon_materiallab.svg</file>
+        <file alias="icon_viewer">icon_viewer.svg</file>
+        <file alias="splash_diag">splash_diag.svg</file>
+        <file alias="splash_materiallab">splash_materiallab.svg</file>
+        <file alias="splash_viewer">splash_viewer.svg</file>
+        <file alias="status_off">status_off.svg</file>
+        <file alias="status_on">status_on.svg</file>
     </qresource>
 </RCC>
