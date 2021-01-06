@@ -139,11 +139,6 @@ public:
 			.Specification()
 			.get();
 	}
-
-	bool init()
-	{
-		return true;
-	}
 };
 } // namespace PR
 

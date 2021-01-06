@@ -236,10 +236,7 @@ public:
 		return builder.get();
 	}
 
-	bool init() override
-	{
-		return true;
-	}
+	
 };
 } // namespace PR
 

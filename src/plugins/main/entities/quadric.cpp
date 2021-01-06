@@ -364,11 +364,6 @@ public:
 				.get();
 		}
 	}
-
-	bool init()
-	{
-		return true;
-	}
 };
 } // namespace PR
 

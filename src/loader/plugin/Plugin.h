@@ -19,7 +19,7 @@ public:
 	IPlugin()		   = default;
 	virtual ~IPlugin() = default;
 
-	virtual bool init()				 = 0;
+	virtual bool init() { return true; };
 	virtual const char* type() const = 0;
 };
 

@@ -270,7 +270,7 @@ private:
 
 class CurveEntityPlugin : public IEntityPlugin {
 public:
-	std::shared_ptr<IEntity> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<IEntity> create(uint32 id, const std::string&, const SceneLoadContext& ctx) override
 	{
 		const ParameterGroup& params = ctx.parameters();
 		std::string name			 = params.getString("name", "__unnamed__");
@@ -316,15 +316,10 @@ public:
 		}
 	}
 
-	const std::vector<std::string>& getNames() const
+	const std::vector<std::string>& getNames() const override
 	{
 		static std::vector<std::string> names({ "curve", "bezier" });
 		return names;
-	}
-
-	bool init()
-	{
-		return true;
 	}
 };
 } // namespace PR

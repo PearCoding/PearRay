@@ -451,10 +451,7 @@ public:
 				.get();
 	}
 
-	bool init() override
-	{
-		return true;
-	}
+	
 };
 } // namespace PR
 

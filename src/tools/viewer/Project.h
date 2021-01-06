@@ -3,8 +3,9 @@
 #include "PR_Config.h"
 
 #include <QObject>
-#include <QTimer>
 #include <QRect>
+#include <QTimer>
+#include <QVector>
 
 namespace PR {
 class Environment;
