@@ -5,6 +5,7 @@
 #include <QMainWindow>
 #include <QPointer>
 #include <QProgressBar>
+#include <QSpinBox>
 #include <QTimer>
 
 class Project;
@@ -52,7 +53,8 @@ private:
 	void closeProject();
 
 	void updateStatus(bool running);
-	void updateProgress(float f);
+	void updateProgress(int iteration);
+	void updateRenderTime(bool running);
 
 	static QPixmap pixmapFromSVG(const QString& filename, const QSize& baseSize);
 
@@ -65,8 +67,11 @@ private:
 	QTimer mImageTimer;
 	QPointer<Project> mProject;
 
+	QLabel* mRenderingTime;
 	QLabel* mRenderingStatus;
 	QProgressBar* mRenderingProgress;
+
+	QSpinBox* mIterationOverride;
 
 	// Some settings
 	int mImageUpdateIntervalMSecs;

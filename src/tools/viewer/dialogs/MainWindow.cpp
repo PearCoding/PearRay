@@ -7,6 +7,7 @@
 #include <QMessageBox>
 #include <QScreen>
 #include <QSettings>
+#include <QStringBuilder>
 #include <QThread>
 
 #include "config/Version.h"
@@ -27,15 +28,27 @@ MainWindow::MainWindow(QWidget* parent)
 
 	mImageTimer.setTimerType(Qt::CoarseTimer);
 
+	// Setup iteration override
+	mIterationOverride = new QSpinBox(this);
+	mIterationOverride->setToolTip(tr("Iterations"));
+	mIterationOverride->setSpecialValueText(tr("Progressive"));
+	mIterationOverride->setRange(0, 1048575);
+	mIterationOverride->setValue(0);
+	ui.controlToolBar->addWidget(mIterationOverride);
+
 	// Setup status bar
 	mRenderingStatus = new QLabel(this);
 
-	// TODO: Make use of this
+	// Setup progress bar
 	mRenderingProgress = new QProgressBar(this);
 	mRenderingProgress->setRange(0, 100);
 	mRenderingProgress->setTextVisible(false);
 	mRenderingProgress->setMaximumWidth(150 * devicePixelRatio());
 
+	// Setup render time label
+	mRenderingTime = new QLabel(this);
+
+	ui.statusBar->addPermanentWidget(mRenderingTime);
 	ui.statusBar->addPermanentWidget(mRenderingProgress);
 	ui.statusBar->addPermanentWidget(mRenderingStatus);
 
@@ -174,7 +187,7 @@ void MainWindow::about()
 					   tr("<h2>About PearRay Viewer " PR_VERSION_STRING "</h2>"
 						  "<p>A viewer for PearRay.</p>"
 						  "<p>Author: &Ouml;mercan Yazici &lt;<a href='mailto:omercan@pearcoding.eu?subject=\"PearRay\"'>omercan@pearcoding.eu</a>&gt;<br/>"
-						  "Copyright &copy; 2015-2020 &Ouml;mercan Yazici<br/>"
+						  "Copyright &copy; 2015-2021 &Ouml;mercan Yazici<br/>"
 						  "Website: <a href='http://pearcoding.eu/projects/pearray'>http://pearcoding.eu/projects/pearray</a></p>"
 						  "<hr /><p>Icon Set: <a href='https://design.google.com/icons/'>https://design.google.com/icons/</a></p>"
 #ifdef PR_DEBUG
@@ -311,6 +324,10 @@ void MainWindow::updateImage()
 	const auto& regions = mProject->currentUpdateRegions();
 	ui.imageView->setUpdateRegions(regions);
 	ui.imageView->updateImage();
+
+	updateRenderTime(true);
+	if (!mProject->isProgressive())
+		updateProgress(mProject->renderIteration());
 }
 
 void MainWindow::startStopRender()
@@ -322,7 +339,7 @@ void MainWindow::startStopRender()
 		ui.statusBar->showMessage(tr("Requested soft stop"), 10);
 		mProject->stopRendering();
 	} else {
-		mProject->startRendering(0);
+		mProject->startRendering(mIterationOverride->value(), 0);
 	}
 }
 
@@ -350,26 +367,75 @@ void MainWindow::renderingFinished()
 void MainWindow::updateStatus(bool running)
 {
 	if (running) {
+		PR_ASSERT(mProject, "Can not run without a project!");
+
 		ui.actionStart->setText(tr("Stop"));
 		ui.actionStart->setIcon(QIcon(":/stop_icon"));
 		mRenderingStatus->setPixmap(pixmapFromSVG(":/status_on", QSize(16, 16)));
 		mRenderingStatus->setToolTip(tr("Rendering"));
 
-		// TODO: This depends if we do progressive rendering or not
-		mRenderingProgress->setRange(0, 0); // Busy
+		mRenderingProgress->setValue(0);
+		if (mProject->isProgressive())
+			mRenderingProgress->setRange(0, 0); // Busy
+		else
+			mRenderingProgress->setRange(0, mIterationOverride->value());
+
+		updateRenderTime(true);
 	} else {
 		ui.actionStart->setText(tr("Start"));
 		ui.actionStart->setIcon(QIcon(":/play_icon"));
 		mRenderingStatus->setPixmap(pixmapFromSVG(":/status_off", QSize(16, 16)));
 		mRenderingStatus->setToolTip(tr("Idle"));
 
-		mRenderingProgress->setRange(0, 100);
+		mRenderingProgress->setRange(0, 1);
+		mRenderingProgress->setValue(1);
+		updateRenderTime(false);
 	}
 }
 
-void MainWindow::updateProgress(float f)
+void MainWindow::updateProgress(int iteration)
 {
-	mRenderingProgress->setValue(100 * f);
+	mRenderingProgress->setValue(iteration);
+}
+
+inline static QString timestr(const std::chrono::milliseconds& msecs)
+{
+	uint64_t sec = std::chrono::duration_cast<std::chrono::seconds>(msecs).count();
+	if (sec == 0)
+		return "<1s";
+
+	QString str;
+
+	uint64_t s = sec % 60;
+	sec /= 60;
+	uint64_t m = sec % 60;
+	sec /= 60;
+	uint64_t h = sec;
+
+	if (h > 0)
+		str = QString::number(h) % "h ";
+
+	if (m > 0)
+		str = str % QString::number(m) % "m ";
+
+	if (s > 0)
+		str = str % QString::number(s) % "s ";
+
+	return str;
+}
+
+void MainWindow::updateRenderTime(bool running)
+{
+	if (!mProject) {
+		mRenderingTime->clear();
+		return;
+	}
+
+	const bool showEta = running && !mProject->isProgressive();
+	if (showEta)
+		mRenderingTime->setText("RT " % timestr(mProject->renderTime()) % " ETA " % timestr(mProject->renderEta()));
+	else
+		mRenderingTime->setText(timestr(mProject->renderTime()));
 }
 
 QPixmap MainWindow::pixmapFromSVG(const QString& filename, const QSize& baseSize)

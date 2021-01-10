@@ -11,6 +11,7 @@ namespace PR {
 RenderSettings::RenderSettings()
 	: seed(42)
 	, maxParallelRays(10000)
+	, sampleCountOverride(0)
 	, timeMappingMode(TimeMappingMode::Right)
 	, timeScale(1)
 	, tileMode(TileMode::ZOrder)
@@ -74,6 +75,8 @@ uint32 RenderSettings::maxSampleCount() const
 	PR_ASSERT(aaSamplerFactory && lensSamplerFactory && timeSamplerFactory && spectralSamplerFactory, "Expect all samplers to be constructed");
 	if (progressive)
 		return 0;
+	else if(sampleCountOverride > 0)
+		return sampleCountOverride;
 	else
 		return aaSamplerFactory->requestedSampleCount()
 			   * lensSamplerFactory->requestedSampleCount()

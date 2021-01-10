@@ -126,7 +126,7 @@ void MainWindow::about()
 					   tr("<h2>About PearRayDiagnostic " PR_VERSION_STRING "</h2>"
 						  "<p>A diagnostic tool for files produced by PearRay.</p>"
 						  "<p>Author: &Ouml;mercan Yazici &lt;<a href='mailto:omercan@pearcoding.eu?subject=\"PearRay\"'>omercan@pearcoding.eu</a>&gt;<br/>"
-						  "Copyright &copy; 2015-2020 &Ouml;mercan Yazici<br/>"
+						  "Copyright &copy; 2015-2021 &Ouml;mercan Yazici<br/>"
 						  "Website: <a href='http://pearcoding.eu/projects/pearray'>http://pearcoding.eu/projects/pearray</a></p>"
 						  "<hr /><p>Icon Set: <a href='https://design.google.com/icons/'>https://design.google.com/icons/</a></p>"
 #ifdef PR_DEBUG

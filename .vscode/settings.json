@@ -150,7 +150,9 @@
       "image": "cpp",
       "fast_back_stack": "cpp",
       "types": "cpp",
-      "timer": "cpp"
+      "timer": "cpp",
+      "buffer": "cpp",
+      "netfwd": "cpp"
     },
     "files.exclude": {
         "**/.git": true,

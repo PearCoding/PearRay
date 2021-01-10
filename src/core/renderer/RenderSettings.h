@@ -26,6 +26,9 @@ public:
 	uint64 seed;
 	size_t maxParallelRays;
 
+	// Will use this sample count if non zero
+	uint32 sampleCountOverride; 
+
 	TimeMappingMode timeMappingMode;
 	float timeScale;
 	TileMode tileMode;
