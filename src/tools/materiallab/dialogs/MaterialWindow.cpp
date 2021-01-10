@@ -66,7 +66,7 @@ MaterialWindow::MaterialWindow(const QString& typeName, const std::shared_ptr<PR
 
 	setWindowTitle(mTypeName);
 
-	ui.propertyView->setPropertyContainer(mProperties);
+	setupProperties();
 
 	ui.sceneView->enableAntialiasing();
 	ui.sceneView->enableExtraEntities();
@@ -83,6 +83,15 @@ MaterialWindow::MaterialWindow(const QString& typeName, const std::shared_ptr<PR
 MaterialWindow::~MaterialWindow()
 {
 	delete mProperties;
+}
+
+void MaterialWindow::setupProperties()
+{
+	const auto spec = mFactory->specification(mTypeName.toStdString());
+
+	mProperties->addSpecification(spec);
+
+	ui.propertyView->setPropertyContainer(mProperties);
 }
 
 void MaterialWindow::addProperty()
@@ -144,9 +153,12 @@ void MaterialWindow::createMaterial()
 
 void MaterialWindow::populateInfo()
 {
+	const auto spec = mFactory->specification(mTypeName.toStdString());
+
 	QStringList names;
-	for (auto name : mFactory->getNames())
-		names.append(QString::fromStdString(name));
+	for (auto entry : spec.Identifiers)
+		names.append(QString::fromStdString(entry.Name));
+
 	ui.namesView->addItems(names);
 }
 

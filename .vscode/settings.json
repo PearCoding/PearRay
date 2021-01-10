@@ -152,7 +152,8 @@
       "types": "cpp",
       "timer": "cpp",
       "buffer": "cpp",
-      "netfwd": "cpp"
+      "netfwd": "cpp",
+      "primitiveset": "cpp"
     },
     "files.exclude": {
         "**/.git": true,

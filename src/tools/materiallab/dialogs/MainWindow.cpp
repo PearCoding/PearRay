@@ -91,15 +91,26 @@ void MainWindow::newInspection()
 	QStringList materialnames;
 	const auto manager = mEnv->materialManager();
 
-	for (auto& entry : manager->factoryMap())
-		materialnames.append(QString::fromStdString(entry.first));
+	// Get all names (uniquely and simplified)
+	for (auto& entry : manager->factoryMap()) {
+		const auto spec = entry.second->specification(entry.first);
+		QString name	= QString::fromStdString(spec.Identifiers.front().Name);
 
+		if (name.isEmpty())
+			continue;
+		name[0] = name[0].toUpper();
+
+		if (!materialnames.contains(name))
+			materialnames.append(name);
+	}
+
+	// Sort names
 	materialnames.sort();
 
 	bool ok;
 	QString item = QInputDialog::getItem(this, tr("Select material"), tr("Material:"), materialnames, 0, false, &ok);
 	if (ok && !item.isEmpty())
-		newInspection(item);
+		newInspection(item.toLower());
 }
 
 void MainWindow::newInspection(const QString& name)

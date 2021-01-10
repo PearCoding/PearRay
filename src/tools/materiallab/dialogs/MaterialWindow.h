@@ -41,6 +41,7 @@ private slots:
 private:
 	PR::Vector3f generateL() const;
 
+	void setupProperties();
 	void populateInfo();
 	void calculateBSDF();
 	void buildGraphicObjects();

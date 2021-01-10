@@ -7,6 +7,9 @@
 #include "IProperty.h"
 
 namespace PR {
+struct PluginSpecification;
+struct PluginParamDescBlock;
+
 namespace UI {
 class PR_LIB_UI PropertyContainer : public QObject {
 	Q_OBJECT
@@ -16,6 +19,8 @@ public:
 
 	void add(IProperty* property);
 	void remove(IProperty* property);
+
+	void addSpecification(const PluginSpecification& spec);
 
 	const QVector<IProperty*>& topProperties() const;
 	const QVector<IProperty*>& allProperties() const;
@@ -33,6 +38,7 @@ private slots:
 
 private:
 	void rec_add(IProperty* property);
+	void addBlock(const PluginParamDescBlock& block, IProperty* parent);
 
 	QVector<IProperty*> mAllProperties;
 	QVector<IProperty*> mTopProperties;

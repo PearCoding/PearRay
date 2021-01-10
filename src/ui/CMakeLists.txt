@@ -41,6 +41,7 @@ set(Src
   properties/PropertyTreeModel.cpp
   properties/SelectionProperty.cpp
   properties/TextProperty.cpp
+  properties/Vector3Property.cpp
   widgets/ColorButton.cpp
   widgets/ImagePipelineEditor.cpp
   widgets/ImageView.cpp
@@ -92,6 +93,7 @@ set(Hdr
   properties/PropertyTreeModel.h
   properties/SelectionProperty.h
   properties/TextProperty.h
+  properties/Vector3Property.h
   widgets/ColorButton.h
   widgets/ImagePipelineEditor.h
   widgets/ImageView.h

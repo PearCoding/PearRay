@@ -48,8 +48,15 @@ int main(int argc, char** argv)
 	MainWindow w;
 	w.show();
 
+	splash.repaint();
+	splash.raise();
+	app.processEvents();
+
 	for (const QString& item : parser.positionalArguments())
 		w.newInspection(item);
 
+	w.raise();
+	splash.finish(&w);
+	
 	return app.exec();
 }
