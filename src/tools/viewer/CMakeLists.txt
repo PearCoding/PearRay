@@ -7,12 +7,14 @@ set(Src
   FrameBufferView.cpp
   Project.cpp
   dialogs/MainWindow.cpp
+  widgets/WinExtraWidget.cpp
   )
 
 set(Hdr
   FrameBufferView.h
   Project.h
   dialogs/MainWindow.h
+  widgets/WinExtraWidget.h
   )
 
 set(Fms
@@ -31,6 +33,10 @@ SOURCE_GROUP("Generated Files" FILES ${GenFiles})
 
 add_executable(prviewer ${Src} ${Hdr} ${GenFiles})
 target_link_libraries(prviewer PRIVATE pr_lib_ui)
+if(TARGET Qt5::WinExtras)
+	target_link_libraries(prviewer PRIVATE Qt5::WinExtras)
+	target_compile_definitions(prviewer PRIVATE PR_UI_HAS_WINEXTRAS)
+endif()
 add_lto(prviewer)
 strip_binary(prviewer)
 target_setup_deploy(prviewer QT RECURSIVE)

@@ -102,22 +102,23 @@ void FrameBufferView::fillImage(QImage& image, const PR::UI::ImagePipeline& mapp
 	});
 #endif
 
-	// Construct buffer descriptors
-	const UI::ImageBufferIOView weightedBufferDesc{
-		&mWeightedBuffer->getFragment(0, 0), mWeightedBuffer->widthPitch(),
-		&mWeightedBuffer->getFragment(0, 1), mWeightedBuffer->widthPitch(),
-		&mWeightedBuffer->getFragment(0, 2), mWeightedBuffer->widthPitch(),
-		mWeightedBuffer->size().area()
-	};
-
-	const UI::ImageBufferIOView outputDesc{
-		&mOutput->getFragment(0, 0), mOutput->widthPitch(),
-		&mOutput->getFragment(0, 1), mOutput->widthPitch(),
-		&mOutput->getFragment(0, 2), mOutput->widthPitch(),
-		mOutput->size().area()
-	};
-
-	mapper.mapTriplet(weightedBufferDesc, outputDesc);
+	// Map triplets
+#ifndef PR_DIAG_NO_TBB
+	tbb::parallel_for(tbb::blocked_range<Size1i>(0, mWeightedBuffer->size().area()), [&](const tbb::blocked_range<Size1i>& r) {
+		const Size1i si = r.begin();
+		const Size1i ei = r.end();
+#else
+		const Size1i si = 0;
+		const Size1i ei = mWeightedBuffer->size().area();
+	PR_OPT_LOOP
+#endif
+		for (Size1i i = si; i < ei; ++i) {
+			mapper.mapTriplet(mWeightedBuffer->getFragment(i, 0), mWeightedBuffer->getFragment(i, 1), mWeightedBuffer->getFragment(i, 2),
+							  mOutput->getFragment(i, 0), mOutput->getFragment(i, 1), mOutput->getFragment(i, 2));
+		}
+#ifndef PR_DIAG_NO_TBB
+	});
+#endif
 
 	const auto pixel = [this](int x, int y, int c) {
 		return mOutput->getFragment(Point2i(x, y), c);

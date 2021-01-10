@@ -113,7 +113,11 @@ endif()
 
 find_package(Filesystem REQUIRED)
 
-find_package(Qt5 COMPONENTS Core Widgets Charts)
+set(_qt_components Core Widgets Charts)
+if(WIN32)
+	set(_qt_components ${_qt_components} WinExtras)
+endif()
+find_package(Qt5 COMPONENTS ${_qt_components})
 
 find_package(Eigen3 REQUIRED NO_MODULE)
 find_package(OpenImageIO REQUIRED)

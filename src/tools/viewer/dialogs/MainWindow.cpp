@@ -22,9 +22,11 @@ MainWindow::MainWindow(QWidget* parent)
 	, mImageTimer(this)
 	, mRenderingStatus(nullptr)
 	, mRenderingProgress(nullptr)
+	, mWinExtras(nullptr)
 	, mImageUpdateIntervalMSecs(1000)
 {
 	ui.setupUi(this);
+	mWinExtras = new WinExtraWidget(this);
 
 	mImageTimer.setTimerType(Qt::CoarseTimer);
 
@@ -61,12 +63,15 @@ MainWindow::MainWindow(QWidget* parent)
 	connect(ui.actionWebsite, &QAction::triggered, this, &MainWindow::openWebsite);
 	connect(ui.actionQuit, &QAction::triggered, this, &MainWindow::close);
 
+	connect(mWinExtras, &WinExtraWidget::startStopRequested, this, &MainWindow::startStopRender);
 	connect(ui.actionStart, &QAction::triggered, this, &MainWindow::startStopRender);
 
 	connect(ui.action100, &QAction::triggered, ui.imageView, &PR::UI::ImageView::zoomToOriginal);
 	connect(ui.actionFit, &QAction::triggered, ui.imageView, &PR::UI::ImageView::zoomToFit);
 	connect(ui.actionExport, &QAction::triggered, this, &MainWindow::exportImage);
 	connect(ui.imagePipeline, &PR::UI::ImagePipelineEditor::changed, this, &MainWindow::updatePipeline);
+
+	connect(mWinExtras, &WinExtraWidget::thumbnailRequested, this, &MainWindow::updateThumbnail);
 
 	connect(&mImageTimer, &QTimer::timeout, this, &MainWindow::updateImage);
 
@@ -94,6 +99,13 @@ void MainWindow::closeEvent(QCloseEvent* event)
 		QThread::usleep(500);
 	}
 	writeSettings();
+	event->accept();
+}
+
+void MainWindow::showEvent(QShowEvent* event)
+{
+	mWinExtras->setWindow(this);
+	updateThumbnail();
 	event->accept();
 }
 
@@ -287,6 +299,8 @@ void MainWindow::setupProjectContext()
 	ui.actionFit->setEnabled(enabled);
 	ui.action100->setEnabled(enabled);
 	ui.actionExport->setEnabled(enabled);
+
+	mWinExtras->enableProject(enabled);
 }
 
 void MainWindow::closeProject()
@@ -328,6 +342,7 @@ void MainWindow::updateImage()
 	updateRenderTime(true);
 	if (!mProject->isProgressive())
 		updateProgress(mProject->renderIteration());
+	updateThumbnail();
 }
 
 void MainWindow::startStopRender()
@@ -346,6 +361,7 @@ void MainWindow::startStopRender()
 void MainWindow::renderingStarted()
 {
 	ui.statusBar->showMessage(tr("Started rendering"), 10);
+	mWinExtras->renderingStarted();
 	updateStatus(true);
 
 	ui.imageView->setView(std::make_shared<FrameBufferView>(mProject->frame()));
@@ -361,6 +377,7 @@ void MainWindow::renderingFinished()
 	ui.imageView->setUpdateRegions({});
 
 	ui.statusBar->showMessage(tr("Finished rendering"), 10);
+	mWinExtras->renderingFinished();
 	updateStatus(false);
 }
 
@@ -375,11 +392,13 @@ void MainWindow::updateStatus(bool running)
 		mRenderingStatus->setToolTip(tr("Rendering"));
 
 		mRenderingProgress->setValue(0);
-		if (mProject->isProgressive())
+		if (mProject->isProgressive()) {
 			mRenderingProgress->setRange(0, 0); // Busy
-		else
+			mWinExtras->setProgressRange(0, 0);
+		} else {
 			mRenderingProgress->setRange(0, mIterationOverride->value());
-
+			mWinExtras->setProgressRange(0, mIterationOverride->value());
+		}
 		updateRenderTime(true);
 	} else {
 		ui.actionStart->setText(tr("Start"));
@@ -388,7 +407,9 @@ void MainWindow::updateStatus(bool running)
 		mRenderingStatus->setToolTip(tr("Idle"));
 
 		mRenderingProgress->setRange(0, 1);
+		mWinExtras->setProgressRange(0, 1);
 		mRenderingProgress->setValue(1);
+		mWinExtras->setProgressValue(1);
 		updateRenderTime(false);
 	}
 }
@@ -396,6 +417,7 @@ void MainWindow::updateStatus(bool running)
 void MainWindow::updateProgress(int iteration)
 {
 	mRenderingProgress->setValue(iteration);
+	mWinExtras->setProgressValue(iteration);
 }
 
 inline static QString timestr(const std::chrono::milliseconds& msecs)
@@ -438,6 +460,19 @@ void MainWindow::updateRenderTime(bool running)
 		mRenderingTime->setText(timestr(mProject->renderTime()));
 }
 
+void MainWindow::updateThumbnail()
+{
+	// Thumbnails will not be uesd in other operating systems
+	if (WinExtraWidget::isSupported()) {
+		const QPixmap main = this->grab();
+		mWinExtras->setLivePreview(main);
+
+		if (mProject && !ui.imageView->currentPixmap().isNull())
+			mWinExtras->setThumbnail(ui.imageView->currentPixmap());
+		else
+			mWinExtras->setThumbnail(main);
+	}
+}
 QPixmap MainWindow::pixmapFromSVG(const QString& filename, const QSize& baseSize)
 {
 	const qreal pixelRatio = qApp->primaryScreen()->devicePixelRatio();

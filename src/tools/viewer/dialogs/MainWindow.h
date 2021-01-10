@@ -8,6 +8,8 @@
 #include <QSpinBox>
 #include <QTimer>
 
+#include "widgets/WinExtraWidget.h"
+
 class Project;
 class MainWindow : public QMainWindow {
 	Q_OBJECT
@@ -20,6 +22,7 @@ public:
 
 protected:
 	void closeEvent(QCloseEvent* event);
+	void showEvent(QShowEvent* event);
 
 private slots:
 	void about();
@@ -32,6 +35,7 @@ private slots:
 	void exportImage();
 	void updatePipeline();
 	void updateImage();
+	void updateThumbnail();
 
 	void startStopRender();
 
@@ -72,6 +76,8 @@ private:
 	QProgressBar* mRenderingProgress;
 
 	QSpinBox* mIterationOverride;
+
+	WinExtraWidget* mWinExtras;
 
 	// Some settings
 	int mImageUpdateIntervalMSecs;

@@ -21,6 +21,8 @@ public:
 
 	void exportImage(const QString& path) const;
 
+	inline const QPixmap& currentPixmap() const { return mPixmap; }
+
 	QSize minimumSizeHint() const override;
 	QSize sizeHint() const override;
 
