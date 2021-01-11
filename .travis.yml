@@ -42,7 +42,7 @@ before_script:
 script:
   - ninja
 after_success:
-  - ctest --output-on-failure
+  - ctest --output-on-failure || true
   - if [ $USE_COVERAGE == ON ]; then ninja coveralls; fi
 notifications:
   email: false
