@@ -28,6 +28,13 @@ project(PearRay
 
 set(PR_PLUGIN_VERSION "1.0")
 
+# For whatever reason PearRay might be used as a subproject...
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+	set(PR_SUBPROJECT OFF)
+else()
+	set(PR_SUBPROJECT ON)
+endif()
+
 # SETS
 if(BUILD_SHARED_LIBS AND WIN32 AND NOT CYGWIN)
    	set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR})
@@ -45,43 +52,63 @@ set(PearRay_VENDOR "PearRay project 2015-2021")
 include(Git)
 
 #CHECKS
-MESSAGE(STATUS "Building PearRay ${PearRay_VERSION}")
+message(STATUS "Building PearRay ${PearRay_VERSION}")
 
 if(MINGW)
-	MESSAGE(WARNING "Please don't use MinGW with PearRay, use the MSVC version instead")
+	message(WARNING "Please don't use MinGW with PearRay, use the MSVC version instead")
 endif()
 
 if(MSYS)
-	MESSAGE(WARNING "Please don't use MSYS with PearRay, use the MSVC version instead")
+	message(WARNING "Please don't use MSYS with PearRay, use the MSVC version instead")
 endif()
 
 if(CYGWIN)
-	MESSAGE(WARNING "Please don't use CYGWIN with PearRay, use the MSVC version instead")
+	message(WARNING "Please don't use CYGWIN with PearRay, use the MSVC version instead")
+endif()
+
+if(NOT PR_SUBPROJECT)
+    include(CTest)
 endif()
 
 #PACKAGES
 include(CMakeDependentOption)
 
+# Some defaults based on initial configuration
+if(PR_SUBPROJECT)
+	set(_default_extra OFF)
+else()
+	set(_default_extra ON)
+endif()
+
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+	set(_default_lto ON)
+else()
+	set(_default_lto OFF)
+endif()
+
+if(MSVC)
+	set(_default_ccache OFF)
+else()
+	set(_default_ccache ON)
+endif()
+
 option(PR_WITH_ASSERTS 			"Compile with asserts on. Disable only in deployment code!" ON)
-option(PR_WITH_PYTHON 			"Compile with python API (using pybind11)." ON)
+option(PR_WITH_PYTHON 			"Compile with python API (using pybind11)" ON)
 option(PR_WITH_CLIENT 			"Compile commandline client. Strongly recommended!" ON)
 option(PR_WITH_MAIN_PLUGINS 	"Compile main plugins. Recommended!" ON)
-option(PR_WITH_EXTRA_PLUGINS 	"Compile extra plugins which in general require extra dependencies." ON)
+option(PR_WITH_EXTRA_PLUGINS 	"Compile extra plugins which in general require extra dependencies" ON)
 option(PR_EMBED_PLUGINS			"Embed plugins into utility library" ON)
-option(PR_WITH_PROFILER 		"Compile with internal profiler. Not recommended in deployment code." OFF)
-option(PR_WITH_EXTRA_TOOLS		"Compile supplementary tools." ON)
-option(PR_BUILD_TESTS 			"Build tests." ON)
-option(PR_GENERATE_COVERAGE 	"Generate coverage for debug builds - Currently only supported with the GCC compiler." OFF)
-option(PR_BUILD_DOCUMENTATION 	"Build documentation with doxygen." ON)
+option(PR_WITH_PROFILER 		"Compile with internal profiler. Not recommended in deployment code" OFF)
+option(PR_WITH_EXTRA_TOOLS		"Compile supplementary tools" ON)
+option(PR_GENERATE_COVERAGE 	"Generate coverage for debug builds - Currently only supported with the GCC compiler" OFF)
 
-CMAKE_DEPENDENT_OPTION(PR_BUILD_TESTS_PYTHON 	"Build tests for the python API. Requires PR_BUILD_TESTS to be ON" ON
-	"NOT PR_BUILD_TESTS" OFF)
-CMAKE_DEPENDENT_OPTION(PR_USE_LTO 				"Use linked time optimization if available." ON
-	"NOT CMAKE_BUILD_TYPE STREQUAL \"Release\"" OFF)
-CMAKE_DEPENDENT_OPTION(PR_USE_CCACHE 			"Use ccache if available." ON
-	"MSVC" OFF)
+option(PR_BUILD_TESTS 			"Build tests" ${_default_extra})
+option(PR_BUILD_DOCUMENTATION 	"Build documentation with doxygen" ${_default_extra})
+option(PR_USE_LTO 				"Use linked time optimization if available" ${_default_lto})
+option(PR_USE_CCACHE 			"Use ccache if available" ${_default_ccache})
 
-# march should be default
+cmake_dependent_option(PR_BUILD_TESTS_PYTHON "Build tests for the python API" ON "PR_BUILD_TESTS" OFF)
+
 option(PR_OPTIMIZE_FOR_NATIVE	"Build with -march=native if possible" ON)
 
 option(PR_EXTRA_OPENSUBDIV		"Build extra OpenSubDiv plugin" ON)
@@ -257,7 +284,7 @@ if(PR_WITH_CLIENT)
 endif()
 
 if(${Qt5Widgets_FOUND})
-	MESSAGE(STATUS "Using Qt: ${Qt5Widgets_VERSION_STRING}")
+	message(STATUS "Using Qt: ${Qt5Widgets_VERSION_STRING}")
 	add_subdirectory(src/ui)
 endif()
 
@@ -266,8 +293,7 @@ if(PR_WITH_EXTRA_TOOLS)
 endif()
 
 # Tests
-include(CTest) 
-if(PR_BUILD_TESTS)
+if(PR_BUILD_TESTS AND BUILD_TESTING)
 	add_subdirectory(src/sandbox)
 	add_subdirectory(src/tests)
 endif()
@@ -279,5 +305,5 @@ endif()
 
 # Coverage
 if(PR_GENERATE_COVERAGE AND (CMAKE_BUILD_TYPE MATCHES Debug))
-	include(Coverage)
+	coveralls_setup()
 endif()

@@ -1,6 +1,4 @@
-if(VERBOSE)
-	message(STATUS "Enabling Python Testing")
-endif()
+message(STATUS "Building python tests")
 
 find_package(PythonInterp)
 
@@ -9,12 +7,12 @@ if(NOT PYTHON_EXECUTABLE)
 	return()
 endif()
 
-FUNCTION(PUSH_PY_TEST name)
+macro(push_test_py name)
 	add_test(NAME ${name}_py
 		COMMAND ${PYTHON_EXECUTABLE}
 			${CMAKE_CURRENT_SOURCE_DIR}/run.py "$<TARGET_FILE:pypearray>" "${name}")
 	set_tests_properties(${name}_py PROPERTIES DEPENDS pypearray)
-ENDFUNCTION(PUSH_PY_TEST)
+endmacro(push_test_py)
 
-PUSH_PY_TEST(validity)
-PUSH_PY_TEST(whitefurnance)
+push_test_py(validity)
+push_test_py(whitefurnance)

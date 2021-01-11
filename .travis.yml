@@ -32,6 +32,8 @@ jobs:
       env: USE_COVERAGE=OFF PYTHON=3 EMBED_PLUGINS=ON CC=clang-8 CXX=clang++-8 USE_ASSERTS=ON
     - compiler: clang
       env: USE_COVERAGE=OFF PYTHON=3 EMBED_PLUGINS=ON CC=clang-8 CXX=clang++-8 USE_ASSERTS=OFF
+before_install:
+  - if [ $USE_COVERAGE == ON ]; then pip install --user cpp-coveralls; fi
 before_script:
   - $CXX --version
   - cmake --version
