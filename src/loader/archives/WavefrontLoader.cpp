@@ -103,7 +103,6 @@ void WavefrontLoader::load(const std::filesystem::path& file, SceneLoadContext& 
 		if (ctx.hasMesh(name))
 			PR_LOG(L_ERROR) << "Mesh " << name << " already in use." << std::endl;
 
-		mesh->triangulate();
 		ctx.addMesh(name, std::move(mesh));
 		PR_LOG(L_DEBUG) << "Added mesh " << name << std::endl;
 	}

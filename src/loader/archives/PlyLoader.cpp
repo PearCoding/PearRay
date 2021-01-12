@@ -325,9 +325,7 @@ void PlyLoader::load(const std::filesystem::path& file, SceneLoadContext& ctx)
 	header.SwitchEndianness		  = (method == "binary_big_endian");
 	std::unique_ptr<MeshBase> cnt = read(stream, header, (method == "ascii"));
 
-	if (cnt) {
-		cnt->triangulate();
+	if (cnt)
 		ctx.addMesh(mName, std::move(cnt));
-	}
 }
 } // namespace PR

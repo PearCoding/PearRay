@@ -563,7 +563,7 @@ public:
 
 	const std::vector<std::string>& getNames() const
 	{
-		static std::vector<std::string> names({ "subdiv", "subdivision", "opensubdiv" });
+		static std::vector<std::string> names({ "opensubdiv" });
 		return names;
 	}
 

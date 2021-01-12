@@ -13,3 +13,4 @@
 [submodule "external/cxxopts"]
 	path = external/cxxopts
 	url = git://github.com/jarro2783/cxxopts.git
+	branch = master

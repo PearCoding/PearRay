@@ -758,11 +758,6 @@ void SceneLoader::addMesh(const DL::DataGroup& group, SceneLoadContext& ctx)
 		return;
 	}
 
-	if (!mesh->isOnlyTriangular()) {
-		PR_LOG(L_WARNING) << "[Loader] Mesh " << name << " had to be triangulated" << std::endl;
-		mesh->triangulate();
-	}
-
 	ctx.addMesh(name, std::move(mesh));
 }
 

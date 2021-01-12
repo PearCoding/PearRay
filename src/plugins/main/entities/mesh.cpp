@@ -3,14 +3,14 @@
 #include "Profiler.h"
 #include "ResourceManager.h"
 #include "SceneLoadContext.h"
-#include "emission/IEmission.h"
 #include "entity/GeometryDev.h"
 #include "entity/GeometryRepr.h"
 #include "entity/IEntity.h"
 #include "entity/IEntityPlugin.h"
-#include "material/IMaterial.h"
+#include "geometry/GeometryPoint.h"
 #include "math/Projection.h"
 #include "math/SplitSample.h"
+#include "math/Tangent.h"
 #include "mesh/MeshBase.h"
 
 #include <filesystem>
@@ -24,6 +24,25 @@ public:
 		, mBase(mesh)
 		, mWasGenerated(false)
 	{
+		// Build mixed indices
+		// TODO: Why not inside MeshBase?
+		if (!mesh->isOnlyTriangular() && !mesh->isOnlyQuadrangular()) {
+			const auto& origIndices = mesh->indices();
+			mMixedIndices.reserve(mesh->faceCount() * 4);
+			size_t iind = 0;
+			for (size_t i = 0; i < mesh->faceCount(); ++i) {
+				const uint32 num = mesh->faceVertexCount(i);
+
+				mMixedIndices.push_back(origIndices[iind++]);
+				mMixedIndices.push_back(origIndices[iind++]);
+				mMixedIndices.push_back(origIndices[iind++]);
+
+				if (num == 4)
+					mMixedIndices.push_back(origIndices[iind++]);
+				else
+					mMixedIndices.push_back(mMixedIndices.back()); // Repeat previous entry
+			}
+		}
 	}
 
 	~Mesh()
@@ -47,11 +66,18 @@ public:
 private:
 	inline void setupOriginal(const RTCDevice& dev)
 	{
-		RTCGeometry geom = rtcNewGeometry(dev, RTC_GEOMETRY_TYPE_TRIANGLE);
+		RTCGeometry geom = rtcNewGeometry(dev, mBase->isOnlyTriangular() ? RTC_GEOMETRY_TYPE_TRIANGLE : RTC_GEOMETRY_TYPE_QUAD);
 
 		// TODO: Make sure the internal mesh buffer is proper aligned at the end
 		rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX, 0, RTC_FORMAT_FLOAT3, mBase->vertices().data(), 0, sizeof(float) * 3, mBase->vertices().size() / 3);
-		rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_INDEX, 0, RTC_FORMAT_UINT3, mBase->indices().data(), 0, sizeof(uint32) * 3, mBase->indices().size() / 3);
+		if (mBase->isOnlyTriangular()) {
+			rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_INDEX, 0, RTC_FORMAT_UINT3, mBase->indices().data(), 0, sizeof(uint32) * 3, mBase->faceCount());
+		} else {
+			if (mBase->isOnlyQuadrangular())
+				rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_INDEX, 0, RTC_FORMAT_UINT4, mBase->indices().data(), 0, sizeof(uint32) * 4, mBase->faceCount());
+			else
+				rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_INDEX, 0, RTC_FORMAT_UINT4, mMixedIndices.data(), 0, sizeof(uint32) * 4, mBase->faceCount());
+		}
 		rtcCommitGeometry(geom);
 
 		mScene = rtcNewScene(dev);
@@ -59,7 +85,7 @@ private:
 		rtcAttachGeometry(mScene, geom);
 		rtcReleaseGeometry(geom);
 
-		rtcSetSceneFlags(mScene, RTC_SCENE_FLAG_COMPACT | RTC_SCENE_FLAG_ROBUST | RTC_SCENE_FLAG_CONTEXT_FILTER_FUNCTION);
+		rtcSetSceneFlags(mScene, RTC_SCENE_FLAG_COMPACT | RTC_SCENE_FLAG_ROBUST);
 		rtcSetSceneBuildQuality(mScene, RTC_BUILD_QUALITY_HIGH);
 		rtcCommitScene(mScene);
 	}
@@ -67,6 +93,9 @@ private:
 	RTCScene mScene;
 	std::shared_ptr<MeshBase> mBase;
 	bool mWasGenerated;
+
+	// Following buffer will be used to construct mixed indices as used inside Embree
+	std::vector<uint32> mMixedIndices;
 };
 
 template <bool HasUV>
@@ -135,7 +164,11 @@ public:
 		const Face face	  = mMesh->base()->getFace(faceID);
 		const float pdf_a = 1.0f / (mMesh->base()->faceCount() * face.surfaceArea() * volumeScalefactor());
 
-		const Vector2f uv = Triangle::sample(Vector2f(split.uniform1(), split.uniform2()));
+		Vector2f uv;
+		if (!face.IsQuad)
+			uv = Triangle::sample(Vector2f(split.uniform1(), split.uniform2()));
+		else
+			uv = Vector2f(split.uniform1(), split.uniform2());
 
 		return EntitySamplePoint(transform() * face.interpolateVertices(uv), uv, faceID, pdf_a);
 	}
@@ -150,8 +183,8 @@ public:
 		pt.N		= face.interpolateNormals(query.UV);
 		Vector2f uv = face.interpolateUVs(query.UV);
 
-		Tangent::unnormalized_frame(pt.N, pt.Nx, pt.Ny);
-		//face.tangentFromUV(pt.N, pt.Nx, pt.Ny);
+		//Tangent::unnormalized_frame(pt.N, pt.Nx, pt.Ny);
+		face.tangentFromUV(pt.N, pt.Nx, pt.Ny);
 		pt.UV = uv;
 
 		pt.MaterialID = face.MaterialSlot < mMaterials.size() ? mMaterials.at(face.MaterialSlot) : PR_INVALID_ID;
@@ -195,10 +228,11 @@ public:
 	}
 
 private:
-	std::vector<uint32> mMaterials;
-	std::shared_ptr<Mesh> mMesh;
+	const std::vector<uint32> mMaterials;
+	const std::shared_ptr<Mesh> mMesh;
 	const BoundingBox mBoundingBox;
 };
+
 
 class MeshEntityPlugin : public IEntityPlugin {
 public:
@@ -229,12 +263,12 @@ public:
 
 			if (mesh->features() & MeshFeature::UV)
 				return std::make_shared<MeshEntity<true>>(name, ctx.transform(),
-														  mesh_p,
-														  materials, emsID);
+															   mesh_p,
+															   materials, emsID);
 			else
 				return std::make_shared<MeshEntity<false>>(name, ctx.transform(),
-														   mesh_p,
-														   materials, emsID);
+																mesh_p,
+																materials, emsID);
 		}
 	}
 
@@ -246,7 +280,7 @@ public:
 
 	PluginSpecification specification(const std::string&) const override
 	{
-		return PluginSpecificationBuilder("Plane Entity", "A solid plane")
+		return PluginSpecificationBuilder("Mesh Entity", "A mesh of triangles and quads")
 			.Identifiers(getNames())
 			.Inputs()
 			.MeshReference("mesh", "Mesh")
