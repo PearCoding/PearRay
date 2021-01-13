@@ -173,34 +173,21 @@ public:
 		return EntitySamplePoint(transform() * face.interpolateVertices(uv), uv, faceID, pdf_a);
 	}
 
-	// UV variant
-	template <bool UV = HasUV>
-	inline typename std::enable_if<UV, void>::type
-	provideGeometryPoint2(const EntityGeometryQueryPoint& query,
-						  GeometryPoint& pt) const
-	{
-		Face face	= mMesh->base()->getFace(query.PrimitiveID);
-		pt.N		= face.interpolateNormals(query.UV);
-		Vector2f uv = face.interpolateUVs(query.UV);
-
-		//Tangent::unnormalized_frame(pt.N, pt.Nx, pt.Ny);
-		face.tangentFromUV(pt.N, pt.Nx, pt.Ny);
-		pt.UV = uv;
-
-		pt.MaterialID = face.MaterialSlot < mMaterials.size() ? mMaterials.at(face.MaterialSlot) : PR_INVALID_ID;
-	}
-
-	// Non UV variant
-	template <bool UV = HasUV>
-	inline typename std::enable_if<!UV, void>::type
-	provideGeometryPoint2(const EntityGeometryQueryPoint& query,
-						  GeometryPoint& pt) const
+	void provideGeometryPointLocal(const EntityGeometryQueryPoint& query,
+								   GeometryPoint& pt) const
 	{
 		Face face = mMesh->base()->getFace(query.PrimitiveID);
 		pt.N	  = face.interpolateNormals(query.UV);
 
-		Tangent::unnormalized_frame(pt.N, pt.Nx, pt.Ny);
-		pt.UV = query.UV;
+		if constexpr (HasUV) {
+			//Tangent::unnormalized_frame(pt.N, pt.Nx, pt.Ny);
+			face.tangentFromUV(pt.N, pt.Nx, pt.Ny);
+			Vector2f uv = face.interpolateUVs(query.UV);
+			pt.UV		= uv;
+		} else {
+			Tangent::unnormalized_frame(pt.N, pt.Nx, pt.Ny);
+			pt.UV = query.UV;
+		}
 
 		pt.MaterialID = face.MaterialSlot < mMaterials.size() ? mMaterials.at(face.MaterialSlot) : PR_INVALID_ID;
 	}
@@ -211,7 +198,7 @@ public:
 		PR_PROFILE_THIS;
 
 		// Local
-		provideGeometryPoint2(query, pt);
+		provideGeometryPointLocal(query, pt);
 
 		// Global
 		pt.N  = normalMatrix() * pt.N;
@@ -232,7 +219,6 @@ private:
 	const std::shared_ptr<Mesh> mMesh;
 	const BoundingBox mBoundingBox;
 };
-
 
 class MeshEntityPlugin : public IEntityPlugin {
 public:
@@ -263,12 +249,12 @@ public:
 
 			if (mesh->features() & MeshFeature::UV)
 				return std::make_shared<MeshEntity<true>>(name, ctx.transform(),
-															   mesh_p,
-															   materials, emsID);
+														  mesh_p,
+														  materials, emsID);
 			else
 				return std::make_shared<MeshEntity<false>>(name, ctx.transform(),
-																mesh_p,
-																materials, emsID);
+														   mesh_p,
+														   materials, emsID);
 		}
 	}
 

@@ -23,18 +23,46 @@ enum class SubdivisionMode {
 	PinAll
 };
 
-constexpr uint32 NORMAL_SLOT = 0;
-constexpr uint32 UV_SLOT	 = 1;
+constexpr uint32 POSITION_SLOT = 0; // Vertex
+constexpr uint32 UV_SLOT	   = 0; // Vertex-Attribute
 
-// TODO: Add features like creases etc and map normals and uv accordingly
+struct SubdivParameters {
+	uint32 TessellationRate;
+	SubdivisionMode Mode;
+	SubdivisionMode UVMode;
+	bool UseCreases;
+};
+
+static inline void setMode(RTCGeometry geometry, unsigned int topologyID, SubdivisionMode mode)
+{
+	switch (mode) {
+	case SubdivisionMode::NoBoundary:
+		rtcSetGeometrySubdivisionMode(geometry, topologyID, RTC_SUBDIVISION_MODE_NO_BOUNDARY);
+		break;
+	default:
+	case SubdivisionMode::SmoothBoundary:
+		rtcSetGeometrySubdivisionMode(geometry, topologyID, RTC_SUBDIVISION_MODE_SMOOTH_BOUNDARY);
+		break;
+	case SubdivisionMode::PinCorners:
+		rtcSetGeometrySubdivisionMode(geometry, topologyID, RTC_SUBDIVISION_MODE_PIN_CORNERS);
+		break;
+	case SubdivisionMode::PinBoundary:
+		rtcSetGeometrySubdivisionMode(geometry, topologyID, RTC_SUBDIVISION_MODE_PIN_BOUNDARY);
+		break;
+	case SubdivisionMode::PinAll:
+		rtcSetGeometrySubdivisionMode(geometry, topologyID, RTC_SUBDIVISION_MODE_PIN_ALL);
+		break;
+	}
+}
+
+// TODO: Add features like creases etc
 class SubdivMesh {
 public:
-	explicit SubdivMesh(const std::shared_ptr<MeshBase>& mesh, uint32 tessellationRate, SubdivisionMode mode)
+	explicit SubdivMesh(const std::shared_ptr<MeshBase>& mesh, const SubdivParameters& params)
 		: mScene()
 		, mBase(mesh)
 		, mWasGenerated(false)
-		, mTessellationRate(tessellationRate)
-		, mMode(mode)
+		, mParameters(params)
 	{
 		mFaceCount.resize(mesh->faceCount());
 		if (mBase->isOnlyTriangular() || mBase->isOnlyQuadrangular()) {
@@ -62,11 +90,11 @@ public:
 		return mScene;
 	}
 
-	inline std::tuple<Vector3f, Vector3f, Vector3f> interpolateNormal(uint32 primID, const Vector2f& param) const
+	inline std::tuple<Vector3f, Vector3f> interpolateTangent(uint32 primID, const Vector2f& param) const
 	{
 		RTCInterpolateArguments args;
-		args.bufferType = RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE;
-		args.bufferSlot = NORMAL_SLOT;
+		args.bufferType = RTC_BUFFER_TYPE_VERTEX;
+		args.bufferSlot = POSITION_SLOT;
 		args.geometry	= mGeometry;
 		args.primID		= primID;
 		args.u			= param(0);
@@ -74,12 +102,10 @@ public:
 		args.valueCount = 3;
 
 		RTC_ALIGN(16)
-		float P[3];
-		RTC_ALIGN(16)
 		float Pu[3];
 		RTC_ALIGN(16)
 		float Pv[3];
-		args.P		 = P;
+		args.P		 = nullptr;
 		args.dPdu	 = Pu;
 		args.dPdv	 = Pv;
 		args.ddPdudu = nullptr;
@@ -88,7 +114,7 @@ public:
 
 		rtcInterpolate(&args);
 
-		return { Vector3f(P[0], P[1], P[2]), Vector3f(Pu[0], Pu[1], Pu[2]), Vector3f(Pv[0], Pv[1], Pv[2]) };
+		return { Vector3f(Pu[0], Pu[1], Pu[2]), Vector3f(Pv[0], Pv[1], Pv[2]) };
 	}
 
 	inline Vector2f interpolateUV(uint32 primID, const Vector2f& param) const
@@ -128,37 +154,20 @@ private:
 		rtcSetSharedGeometryBuffer(mGeometry, RTC_BUFFER_TYPE_INDEX, 0, RTC_FORMAT_UINT, mBase->indices().data(), 0, sizeof(uint32), mBase->indices().size());
 		rtcSetSharedGeometryBuffer(mGeometry, RTC_BUFFER_TYPE_FACE, 0, RTC_FORMAT_UINT, mFaceCount.data(), 0, sizeof(uint32), mBase->faceCount());
 
-		rtcSetGeometryVertexAttributeCount(mGeometry, (mBase->features() & MeshFeature::UV) ? 2 : 1);
-
-		// Normal
-		rtcSetSharedGeometryBuffer(mGeometry, RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, NORMAL_SLOT, RTC_FORMAT_FLOAT3, mBase->normals().data(), 0, sizeof(float) * 3, mBase->normals().size() / 3);
-		rtcSetSharedGeometryBuffer(mGeometry, RTC_BUFFER_TYPE_INDEX, NORMAL_SLOT, RTC_FORMAT_UINT, mBase->indices().data(), 0, sizeof(uint32), mBase->indices().size());
+		setMode(mGeometry, 0, mParameters.Mode);
 
 		// UV
 		if (mBase->features() & MeshFeature::UV) {
+			rtcSetGeometryVertexAttributeCount(mGeometry, 1);
+			rtcSetGeometryTopologyCount(mGeometry, 2);
 			rtcSetSharedGeometryBuffer(mGeometry, RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, UV_SLOT, RTC_FORMAT_FLOAT2, mBase->uvs().data(), 0, sizeof(float) * 2, mBase->uvs().size() / 2);
-			rtcSetSharedGeometryBuffer(mGeometry, RTC_BUFFER_TYPE_INDEX, UV_SLOT, RTC_FORMAT_UINT, mBase->indices().data(), 0, sizeof(uint32), mBase->indices().size());
+			rtcSetSharedGeometryBuffer(mGeometry, RTC_BUFFER_TYPE_INDEX, 1 /* topologyID */, RTC_FORMAT_UINT, mBase->indices().data(), 0, sizeof(uint32), mBase->indices().size());
+			rtcSetGeometryVertexAttributeTopology(mGeometry, UV_SLOT, 1);
+			setMode(mGeometry, 1, mParameters.UVMode);
 		}
 
-		rtcSetGeometryTessellationRate(mGeometry, mTessellationRate);
-		switch (mMode) {
-		case SubdivisionMode::NoBoundary:
-			rtcSetGeometrySubdivisionMode(mGeometry, 0, RTC_SUBDIVISION_MODE_NO_BOUNDARY);
-			break;
-		default:
-		case SubdivisionMode::SmoothBoundary:
-			rtcSetGeometrySubdivisionMode(mGeometry, 0, RTC_SUBDIVISION_MODE_SMOOTH_BOUNDARY);
-			break;
-		case SubdivisionMode::PinCorners:
-			rtcSetGeometrySubdivisionMode(mGeometry, 0, RTC_SUBDIVISION_MODE_PIN_CORNERS);
-			break;
-		case SubdivisionMode::PinBoundary:
-			rtcSetGeometrySubdivisionMode(mGeometry, 0, RTC_SUBDIVISION_MODE_PIN_BOUNDARY);
-			break;
-		case SubdivisionMode::PinAll:
-			rtcSetGeometrySubdivisionMode(mGeometry, 0, RTC_SUBDIVISION_MODE_PIN_ALL);
-			break;
-		}
+		rtcSetGeometryTessellationRate(mGeometry, mParameters.TessellationRate);
+
 		rtcCommitGeometry(mGeometry);
 
 		mScene = rtcNewScene(dev);
@@ -175,15 +184,14 @@ private:
 	std::shared_ptr<MeshBase> mBase;
 	bool mWasGenerated;
 
-	const uint32 mTessellationRate;
-	const SubdivisionMode mMode;
+	const SubdivParameters mParameters;
 
 	// Our implementation does not build a face count buffer but an optional index shift array.
 	// However Embree requires one!
 	std::vector<uint32> mFaceCount;
 };
 
-template <bool HasUV>
+template <bool HasUV, bool CustomNormal>
 class SubdivMeshEntity : public IEntity {
 public:
 	ENTITY_CLASS
@@ -258,34 +266,27 @@ public:
 		return EntitySamplePoint(transform() * face.interpolateVertices(uv), uv, faceID, pdf_a);
 	}
 
-	// UV variant
-	template <bool UV = HasUV>
-	inline typename std::enable_if<UV, void>::type
-	provideGeometryPoint2(const EntityGeometryQueryPoint& query,
-						  GeometryPoint& pt) const
+	void provideGeometryPointLocal(const EntityGeometryQueryPoint& query,
+								   GeometryPoint& pt) const
 	{
-		Face face  = mMesh->base()->getFace(query.PrimitiveID);
-		auto tuple = mMesh->interpolateNormal(query.PrimitiveID, query.UV);
-		pt.N	   = std::get<0>(tuple);
-		pt.Nx	   = std::get<1>(tuple);
-		pt.Ny	   = std::get<2>(tuple);
-		pt.UV	   = mMesh->interpolateUV(query.PrimitiveID, query.UV);
+		const Face face = mMesh->base()->getFace(query.PrimitiveID);
+		if constexpr (CustomNormal) {
+			pt.N = face.interpolateNormals(query.UV);
+			if constexpr (HasUV)
+				face.tangentFromUV(pt.N, pt.Nx, pt.Ny);
+			else
+				Tangent::unnormalized_frame(pt.N, pt.Nx, pt.Ny);
+		} else {
+			auto tuple = mMesh->interpolateTangent(query.PrimitiveID, query.UV);
+			pt.Nx	   = std::get<0>(tuple);
+			pt.Ny	   = std::get<1>(tuple);
+			pt.N	   = pt.Nx.cross(pt.Ny);
+		}
 
-		pt.MaterialID = face.MaterialSlot < mMaterials.size() ? mMaterials.at(face.MaterialSlot) : PR_INVALID_ID;
-	}
-
-	// Non UV variant
-	template <bool UV = HasUV>
-	inline typename std::enable_if<!UV, void>::type
-	provideGeometryPoint2(const EntityGeometryQueryPoint& query,
-						  GeometryPoint& pt) const
-	{
-		Face face  = mMesh->base()->getFace(query.PrimitiveID);
-		auto tuple = mMesh->interpolateNormal(query.PrimitiveID, query.UV);
-		pt.N	   = std::get<0>(tuple);
-		pt.Nx	   = std::get<1>(tuple);
-		pt.Ny	   = std::get<2>(tuple);
-		pt.UV	   = query.UV;
+		if constexpr (HasUV)
+			pt.UV = mMesh->interpolateUV(query.PrimitiveID, query.UV);
+		else
+			pt.UV = query.UV;
 
 		pt.MaterialID = face.MaterialSlot < mMaterials.size() ? mMaterials.at(face.MaterialSlot) : PR_INVALID_ID;
 	}
@@ -296,7 +297,7 @@ public:
 		PR_PROFILE_THIS;
 
 		// Local
-		provideGeometryPoint2(query, pt);
+		provideGeometryPointLocal(query, pt);
 
 		// Global
 		pt.N  = normalMatrix() * pt.N;
@@ -318,6 +319,22 @@ private:
 	const BoundingBox mBoundingBox;
 };
 
+static inline SubdivisionMode strToMode(const std::string& str)
+{
+	std::string modeStr = str;
+	std::transform(modeStr.begin(), modeStr.end(), modeStr.begin(), ::tolower);
+	if (modeStr == "no_boundary")
+		return SubdivisionMode::NoBoundary;
+	else if (modeStr == "pin_corners")
+		return SubdivisionMode::PinCorners;
+	else if (modeStr == "pin_boundary")
+		return SubdivisionMode::PinBoundary;
+	else if (modeStr == "pin_all")
+		return SubdivisionMode::PinAll;
+	else
+		return SubdivisionMode::SmoothBoundary;
+}
+
 class SubdivMeshEntityPlugin : public IEntityPlugin {
 public:
 	std::unordered_map<MeshBase*, std::shared_ptr<SubdivMesh>> mOriginalMesh;
@@ -331,7 +348,7 @@ public:
 
 		const std::vector<uint32> materials = ctx.lookupMaterialIDArray(params.getParameter("materials"));
 		const uint32 emsID					= ctx.lookupEmissionID(params.getParameter("emission"));
-		const uint32 tessellationRate		= params.getUInt("tessellation", 4);
+		const bool customNormal				= !params.getBool("smooth_normal", true);
 
 		if (!ctx.hasMesh(mesh_name)) {
 			PR_LOG(L_ERROR) << "Could not find a mesh named " << mesh_name << std::endl;
@@ -342,30 +359,35 @@ public:
 			if (mOriginalMesh.count(mesh.get()) > 0) {
 				mesh_p = mOriginalMesh.at(mesh.get());
 			} else {
-				SubdivisionMode mode = SubdivisionMode::SmoothBoundary;
-				std::string modeStr	 = params.getString("mode", "");
-				std::transform(modeStr.begin(), modeStr.end(), modeStr.begin(), ::tolower);
-				if (modeStr == "no_boundary")
-					mode = SubdivisionMode::NoBoundary;
-				else if (modeStr == "pin_corners")
-					mode = SubdivisionMode::PinCorners;
-				else if (modeStr == "pin_boundary")
-					mode = SubdivisionMode::PinBoundary;
-				else if (modeStr == "pin_all")
-					mode = SubdivisionMode::PinAll;
+				SubdivParameters sp;
+				sp.TessellationRate = params.getUInt("tessellation", 4);
+				sp.Mode				= strToMode(params.getString("mode", ""));
+				sp.UVMode			= strToMode(params.getString("uv_mode", ""));
+				sp.UseCreases		= params.getBool("creases", true); // Only if available (TODO)
 
-				mesh_p					  = std::make_shared<SubdivMesh>(mesh, tessellationRate, mode);
+				mesh_p					  = std::make_shared<SubdivMesh>(mesh, sp);
 				mOriginalMesh[mesh.get()] = mesh_p;
 			}
 
-			if (mesh->features() & MeshFeature::UV)
-				return std::make_shared<SubdivMeshEntity<true>>(name, ctx.transform(),
-																mesh_p,
-																materials, emsID);
-			else
-				return std::make_shared<SubdivMeshEntity<false>>(name, ctx.transform(),
-																 mesh_p,
-																 materials, emsID);
+			if (customNormal) {
+				if (mesh->features() & MeshFeature::UV)
+					return std::make_shared<SubdivMeshEntity<true, true>>(name, ctx.transform(),
+																		  mesh_p,
+																		  materials, emsID);
+				else
+					return std::make_shared<SubdivMeshEntity<false, true>>(name, ctx.transform(),
+																		   mesh_p,
+																		   materials, emsID);
+			} else {
+				if (mesh->features() & MeshFeature::UV)
+					return std::make_shared<SubdivMeshEntity<true, false>>(name, ctx.transform(),
+																		   mesh_p,
+																		   materials, emsID);
+				else
+					return std::make_shared<SubdivMeshEntity<false, false>>(name, ctx.transform(),
+																			mesh_p,
+																			materials, emsID);
+			}
 		}
 	}
 
@@ -385,6 +407,9 @@ public:
 			.EmissionReference("emission", "Emission", true)
 			.UInt("tessellation", "Tesselation Rate", 4)
 			.Option("mode", "Subdivision mode", "smooth_boundary", { "no_boundary", "smooth_boundary", "pin_corners", "pin_boundary", "pin_all" })
+			.Option("uv_mode", "Subdivision mode for uv coordinates", "smooth_boundary", { "no_boundary", "smooth_boundary", "pin_corners", "pin_boundary", "pin_all" })
+			.Bool("creases", "Use creases if available", true)
+			.Bool("smooth_normal", "Use calculated smooth normals", true)
 			.Specification()
 			.get();
 	}

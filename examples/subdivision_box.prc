@@ -97,7 +97,8 @@
 		:materials 'Metal'
 		:mesh 'Cube'
 		:position [0,0,1]
-		:tessellation 16
+		:tessellation 4
 		:mode 'smooth'
+		:smooth_normal true
 	)
 )
