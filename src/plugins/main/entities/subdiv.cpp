@@ -63,15 +63,8 @@ public:
 		, mBase(mesh)
 		, mWasGenerated(false)
 		, mParameters(params)
+		, mFaceCount(mesh->faceVertexCounts())
 	{
-		mFaceCount.resize(mesh->faceCount());
-		if (mBase->isOnlyTriangular() || mBase->isOnlyQuadrangular()) {
-			std::fill(mFaceCount.begin(), mFaceCount.end(), mBase->isOnlyTriangular() ? 3 : 4);
-		} else {
-			PR_OPT_LOOP
-			for (size_t i = 0; i < mBase->faceCount(); ++i)
-				mFaceCount[i] = mBase->faceVertexCount(i);
-		}
 	}
 
 	~SubdivMesh()
@@ -150,18 +143,24 @@ private:
 	{
 		mGeometry = rtcNewGeometry(dev, RTC_GEOMETRY_TYPE_SUBDIVISION);
 
-		rtcSetSharedGeometryBuffer(mGeometry, RTC_BUFFER_TYPE_VERTEX, 0, RTC_FORMAT_FLOAT3, mBase->vertices().data(), 0, sizeof(float) * 3, mBase->vertices().size() / 3);
-		rtcSetSharedGeometryBuffer(mGeometry, RTC_BUFFER_TYPE_INDEX, 0, RTC_FORMAT_UINT, mBase->indices().data(), 0, sizeof(uint32), mBase->indices().size());
+		rtcSetSharedGeometryBuffer(mGeometry, RTC_BUFFER_TYPE_VERTEX, 0, RTC_FORMAT_FLOAT3, mBase->vertexComponent(MeshComponent::Vertex).data(),
+								   0, sizeof(float) * 3, mBase->vertexComponent(MeshComponent::Vertex).size() / 3);
+		rtcSetSharedGeometryBuffer(mGeometry, RTC_BUFFER_TYPE_INDEX, 0, RTC_FORMAT_UINT, mBase->vertexComponentIndices(MeshComponent::Vertex).data(),
+								   0, sizeof(uint32), mBase->vertexComponentIndices(MeshComponent::Vertex).size());
 		rtcSetSharedGeometryBuffer(mGeometry, RTC_BUFFER_TYPE_FACE, 0, RTC_FORMAT_UINT, mFaceCount.data(), 0, sizeof(uint32), mBase->faceCount());
 
 		setMode(mGeometry, 0, mParameters.Mode);
 
 		// UV
-		if (mBase->features() & MeshFeature::UV) {
+		if (mBase->features() & MeshFeature::Texture) {
 			rtcSetGeometryVertexAttributeCount(mGeometry, 1);
 			rtcSetGeometryTopologyCount(mGeometry, 2);
-			rtcSetSharedGeometryBuffer(mGeometry, RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, UV_SLOT, RTC_FORMAT_FLOAT2, mBase->uvs().data(), 0, sizeof(float) * 2, mBase->uvs().size() / 2);
-			rtcSetSharedGeometryBuffer(mGeometry, RTC_BUFFER_TYPE_INDEX, 1 /* topologyID */, RTC_FORMAT_UINT, mBase->indices().data(), 0, sizeof(uint32), mBase->indices().size());
+			rtcSetSharedGeometryBuffer(mGeometry, RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, UV_SLOT, RTC_FORMAT_FLOAT2, mBase->vertexComponent(MeshComponent::Vertex).data(),
+									   0, sizeof(float) * 2, mBase->vertexComponent(MeshComponent::Vertex).size() / 2);
+
+			const MeshComponent indexComponent = mBase->hasVertexComponentIndices(MeshComponent::Texture) ? MeshComponent::Texture : MeshComponent::Vertex;
+			rtcSetSharedGeometryBuffer(mGeometry, RTC_BUFFER_TYPE_INDEX, 1 /* topologyID */, RTC_FORMAT_UINT, mBase->vertexComponentIndices(indexComponent).data(),
+									   0, sizeof(uint32), mBase->vertexComponentIndices(indexComponent).size());
 			rtcSetGeometryVertexAttributeTopology(mGeometry, UV_SLOT, 1);
 			setMode(mGeometry, 1, mParameters.UVMode);
 		}
@@ -206,6 +205,7 @@ public:
 		, mBoundingBox(mesh->base()->constructBoundingBox())
 	{
 	}
+
 	virtual ~SubdivMeshEntity() {}
 
 	std::string type() const override
@@ -369,8 +369,8 @@ public:
 				mOriginalMesh[mesh.get()] = mesh_p;
 			}
 
-			if (customNormal) {
-				if (mesh->features() & MeshFeature::UV)
+			if (customNormal && mesh->features() & MeshFeature::Normal) {
+				if (mesh->features() & MeshFeature::Texture)
 					return std::make_shared<SubdivMeshEntity<true, true>>(name, ctx.transform(),
 																		  mesh_p,
 																		  materials, emsID);
@@ -379,7 +379,7 @@ public:
 																		   mesh_p,
 																		   materials, emsID);
 			} else {
-				if (mesh->features() & MeshFeature::UV)
+				if (mesh->features() & MeshFeature::Texture)
 					return std::make_shared<SubdivMeshEntity<true, false>>(name, ctx.transform(),
 																		   mesh_p,
 																		   materials, emsID);

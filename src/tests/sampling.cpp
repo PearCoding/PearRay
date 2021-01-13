@@ -28,7 +28,7 @@ PR_TEST("Cos Hemi Equal")
 	auto V2 = Sampling::cos_hemi(u1, u2, 1);
 
 	PR_CHECK_NEARLY_EQ(V1, V2);
-	PR_CHECK_NEARLY_EQ(Sampling::cos_hemi_pdf(V1(0)), Sampling::cos_hemi_pdf(V2(0), 1));
+	PR_CHECK_NEARLY_EQ(Sampling::cos_hemi_pdf(V1(2)), Sampling::cos_hemi_pdf(V2(2), 1));
 }
 
 PR_END_TESTCASE()

@@ -4,9 +4,11 @@
 
 namespace PR {
 enum class MeshFeature : uint32 {
-	UV		 = 0x1,
-	Velocity = 0x2,
-	Material = 0x4
+	Normal	 = 0x1,
+	Texture	 = 0x2,
+	Weight	 = 0x4,
+	Velocity = 0x8,
+	Material = 0x10
 };
 PR_MAKE_FLAGS(MeshFeature, MeshFeatures)
 

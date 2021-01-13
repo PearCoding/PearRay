@@ -84,17 +84,15 @@ void WavefrontLoader::load(const std::filesystem::path& file, SceneLoadContext& 
 		}
 
 		auto mesh = std::make_unique<MeshBase>();
-		mesh->setVertices(std::move(attrib.vertices));
-		mesh->setIndices(std::move(indices));
+		mesh->setVertexComponent(MeshComponent::Vertex, std::move(attrib.vertices));
+		mesh->setVertexComponentIndices(MeshComponent::Vertex, std::move(indices));
 		mesh->assumeTriangular(indices_count / 3);
 
 		if (hasNorms)
-			mesh->setNormals(std::move(attrib.normals));
-		else
-			mesh->buildNormals();
+			mesh->setVertexComponent(MeshComponent::Normal, std::move(attrib.normals));
 
 		if (hasCoords)
-			mesh->setUVs(std::move(attrib.texcoords));
+			mesh->setVertexComponent(MeshComponent::Texture, std::move(attrib.texcoords));
 
 		std::string name = shapes[0].name;
 		if (!mName.empty())

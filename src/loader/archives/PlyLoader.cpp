@@ -208,17 +208,13 @@ std::unique_ptr<MeshBase> read(std::fstream& stream, const Header& header, bool 
 
 	// Build
 	std::unique_ptr<MeshBase> cnt = std::make_unique<MeshBase>();
-	cnt->setVertices(vertices);
+	cnt->setVertexComponent(MeshComponent::Vertex, std::move(vertices));
+	cnt->setVertexComponentIndices(MeshComponent::Vertex, std::move(indices));
 	if (header.hasNormals())
-		cnt->setNormals(normals);
+		cnt->setVertexComponent(MeshComponent::Normal, std::move(normals));
 	if (header.hasUVs())
-		cnt->setUVs(uvs);
-
-	cnt->setIndices(indices);
+		cnt->setVertexComponent(MeshComponent::Texture, std::move(uvs));
 	cnt->setFaceVertexCount(vertPerFace);
-
-	if (!header.hasNormals())
-		cnt->buildNormals();
 
 	return cnt;
 }

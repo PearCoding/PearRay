@@ -26,6 +26,11 @@ public:
 		return v1 * uv(0) + v2 * uv(1) + v0 * (1 - uv(0) - uv(1));
 	}
 
+	inline static Vector3f normal(const Vector3f& v0, const Vector3f& v1, const Vector3f& v2)
+	{
+		return (v1 - v0).cross(v2 - v0).normalized();
+	}
+
 	inline static float surfaceArea(const Vector3f& p1,
 									const Vector3f& p2,
 									const Vector3f& p3)

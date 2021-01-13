@@ -13,37 +13,49 @@ class UV;
 class Vertex;
 struct FacePoint;
 class ISampler;
+
+enum class MeshComponent {
+	Vertex = 0, // 3D
+	Normal,		// 3D
+	Texture,	// 2D
+	Weight,		// 1D
+	Velocity,	// 3D
+	_COUNT
+};
+
 class PR_LIB_CORE MeshBase : public ISerializable {
 public:
+	inline static constexpr bool isComponent3D(MeshComponent component)
+	{
+		return component == MeshComponent::Vertex || component == MeshComponent::Normal || component == MeshComponent::Velocity;
+	}
+	inline static constexpr bool isComponent2D(MeshComponent component)
+	{
+		return component == MeshComponent::Texture;
+	}
+	inline static constexpr bool isComponent1D(MeshComponent component)
+	{
+		return component == MeshComponent::Weight;
+	}
+
 	MeshBase();
 	virtual ~MeshBase();
 
 	// ISerializable
 	void serialize(Serializer& serializer) override;
 
-	inline void setVertices(const std::vector<float>& vertices);
-	inline void setVertices(std::vector<float>&& vertices);
-	inline const std::vector<float>& vertices() const { return mVertices; }
-	inline Vector3f vertex(size_t ind) const { return Vector3f(mVertices[3 * ind], mVertices[3 * ind + 1], mVertices[3 * ind + 2]); }
+	inline void setVertexComponent(MeshComponent component, const std::vector<float>& entries);
+	inline void setVertexComponent(MeshComponent component, std::vector<float>&& entries);
+	inline void setVertexComponentIndices(MeshComponent component, const std::vector<uint32>& indices);
+	inline void setVertexComponentIndices(MeshComponent component, std::vector<uint32>&& indices);
+	inline const std::vector<float>& vertexComponent(MeshComponent component) const { return mVertexComponents[(size_t)component].Entries; }
+	inline const std::vector<uint32>& vertexComponentIndices(MeshComponent component) const { return mVertexComponents[(size_t)component].Indices; }
+	inline Vector3f vertexComponent3D(MeshComponent component, size_t ind) const;
+	inline Vector2f vertexComponent2D(MeshComponent component, size_t ind) const;
+	inline float vertexComponent1D(MeshComponent component, size_t ind) const;
 
-	inline void setNormals(const std::vector<float>& normals);
-	inline void setNormals(std::vector<float>&& normals);
-	inline const std::vector<float>& normals() const { return mNormals; }
-	inline Vector3f normal(size_t ind) const { return Vector3f(mNormals[3 * ind], mNormals[3 * ind + 1], mNormals[3 * ind + 2]); }
-
-	inline void setUVs(const std::vector<float>& uvs);
-	inline void setUVs(std::vector<float>&& uvs);
-	inline const std::vector<float>& uvs() const { return mUVs; }
-	inline Vector2f uv(size_t ind) const { return (features() & MeshFeature::UV) ? Vector2f(mUVs[2 * ind], mUVs[2 * ind + 1]) : Vector2f(0, 0); }
-
-	inline void setVelocities(const std::vector<float>& velocities);
-	inline void setVelocities(std::vector<float>&& velocities);
-	inline const std::vector<float>& velocities() const { return mVelocities; }
-	inline Vector3f velocity(size_t ind) const { return (features() & MeshFeature::Velocity) ? Vector3f(mVelocities[3 * ind], mVelocities[3 * ind + 1], mVelocities[3 * ind + 2]) : Vector3f(0, 0, 0); }
-
-	inline void setIndices(const std::vector<uint32>& indices);
-	inline void setIndices(std::vector<uint32>&& indices);
-	inline const std::vector<uint32>& indices() const { return mIndices; }
+	inline bool hasVertexComponent(MeshComponent component) const { return !mVertexComponents[(size_t)component].Entries.empty(); }
+	inline bool hasVertexComponentIndices(MeshComponent component) const { return !mVertexComponents[(size_t)component].Indices.empty(); }
 
 	inline void assumeTriangular(size_t faceCount);
 	inline void assumeQuadrangular(size_t faceCount);
@@ -81,49 +93,26 @@ public:
 
 	BoundingBox constructBoundingBox() const;
 
-	size_t addUserVertexAttrib(const std::string& name, const std::vector<float>& cnt, size_t channels);
-	inline std::vector<float>& userVertexAttrib(size_t id) { return mUserVertexAttribs.at(id); }
-	size_t addUserFaceAttrib(const std::string& name, const std::vector<float>& cnt, size_t channels);
-	inline std::vector<float>& userFaceAttrib(size_t id) { return mUserFaceAttribs.at(id); }
-
-	size_t addUserVertexAttribU32(const std::string& name, const std::vector<uint32>& cnt, size_t channels);
-	inline std::vector<uint32>& userVertexAttribU32(size_t id) { return mUserVertexAttribsU32.at(id); }
-	size_t addUserFaceAttribU32(const std::string& name, const std::vector<uint32>& cnt, size_t channels);
-	inline std::vector<uint32>& userFaceAttribU32(size_t id) { return mUserFaceAttribsU32.at(id); }
-
-	size_t addUserVertexAttribU8(const std::string& name, const std::vector<uint8>& cnt, size_t channels);
-	inline std::vector<uint8>& userVertexAttribU8(size_t id) { return mUserVertexAttribsU8.at(id); }
-	size_t addUserFaceAttribU8(const std::string& name, const std::vector<uint8>& cnt, size_t channels);
-	inline std::vector<uint8>& userFaceAttribU8(size_t id) { return mUserFaceAttribsU8.at(id); }
-
-	size_t userVertexID(const std::string& name, bool& found) const;
-	size_t userFaceID(const std::string& name, bool& found) const;
-
 	// Modifiers
-	void buildNormals();
+	void buildSmoothNormals();
 	void flipNormals();
-	void triangulate();
 
 private:
 	inline uint32 faceIndexOffset(uint32 f) const;
+	inline void handleInfo(MeshComponent component);
+
+	struct VertexIndexPair {
+		std::vector<float> Entries;
+		std::vector<uint32> Indices;
+	};
+
 	MeshInfo mInfo;
-	std::vector<float> mVertices;	//3 floats
-	std::vector<float> mNormals;	//3 floats
-	std::vector<float> mUVs;		// 2 floats
-	std::vector<float> mVelocities; //3 floats
+	// Vertex components
+	std::array<VertexIndexPair, (size_t)MeshComponent::_COUNT> mVertexComponents;
+	// Face components
 	std::vector<uint32> mMaterialSlots;
-	std::vector<uint32> mIndices;
+
 	std::vector<uint32> mFaceIndexOffset; // Only triangles and quads supported
-
-	std::vector<std::vector<float>> mUserVertexAttribs;
-	std::vector<std::vector<float>> mUserFaceAttribs;
-	std::vector<std::vector<uint32>> mUserVertexAttribsU32;
-	std::vector<std::vector<uint32>> mUserFaceAttribsU32;
-	std::vector<std::vector<uint8>> mUserVertexAttribsU8;
-	std::vector<std::vector<uint8>> mUserFaceAttribsU8;
-
-	std::unordered_map<std::string, size_t> mUserVertexID;
-	std::unordered_map<std::string, size_t> mUserFaceID;
 };
 } // namespace PR
 

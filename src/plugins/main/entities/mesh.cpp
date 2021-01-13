@@ -21,13 +21,14 @@ class Mesh {
 public:
 	explicit Mesh(const std::shared_ptr<MeshBase>& mesh)
 		: mScene()
+		, mGeometry()
 		, mBase(mesh)
 		, mWasGenerated(false)
 	{
 		// Build mixed indices
 		// TODO: Why not inside MeshBase?
 		if (!mesh->isOnlyTriangular() && !mesh->isOnlyQuadrangular()) {
-			const auto& origIndices = mesh->indices();
+			const auto& origIndices = mesh->vertexComponentIndices(MeshComponent::Vertex);
 			mMixedIndices.reserve(mesh->faceCount() * 4);
 			size_t iind = 0;
 			for (size_t i = 0; i < mesh->faceCount(); ++i) {
@@ -47,7 +48,35 @@ public:
 
 	~Mesh()
 	{
+		rtcReleaseGeometry(mGeometry);
 		rtcReleaseScene(mScene);
+	}
+
+	inline std::tuple<Vector3f, Vector3f> interpolateTangent(uint32 primID, const Vector2f& param) const
+	{
+		RTCInterpolateArguments args;
+		args.bufferType = RTC_BUFFER_TYPE_VERTEX;
+		args.bufferSlot = 0;
+		args.geometry	= mGeometry;
+		args.primID		= primID;
+		args.u			= param(0);
+		args.v			= param(1);
+		args.valueCount = 3;
+
+		RTC_ALIGN(16)
+		float Pu[3];
+		RTC_ALIGN(16)
+		float Pv[3];
+		args.P		 = nullptr;
+		args.dPdu	 = Pu;
+		args.dPdv	 = Pv;
+		args.ddPdudu = nullptr;
+		args.ddPdudv = nullptr;
+		args.ddPdvdv = nullptr;
+
+		rtcInterpolate(&args);
+
+		return { Vector3f(Pu[0], Pu[1], Pu[2]), Vector3f(Pv[0], Pv[1], Pv[2]) };
 	}
 
 	inline RTCScene generate(const RTCDevice& dev)
@@ -66,24 +95,23 @@ public:
 private:
 	inline void setupOriginal(const RTCDevice& dev)
 	{
-		RTCGeometry geom = rtcNewGeometry(dev, mBase->isOnlyTriangular() ? RTC_GEOMETRY_TYPE_TRIANGLE : RTC_GEOMETRY_TYPE_QUAD);
+		mGeometry = rtcNewGeometry(dev, mBase->isOnlyTriangular() ? RTC_GEOMETRY_TYPE_TRIANGLE : RTC_GEOMETRY_TYPE_QUAD);
 
 		// TODO: Make sure the internal mesh buffer is proper aligned at the end
-		rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX, 0, RTC_FORMAT_FLOAT3, mBase->vertices().data(), 0, sizeof(float) * 3, mBase->vertices().size() / 3);
+		rtcSetSharedGeometryBuffer(mGeometry, RTC_BUFFER_TYPE_VERTEX, 0, RTC_FORMAT_FLOAT3, mBase->vertexComponent(MeshComponent::Vertex).data(), 0, sizeof(float) * 3, mBase->vertexComponent(MeshComponent::Vertex).size() / 3);
 		if (mBase->isOnlyTriangular()) {
-			rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_INDEX, 0, RTC_FORMAT_UINT3, mBase->indices().data(), 0, sizeof(uint32) * 3, mBase->faceCount());
+			rtcSetSharedGeometryBuffer(mGeometry, RTC_BUFFER_TYPE_INDEX, 0, RTC_FORMAT_UINT3, mBase->vertexComponentIndices(MeshComponent::Vertex).data(), 0, sizeof(uint32) * 3, mBase->faceCount());
 		} else {
 			if (mBase->isOnlyQuadrangular())
-				rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_INDEX, 0, RTC_FORMAT_UINT4, mBase->indices().data(), 0, sizeof(uint32) * 4, mBase->faceCount());
+				rtcSetSharedGeometryBuffer(mGeometry, RTC_BUFFER_TYPE_INDEX, 0, RTC_FORMAT_UINT4, mBase->vertexComponentIndices(MeshComponent::Vertex).data(), 0, sizeof(uint32) * 4, mBase->faceCount());
 			else
-				rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_INDEX, 0, RTC_FORMAT_UINT4, mMixedIndices.data(), 0, sizeof(uint32) * 4, mBase->faceCount());
+				rtcSetSharedGeometryBuffer(mGeometry, RTC_BUFFER_TYPE_INDEX, 0, RTC_FORMAT_UINT4, mMixedIndices.data(), 0, sizeof(uint32) * 4, mBase->faceCount());
 		}
-		rtcCommitGeometry(geom);
+		rtcCommitGeometry(mGeometry);
 
 		mScene = rtcNewScene(dev);
 
-		rtcAttachGeometry(mScene, geom);
-		rtcReleaseGeometry(geom);
+		rtcAttachGeometry(mScene, mGeometry);
 
 		rtcSetSceneFlags(mScene, RTC_SCENE_FLAG_COMPACT | RTC_SCENE_FLAG_ROBUST);
 		rtcSetSceneBuildQuality(mScene, RTC_BUILD_QUALITY_HIGH);
@@ -91,6 +119,7 @@ private:
 	}
 
 	RTCScene mScene;
+	RTCGeometry mGeometry;
 	std::shared_ptr<MeshBase> mBase;
 	bool mWasGenerated;
 
@@ -98,7 +127,7 @@ private:
 	std::vector<uint32> mMixedIndices;
 };
 
-template <bool HasUV>
+template <bool HasUV, bool CustomNormal>
 class MeshEntity : public IEntity {
 public:
 	ENTITY_CLASS
@@ -177,17 +206,23 @@ public:
 								   GeometryPoint& pt) const
 	{
 		Face face = mMesh->base()->getFace(query.PrimitiveID);
-		pt.N	  = face.interpolateNormals(query.UV);
-
-		if constexpr (HasUV) {
-			//Tangent::unnormalized_frame(pt.N, pt.Nx, pt.Ny);
-			face.tangentFromUV(pt.N, pt.Nx, pt.Ny);
-			Vector2f uv = face.interpolateUVs(query.UV);
-			pt.UV		= uv;
+		if constexpr (CustomNormal) {
+			pt.N = face.interpolateNormals(query.UV);
+			if constexpr (HasUV)
+				face.tangentFromUV(pt.N, pt.Nx, pt.Ny);
+			else
+				Tangent::unnormalized_frame(pt.N, pt.Nx, pt.Ny);
 		} else {
-			Tangent::unnormalized_frame(pt.N, pt.Nx, pt.Ny);
-			pt.UV = query.UV;
+			auto tuple = mMesh->interpolateTangent(query.PrimitiveID, query.UV);
+			pt.Nx	   = std::get<0>(tuple);
+			pt.Ny	   = std::get<1>(tuple);
+			pt.N	   = pt.Nx.cross(pt.Ny);
 		}
+
+		if constexpr (HasUV)
+			pt.UV = face.interpolateUVs(query.UV);
+		else
+			pt.UV = query.UV;
 
 		pt.MaterialID = face.MaterialSlot < mMaterials.size() ? mMaterials.at(face.MaterialSlot) : PR_INVALID_ID;
 	}
@@ -233,6 +268,7 @@ public:
 
 		const std::vector<uint32> materials = ctx.lookupMaterialIDArray(params.getParameter("materials"));
 		const uint32 emsID					= ctx.lookupEmissionID(params.getParameter("emission"));
+		const bool customNormal				= !params.getBool("ignore_normals", false);
 
 		if (!ctx.hasMesh(mesh_name)) {
 			PR_LOG(L_ERROR) << "Could not find a mesh named " << mesh_name << std::endl;
@@ -247,14 +283,25 @@ public:
 				mOriginalMesh[mesh.get()] = mesh_p;
 			}
 
-			if (mesh->features() & MeshFeature::UV)
-				return std::make_shared<MeshEntity<true>>(name, ctx.transform(),
-														  mesh_p,
-														  materials, emsID);
-			else
-				return std::make_shared<MeshEntity<false>>(name, ctx.transform(),
-														   mesh_p,
-														   materials, emsID);
+			if (customNormal && mesh->features() & MeshFeature::Normal) {
+				if (mesh->features() & MeshFeature::Texture)
+					return std::make_shared<MeshEntity<true, true>>(name, ctx.transform(),
+																	mesh_p,
+																	materials, emsID);
+				else
+					return std::make_shared<MeshEntity<false, true>>(name, ctx.transform(),
+																	 mesh_p,
+																	 materials, emsID);
+			} else {
+				if (mesh->features() & MeshFeature::Texture)
+					return std::make_shared<MeshEntity<true, false>>(name, ctx.transform(),
+																	 mesh_p,
+																	 materials, emsID);
+				else
+					return std::make_shared<MeshEntity<false, false>>(name, ctx.transform(),
+																	  mesh_p,
+																	  materials, emsID);
+			}
 		}
 	}
 
@@ -272,6 +319,7 @@ public:
 			.MeshReference("mesh", "Mesh")
 			.MaterialReferenceV({ "material", "materials" }, "Material")
 			.EmissionReference("emission", "Emission", true)
+			.Bool("ignore_normals", "Ignore user given normals", false)
 			.Specification()
 			.get();
 	}

@@ -308,15 +308,15 @@ void MtsSerializedLoader::load(const std::filesystem::path& file, SceneLoadConte
 
 	// Build
 	std::unique_ptr<MeshBase> cnt = std::make_unique<MeshBase>();
-	cnt->setVertices(std::move(vertices));
-	cnt->setNormals(std::move(normals));
-	cnt->setUVs(std::move(texcoords));
-	cnt->setIndices(std::move(indices));
+	cnt->setVertexComponent(MeshComponent::Vertex, std::move(vertices));
+	cnt->setVertexComponentIndices(MeshComponent::Vertex, std::move(indices));
+	cnt->setVertexComponent(MeshComponent::Normal, std::move(normals));
+	cnt->setVertexComponent(MeshComponent::Texture, std::move(texcoords));
 
 	cnt->assumeTriangular(triCount);
 
 	if (!(mesh_flags & MF_VERTEXNORMALS))
-		cnt->buildNormals();
+		cnt->buildSmoothNormals();
 
 	ctx.addMesh(mName, std::move(cnt));
 }
