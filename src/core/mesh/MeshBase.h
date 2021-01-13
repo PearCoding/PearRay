@@ -63,8 +63,6 @@ public:
 	inline size_t faceVertexCount(size_t face) const;
 	std::vector<uint32> faceVertexCounts() const;
 
-	inline void setFaceIndexOffsets(const std::vector<uint32>& faceIndexOffsets);
-	inline void setFaceIndexOffsets(std::vector<uint32>&& faceIndexOffsets);
 	inline const std::vector<uint32>& faceIndexOffsets() const { return mFaceIndexOffset; }
 
 	inline void setMaterialSlots(const std::vector<uint32>& f);
@@ -89,7 +87,7 @@ public:
 	float surfaceArea(uint32 matID, const Eigen::Affine3f& transform) const;
 	float surfaceArea(const Eigen::Affine3f& transform) const;
 
-	inline bool isValid() const;
+	inline bool isValid(std::string* errMsg = nullptr) const;
 
 	BoundingBox constructBoundingBox() const;
 

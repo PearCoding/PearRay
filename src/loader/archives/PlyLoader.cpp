@@ -321,6 +321,12 @@ void PlyLoader::load(const std::filesystem::path& file, SceneLoadContext& ctx)
 	header.SwitchEndianness		  = (method == "binary_big_endian");
 	std::unique_ptr<MeshBase> cnt = read(stream, header, (method == "ascii"));
 
+	std::string errMsg;
+	if (!cnt->isValid(&errMsg)) {
+		PR_LOG(L_WARNING) << "Ply file could not construct a valid mesh data: " << errMsg << std::endl;
+		return;
+	}
+
 	if (cnt)
 		ctx.addMesh(mName, std::move(cnt));
 }

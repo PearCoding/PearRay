@@ -93,6 +93,9 @@ void MeshBase::setFaceVertexCount(const std::vector<uint8>& faceVertexCount)
 
 		counter += faceElems;
 	}
+
+	if (mInfo.TriangleCount == 0 || mInfo.QuadCount == 0) // No need for that buffer
+		std::vector<uint32>().swap(mFaceIndexOffset);
 }
 
 std::vector<uint32> MeshBase::faceVertexCounts() const

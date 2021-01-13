@@ -71,16 +71,6 @@ inline void MeshBase::assumeQuadrangular(size_t faceCount)
 	mFaceIndexOffset	= std::vector<uint32>();
 }
 
-inline void MeshBase::setFaceIndexOffsets(const std::vector<uint32>& faceIndexOffsets)
-{
-	mFaceIndexOffset = faceIndexOffsets;
-}
-
-inline void MeshBase::setFaceIndexOffsets(std::vector<uint32>&& faceIndexOffsets)
-{
-	mFaceIndexOffset = std::move(faceIndexOffsets);
-}
-
 inline size_t MeshBase::faceVertexCount(size_t face) const
 {
 	if (mInfo.QuadCount == 0)
@@ -143,32 +133,59 @@ inline Face MeshBase::getFace(uint32 index) const
 	return f;
 }
 
-inline bool MeshBase::isValid() const
+inline bool MeshBase::isValid(std::string* errMsg) const
 {
 	const size_t expectedSize = triangleCount() * 3 + quadCount() * 4;
 
-	// The vertex index buffer has to be always available
-	if (mVertexComponents[(size_t)MeshComponent::Vertex].Indices.size() != expectedSize)
+	if (faceCount() == 0) {
+		if (errMsg)
+			*errMsg = "Mesh has no faces";
 		return false;
+	}
+
+	if (nodeCount() < 3) {
+		if (errMsg)
+			*errMsg = "Mesh not enough vertices to have at least one triangle";
+		return false;
+	}
+
+	// The vertex index buffer has to be always available
+	if (mVertexComponents[(size_t)MeshComponent::Vertex].Indices.size() != expectedSize) {
+		if (errMsg)
+			*errMsg = "Vertex indices not given!";
+		return false;
+	}
 
 	for (size_t c = 0; c < (size_t)MeshComponent::_COUNT; ++c) {
 		if (mVertexComponents[c].Indices.empty())
 			continue;
 
-		if (mVertexComponents[c].Indices.size() != expectedSize)
+		if (mVertexComponents[c].Indices.size() != expectedSize) {
+			if (errMsg)
+				*errMsg = "Component indices do not have the same size as the primary index buffer!";
 			return false;
+		}
 
 		// Can not be empty!
-		if (mVertexComponents[c].Entries.size() == 0)
+		if (mVertexComponents[c].Entries.size() == 0) {
+			if (errMsg)
+				*errMsg = "Component has indices but not entries!";
 			return false;
+		}
 
 		// Has to be a multiple of two
-		if (isComponent2D((MeshComponent)c) && mVertexComponents[c].Entries.size() % 2 != 0)
+		if (isComponent2D((MeshComponent)c) && mVertexComponents[c].Entries.size() % 2 != 0) {
+			if (errMsg)
+				*errMsg = "2d component has entries which is not a multiple of two!";
 			return false;
+		}
 
 		// Has to be a multiple of three
-		if (isComponent3D((MeshComponent)c) && mVertexComponents[c].Entries.size() % 3 != 0)
+		if (isComponent3D((MeshComponent)c) && mVertexComponents[c].Entries.size() % 3 != 0) {
+			if (errMsg)
+				*errMsg = "3d component has entries which is not a multiple of three!";
 			return false;
+		}
 	}
 
 	PR_ASSERT(!(mInfo.Features & MeshFeature::Normal) == mVertexComponents[(size_t)MeshComponent::Normal].Entries.empty(), "Expected normals to be present if feature is present!");
@@ -177,7 +194,7 @@ inline bool MeshBase::isValid() const
 	PR_ASSERT(!(mInfo.Features & MeshFeature::Velocity) == mVertexComponents[(size_t)MeshComponent::Velocity].Entries.empty(), "Expected velocities to be present if feature is present!");
 	PR_ASSERT(!(mInfo.Features & MeshFeature::Material) == mMaterialSlots.empty(), "Expected normals to be present if feature is present!");
 
-	return faceCount() > 0 && nodeCount() > 3;
+	return true;
 }
 
 void MeshBase::handleInfo(MeshComponent component)

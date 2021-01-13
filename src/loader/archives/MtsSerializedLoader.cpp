@@ -318,6 +318,12 @@ void MtsSerializedLoader::load(const std::filesystem::path& file, SceneLoadConte
 	if (!(mesh_flags & MF_VERTEXNORMALS))
 		cnt->buildSmoothNormals();
 
+	std::string errMsg;
+	if (!cnt->isValid(&errMsg)) {
+		PR_LOG(L_WARNING) << "Mts file could not construct a valid mesh data: " << errMsg << std::endl;
+		return;
+	}
+
 	ctx.addMesh(mName, std::move(cnt));
 }
 } // namespace PR
