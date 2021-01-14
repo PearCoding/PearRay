@@ -327,7 +327,9 @@ void PlyLoader::load(const std::filesystem::path& file, SceneLoadContext& ctx)
 		return;
 	}
 
-	if (cnt)
+	if (cnt) {
+		PR_LOG(L_INFO) << "Added mesh '" << mName << "' with " << cnt->triangleCount() << " triangles and " << cnt->quadCount() << " quads" << std::endl;
 		ctx.addMesh(mName, std::move(cnt));
+	}
 }
 } // namespace PR

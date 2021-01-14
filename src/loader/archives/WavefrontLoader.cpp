@@ -35,7 +35,7 @@ void WavefrontLoader::load(const std::filesystem::path& file, SceneLoadContext& 
 		return;
 	}
 
-	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, &stream, nullptr /*material reader*/, /* todo: handle non tri/quads */ true /*triangulate*/)) {
+	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, &stream, nullptr /*material reader*/, true /*triangulate*/, false, true)) {
 		PR_LOG(L_ERROR) << "Error reading Wavefront file: " << err << std::endl;
 	} else {
 		stream.close();
@@ -112,8 +112,9 @@ void WavefrontLoader::load(const std::filesystem::path& file, SceneLoadContext& 
 		std::vector<uint32> indices;
 		indices.reserve(indices_count);
 		for (size_t sh = 0; sh < shapes.size(); ++sh) {
-			for (size_t i = 0; i < shapes[sh].mesh.indices.size(); ++i)
-				indices.push_back(shapes[sh].mesh.indices.at(i).vertex_index);
+			const auto& m = shapes[sh].mesh;
+			for (size_t i = 0; i < m.indices.size(); ++i)
+				indices.push_back(std::max(0, m.indices.at(i).vertex_index));
 		}
 
 		auto mesh = std::make_unique<MeshBase>();
@@ -140,8 +141,9 @@ void WavefrontLoader::load(const std::filesystem::path& file, SceneLoadContext& 
 				std::vector<uint32> norm_indices;
 				norm_indices.reserve(indices_count);
 				for (size_t sh = 0; sh < shapes.size(); ++sh) {
-					for (size_t i = 0; i < shapes[sh].mesh.indices.size(); ++i)
-						norm_indices.push_back(shapes[sh].mesh.indices.at(i).normal_index);
+					const auto& m = shapes[sh].mesh;
+					for (size_t i = 0; i < m.indices.size(); ++i)
+						norm_indices.push_back(std::max(0, m.indices.at(i).normal_index));
 				}
 				mesh->setVertexComponentIndices(MeshComponent::Normal, std::move(norm_indices));
 			}
@@ -155,8 +157,9 @@ void WavefrontLoader::load(const std::filesystem::path& file, SceneLoadContext& 
 				std::vector<uint32> tex_indices;
 				tex_indices.reserve(indices_count);
 				for (size_t sh = 0; sh < shapes.size(); ++sh) {
-					for (size_t i = 0; i < shapes[sh].mesh.indices.size(); ++i)
-						tex_indices.push_back(shapes[sh].mesh.indices.at(i).texcoord_index);
+					const auto& m = shapes[sh].mesh;
+					for (size_t i = 0; i < m.indices.size(); ++i)
+						tex_indices.push_back(std::max(0, m.indices.at(i).texcoord_index));
 				}
 				mesh->setVertexComponentIndices(MeshComponent::Texture, std::move(tex_indices));
 			}
@@ -183,8 +186,8 @@ void WavefrontLoader::load(const std::filesystem::path& file, SceneLoadContext& 
 			return;
 		}
 
+		PR_LOG(L_INFO) << "Added mesh '" << name << "' with " << mesh->triangleCount() << " triangles and " << mesh->quadCount() << " quads" << std::endl;
 		ctx.addMesh(name, std::move(mesh));
-		PR_LOG(L_DEBUG) << "Added mesh " << name << std::endl;
 	}
 }
 } // namespace PR
