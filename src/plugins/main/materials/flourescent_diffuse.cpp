@@ -32,6 +32,7 @@ public:
 	}
 
 	// The stokes shift is not linear in the wavelength domain
+	// Note: stokesShift(stokesShift(a, s), -s) = a
 	inline static SpectralBlob stokesShift(const SpectralBlob& wvl, const SpectralBlob& shift)
 	{
 		/* E = hc/w -> K = 1/w <=> w = 1/K
@@ -47,8 +48,9 @@ public:
 	{
 		PR_PROFILE_THIS;
 
+		const bool isLight				= in.Context.RayFlags & RayFlag::Light;
 		const SpectralBlob expShift		= mShift->eval(in.ShadingContext);
-		const SpectralBlob expWvl		= stokesShift(expShift, in.Context.WavelengthNM);
+		const SpectralBlob expWvl		= isLight ? stokesShift(in.Context.WavelengthNM, expShift) : stokesShift(in.Context.WavelengthNM, -expShift);
 		const SpectralBlob actShift		= in.Context.FlourescentWavelengthNM - expWvl;
 		const SpectralBlob flourescentW = (actShift < 0).select(0, (1 - actShift / expShift).cwiseMax(0.0f));
 
@@ -83,10 +85,16 @@ public:
 
 		out.L = Sampling::cos_hemi(in.RND.getFloat(), in.RND.getFloat());
 
-		out.Weight					= mAlbedo->eval(in.ShadingContext) * out.L(2) * PR_INV_PI;
-		out.FlourescentWavelengthNM = stokesShift(in.Context.WavelengthNM, mShift->eval(in.ShadingContext));
-		out.PDF_S					= Sampling::cos_hemi_pdf(out.L(2));
-		out.Type					= MaterialScatteringType::DiffuseReflection;
+		out.Weight = mAlbedo->eval(in.ShadingContext) * out.L(2) * PR_INV_PI;
+
+		// We apply the forward stokes shift for lights and reverse stokes shift for camera lights
+		if (in.Context.RayFlags & RayFlag::Light)
+			out.FlourescentWavelengthNM = stokesShift(in.Context.WavelengthNM, mShift->eval(in.ShadingContext));
+		else
+			out.FlourescentWavelengthNM = stokesShift(in.Context.WavelengthNM, -mShift->eval(in.ShadingContext));
+
+		out.PDF_S = Sampling::cos_hemi_pdf(out.L(2));
+		out.Type  = MaterialScatteringType::DiffuseReflection;
 
 		// Make sure the output direction is on the same side
 		out.L = in.Context.V.makeSameHemisphere(out.L);
