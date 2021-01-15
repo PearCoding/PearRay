@@ -11,7 +11,7 @@
 	(sampler 
 	  :slot 'aa'
 	  :type 'hammersley'
-	  :sample_count 1024
+	  :sample_count 128
 	)
 	(filter 
 	  :slot 'pixel'

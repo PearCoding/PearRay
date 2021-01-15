@@ -16,7 +16,7 @@
 	(sampler
 		:slot 'aa'
 		:type 'MULTI_JITTER'
-		:sample_count 512
+		:sample_count 256
 	)
 	(filter
 		:slot 'pixel'

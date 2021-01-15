@@ -31,13 +31,25 @@ public:
 			return std::max(0.0f, u);
 	}
 
+	// The stokes shift is not linear in the wavelength domain
+	inline static SpectralBlob stokesShift(const SpectralBlob& wvl, const SpectralBlob& shift)
+	{
+		/* E = hc/w -> K = 1/w <=> w = 1/K
+		 * Sw = 1/(K - S) <=> Sw = 1/(1/w - S) <=> Sw = w / (1 - w*S)
+		 * The shift variable (S) is given in 1/nm units
+		 * Keep in mind, lower energy means larger wavelength
+		 */
+		return wvl / (1 - wvl * shift);
+	}
+
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
 			  const RenderTileSession&) const override
 	{
 		PR_PROFILE_THIS;
 
 		const SpectralBlob expShift		= mShift->eval(in.ShadingContext);
-		const SpectralBlob actShift		= in.Context.FlourescentWavelengthNM - in.Context.WavelengthNM;
+		const SpectralBlob expWvl		= stokesShift(expShift, in.Context.WavelengthNM);
+		const SpectralBlob actShift		= in.Context.FlourescentWavelengthNM - expWvl;
 		const SpectralBlob flourescentW = (actShift < 0).select(0, (1 - actShift / expShift).cwiseMax(0.0f));
 
 		const float dot = in.Context.V.sameHemisphere(in.Context.L) ? culling(in.Context.NdotL()) : 0;
@@ -72,7 +84,7 @@ public:
 		out.L = Sampling::cos_hemi(in.RND.getFloat(), in.RND.getFloat());
 
 		out.Weight					= mAlbedo->eval(in.ShadingContext) * out.L(2) * PR_INV_PI;
-		out.FlourescentWavelengthNM = in.Context.WavelengthNM + mShift->eval(in.ShadingContext);
+		out.FlourescentWavelengthNM = stokesShift(in.Context.WavelengthNM, mShift->eval(in.ShadingContext));
 		out.PDF_S					= Sampling::cos_hemi_pdf(out.L(2));
 		out.Type					= MaterialScatteringType::DiffuseReflection;
 
@@ -100,12 +112,17 @@ private:
 	const std::shared_ptr<FloatSpectralNode> mShift;
 };
 
+inline constexpr float stokesShiftDelta(float nm, float nm_shift) { return 1 / nm - 1 / (nm + nm_shift); }
+
 class FlourescentDiffuseMaterialPlugin : public IMaterialPlugin {
 public:
 	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx) override
 	{
+		// Calculate the stokes shift from 550nm to 552nm
+		constexpr float def_shift = stokesShiftDelta(550, 2);
+
 		const auto albedo = ctx.lookupSpectralNode({ "albedo", "base", "diffuse" }, 1);
-		const auto shift  = ctx.lookupSpectralNode("shift", 1); // Shift of 1 nm
+		const auto shift  = ctx.lookupSpectralNode("shift", def_shift);
 
 		if (ctx.parameters().getBool("two_sided", true))
 			return std::make_shared<FlourescentDiffuse<true>>(albedo, shift);

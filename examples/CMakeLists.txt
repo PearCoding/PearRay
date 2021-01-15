@@ -3,9 +3,9 @@ file(GLOB EXAMPLE_FILES "*.prc")
 
 set(EXAMPLE_TARGETS )
 
-# Ignore some scenes as they are to complex and take too long.
+# Ignore some scenes as they are to complex, require external resources or take too long.
 # They still can be run explicitly however
-set(IGNORE_IN_ALL complex)
+set(IGNORE_IN_ALL complex klems_measured rgl_measured )
 
 foreach(EXAMPLE_FILE ${EXAMPLE_FILES})
 	get_filename_component(EXAMPLE_NAME ${EXAMPLE_FILE} NAME_WE)
@@ -15,6 +15,8 @@ foreach(EXAMPLE_FILE ${EXAMPLE_FILES})
 	add_custom_target(${_target_name} 
 		COMMAND pearray ${EXAMPLE_FILE}
 		DEPENDS pearray
+		SOURCES ${EXAMPLE_FILES}
+		BYPRODUCTS ${EXAMPLE_NAME}/scene/results/scene.exr
 		WORKING_DIRECTORY ${_wrk_dir}
 		COMMENT "Rendering ${EXAMPLE_FILE}"
 		USES_TERMINAL
