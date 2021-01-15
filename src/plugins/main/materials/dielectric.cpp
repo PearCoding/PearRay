@@ -25,6 +25,7 @@ public:
 		, mSpecularity(spec)
 		, mTransmission(trans)
 		, mIOR(ior)
+		, mNodeContribFlags(ior->materialFlags())
 	{
 	}
 
@@ -42,7 +43,7 @@ public:
 		out.PDF_S  = 0.0f;
 		out.Type   = MaterialScatteringType::SpecularTransmission;
 		out.Weight = SpectralBlob::Zero();
-		out.Flags  = MaterialScatter::DeltaDistribution;
+		out.Flags  = MaterialSampleFlag::DeltaDistribution | mNodeContribFlags;
 	}
 
 	void pdf(const MaterialEvalInput&, MaterialPDFOutput& out,
@@ -53,7 +54,7 @@ public:
 		PR_ASSERT(false, "Delta distribution materials should not be evaluated");
 
 		out.PDF_S = 0.0f;
-		out.Flags = MaterialScatter::DeltaDistribution;
+		out.Flags = MaterialSampleFlag::DeltaDistribution | mNodeContribFlags;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -109,7 +110,7 @@ public:
 			}
 		}
 
-		out.Flags = MaterialScatter::DeltaDistribution;
+		out.Flags = MaterialSampleFlag::DeltaDistribution | mNodeContribFlags;
 	}
 
 	std::string dumpInformation() const override
@@ -129,6 +130,8 @@ private:
 	const std::shared_ptr<FloatSpectralNode> mSpecularity;
 	const std::shared_ptr<FloatSpectralNode> mTransmission;
 	const std::shared_ptr<FloatSpectralNode> mIOR;
+
+	const MaterialSampleFlags mNodeContribFlags;
 };
 
 // System of function which probably could be simplified with template meta programming

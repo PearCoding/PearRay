@@ -8,7 +8,8 @@ namespace PR {
 class ConstBlackbodyNode : public FloatSpectralNode {
 public:
 	explicit ConstBlackbodyNode(float temperature)
-		: mTemperature(temperature)
+		: FloatSpectralNode(NodeFlag::SpectralVarying)
+		, mTemperature(temperature)
 	{
 	}
 
@@ -36,7 +37,8 @@ private:
 class DynamicBlackbodyNode : public FloatSpectralNode {
 public:
 	explicit DynamicBlackbodyNode(const std::shared_ptr<FloatScalarNode>& temperature)
-		: mTemperature(temperature)
+		: FloatSpectralNode(temperature->flags() | NodeFlag::SpectralVarying)
+		, mTemperature(temperature)
 	{
 	}
 
@@ -89,8 +91,6 @@ public:
 			.Specification()
 			.get();
 	}
-
-	
 };
 } // namespace PR
 

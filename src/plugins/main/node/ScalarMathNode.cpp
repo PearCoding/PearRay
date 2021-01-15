@@ -8,7 +8,8 @@ namespace PR {
 	class Prefix##Math : public FloatScalarNode {                               \
 	public:                                                                     \
 		explicit Prefix##Math(const std::shared_ptr<FloatScalarNode>& op1)      \
-			: mOp1(op1)                                                         \
+			: FloatScalarNode(op1->flags())                                     \
+			, mOp1(op1)                                                         \
 		{                                                                       \
 		}                                                                       \
 		float eval(const ShadingContext& ctx) const override                    \
@@ -30,7 +31,8 @@ namespace PR {
 	class Prefix##Math : public FloatScalarNode {                              \
 	public:                                                                    \
 		explicit Prefix##Math(const std::shared_ptr<FloatScalarNode>& op1)     \
-			: mOp1(op1)                                                        \
+			: FloatScalarNode(op1->flags())                                    \
+			, mOp1(op1)                                                        \
 		{                                                                      \
 		}                                                                      \
 		float eval(const ShadingContext& ctx) const override                   \
@@ -53,7 +55,8 @@ namespace PR {
 	public:                                                                                                            \
 		explicit Prefix##Math(const std::shared_ptr<FloatScalarNode>& op1,                                             \
 							  const std::shared_ptr<FloatScalarNode>& op2)                                             \
-			: mOp1(op1)                                                                                                \
+			: FloatScalarNode(op1->flags() | op2->flags())                                                             \
+			, mOp1(op1)                                                                                                \
 			, mOp2(op2)                                                                                                \
 		{                                                                                                              \
 		}                                                                                                              \
@@ -78,7 +81,8 @@ namespace PR {
 	public:                                                                                                        \
 		explicit Prefix##Math(const std::shared_ptr<FloatScalarNode>& op1,                                         \
 							  const std::shared_ptr<FloatScalarNode>& op2)                                         \
-			: mOp1(op1)                                                                                            \
+			: FloatScalarNode(op1->flags() | op2->flags())                                                         \
+			, mOp1(op1)                                                                                            \
 			, mOp2(op2)                                                                                            \
 		{                                                                                                          \
 		}                                                                                                          \
@@ -235,8 +239,6 @@ public:
 
 		return builder.get();
 	}
-
-	
 };
 } // namespace PR
 

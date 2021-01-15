@@ -15,7 +15,8 @@ class CheckerboardNode : public FloatSpectralNode {
 public:
 	explicit CheckerboardNode(const std::shared_ptr<FloatSpectralNode>& op1, const std::shared_ptr<FloatSpectralNode>& op2,
 							  const std::shared_ptr<FloatScalarNode>& scaleU, const std::shared_ptr<FloatScalarNode>& scaleV)
-		: mOp1(op1)
+		: FloatSpectralNode(op1->flags() | op2->flags() | scaleU->flags() | (scaleV->flags() | NodeFlag::TextureVarying))
+		, mOp1(op1)
 		, mOp2(op2)
 		, mScaleU(scaleU)
 		, mScaleV(scaleV)

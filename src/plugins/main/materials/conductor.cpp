@@ -21,6 +21,7 @@ public:
 		, mEta(eta)
 		, mK(k)
 		, mSpecularity(spec)
+		, mNodeContribFlags(mEta->materialFlags() | mK->materialFlags() /* No specularity, as it has no influency on sampling */)
 	{
 	}
 
@@ -38,7 +39,7 @@ public:
 		out.PDF_S  = 0.0f;
 		out.Type   = MaterialScatteringType::SpecularReflection;
 		out.Weight = SpectralBlob::Zero();
-		out.Flags  = MaterialScatter::DeltaDistribution;
+		out.Flags  = MaterialSampleFlag::DeltaDistribution | mNodeContribFlags;
 	}
 
 	void pdf(const MaterialEvalInput&, MaterialPDFOutput& out,
@@ -49,7 +50,7 @@ public:
 		PR_ASSERT(false, "Delta distribution materials should not be evaluated");
 
 		out.PDF_S = 0;
-		out.Flags = MaterialScatter::DeltaDistribution;
+		out.Flags = MaterialSampleFlag::DeltaDistribution | mNodeContribFlags;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -69,7 +70,7 @@ public:
 		out.Type   = MaterialScatteringType::SpecularReflection;
 		out.PDF_S  = 1;
 		out.L	   = Scattering::reflect(in.Context.V);
-		out.Flags  = MaterialScatter::DeltaDistribution;
+		out.Flags  = MaterialSampleFlag::DeltaDistribution | mNodeContribFlags;
 	}
 
 	std::string dumpInformation() const override
@@ -89,6 +90,8 @@ private:
 	const std::shared_ptr<FloatSpectralNode> mEta;
 	const std::shared_ptr<FloatSpectralNode> mK;
 	const std::shared_ptr<FloatSpectralNode> mSpecularity;
+
+	const MaterialSampleFlags mNodeContribFlags;
 };
 
 class ConductorMaterialPlugin : public IMaterialPlugin {

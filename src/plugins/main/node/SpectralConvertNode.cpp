@@ -76,7 +76,8 @@ static inline void hsv(const SpectralBlob& w, const SpectralBlob& wvl, SpectralB
 	class Prefix##SpectralConvert : public FloatSpectralNode {                         \
 	public:                                                                            \
 		explicit Prefix##SpectralConvert(const std::shared_ptr<FloatSpectralNode>& op) \
-			: mOperand(op)                                                             \
+			: FloatSpectralNode(op->flags() | NodeFlag::SpectralVarying)               \
+			, mOperand(op)                                                             \
 		{                                                                              \
 		}                                                                              \
 		SpectralBlob eval(const ShadingContext& ctx) const override                    \
@@ -208,8 +209,6 @@ public:
 			.Specification()
 			.get();
 	}
-
-	
 };
 } // namespace PR
 

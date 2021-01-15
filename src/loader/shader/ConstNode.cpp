@@ -6,7 +6,7 @@
 
 namespace PR {
 ConstScalarNode::ConstScalarNode(float f)
-	: FloatScalarNode()
+	: FloatScalarNode(NodeFlag::Const)
 	, mValue(f)
 {
 }
@@ -26,7 +26,7 @@ std::string ConstScalarNode::dumpInformation() const
 /////////////////////////////////////
 
 ConstSpectralNode::ConstSpectralNode(const SpectralBlob& f)
-	: FloatSpectralNode()
+	: FloatSpectralNode(NodeFlag::Const)
 	, mValue(f)
 {
 }
@@ -51,7 +51,7 @@ std::string ConstSpectralNode::dumpInformation() const
 /////////////////////////////////////
 
 ParametricSpectralNode::ParametricSpectralNode(const ParametricBlob& f)
-	: FloatSpectralNode()
+	: FloatSpectralNode(NodeFlag::SpectralVarying)
 	, mValue(f)
 {
 }
@@ -76,7 +76,7 @@ std::string ParametricSpectralNode::dumpInformation() const
 /////////////////////////////////////
 
 ParametricScaledSpectralNode::ParametricScaledSpectralNode(const ParametricBlob& f, float power)
-	: FloatSpectralNode()
+	: FloatSpectralNode(NodeFlag::SpectralVarying)
 	, mValue(f)
 	, mPower(power)
 {
@@ -102,7 +102,7 @@ std::string ParametricScaledSpectralNode::dumpInformation() const
 /////////////////////////////////////
 
 SplatSpectralNode::SplatSpectralNode(const std::shared_ptr<FloatScalarNode>& f)
-	: FloatSpectralNode()
+	: FloatSpectralNode(f->flags())
 	, mValue(f)
 {
 }
@@ -127,7 +127,7 @@ std::string SplatSpectralNode::dumpInformation() const
 /////////////////////////////////////
 
 ConstVectorNode::ConstVectorNode(const Vector3f& f)
-	: FloatVectorNode()
+	: FloatVectorNode(NodeFlag::Const)
 	, mValue(f)
 {
 }

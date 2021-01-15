@@ -151,6 +151,7 @@ public:
 		, mIOR(ior)
 		, mRoughnessX(roughnessX)
 		, mRoughnessY(roughnessY)
+		, mNodeContribFlags(mIOR->materialFlags() | mRoughnessX->flags() | mRoughnessY->flags())
 	{
 	}
 
@@ -185,7 +186,7 @@ public:
 		if (closure.isDelta()) { // Reject
 			out.PDF_S  = 0.0f;
 			out.Weight = SpectralBlob::Zero();
-			out.Flags  = MaterialScatter::DeltaDistribution;
+			out.Flags  = MaterialSampleFlag::DeltaDistribution | mNodeContribFlags;
 			return;
 		}
 
@@ -197,6 +198,8 @@ public:
 			out.Type = MaterialScatteringType::SpecularReflection;
 		else
 			out.Type = MaterialScatteringType::SpecularTransmission;
+
+		out.Flags = mNodeContribFlags;
 	}
 
 	void pdf(const MaterialEvalInput& in, MaterialPDFOutput& out,
@@ -207,11 +210,12 @@ public:
 		const auto closure = getClosurePdf(in.ShadingContext);
 		if (closure.isDelta()) { // Reject
 			out.PDF_S = 0.0f;
-			out.Flags = MaterialScatter::DeltaDistribution;
+			out.Flags = MaterialSampleFlag::DeltaDistribution | mNodeContribFlags;
 			return;
 		}
 
 		out.PDF_S = closure.pdf(in.Context.V, in.Context.L);
+		out.Flags = mNodeContribFlags;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -222,8 +226,9 @@ public:
 		out.L = closure.sample(in.RND, in.Context.V);
 
 		// Set flags
+		out.Flags = mNodeContribFlags;
 		if (closure.isDelta())
-			out.Flags |= MaterialScatter::DeltaDistribution;
+			out.Flags |= MaterialSampleFlag::DeltaDistribution;
 
 		if (PR_UNLIKELY(out.L.isZero())) {
 			out = MaterialSampleOutput::Reject(MaterialScatteringType::SpecularReflection, out.Flags);
@@ -268,6 +273,8 @@ private:
 	const std::shared_ptr<FloatSpectralNode> mIOR;
 	const std::shared_ptr<FloatScalarNode> mRoughnessX;
 	const std::shared_ptr<FloatScalarNode> mRoughnessY;
+
+	const MaterialSampleFlags mNodeContribFlags; // Flags which affect the sampling process
 };
 
 // System of function which probably could be simplified with template meta programming
@@ -352,8 +359,6 @@ public:
 			.Specification()
 			.get();
 	}
-	
-	
 };
 } // namespace PR
 

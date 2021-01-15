@@ -11,7 +11,7 @@ template <typename T>
 class PR_LIB_LOADER EquidistantSpectrumBaseNode : public FloatSpectralNode {
 public:
 	inline EquidistantSpectrumBaseNode(const T& spec)
-		: mSpectrum(spec)
+		: FloatSpectralNode(NodeFlag::SpectralVarying), mSpectrum(spec)
 	{
 	}
 

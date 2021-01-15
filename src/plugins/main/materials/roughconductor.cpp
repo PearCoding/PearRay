@@ -26,6 +26,7 @@ public:
 		, mSpecularity(spec)
 		, mRoughnessX(roughnessX)
 		, mRoughnessY(roughnessY)
+		, mNodeContribFlags(mEta->materialFlags() | mK->materialFlags() | mRoughnessX->flags() | mRoughnessY->flags())
 	{
 	}
 
@@ -46,7 +47,7 @@ public:
 		if (closure.isDelta()) { // Reject
 			out.PDF_S  = 0.0f;
 			out.Weight = SpectralBlob::Zero();
-			out.Flags  = MaterialScatter::DeltaDistribution;
+			out.Flags  = MaterialSampleFlag::DeltaDistribution | mNodeContribFlags;
 			return;
 		}
 
@@ -59,6 +60,7 @@ public:
 
 		out.Weight = mSpecularity->eval(in.ShadingContext) * factor;
 		out.PDF_S  = closure.pdf(in.Context.L, in.Context.V);
+		out.Flags  = mNodeContribFlags;
 	}
 
 	void pdf(const MaterialEvalInput& in, MaterialPDFOutput& out,
@@ -69,11 +71,12 @@ public:
 		const auto closure = MicrofacetReflection(roughness(in.ShadingContext));
 		if (closure.isDelta()) {
 			out.PDF_S = 0.0f;
-			out.Flags = MaterialScatter::DeltaDistribution;
+			out.Flags = MaterialSampleFlag::DeltaDistribution | mNodeContribFlags;
 			return;
 		}
 
 		out.PDF_S = closure.pdf(in.Context.L, in.Context.V);
+		out.Flags = mNodeContribFlags;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -85,8 +88,9 @@ public:
 		out.L			   = closure.sample(in.RND.get2D(), in.Context.V);
 
 		// Set flags
+		out.Flags = mNodeContribFlags;
 		if (closure.isDelta())
-			out.Flags |= MaterialScatter::DeltaDistribution;
+			out.Flags |= MaterialSampleFlag::DeltaDistribution;
 
 		if (!in.Context.V.sameHemisphere(out.L)) { // No transmission
 			out = MaterialSampleOutput::Reject(MaterialScatteringType::SpecularReflection, out.Flags);
@@ -133,6 +137,8 @@ private:
 	const std::shared_ptr<FloatSpectralNode> mSpecularity;
 	const std::shared_ptr<FloatScalarNode> mRoughnessX;
 	const std::shared_ptr<FloatScalarNode> mRoughnessY;
+
+	const MaterialSampleFlags mNodeContribFlags; // Flags which affect the sampling process
 };
 
 // System of function which probably could be simplified with template meta programming
@@ -204,8 +210,6 @@ public:
 			.Specification()
 			.get();
 	}
-
-	
 };
 } // namespace PR
 

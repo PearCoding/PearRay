@@ -10,6 +10,14 @@ ImagePipelineEditor::ImagePipelineEditor(QWidget* parent)
 {
 	ui->setupUi(this);
 
+	// Set defaults
+	ui->toneMapperCB->setCurrentIndex((int)ToneMappingMode::ACES);
+	ui->formatToCB->setCurrentIndex((int)ColorFormat::SRGB);
+	ui->formatFromCB->setCurrentIndex((int)ColorFormat::XYZ /* Renderer default */);
+	ui->gammaCB->setChecked(true);
+	ui->gammaSB->setValue(2.20f);
+	ui->invertCB->setChecked(true);
+
 	connect(ui->exposureSB, SIGNAL(valueChanged(double)), this, SIGNAL(changed()));
 	connect(ui->offsetSB, SIGNAL(valueChanged(double)), this, SIGNAL(changed()));
 

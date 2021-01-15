@@ -504,7 +504,7 @@ public:
 		if (closure.isDelta()) { // Reject
 			out.Weight = 0;
 			out.PDF_S  = 0;
-			out.Flags  = MaterialScatter::DeltaDistribution;
+			out.Flags  = MaterialSampleFlag::DeltaDistribution;
 			return;
 		}
 
@@ -536,7 +536,7 @@ public:
 		const auto closure = createClosure(in.ShadingContext);
 		if (closure.isDelta()) { // Reject
 			out.PDF_S = 0;
-			out.Flags = MaterialScatter::DeltaDistribution;
+			out.Flags = MaterialSampleFlag::DeltaDistribution;
 			return;
 		}
 
@@ -555,7 +555,7 @@ public:
 
 		// Set flags
 		if (closure.isDelta())
-			out.Flags |= MaterialScatter::DeltaDistribution;
+			out.Flags |= MaterialSampleFlag::DeltaDistribution;
 
 		if (PR_UNLIKELY(out.L.isZero())) {
 			out = MaterialSampleOutput::Reject(MaterialScatteringType::DiffuseReflection, out.Flags);

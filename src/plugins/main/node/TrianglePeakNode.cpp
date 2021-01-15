@@ -14,7 +14,8 @@ class TrianglePeakNode : public FloatSpectralNode {
 public:
 	explicit TrianglePeakNode(const std::shared_ptr<FloatScalarNode>& peak_nm,
 							  const std::shared_ptr<FloatScalarNode>& radius)
-		: mPeak(peak_nm)
+		: FloatSpectralNode(peak_nm->flags() | (radius->flags() | NodeFlag::SpectralVarying))
+		, mPeak(peak_nm)
 		, mRadius(radius)
 	{
 	}
@@ -47,7 +48,8 @@ private:
 class TrianglePeakNodeConst : public FloatSpectralNode {
 public:
 	explicit TrianglePeakNodeConst(float peak_nm, float radius)
-		: mPeak(peak_nm)
+		: FloatSpectralNode(NodeFlag::SpectralVarying)
+		, mPeak(peak_nm)
 		, mRadius(radius)
 	{
 	}
@@ -104,8 +106,6 @@ public:
 			.Specification()
 			.get();
 	}
-
-	
 };
 } // namespace PR
 

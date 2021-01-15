@@ -29,7 +29,7 @@ public:
 		out.PDF_S  = 0.0f;
 		out.Type   = MaterialScatteringType::SpecularTransmission;
 		out.Weight = SpectralBlob::Zero();
-		out.Flags  = MaterialScatter::Null | MaterialScatter::DeltaDistribution;
+		out.Flags  = MaterialSampleFlag::Null | MaterialSampleFlag::DeltaDistribution;
 	}
 
 	void pdf(const MaterialEvalInput&, MaterialPDFOutput& out,
@@ -39,7 +39,7 @@ public:
 
 		PR_ASSERT(false, "Delta distribution materials should not be evaluated");
 		out.PDF_S = 0.0f;
-		out.Flags = MaterialScatter::Null | MaterialScatter::DeltaDistribution;
+		out.Flags = MaterialSampleFlag::Null | MaterialSampleFlag::DeltaDistribution;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -51,7 +51,7 @@ public:
 		out.PDF_S  = 1;
 		out.Type   = MaterialScatteringType::SpecularTransmission;
 		out.L	   = -in.Context.V;
-		out.Flags  = MaterialScatter::Null | MaterialScatter::DeltaDistribution;
+		out.Flags  = MaterialSampleFlag::Null | MaterialSampleFlag::DeltaDistribution;
 	}
 
 	std::string dumpInformation() const override

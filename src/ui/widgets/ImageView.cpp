@@ -217,7 +217,7 @@ void ImageView::renderBackground(const QSize& size)
 
 	// Bar
 	painter.setBrush(QBrush(Qt::darkGray));
-	painter.drawRect(0, 0, mBackground.width() - 1, bar_height - 1);
+	painter.drawRect(0, 0, mBackground.width(), bar_height);
 
 	// Separators
 	painter.drawLine(BAR_POS_W / 2, 0,

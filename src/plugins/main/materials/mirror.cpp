@@ -34,7 +34,7 @@ public:
 		out.PDF_S  = 0.0f;
 		out.Type   = MaterialScatteringType::SpecularReflection;
 		out.Weight = SpectralBlob::Zero();
-		out.Flags  = MaterialScatter::DeltaDistribution;
+		out.Flags  = MaterialSampleFlag::DeltaDistribution;
 	}
 
 	void pdf(const MaterialEvalInput&, MaterialPDFOutput& out,
@@ -45,7 +45,7 @@ public:
 		PR_ASSERT(false, "Delta distribution materials should not be evaluated");
 
 		out.PDF_S = 0;
-		out.Flags = MaterialScatter::DeltaDistribution;
+		out.Flags = MaterialSampleFlag::DeltaDistribution;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -57,7 +57,7 @@ public:
 		out.Type   = MaterialScatteringType::SpecularReflection;
 		out.PDF_S  = 1;
 		out.L	   = Scattering::reflect(in.Context.V);
-		out.Flags  = MaterialScatter::DeltaDistribution;
+		out.Flags  = MaterialSampleFlag::DeltaDistribution;
 	}
 
 	std::string dumpInformation() const override

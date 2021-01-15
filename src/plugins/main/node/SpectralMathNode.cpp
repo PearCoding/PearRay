@@ -9,7 +9,8 @@ namespace PR {
 	class Prefix##SpectralMath : public FloatSpectralNode {                          \
 	public:                                                                          \
 		explicit Prefix##SpectralMath(const std::shared_ptr<FloatSpectralNode>& op1) \
-			: mOp1(op1)                                                              \
+			: FloatSpectralNode(op1->flags())                                        \
+			, mOp1(op1)                                                              \
 		{                                                                            \
 		}                                                                            \
 		SpectralBlob eval(const ShadingContext& ctx) const override                  \
@@ -36,7 +37,8 @@ namespace PR {
 	public:                                                                                                        \
 		explicit Prefix##SpectralMath(const std::shared_ptr<FloatSpectralNode>& op1,                               \
 									  const std::shared_ptr<FloatSpectralNode>& op2)                               \
-			: mOp1(op1)                                                                                            \
+			: FloatSpectralNode(op1->flags() | op2->flags())                                                       \
+			, mOp1(op1)                                                                                            \
 			, mOp2(op2)                                                                                            \
 		{                                                                                                          \
 		}                                                                                                          \
@@ -113,7 +115,8 @@ public:
 	explicit ConstBlendSpectralMath(float factor,
 									const std::shared_ptr<FloatSpectralNode>& op1,
 									const std::shared_ptr<FloatSpectralNode>& op2)
-		: mFactor(factor)
+		: FloatSpectralNode(op1->flags() | op2->flags())
+		, mFactor(factor)
 		, mOp1(op1)
 		, mOp2(op2)
 	{
@@ -146,7 +149,8 @@ public:
 	explicit DynamicBlendSpectralMath(const std::shared_ptr<FloatScalarNode>& factor,
 									  const std::shared_ptr<FloatSpectralNode>& op1,
 									  const std::shared_ptr<FloatSpectralNode>& op2)
-		: mFactor(factor)
+		: FloatSpectralNode(op1->flags() | op2->flags() | factor->flags())
+		, mFactor(factor)
 		, mOp1(op1)
 		, mOp2(op2)
 	{
@@ -187,7 +191,8 @@ class ConstBCSpectralMath : public FloatSpectralNode {
 public:
 	explicit ConstBCSpectralMath(const std::shared_ptr<FloatSpectralNode>& color,
 								 float brightness, float contrast)
-		: mColor(color)
+		: FloatSpectralNode(color->flags())
+		, mColor(color)
 		, mBrightness(brightness)
 		, mContrast(contrast)
 	{
@@ -221,7 +226,8 @@ public:
 	explicit DynamicBCSpectralMath(const std::shared_ptr<FloatSpectralNode>& color,
 								   const std::shared_ptr<FloatScalarNode>& brightness,
 								   const std::shared_ptr<FloatScalarNode>& contrast)
-		: mColor(color)
+		: FloatSpectralNode(color->flags() | brightness->flags() | contrast->flags())
+		, mColor(color)
 		, mBrightness(brightness)
 		, mContrast(contrast)
 	{
@@ -344,8 +350,6 @@ public:
 
 		return builder.get();
 	}
-
-	
 };
 } // namespace PR
 

@@ -9,16 +9,17 @@ namespace PR {
 
 struct PR_LIB_CORE MaterialBaseOutput {
 	SpectralBlob PDF_S;
-	MaterialScatterFlags Flags = 0;
+	MaterialSampleFlags Flags = 0;
 
-	inline bool isNull() const { return Flags & MaterialScatter::Null; }
-	inline bool isDelta() const { return Flags & MaterialScatter::DeltaDistribution; }
-	inline bool isSpectralVarying() const { return Flags & MaterialScatter::SpectralVarying; }
-	inline bool isSpatialVarying() const { return Flags & MaterialScatter::SpatialVarying; }
-	inline bool isTimeVarying() const { return Flags & MaterialScatter::TimeVarying; }
+	inline bool isNull() const { return Flags & MaterialSampleFlag::Null; }
+	inline bool isDelta() const { return Flags & MaterialSampleFlag::DeltaDistribution; }
+	inline bool isSpectralVarying() const { return Flags & MaterialSampleFlag::SpectralVarying; }
+	inline bool isSpatialVarying() const { return Flags & MaterialSampleFlag::SpatialVarying; }
+	inline bool isTimeVarying() const { return Flags & MaterialSampleFlag::TimeVarying; }
+	inline bool isFlourescent() const { return Flags & MaterialSampleFlag::Flourescent; }
 
 	// When to reduce to hero wavelength only
-	inline bool isHeroCollapsing() const { return !isNull() && isDelta(); }
+	inline bool isHeroCollapsing() const { return isDelta() && isSpectralVarying(); }
 };
 
 // Evaluation

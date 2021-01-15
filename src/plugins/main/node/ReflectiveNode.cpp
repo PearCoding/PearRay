@@ -19,7 +19,8 @@ template <typename T, size_t N>
 class CauchyIndexNode : public FloatSpectralNode {
 public:
 	explicit CauchyIndexNode(const std::array<T, N>& cs)
-		: mCs(cs)
+		: FloatSpectralNode(NodeFlag::SpectralVarying)
+		, mCs(cs)
 	{
 	}
 
@@ -58,7 +59,8 @@ template <typename T, size_t N>
 class SellmeierSqrIndexNode : public FloatSpectralNode {
 public:
 	explicit SellmeierSqrIndexNode(const std::array<T, N>& bs, const std::array<T, N>& cs)
-		: mBs(bs)
+		: FloatSpectralNode(NodeFlag::SpectralVarying)
+		, mBs(bs)
 		, mCs(cs)
 	{
 	}
@@ -102,7 +104,8 @@ template <typename T, size_t N>
 class SellmeierIndexNode : public FloatSpectralNode {
 public:
 	explicit SellmeierIndexNode(const std::array<T, N>& bs, const std::array<T, N>& cs)
-		: mBs(bs)
+		: FloatSpectralNode(NodeFlag::SpectralVarying)
+		, mBs(bs)
 		, mCs(cs)
 	{
 	}
@@ -146,7 +149,8 @@ template <typename T>
 class PolySqrIndexNode : public FloatSpectralNode {
 public:
 	explicit PolySqrIndexNode(const T& a, const T& b1, const T& b2, const T& c1, const T& c2)
-		: mA(a)
+		: FloatSpectralNode(NodeFlag::SpectralVarying)
+		, mA(a)
 		, mB1(b1)
 		, mB2(b2)
 		, mC1(c1)
@@ -180,7 +184,8 @@ template <typename T>
 class PolyIndexNode : public FloatSpectralNode {
 public:
 	explicit PolyIndexNode(const T& a, const T& b1, const T& b2, const T& c1, const T& c2)
-		: mA(a)
+		: FloatSpectralNode(NodeFlag::SpectralVarying)
+		, mA(a)
 		, mB1(b1)
 		, mB2(b2)
 		, mC1(c1)
@@ -480,8 +485,6 @@ public:
 			return PluginSpecification("INVALID", "INVALID");
 		}
 	}
-
-	
 };
 } // namespace PR
 
