@@ -54,7 +54,7 @@
 	(emission
 		:name 'light_em'
 		:type 'standard'
-		:radiance (smul (illuminant "D65") (illum 17 12 4))
+		:radiance (smul (blackbody 16000 true) 20)
 	)
 	; Materials
 	(material
@@ -91,13 +91,13 @@
 		:name 'shortBox'
 		:type 'flourescent'
 		:albedo (refl 0.6 0.8 0.4)
-		:shift 0.00001638 ; Shift from 550nm to 555nm
+		:shift 0.000151515 ; Shift from 550nm to 600nm
 	)
 	(material
 		:name 'tallBox'
 		:type 'flourescent'
-		:albedo (refl 0.1 0.3 0.5)
-		:shift 0.000006588 ; Shift from 550nm to 552nm
+		:albedo (refl 0.4 0.6 0.8)
+		:shift 0.00027972 ; Shift from 550nm to 650nm
 	)
 
 	(include "cornellbox_mesh.prc.inc")
