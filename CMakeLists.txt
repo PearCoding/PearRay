@@ -298,6 +298,9 @@ if(PR_BUILD_TESTS AND BUILD_TESTING)
 	add_subdirectory(src/tests)
 endif()
 
+# Example renderings
+add_subdirectory(examples)
+
 # Documentation
 if(PR_BUILD_DOCUMENTATION)
   include(Documentation)
