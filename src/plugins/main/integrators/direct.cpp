@@ -202,7 +202,11 @@ private:
 		if (sout.isHeroCollapsing())
 			rflags |= RayFlag::Monochrome;
 
-		return std::make_optional(ip.nextRay(L, rflags, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX));
+		Ray nextRay = ip.nextRay(L, rflags, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX);
+		if (sout.isFlourescent())
+			nextRay.WavelengthNM = sout.FlourescentWavelengthNM;
+
+		return std::make_optional(nextRay);
 	}
 
 	/// Handle simple Next Event Estimation (aka, connect point with light)

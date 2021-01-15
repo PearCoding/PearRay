@@ -1,16 +1,15 @@
 ; Original CornellBox converted to PearRay format
 (scene
+	:name 'cornellbox'
 	:render_width 1000
 	:render_height 1000
 	:camera 'Camera'
-	
 	; Settings
 	(integrator
 		:type 'direct'
 		:max_ray_depth 16
 		:max_camera_ray_depth 4
 		:max_light_ray_depth 4
-		:mis 'power'
 		:contract_ratio 0.2
 		:max_light_ray_depth 16
 		:soft_max_light_ray_depth 6
@@ -19,6 +18,11 @@
 		:slot 'aa'
 		:type 'mjitt'
 		:sample_count 128
+	)
+	(spectral_mapper
+		:type 'spd'
+		;:weighting 'none'
+		;:smooth_iterations 2
 	)
 	; Outputs
 	(output
@@ -85,15 +89,16 @@
 	)
 	(material
 		:name 'shortBox'
-		:type 'diffuse'
-		:albedo (refl 0.725000 0.710000 0.680000)
+		:type 'flourescent'
+		:albedo (refl 0.6 0.8 0.4)
+		:shift 2
 	)
 	(material
 		:name 'tallBox'
-		:type 'diffuse'
-		:albedo (refl 0.725000 0.710000 0.680000)
+		:type 'flourescent'
+		:albedo (refl 0.1 0.3 0.5)
+		:shift 1
 	)
 
-	
 	(include "cornellbox_mesh.prc.inc")
 )

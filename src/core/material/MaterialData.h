@@ -58,6 +58,7 @@ struct PR_LIB_CORE MaterialSampleOutput : public MaterialBaseOutput {
 	ShadingVector L;
 
 	SpectralBlob Weight;
+	SpectralBlob FlourescentWavelengthNM; // Only valid if isFlourescent() is true
 	MaterialScatteringType Type = MaterialScatteringType::DiffuseReflection;
 
 	inline Vector3f globalL(const IntersectionPoint& ip) const
