@@ -5,6 +5,8 @@
 
 #include "DataLisp.h"
 
+#include <optional>
+
 namespace PR {
 
 template <int D>
