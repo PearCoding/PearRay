@@ -91,13 +91,15 @@
 		:name 'shortBox'
 		:type 'flourescent'
 		:albedo (refl 0.6 0.8 0.4)
-		:shift 0.000151515 ; Shift from 550nm to 600nm
+		:absorption (refl 0.4 0.8 0.8)
+		:emission (refl 0.7 0.6 0.6)
 	)
 	(material
 		:name 'tallBox'
 		:type 'flourescent'
 		:albedo (refl 0.4 0.6 0.8)
-		:shift 0.00027972 ; Shift from 550nm to 650nm
+		:absorption (refl 0.8 0.2 0.8)
+		:emission (refl 0.1 0.6 0.3)
 	)
 
 	(include "cornellbox_mesh.prc.inc")
