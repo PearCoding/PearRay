@@ -1,6 +1,7 @@
 #pragma once
 
 #include "trace/IntersectionPoint.h"
+#include "Random.h"
 
 namespace PR {
 struct LightPDF {
@@ -19,16 +20,23 @@ struct PR_LIB_CORE LightEvalOutput {
 
 struct EntitySamplingInfo;
 struct PR_LIB_CORE LightSampleInput {
-	Vector4f RND;
-	SpectralBlob WavelengthNM;
+	Random& RND;
+	SpectralBlob WavelengthNM; // Will be used if SampleWavelength is false
 	const IntersectionPoint* Point		   = nullptr;
 	const EntitySamplingInfo* SamplingInfo = nullptr;
 	bool SamplePosition					   = false;
+	bool SampleWavelength				   = false;
+
+	inline explicit LightSampleInput(Random& rnd)
+		: RND(rnd)
+	{
+	}
 };
 
 struct PR_LIB_CORE LightSampleOutput {
 	SpectralBlob Radiance;
-	Vector3f LightPosition; // If requested, position of light (abstract) surface
+	SpectralBlob WavelengthNM; // If requested with SampleWavelength, or same as input
+	Vector3f LightPosition;	   // If requested, position of light (abstract) surface
 	LightPDF Position_PDF;
 	float CosLight; // Cosinus between light normal and direction
 	float Direction_PDF_S;

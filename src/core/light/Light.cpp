@@ -71,7 +71,7 @@ void Light::eval(const LightEvalInput& in, LightEvalOutput& out, const RenderTil
 		}
 
 		EmissionEvalInput eein;
-		eein.Entity			= ent;
+		eein.Context		= EmissionEvalContext::fromIP(*in.Point, -in.Ray.Direction);
 		eein.ShadingContext = ShadingContext::fromIP(session.threadID(), *in.Point);
 
 		EmissionEvalOutput eeout;
@@ -95,8 +95,8 @@ void Light::sample(const LightSampleInput& in, LightSampleOutput& out, const Ren
 
 		if (in.SamplePosition) {
 			InfiniteLightSamplePosDirInput ilsin;
-			ilsin.DirectionRND = Vector2f(in.RND(0), in.RND(1));
-			ilsin.PositionRND  = Vector2f(in.RND(2), in.RND(3));
+			ilsin.DirectionRND = in.RND.get2D();
+			ilsin.PositionRND  = in.RND.get2D();
 			ilsin.WavelengthNM = in.WavelengthNM;
 			ilsin.Point		   = in.Point;
 
@@ -111,7 +111,7 @@ void Light::sample(const LightSampleInput& in, LightSampleOutput& out, const Ren
 			out.LightPosition		= ilsout.LightPosition;
 		} else {
 			InfiniteLightSampleDirInput ilsin;
-			ilsin.DirectionRND = Vector2f(in.RND(0), in.RND(1));
+			ilsin.DirectionRND = in.RND.get2D();
 			ilsin.WavelengthNM = in.WavelengthNM;
 
 			InfiniteLightSampleDirOutput ilsout;
@@ -127,20 +127,67 @@ void Light::sample(const LightSampleInput& in, LightSampleOutput& out, const Ren
 		out.CosLight = 1;
 	} else {
 		IEntity* ent			   = reinterpret_cast<IEntity*>(mEntity);
-		const EntitySamplePoint pp = in.SamplingInfo ? ent->sampleParameterPoint(*in.SamplingInfo, Vector2f(in.RND[0], in.RND[1]))
-													 : ent->sampleParameterPoint(Vector2f(in.RND[0], in.RND[1]));
+		const EntitySamplePoint pp = in.SamplingInfo ? ent->sampleParameterPoint(*in.SamplingInfo, in.RND.get2D())
+													 : ent->sampleParameterPoint(in.RND.get2D());
 		const EntityGeometryQueryPoint qp = pp.toQueryPoint(Vector3f::Zero());
 
 		GeometryPoint gp;
 		ent->provideGeometryPoint(qp, gp);
 
+		ShadingContext sctx;
+		sctx.Face		  = gp.PrimitiveID;
+		sctx.dUV		  = gp.dUV;
+		sctx.UV			  = gp.UV;
+		sctx.ThreadIndex  = session.threadID();
+		sctx.WavelengthNM = in.WavelengthNM;
+
+		EmissionSampleContext ectx;
+		ectx.P			 = pp.Position;
+		ectx.PrimitiveID = gp.PrimitiveID;
+		ectx.RayFlags	 = RayFlag::Light;
+		ectx.UV			 = gp.UV;
+
+		if (!in.Point) { // Sample a complete new direction
+			EmissionSampleInput esin(in.RND);
+			esin.Requests = EmissionSampleRequest::Direction;
+			if (in.SampleWavelength)
+				esin.Requests |= EmissionSampleRequest::Wavelength;
+
+			esin.ShadingContext = sctx;
+			esin.Context		= ectx;
+
+			EmissionSampleOutput esout;
+			mEmission->sample(esin, esout, session);
+
+			out.WavelengthNM	= in.SampleWavelength ? esout.WavelengthNM : in.WavelengthNM;
+			out.Outgoing		= -esout.L;
+			out.Direction_PDF_S = esout.PDF_S[0];
+		} else { // Sample only wavelength if necessary
+			out.Outgoing = (pp.Position - in.Point->P).normalized();
+			if (in.SampleWavelength) {
+				EmissionSampleInput esin(in.RND);
+				esin.Requests = EmissionSampleRequest::Wavelength;
+
+				esin.ShadingContext = sctx;
+				esin.Context		= ectx;
+
+				EmissionSampleOutput esout;
+				mEmission->sample(esin, esout, session);
+				out.WavelengthNM	= esout.WavelengthNM;
+				out.Direction_PDF_S = esout.PDF_S[0]; // TODO
+			} else {
+				out.WavelengthNM	= in.WavelengthNM;
+				out.Direction_PDF_S = 1;
+			}
+		}
+
+		// Evaluate to get the radiance
 		EmissionEvalInput eein;
-		eein.Entity						 = ent;
-		eein.ShadingContext.Face		 = gp.PrimitiveID;
-		eein.ShadingContext.dUV			 = gp.dUV;
-		eein.ShadingContext.UV			 = gp.UV;
-		eein.ShadingContext.ThreadIndex	 = session.threadID();
-		eein.ShadingContext.WavelengthNM = in.WavelengthNM;
+
+		eein.Context = ectx.expand(-out.Outgoing, out.WavelengthNM);
+
+		eein.ShadingContext				 = sctx;
+		eein.ShadingContext.WavelengthNM = out.WavelengthNM;
 
 		EmissionEvalOutput eeout;
 		mEmission->eval(eein, eeout, session);
@@ -149,20 +196,7 @@ void Light::sample(const LightSampleInput& in, LightSampleOutput& out, const Ren
 		out.Position_PDF.Value	= pp.PDF_A;
 		out.Position_PDF.IsArea = true;
 		out.LightPosition		= pp.Position;
-
-		if (!in.Point) {
-			// Randomly sample direction from emissive material (TODO: Should be abstracted -> Use Emission)
-			const Vector3f local_dir = Sampling::cos_hemi(in.RND[2], in.RND[3]);
-			const Vector3f dir		 = -Tangent::fromTangentSpace(gp.N, gp.Nx, gp.Ny, local_dir);
-
-			out.Direction_PDF_S = Sampling::cos_hemi_pdf(local_dir(2));
-			out.Outgoing		= dir;
-			out.CosLight		= local_dir(2);
-		} else { // Connect to given surface
-			out.Outgoing		= (pp.Position - in.Point->P).normalized();
-			out.Direction_PDF_S = 1;
-			out.CosLight		= -out.Outgoing.dot(gp.N);
-		}
+		out.CosLight			= -out.Outgoing.dot(gp.N);
 	}
 }
 

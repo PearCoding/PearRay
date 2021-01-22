@@ -215,12 +215,12 @@ private:
 		const EntitySamplingInfo sampleInfo = { cameraIP.P, cameraIP.Surface.N };
 
 		// Sample light
-		LightSampleInput lsin;
-		lsin.RND			= session.random().get4D();
-		lsin.WavelengthNM	= cameraIP.Ray.WavelengthNM;
-		lsin.Point			= &cameraIP;
-		lsin.SamplingInfo	= &sampleInfo;
-		lsin.SamplePosition = true;
+		LightSampleInput lsin(session.random());
+		lsin.WavelengthNM	  = cameraIP.Ray.WavelengthNM;
+		lsin.Point			  = &cameraIP;
+		lsin.SamplingInfo	  = &sampleInfo;
+		lsin.SamplePosition	  = true;
+		lsin.SampleWavelength = cameraMaterial->hasFlourescence();
 		LightSampleOutput lsout;
 		const auto lsample = mLightSampler->sample(lsin, lsout, session);
 		const Light* light = lsample.first;
@@ -334,7 +334,7 @@ private:
 		} else {
 			// Evaluate emission
 			EmissionEvalInput ein;
-			ein.Entity		   = cameraEntity;
+			ein.Context		   = EmissionEvalContext::fromIP(cameraIP, -cameraIP.Ray.Direction);
 			ein.ShadingContext = ShadingContext::fromIP(session.threadID(), cameraIP);
 			EmissionEvalOutput eout;
 			ems->eval(ein, eout, session);

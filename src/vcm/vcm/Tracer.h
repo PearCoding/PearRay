@@ -106,9 +106,8 @@ public:
 			PR_ASSERT(mLightPathCounter < mOptions.MaxLightSamples, "Do not call trace more than the expected number of light samples");
 
 		// Sample light
-		LightSampleInput lsin;
+		LightSampleInput lsin(tctx.Session.random());
 		lsin.WavelengthNM	= wvl;
-		lsin.RND			= tctx.Session.random().get4D();
 		lsin.SamplePosition = true;
 		LightSampleOutput lsout;
 		const auto lsample = mLightSampler->sample(lsin, lsout, tctx.Session);
@@ -510,8 +509,7 @@ private:
 		const EntitySamplingInfo sampleInfo = { cameraIP.P, cameraIP.Surface.N };
 
 		// Sample light
-		LightSampleInput lsin;
-		lsin.RND			= tctx.Session.random().get4D();
+		LightSampleInput lsin(tctx.Session.random());
 		lsin.WavelengthNM	= cameraIP.Ray.WavelengthNM;
 		lsin.Point			= &cameraIP;
 		lsin.SamplingInfo	= &sampleInfo;
@@ -799,7 +797,7 @@ private:
 			radiance = SpectralBlob::Zero();
 		} else {
 			EmissionEvalInput ein;
-			ein.Entity		   = cameraEntity;
+			ein.Context		   = EmissionEvalContext::fromIP(cameraIP, -cameraIP.Ray.Direction);
 			ein.ShadingContext = ShadingContext::fromIP(tctx.Session.threadID(), cameraIP);
 			EmissionEvalOutput eout;
 			ems->eval(ein, eout, tctx.Session);

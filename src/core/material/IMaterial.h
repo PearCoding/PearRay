@@ -7,7 +7,8 @@ namespace PR {
 class RenderTileSession;
 
 enum class MaterialFlag {
-	OnlyDeltaDistribution = 0x1
+	OnlyDeltaDistribution = 0x1,
+	HasFlourescence		  = 0x2
 };
 PR_MAKE_FLAGS(MaterialFlag, MaterialFlags)
 
@@ -30,6 +31,7 @@ public:
 
 	virtual MaterialFlags flags() const { return 0; }
 	inline bool hasOnlyDeltaDistribution() const { return flags() & MaterialFlag::OnlyDeltaDistribution; }
+	inline bool hasFlourescence() const { return flags() & MaterialFlag::HasFlourescence; }
 
 	inline bool canBeShaded() const;
 	inline void enableShading(bool b);

@@ -42,6 +42,8 @@ public:
 		return wvl / (1 - wvl * shift);
 	}
 
+	MaterialFlags flags() const override { return MaterialFlag::HasFlourescence; }
+
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
 			  const RenderTileSession&) const override
 	{

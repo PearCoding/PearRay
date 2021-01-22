@@ -15,13 +15,10 @@ inline std::pair<const Light*, float> LightSampler::sample(const LightSampleInpu
 {
 	if (mSelector) {
 		float pdf, rem;
-		const size_t id = mSelector->sampleDiscrete(in.RND[0], pdf, &rem);
+		const size_t id = mSelector->sampleDiscrete(in.RND.getFloat(), pdf, &rem);
 		if (id < mLights.size()) {
 			const Light* l = mLights[id].get();
-
-			LightSampleInput in2 = in;
-			in2.RND[0]			 = rem;
-			l->sample(in2, out, session);
+			l->sample(in, out, session);
 			return { l, pdf };
 		}
 	}

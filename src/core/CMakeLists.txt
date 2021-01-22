@@ -22,6 +22,9 @@ set(PR_Src
   container/PointKdTree.h
   container/PointKdTree.inl
   container/PositionGetter.h
+  emission/EmissionContext.h
+  emission/EmissionData.h
+  emission/EmissionDatabase.h
   emission/IEmission.cpp
   emission/IEmission.h
   entity/GeometryRepr.h

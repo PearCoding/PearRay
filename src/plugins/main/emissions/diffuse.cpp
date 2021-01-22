@@ -4,6 +4,7 @@
 #include "emission/IEmissionPlugin.h"
 #include "entity/IEntity.h"
 #include "math/Projection.h"
+#include "math/Sampling.h"
 #include "shader/NodeUtils.h"
 
 namespace PR {
@@ -22,6 +23,21 @@ public:
 			  const RenderTileSession&) const override
 	{
 		out.Radiance = mRadiance->eval(in.ShadingContext);
+		out.PDF_S	 = Sampling::cos_hemi_pdf(std::abs(in.Context.NdotL()));
+	}
+
+	void pdf(const EmissionEvalInput& in, EmissionPDFOutput& out,
+			 const RenderTileSession&) const override
+	{
+		out.PDF_S = Sampling::cos_hemi_pdf(in.Context.NdotL());
+	}
+
+	void sample(const EmissionSampleInput& in, EmissionSampleOutput& out, const RenderTileSession& session) const
+	{
+		// TODO: Wavelength???
+
+		out.L	  = Sampling::cos_hemi(in.RND.getFloat(), in.RND.getFloat());
+		out.PDF_S = Sampling::cos_hemi_pdf(out.L(2));
 	}
 
 	SpectralBlob power(const SpectralBlob& wvl) const override { return NodeUtils::average(wvl, mRadiance.get()); }

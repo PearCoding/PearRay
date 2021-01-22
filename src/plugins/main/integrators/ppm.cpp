@@ -200,7 +200,7 @@ public:
 					if (PR_LIKELY(ems)) {
 						// Evaluate light
 						EmissionEvalInput inL;
-						inL.Entity		   = entity_hit;
+						inL.Context		   = EmissionEvalContext::fromIP(ip, -ip.Ray.Direction);
 						inL.ShadingContext = ShadingContext::fromIP(session.threadID(), ip);
 						EmissionEvalOutput outL;
 						ems->eval(inL, outL, session);
@@ -284,9 +284,8 @@ public:
 
 		size_t photonsShoot = 0;
 		for (; photonsShoot < light.Photons; ++photonsShoot) {
-			LightSampleInput lsin;
+			LightSampleInput lsin(session.random());
 			lsin.WavelengthNM	= sampleWavelength(session.random());
-			lsin.RND			= session.random().get4D();
 			lsin.SamplePosition = true;
 			LightSampleOutput lsout;
 			light.Light->sample(lsin, lsout, session);
