@@ -32,7 +32,7 @@ RenderTile::RenderTile(const Point2i& start, const Point2i& end,
 	mTimeSampler	 = mRenderContext->settings().createTimeSampler(mRandom);
 	mSpectralSampler = mRenderContext->settings().createSpectralSampler(mRandom);
 
-	mSpectralMapper = mRenderContext->settings().createSpectralMapper(mRenderContext);
+	mSpectralMapper = mRenderContext->settings().createSpectralMapper("pixel", mRenderContext);
 
 	switch (mRenderContext->settings().timeMappingMode) {
 	default:
@@ -87,10 +87,16 @@ std::optional<CameraRay> RenderTile::constructCameraRay(const Point2i& p, const 
 		cameraSample.WavelengthNM  = SpectralBlob(mRenderContext->settings().spectralStart);
 		cameraSample.WavelengthPDF = 1.0f;
 	} else {
-		const auto specSample	   = mSpectralMapper->sample(p + mRenderContext->viewOffset(), mSpectralSampler->generate1D(sample));
-		cameraSample.WavelengthNM  = specSample.WavelengthNM;
-		cameraSample.WavelengthPDF = specSample.PDF;
-		cameraSample.BlendWeight *= specSample.BlendWeight;
+		SpectralSampleInput ssin(mRandom); // TODO: Maybe use mSpectralSampler??
+		ssin.Purpose = SpectralSamplePurpose::Pixel;
+		ssin.Pixel	 = p + mRenderContext->viewOffset();
+
+		SpectralSampleOutput ssout;
+		mSpectralMapper->sample(ssin, ssout);
+
+		cameraSample.WavelengthNM  = ssout.WavelengthNM;
+		cameraSample.WavelengthPDF = ssout.PDF;
+		cameraSample.BlendWeight *= ssout.BlendWeight;
 	}
 
 	// Construct actual ray

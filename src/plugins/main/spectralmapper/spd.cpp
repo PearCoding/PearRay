@@ -1,4 +1,5 @@
 #include "Environment.h"
+#include "Random.h"
 #include "SceneLoadContext.h"
 #include "light/LightSampler.h"
 #include "renderer/RenderContext.h"
@@ -23,21 +24,19 @@ public:
 
 	virtual ~SPDSpectralMapper() = default;
 
-	SpectralMapSample sample(const Point2i&, float u) const override
+	void sample(const SpectralSampleInput& in, SpectralSampleOutput& out) const override
 	{
-		SpectralMapSample S;
+		const float u = in.RND.getFloat();
 
 		PR_OPT_LOOP
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
-			const float k	  = std::fmod(u + i / (float)PR_SPECTRAL_BLOB_SIZE, 1.0f);
-			S.WavelengthNM(i) = mDistribution.sampleContinuous(k, S.PDF(i)) * (wavelengthEnd() - wavelengthStart()) + wavelengthStart();
+			const float k		= std::fmod(u + i / (float)PR_SPECTRAL_BLOB_SIZE, 1.0f);
+			out.WavelengthNM(i) = mDistribution.sampleContinuous(k, out.PDF(i)) * (wavelengthEnd() - wavelengthStart()) + wavelengthStart();
 		}
-
-		return S;
 	}
 
 	// Do not apply the jacobian of the mapping from [0, 1] to [start, end], as we do not divide by it
-	SpectralBlob pdf(const Point2i&, const SpectralBlob& wavelength) const override
+	SpectralBlob pdf(const SpectralEvalInput&, const SpectralBlob& wavelength) const override
 	{
 		SpectralBlob res;
 		PR_OPT_LOOP
@@ -247,8 +246,6 @@ public:
 			.Specification()
 			.get();
 	}
-
-	
 };
 } // namespace PR
 

@@ -26,10 +26,13 @@ bool SpectralMapperManager::createDefaultsIfNecessary(Environment* env)
 	auto& settings = env->renderSettings();
 
 	// Add if necessary
-	if (!settings.spectralMapperFactory)
-		settings.spectralMapperFactory = createAndAdd("spd");
+	if (settings.spectralMapperFactories.count("pixel") == 0)
+		settings.spectralMapperFactories["pixel"] = createAndAdd("spd");
 
-	return settings.spectralMapperFactory != nullptr;
+	if (settings.spectralMapperFactories.count("light") == 0)
+		settings.spectralMapperFactories["light"] = settings.spectralMapperFactories["pixel"];
+
+	return settings.spectralMapperFactories["pixel"] != nullptr;
 }
 
 } // namespace PR

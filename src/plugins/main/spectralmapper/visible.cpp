@@ -1,4 +1,5 @@
 #include "Environment.h"
+#include "Random.h"
 #include "SceneLoadContext.h"
 #include "spectral/CIE.h"
 #include "spectral/ISpectralMapper.h"
@@ -17,23 +18,21 @@ public:
 
 	virtual ~FullVisibleSpectralMapper() = default;
 
-	SpectralMapSample sample(const Point2i&, float u) const override
+	void sample(const SpectralSampleInput& in, SpectralSampleOutput& out) const override
 	{
-		SpectralMapSample S;
+		const float u = in.RND.getFloat();
 
 		PR_OPT_LOOP
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
 			const float k = std::fmod(u + i / (float)PR_SPECTRAL_BLOB_SIZE, 1.0f);
 			if constexpr (YOnly)
-				S.WavelengthNM(i) = CIE::sample_vis_y(k, S.PDF(i));
+				out.WavelengthNM(i) = CIE::sample_vis_y(k, out.PDF(i));
 			else
-				S.WavelengthNM(i) = CIE::sample_vis_xyz(k, S.PDF(i));
+				out.WavelengthNM(i) = CIE::sample_vis_xyz(k, out.PDF(i));
 		}
-
-		return S;
 	}
 
-	SpectralBlob pdf(const Point2i&, const SpectralBlob& wavelength) const override
+	SpectralBlob pdf(const SpectralEvalInput&, const SpectralBlob& wavelength) const override
 	{
 		SpectralBlob res;
 		PR_OPT_LOOP
@@ -59,23 +58,21 @@ public:
 
 	virtual ~TruncatedVisibleSpectralMapper() = default;
 
-	SpectralMapSample sample(const Point2i&, float u) const override
+	void sample(const SpectralSampleInput& in, SpectralSampleOutput& out) const override
 	{
-		SpectralMapSample S;
+		const float u = in.RND.getFloat();
 
 		PR_OPT_LOOP
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
 			const float k = std::fmod(u + i / (float)PR_SPECTRAL_BLOB_SIZE, 1.0f);
 			if constexpr (YOnly)
-				S.WavelengthNM(i) = CIE::sample_trunc_vis_y(k, S.PDF(i), wavelengthStart(), wavelengthEnd());
+				out.WavelengthNM(i) = CIE::sample_trunc_vis_y(k, out.PDF(i), wavelengthStart(), wavelengthEnd());
 			else
-				S.WavelengthNM(i) = CIE::sample_trunc_vis_xyz(k, S.PDF(i), wavelengthStart(), wavelengthEnd());
+				out.WavelengthNM(i) = CIE::sample_trunc_vis_xyz(k, out.PDF(i), wavelengthStart(), wavelengthEnd());
 		}
-
-		return S;
 	}
 
-	SpectralBlob pdf(const Point2i&, const SpectralBlob& wavelength) const override
+	SpectralBlob pdf(const SpectralEvalInput&, const SpectralBlob& wavelength) const override
 	{
 		SpectralBlob res;
 		PR_OPT_LOOP
@@ -129,8 +126,6 @@ public:
 			.Specification()
 			.get();
 	}
-
-	
 };
 } // namespace PR
 

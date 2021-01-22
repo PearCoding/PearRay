@@ -65,9 +65,12 @@ std::shared_ptr<IIntegrator> RenderSettings::createIntegrator() const
 	return integratorFactory ? integratorFactory->createInstance() : nullptr;
 }
 
-std::shared_ptr<ISpectralMapper> RenderSettings::createSpectralMapper(RenderContext* ctx) const
+std::shared_ptr<ISpectralMapper> RenderSettings::createSpectralMapper(const std::string& purpose, RenderContext* ctx) const
 {
-	return spectralMapperFactory ? spectralMapperFactory->createInstance(spectralStart, spectralEnd, ctx) : nullptr;
+	if (spectralMapperFactories.count(purpose))
+		return spectralMapperFactories.at(purpose)->createInstance(spectralStart, spectralEnd, ctx);
+	else
+		return nullptr;
 }
 
 uint32 RenderSettings::maxSampleCount() const
@@ -75,7 +78,7 @@ uint32 RenderSettings::maxSampleCount() const
 	PR_ASSERT(aaSamplerFactory && lensSamplerFactory && timeSamplerFactory && spectralSamplerFactory, "Expect all samplers to be constructed");
 	if (progressive)
 		return 0;
-	else if(sampleCountOverride > 0)
+	else if (sampleCountOverride > 0)
 		return sampleCountOverride;
 	else
 		return aaSamplerFactory->requestedSampleCount()

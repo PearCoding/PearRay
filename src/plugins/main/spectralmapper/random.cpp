@@ -1,3 +1,4 @@
+#include "Random.h"
 #include "Environment.h"
 #include "SceneLoadContext.h"
 #include "spectral/CIE.h"
@@ -15,21 +16,19 @@ public:
 
 	virtual ~RandomSpectralMapper() = default;
 
-	SpectralMapSample sample(const Point2i&, float u) const override
+	void sample(const SpectralSampleInput& in, SpectralSampleOutput& out) const override
 	{
-		SpectralMapSample S;
+		const float u = in.RND.getFloat();
 
 		const float span  = wavelengthEnd() - wavelengthStart();
 		const float delta = span / PR_SPECTRAL_BLOB_SIZE;
 
-		const float start = u * span;				   // Wavelength inside the span
-		S.WavelengthNM(0) = start + wavelengthStart(); // Hero wavelength
+		const float start	= u * span;					 // Wavelength inside the span
+		out.WavelengthNM(0) = start + wavelengthStart(); // Hero wavelength
 		PR_OPT_LOOP
 		for (size_t i = 1; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-			S.WavelengthNM(i) = wavelengthStart() + std::fmod(start + i * delta, span);
-		S.PDF = 1;
-
-		return S;
+			out.WavelengthNM(i) = wavelengthStart() + std::fmod(start + i * delta, span);
+		out.PDF = 1;
 	}
 };
 
@@ -60,8 +59,6 @@ public:
 			.Identifiers(getNames())
 			.get();
 	}
-
-	
 };
 } // namespace PR
 

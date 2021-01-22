@@ -309,7 +309,8 @@ void SceneLoader::addSpectralMapper(const DL::DataGroup& group, SceneLoadContext
 {
 	auto manag = ctx.environment()->spectralMapperManager();
 
-	DL::Data typeD = group.getFromKey("type");
+	DL::Data typeD	  = group.getFromKey("type");
+	DL::Data purposeD = group.getFromKey("purpose");
 
 	std::string type;
 
@@ -334,10 +335,19 @@ void SceneLoader::addSpectralMapper(const DL::DataGroup& group, SceneLoadContext
 		return;
 	}
 
-	if (ctx.environment()->renderSettings().spectralMapperFactory)
-		PR_LOG(L_WARNING) << "[Loader] Spectral mapper already selected. Replacing it " << std::endl;
+	std::string purpose;
 
-	ctx.environment()->renderSettings().spectralMapperFactory = mapper;
+	if (purposeD.type() == DL::DT_String) {
+		purpose = purposeD.getString();
+		std::transform(purpose.begin(), purpose.end(), purpose.begin(), ::tolower);
+	} else {
+		purpose = "pixel";
+	}
+
+	if (ctx.environment()->renderSettings().spectralMapperFactories.count(purpose))
+		PR_LOG(L_WARNING) << "[Loader] Spectral mapper for '" << purpose << "' already selected.Replacing it " << std::endl;
+
+	ctx.environment()->renderSettings().spectralMapperFactories[purpose] = mapper;
 }
 
 void SceneLoader::addIntegrator(const DL::DataGroup& group, SceneLoadContext& ctx)

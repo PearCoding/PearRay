@@ -27,7 +27,7 @@ public:
 	size_t maxParallelRays;
 
 	// Will use this sample count if non zero
-	uint32 sampleCountOverride; 
+	uint32 sampleCountOverride;
 
 	TimeMappingMode timeMappingMode;
 	float timeScale;
@@ -79,7 +79,7 @@ public:
 	std::shared_ptr<IFilterFactory> pixelFilterFactory;
 	std::shared_ptr<IIntegratorFactory> integratorFactory;
 
-	std::shared_ptr<ISpectralMapperFactory> spectralMapperFactory;
+	std::unordered_map<std::string, std::shared_ptr<ISpectralMapperFactory>> spectralMapperFactories;
 
 	// Easy access
 	std::shared_ptr<ISampler> createAASampler(Random& random) const;
@@ -88,8 +88,8 @@ public:
 	std::shared_ptr<ISampler> createSpectralSampler(Random& random) const;
 	std::shared_ptr<IFilter> createPixelFilter() const;
 	std::shared_ptr<IIntegrator> createIntegrator() const;
-	std::shared_ptr<ISpectralMapper> createSpectralMapper(RenderContext* ctx) const;
-	
+	std::shared_ptr<ISpectralMapper> createSpectralMapper(const std::string& purpose, RenderContext* ctx) const;
+
 	uint32 maxSampleCount() const;
 };
 } // namespace PR

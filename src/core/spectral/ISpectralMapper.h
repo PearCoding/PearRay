@@ -4,15 +4,41 @@
 
 namespace PR {
 
-struct PR_LIB_CORE SpectralMapSample {
-	SpectralBlob BlendWeight = SpectralBlob::Ones();
+class Light;
+enum class SpectralSamplePurpose {
+	Pixel,		// Light and Position are not valid
+	Connection, // Position has to be set
+	Light		// Position and Light is set
+};
+
+struct PR_LIB_CORE SpectralEvalInput {
+	Point2i Pixel;
+	Vector3f Position = Vector3f::Zero(); // Global position
+	PR::Light* Light  = nullptr;
+
+	SpectralSamplePurpose Purpose = SpectralSamplePurpose::Pixel;
+};
+
+struct PR_LIB_CORE SpectralSampleInput {
+	Random& RND;
+	Point2i Pixel;
+	Vector3f Position = Vector3f::Zero(); // Global position
+	PR::Light* Light  = nullptr;
+
+	SpectralSamplePurpose Purpose = SpectralSamplePurpose::Pixel;
+
+	inline explicit SpectralSampleInput(Random& rnd)
+		: RND(rnd)
+	{
+	}
+};
+
+struct PR_LIB_CORE SpectralSampleOutput {
+	SpectralBlob BlendWeight = SpectralBlob::Ones(); // Only valid for Pixel samples
 	SpectralBlob WavelengthNM;
 	SpectralBlob PDF;
 };
 
-class RenderTile;
-class StreamPipeline;
-struct OutputSpectralEntry;
 class PR_LIB_CORE ISpectralMapper {
 public:
 	inline ISpectralMapper(float start, float end)
@@ -21,11 +47,11 @@ public:
 	{
 	}
 
-	virtual SpectralMapSample sample(const Point2i& pixel, float u) const = 0;
+	virtual void sample(const SpectralSampleInput& in, SpectralSampleOutput& out) const = 0;
 
-	virtual SpectralBlob pdf(const Point2i& pixel, const SpectralBlob& wavelength) const
+	virtual SpectralBlob pdf(const SpectralEvalInput& in, const SpectralBlob& wavelength) const
 	{
-		PR_UNUSED(pixel);
+		PR_UNUSED(in);
 		PR_UNUSED(wavelength);
 		return SpectralBlob::Ones();
 	}
