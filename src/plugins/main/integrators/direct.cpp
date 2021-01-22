@@ -227,6 +227,9 @@ private:
 		if (PR_UNLIKELY(!light))
 			return;
 
+		// TODO: Integrate this into MIS
+		lsout.Radiance /= lsout.Wavelength_PDF;
+
 		// Calculate geometry stuff
 		const float sqrD	  = (lsout.LightPosition - cameraIP.P).squaredNorm();
 		const Vector3f L	  = lsout.Outgoing;
@@ -241,8 +244,9 @@ private:
 
 		// Evaluate camera material
 		MaterialEvalInput min;
-		min.Context		   = MaterialEvalContext::fromIP(cameraIP, L);
-		min.ShadingContext = ShadingContext::fromIP(session.threadID(), cameraIP);
+		min.Context							= MaterialEvalContext::fromIP(cameraIP, L);
+		min.Context.FlourescentWavelengthNM = lsout.WavelengthNM;
+		min.ShadingContext					= ShadingContext::fromIP(session.threadID(), cameraIP);
 		MaterialEvalOutput mout;
 		cameraMaterial->eval(min, mout, session);
 

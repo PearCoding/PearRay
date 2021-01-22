@@ -14,7 +14,8 @@ class PR_LIB_CORE EmissionSampleContext {
 public:
 	Vector3f P; // Global space
 	Vector2f UV;
-	uint32 PrimitiveID	  = PR_INVALID_ID; // Useful for PTex
+	uint32 PrimitiveID = PR_INVALID_ID; // Useful for PTex
+	SpectralBlob WavelengthNM;
 	PR::RayFlags RayFlags = 0;
 
 	inline static EmissionSampleContext fromIP(const IntersectionPoint& sp)
@@ -25,18 +26,18 @@ public:
 		ctx.P			 = sp.Surface.P;
 		ctx.UV			 = sp.Surface.Geometry.UV;
 		ctx.PrimitiveID	 = sp.Surface.Geometry.PrimitiveID;
+		ctx.WavelengthNM = sp.Ray.WavelengthNM;
 		ctx.RayFlags	 = sp.Ray.Flags;
 
 		return ctx;
 	}
 
-	inline EmissionEvalContext expand(const Vector3f& L, const SpectralBlob& wavelengthNM) const;
+	inline EmissionEvalContext expand(const Vector3f& L) const;
 };
 
 class PR_LIB_CORE EmissionEvalContext : public EmissionSampleContext {
 public:
-	ShadingVector L;		   // Outgoing light vector in shading space
-	SpectralBlob WavelengthNM; // Light vector wavelength, same as incoming for most materials
+	ShadingVector L; // Outgoing light vector in shading space
 
 	inline float NdotL() const { return L(2); }
 	inline float XdotL() const { return L(0); }
@@ -49,11 +50,11 @@ public:
 		PR_ASSERT(sp.isAtSurface(), "Expected IntersectionPoint to be a surface point");
 
 		EmissionEvalContext ctx;
-		ctx.P						= sp.Surface.P;
-		ctx.UV						= sp.Surface.Geometry.UV;
-		ctx.PrimitiveID				= sp.Surface.Geometry.PrimitiveID;
-		ctx.WavelengthNM			= sp.Ray.WavelengthNM;
-		ctx.RayFlags				= sp.Ray.Flags;
+		ctx.P			 = sp.Surface.P;
+		ctx.UV			 = sp.Surface.Geometry.UV;
+		ctx.PrimitiveID	 = sp.Surface.Geometry.PrimitiveID;
+		ctx.WavelengthNM = sp.Ray.WavelengthNM;
+		ctx.RayFlags	 = sp.Ray.Flags;
 		ctx.setLFromGlobal(sp, gL);
 
 		return ctx;
@@ -65,12 +66,11 @@ public:
 	}
 };
 
-inline EmissionEvalContext EmissionSampleContext::expand(const Vector3f& L, const SpectralBlob& wavelengthNM) const
+inline EmissionEvalContext EmissionSampleContext::expand(const Vector3f& L) const
 {
 	EmissionEvalContext ctx;
 	*reinterpret_cast<EmissionSampleContext*>(&ctx) = *this;
 	ctx.L											= L;
-	ctx.WavelengthNM								= wavelengthNM;
 	return ctx;
 }
 

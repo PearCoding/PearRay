@@ -22,18 +22,10 @@ struct PR_LIB_CORE EmissionEvalOutput {
 };
 
 // Sampling
-enum class EmissionSampleRequest {
-	Direction  = 0x1,
-	Wavelength = 0x2
-};
-PR_MAKE_FLAGS(EmissionSampleRequest, EmissionSampleRequests)
-
 struct PR_LIB_CORE EmissionSampleInput {
 	EmissionSampleContext Context;
 	PR::ShadingContext ShadingContext;
 	Random& RND;
-
-	EmissionSampleRequests Requests = EmissionSampleRequest::Direction;
 
 	inline EmissionSampleInput(Random& rnd)
 		: RND(rnd)
@@ -48,9 +40,7 @@ struct PR_LIB_CORE EmissionSampleInput {
 	}
 };
 struct PR_LIB_CORE EmissionSampleOutput {
-	ShadingVector L;		   // Only valid if EmissionSampleRequest::Direction is set
-	SpectralBlob WavelengthNM; // Only valid if EmissionSampleRequest::Wavelength is set
-
+	ShadingVector L;
 	SpectralBlob PDF_S; // In respect to the radiance
 
 	inline Vector3f globalL(const IntersectionPoint& ip) const
@@ -63,7 +53,6 @@ struct PR_LIB_CORE EmissionSampleOutput {
 		EmissionSampleOutput out;
 		out.L			 = Vector3f::Zero();
 		out.PDF_S		 = SpectralBlob::Zero();
-		out.WavelengthNM = SpectralBlob::Zero();
 		return out;
 	}
 };

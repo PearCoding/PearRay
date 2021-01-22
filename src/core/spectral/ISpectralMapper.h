@@ -13,8 +13,8 @@ enum class SpectralSamplePurpose {
 
 struct PR_LIB_CORE SpectralEvalInput {
 	Point2i Pixel;
-	Vector3f Position = Vector3f::Zero(); // Global position
-	PR::Light* Light  = nullptr;
+	Vector3f Position	   = Vector3f::Zero(); // Global position
+	const PR::Light* Light = nullptr;
 
 	SpectralSamplePurpose Purpose = SpectralSamplePurpose::Pixel;
 };
@@ -22,8 +22,8 @@ struct PR_LIB_CORE SpectralEvalInput {
 struct PR_LIB_CORE SpectralSampleInput {
 	Random& RND;
 	Point2i Pixel;
-	Vector3f Position = Vector3f::Zero(); // Global position
-	PR::Light* Light  = nullptr;
+	Vector3f Position	   = Vector3f::Zero(); // Global position
+	const PR::Light* Light = nullptr;
 
 	SpectralSamplePurpose Purpose = SpectralSamplePurpose::Pixel;
 

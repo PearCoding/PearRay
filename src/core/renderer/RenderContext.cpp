@@ -86,6 +86,14 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 	mTileMap = std::make_unique<RenderTileMap>();
 	mTileMap->init(this, rtx, rty, mRenderSettings.tileMode);
 
+	// Setup wavelength sampler for lights
+	const auto wavelengthSampler = mRenderSettings.createSpectralMapper("light", this);
+	if (!wavelengthSampler) {
+		PR_LOG(L_ERROR) << "No spectral mapper for 'light' was created. Should not happen, as per default the 'pixel' mapper is used." << std::endl;
+		return;
+	}
+	mLightSampler->setWavelengthSampler(wavelengthSampler);
+
 	// Init modules
 	mIntegrator->onInit(this);
 	mOutputSystem->clear();
@@ -297,8 +305,8 @@ RenderStatus RenderContext::status() const
 
 	RenderStatus status = mIntegrator->status();
 
-	const RenderStatistics s = statistics();
-	const RenderIteration iter	 = currentIteration();
+	const RenderStatistics s   = statistics();
+	const RenderIteration iter = currentIteration();
 
 	// Approximate percentage if not given by the integrator
 	if (status.percentage() < 0)

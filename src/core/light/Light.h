@@ -1,7 +1,7 @@
 #pragma once
 
-#include "trace/IntersectionPoint.h"
 #include "Random.h"
+#include "trace/IntersectionPoint.h"
 
 namespace PR {
 struct LightPDF {
@@ -35,8 +35,9 @@ struct PR_LIB_CORE LightSampleInput {
 
 struct PR_LIB_CORE LightSampleOutput {
 	SpectralBlob Radiance;
-	SpectralBlob WavelengthNM; // If requested with SampleWavelength, or same as input
-	Vector3f LightPosition;	   // If requested, position of light (abstract) surface
+	SpectralBlob WavelengthNM;	 // If requested with SampleWavelength, or same as input
+	SpectralBlob Wavelength_PDF; // If requested, with SampleWavelength,  or 1
+	Vector3f LightPosition;		 // If requested, position of light (abstract) surface
 	LightPDF Position_PDF;
 	float CosLight; // Cosinus between light normal and direction
 	float Direction_PDF_S;
@@ -46,6 +47,7 @@ struct PR_LIB_CORE LightSampleOutput {
 class IInfiniteLight;
 class IEntity;
 class IEmission;
+class LightSampler;
 class RenderTileSession;
 // Abstraction over infinite and area lights
 class PR_LIB_CORE Light {
@@ -68,26 +70,27 @@ public:
 	// Returns pdf for direction respect to solid angle
 	float pdfDirection(const Vector3f& dir, float cosLight = 1.0f) const;
 
-	inline static Light makeInfLight(uint32 light_id, IInfiniteLight* infLight, float relContribution)
+	inline static Light makeInfLight(uint32 light_id, IInfiniteLight* infLight, float relContribution, const LightSampler* sampler)
 	{
-		return Light(light_id, infLight, relContribution);
+		return Light(light_id, infLight, relContribution, sampler);
 	}
 
-	inline static Light makeAreaLight(uint32 light_id, IEntity* entity, IEmission* emission, float relContribution)
+	inline static Light makeAreaLight(uint32 light_id, IEntity* entity, IEmission* emission, float relContribution, const LightSampler* sampler)
 	{
-		return Light(light_id, entity, emission, relContribution);
+		return Light(light_id, entity, emission, relContribution, sampler);
 	}
 
 	inline IEntity* asEntity() const { return reinterpret_cast<IEntity*>(mEntity); }
 	inline IInfiniteLight* asInfiniteLight() const { return reinterpret_cast<IInfiniteLight*>(mEntity); }
 
 private:
-	Light(uint32 id, IInfiniteLight* infLight, float relContribution);
-	Light(uint32 id, IEntity* entity, IEmission* emission, float relContribution);
+	Light(uint32 id, IInfiniteLight* infLight, float relContribution, const LightSampler* sampler);
+	Light(uint32 id, IEntity* entity, IEmission* emission, float relContribution, const LightSampler* sampler);
 
 	const uint32 mID;
 	void* const mEntity;
 	IEmission* const mEmission;
 	const float mRelativeContribution;
+	const LightSampler* mSampler;
 };
 } // namespace PR

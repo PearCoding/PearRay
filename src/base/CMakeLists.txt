@@ -20,6 +20,8 @@ set(PR_Src
   config/Types.inl
   config/VectorGlue.inl
   config/Version.h.in
+  container/CSV.cpp
+  container/CSV.h
   container/IndexSort.h
   container/Interval.h
   container/NTree.h

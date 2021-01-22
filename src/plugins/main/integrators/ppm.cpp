@@ -293,9 +293,9 @@ public:
 			Ray ray	   = Ray(lsout.LightPosition, -lsout.Outgoing);
 			ray.Origin = Transform::safePosition(ray.Origin, ray.Direction); // Make sure no self intersection happens
 			ray.Flags |= RayFlag::Light;
-			ray.WavelengthNM = lsin.WavelengthNM;
+			ray.WavelengthNM = lsout.WavelengthNM;
 
-			const float pdf				= lsout.Direction_PDF_S * lsout.Position_PDF.Value;
+			const SpectralBlob pdf		= lsout.Direction_PDF_S * lsout.Position_PDF.Value * lsout.Wavelength_PDF;
 			const SpectralBlob radiance = lsout.Radiance * (sampleInv / pdf);
 
 			mLightPathWalker.traverseBSDFSimple(

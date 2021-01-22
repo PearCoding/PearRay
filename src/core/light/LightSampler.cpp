@@ -101,14 +101,14 @@ LightSampler::LightSampler(Scene* scene)
 			continue;
 
 		IEmission* emission = emissions[ems_id].get();
-		mLights.emplace_back(std::make_unique<Light>(Light::makeAreaLight(mLights.size(), e.get(), emission, intensities[k])));
+		mLights.emplace_back(std::make_unique<Light>(Light::makeAreaLight(mLights.size(), e.get(), emission, intensities[k], this)));
 		mLightEntityMap[e.get()] = k;
 		++k;
 	}
 
 	// Add infinite lights (approx)
 	for (const auto& infL : inflights) {
-		mLights.emplace_back(std::make_unique<Light>(Light::makeInfLight(mLights.size(), infL.get(), intensities[k])));
+		mLights.emplace_back(std::make_unique<Light>(Light::makeInfLight(mLights.size(), infL.get(), intensities[k], this)));
 		mInfLights.emplace_back(mLights.back().get());
 		++k;
 	}

@@ -1,26 +1,32 @@
 #include "Light.h"
 
+#include "LightSampler.h"
 #include "emission/IEmission.h"
 #include "entity/IEntity.h"
 #include "infinitelight/IInfiniteLight.h"
 #include "math/Sampling.h"
 #include "renderer/RenderTileSession.h"
+#include "spectral/ISpectralMapper.h"
 
 namespace PR {
-Light::Light(uint32 light_id, IInfiniteLight* infLight, float relContribution)
+Light::Light(uint32 light_id, IInfiniteLight* infLight, float relContribution, const LightSampler* sampler)
 	: mID(light_id)
 	, mEntity(infLight)
 	, mEmission(nullptr)
 	, mRelativeContribution(relContribution)
+	, mSampler(sampler)
 {
+	PR_ASSERT(mSampler, "Expected valid sampler");
 }
 
-Light::Light(uint32 light_id, IEntity* entity, IEmission* emission, float relContribution)
+Light::Light(uint32 light_id, IEntity* entity, IEmission* emission, float relContribution, const LightSampler* sampler)
 	: mID(light_id)
 	, mEntity(entity)
 	, mEmission(emission)
 	, mRelativeContribution(relContribution)
+	, mSampler(sampler)
 {
+	PR_ASSERT(mSampler, "Expected valid sampler");
 }
 
 std::string Light::name() const
@@ -90,14 +96,28 @@ void Light::eval(const LightEvalInput& in, LightEvalOutput& out, const RenderTil
 
 void Light::sample(const LightSampleInput& in, LightSampleOutput& out, const RenderTileSession& session) const
 {
+	out.WavelengthNM   = in.WavelengthNM;
+	out.Wavelength_PDF = 1;
+
 	if (isInfinite()) {
+		if (in.SampleWavelength) {
+			SpectralSampleInput ssin(session.tile()->random());
+			ssin.Light	 = this;
+			ssin.Purpose = SpectralSamplePurpose::Light;
+
+			SpectralSampleOutput ssout;
+			mSampler->wavelengthSampler()->sample(ssin, ssout);
+			out.WavelengthNM   = ssout.WavelengthNM;
+			out.Wavelength_PDF = ssout.PDF;
+		}
+
 		IInfiniteLight* infL = reinterpret_cast<IInfiniteLight*>(mEntity);
 
 		if (in.SamplePosition) {
 			InfiniteLightSamplePosDirInput ilsin;
 			ilsin.DirectionRND = in.RND.get2D();
 			ilsin.PositionRND  = in.RND.get2D();
-			ilsin.WavelengthNM = in.WavelengthNM;
+			ilsin.WavelengthNM = out.WavelengthNM;
 			ilsin.Point		   = in.Point;
 
 			InfiniteLightSamplePosDirOutput ilsout;
@@ -112,7 +132,7 @@ void Light::sample(const LightSampleInput& in, LightSampleOutput& out, const Ren
 		} else {
 			InfiniteLightSampleDirInput ilsin;
 			ilsin.DirectionRND = in.RND.get2D();
-			ilsin.WavelengthNM = in.WavelengthNM;
+			ilsin.WavelengthNM = out.WavelengthNM;
 
 			InfiniteLightSampleDirOutput ilsout;
 			infL->sampleDir(ilsin, ilsout, session);
@@ -134,12 +154,24 @@ void Light::sample(const LightSampleInput& in, LightSampleOutput& out, const Ren
 		GeometryPoint gp;
 		ent->provideGeometryPoint(qp, gp);
 
+		if (in.SampleWavelength) {
+			SpectralSampleInput ssin(session.tile()->random());
+			ssin.Light	  = this;
+			ssin.Position = pp.Position;
+			ssin.Purpose  = SpectralSamplePurpose::Light;
+
+			SpectralSampleOutput ssout;
+			mSampler->wavelengthSampler()->sample(ssin, ssout);
+			out.WavelengthNM   = ssout.WavelengthNM;
+			out.Wavelength_PDF = ssout.PDF;
+		}
+
 		ShadingContext sctx;
 		sctx.Face		  = gp.PrimitiveID;
 		sctx.dUV		  = gp.dUV;
 		sctx.UV			  = gp.UV;
 		sctx.ThreadIndex  = session.threadID();
-		sctx.WavelengthNM = in.WavelengthNM;
+		sctx.WavelengthNM = out.WavelengthNM;
 
 		EmissionSampleContext ectx;
 		ectx.P			 = pp.Position;
@@ -149,42 +181,23 @@ void Light::sample(const LightSampleInput& in, LightSampleOutput& out, const Ren
 
 		if (!in.Point) { // Sample a complete new direction
 			EmissionSampleInput esin(in.RND);
-			esin.Requests = EmissionSampleRequest::Direction;
-			if (in.SampleWavelength)
-				esin.Requests |= EmissionSampleRequest::Wavelength;
-
 			esin.ShadingContext = sctx;
 			esin.Context		= ectx;
 
 			EmissionSampleOutput esout;
 			mEmission->sample(esin, esout, session);
 
-			out.WavelengthNM	= in.SampleWavelength ? esout.WavelengthNM : in.WavelengthNM;
 			out.Outgoing		= -esout.L;
 			out.Direction_PDF_S = esout.PDF_S[0];
 		} else { // Sample only wavelength if necessary
-			out.Outgoing = (pp.Position - in.Point->P).normalized();
-			if (in.SampleWavelength) {
-				EmissionSampleInput esin(in.RND);
-				esin.Requests = EmissionSampleRequest::Wavelength;
-
-				esin.ShadingContext = sctx;
-				esin.Context		= ectx;
-
-				EmissionSampleOutput esout;
-				mEmission->sample(esin, esout, session);
-				out.WavelengthNM	= esout.WavelengthNM;
-				out.Direction_PDF_S = esout.PDF_S[0]; // TODO
-			} else {
-				out.WavelengthNM	= in.WavelengthNM;
-				out.Direction_PDF_S = 1;
-			}
+			out.Outgoing		= (pp.Position - in.Point->P).normalized();
+			out.Direction_PDF_S = 1;
 		}
 
 		// Evaluate to get the radiance
 		EmissionEvalInput eein;
 
-		eein.Context = ectx.expand(-out.Outgoing, out.WavelengthNM);
+		eein.Context = ectx.expand(-out.Outgoing);
 
 		eein.ShadingContext				 = sctx;
 		eein.ShadingContext.WavelengthNM = out.WavelengthNM;
