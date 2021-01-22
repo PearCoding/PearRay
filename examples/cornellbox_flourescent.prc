@@ -54,7 +54,7 @@
 	(emission
 		:name 'light_em'
 		:type 'standard'
-		:radiance (smul (blackbody 16000 true) 20)
+		:radiance (smul (spd 'UVLight.csv') 20)
 	)
 	; Materials
 	(material
@@ -90,15 +90,15 @@
 	(material
 		:name 'shortBox'
 		:type 'flourescent'
-		:albedo (refl 0.6 0.8 0.4)
-		:absorption (refl 0.4 0.8 0.8)
+		:albedo 0
+		:absorption 1
 		:emission (refl 0.7 0.6 0.6)
 	)
 	(material
 		:name 'tallBox'
 		:type 'flourescent'
-		:albedo (refl 0.4 0.6 0.8)
-		:absorption (refl 0.8 0.2 0.8)
+		:albedo 0
+		:absorption 1
 		:emission (refl 0.1 0.6 0.3)
 	)
 
