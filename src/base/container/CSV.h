@@ -25,6 +25,9 @@ public:
 
 	inline bool isValid() const { return mRowCount > 0 && mColumnCount > 0; }
 
+	bool read(const std::filesystem::path& path);
+	bool read(std::istream& stream);
+
 	bool write(const std::filesystem::path& path, char separator = ';') const;
 	bool write(std::ostream& stream, char separator = ';') const;
 

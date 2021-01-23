@@ -20,16 +20,36 @@ static inline bool isSeparator(int c)
 }
 
 CSV::CSV(const std::filesystem::path& path)
-	: CSV(std::fstream(path.c_str(), std::ios::in))
+	: mRowCount(0)
+	, mColumnCount(0)
 {
+	read(path);
 }
 
 CSV::CSV(std::istream& stream)
 	: mRowCount(0)
 	, mColumnCount(0)
 {
+	read(stream);
+}
+
+bool CSV::read(const std::filesystem::path& path)
+{
+	std::fstream stream;
+	stream.open(path.c_str(), std::ios::in);
 	if (!stream)
-		return;
+		return false;
+
+	return read(stream);
+}
+
+bool CSV::read(std::istream& stream)
+{
+	if (!stream)
+		return false;
+
+	mData.clear();
+	mHeader.clear();
 
 	// Get first row and detect seperator
 	std::vector<std::string> first_row;
@@ -52,7 +72,7 @@ CSV::CSV(std::istream& stream)
 
 	mColumnCount = first_row.size();
 	if (mColumnCount == 0)
-		return;
+		return false;
 
 	// Check if first row is the header...
 	// There is no standard way, but we just assume the first row has strings, the data does not
@@ -128,6 +148,8 @@ CSV::CSV(std::istream& stream)
 
 	mRowCount = mData.size() / mColumnCount;
 	mData.shrink_to_fit();
+
+	return true;
 }
 
 bool CSV::write(const std::filesystem::path& path, char separator) const
