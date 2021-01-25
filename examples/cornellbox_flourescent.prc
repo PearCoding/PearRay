@@ -90,16 +90,16 @@
 	(material
 		:name 'shortBox'
 		:type 'flourescent'
-		:albedo 0
-		:absorption 1
-		:emission (refl 0.7 0.6 0.6)
+		:albedo 1
+		:absorption (spd 'fluorophores/MarinaBlue.csv' 1 true)
+		:emission (spd 'fluorophores/MarinaBlue.csv' 2 true)
 	)
 	(material
 		:name 'tallBox'
 		:type 'flourescent'
-		:albedo 0
-		:absorption 1
-		:emission (refl 0.1 0.6 0.3)
+		:albedo 1
+		:absorption (spd 'fluorophores/HypoxiaGreen.csv' 1 true)
+		:emission (spd 'fluorophores/HypoxiaGreen.csv' 2 true)
 	)
 
 	(include "cornellbox_mesh.prc.inc")

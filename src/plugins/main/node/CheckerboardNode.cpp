@@ -52,6 +52,8 @@ public:
 		return mOp1->queryRecommendedSize().cwiseMax(mOp2->queryRecommendedSize());
 	}
 
+	WavelengthRange wavelengthRange() const override { return unionRange(mOp1->wavelengthRange(), mOp2->wavelengthRange()); }
+
 	std::string dumpInformation() const override
 	{
 		std::stringstream sstream;
@@ -104,8 +106,6 @@ public:
 			.Specification()
 			.get();
 	}
-
-	
 };
 } // namespace PR
 

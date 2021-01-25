@@ -45,7 +45,8 @@ res
 tools/spectrum
 CMakeSettings.json
 
-# Ignore measured BSDF files as they have to be acquired manually
+# Ignore some external files as they have to be acquired manually due to copyright reasons
 examples/*.bsdf
 examples/*.binary
 examples/*.xml
+examples/fluorophores/*.csv

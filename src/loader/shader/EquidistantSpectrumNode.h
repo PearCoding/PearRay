@@ -11,7 +11,8 @@ template <typename T>
 class PR_LIB_LOADER EquidistantSpectrumBaseNode : public FloatSpectralNode {
 public:
 	inline EquidistantSpectrumBaseNode(const T& spec)
-		: FloatSpectralNode(NodeFlag::SpectralVarying), mSpectrum(spec)
+		: FloatSpectralNode(NodeFlag::SpectralVarying)
+		, mSpectrum(spec)
 	{
 	}
 
@@ -20,9 +21,9 @@ public:
 		SpectralBlob blob;
 
 		PR_UNROLL_LOOP(PR_SPECTRAL_BLOB_SIZE)
-		for (size_t k = 0; k < PR_SPECTRAL_BLOB_SIZE; ++k) {
+		for (size_t k = 0; k < PR_SPECTRAL_BLOB_SIZE; ++k)
 			blob[k] = mSpectrum.lookup(ctx.WavelengthNM[k]);
-		}
+
 		return blob;
 	}
 
@@ -34,11 +35,13 @@ public:
 		return sstream.str();
 	}
 
+	virtual WavelengthRange wavelengthRange() const override { return { (float)mSpectrum.wavelengthStart(), (float)mSpectrum.wavelengthEnd() }; }
+
 private:
 	T mSpectrum;
 };
 
-using EquidistantSpectrumNode	   = EquidistantSpectrumBaseNode<EquidistantSpectrum>;
+using EquidistantSpectrumNode	  = EquidistantSpectrumBaseNode<EquidistantSpectrum>;
 using EquidistantSpectrumViewNode = EquidistantSpectrumBaseNode<EquidistantSpectrumView>;
 
 } // namespace PR

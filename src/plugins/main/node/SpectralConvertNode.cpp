@@ -88,6 +88,7 @@ static inline void hsv(const SpectralBlob& w, const SpectralBlob& wvl, SpectralB
 		{                                                                              \
 			return mOperand->queryRecommendedSize();                                   \
 		}                                                                              \
+		WavelengthRange wavelengthRange() const override { return mOperand->wavelengthRange(); } \
 		std::string dumpInformation() const override                                   \
 		{                                                                              \
 			std::stringstream sstream;                                                 \

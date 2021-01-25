@@ -50,12 +50,31 @@ public:
 
 		bool hasNonEquidistantData = false;
 
+		// Extract optional column index
+		size_t dataColumn = 1;
+		if (ctx.parameters().hasParameter("column"))
+			dataColumn = ctx.parameters().getUInt("column", dataColumn);
+
+		if (ctx.parameters().positionalParameterCount() > 1)
+			dataColumn = ctx.parameters().getUInt(1, dataColumn);
+
+		dataColumn = std::min(dataColumn, csv.columnCount());
+
+		// Set optional norm factor
+		float normF = 1;
+		if (ctx.parameters().hasParameter("percentage"))
+			normF = ctx.parameters().getBool("percentage", false) ? (1 / 100.0f) : 1.0f;
+
+		if (ctx.parameters().positionalParameterCount() > 2)
+			normF = ctx.parameters().getBool(2, false) ? (1 / 100.0f) : 1.0f;
+
+		// Build equidistant spectrum
 		EquidistantSpectrum spectrum(csv.rowCount(), start, end);
 		for (size_t i = 0; i < csv.rowCount(); ++i) {
 			const float expectedWvl = i * delta + start;
 			if (std::abs(csv(i, 0) - expectedWvl) > PR_EPSILON)
 				hasNonEquidistantData = true;
-			spectrum.at(i) = csv(i, 1);
+			spectrum.at(i) = csv(i, dataColumn) * normF;
 		}
 
 		if (hasNonEquidistantData)
@@ -76,6 +95,8 @@ public:
 			.Identifiers(getNames())
 			.Inputs()
 			.Filename("file", "Path to a CSV file containing wavelength and power distribution")
+			.UInt("column", "Index of column the data is in. Column 0 is reserved for wavelengths", 1, 0, 16, 0, 1024, true)
+			.Bool("percentage", "Data given as percentage, divide by 100 ", false, true)
 			.Specification()
 			.get();
 	}
