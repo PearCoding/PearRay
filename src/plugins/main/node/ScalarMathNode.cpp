@@ -4,106 +4,106 @@
 #include "shader/INodePlugin.h"
 
 namespace PR {
-#define _OP1(Prefix, Op)                                                                     \
-	class Prefix##Math : public FloatScalarNode {                                            \
-	public:                                                                                  \
-		explicit Prefix##Math(const std::shared_ptr<FloatScalarNode>& op1)                   \
-			: FloatScalarNode(op1->flags())                                                  \
-			, mOp1(op1)                                                                      \
-		{                                                                                    \
-		}                                                                                    \
-		float eval(const ShadingContext& ctx) const override                                 \
-		{                                                                                    \
-			return Op mOp1->eval(ctx);                                                       \
-		}                                                                                    \
-		WavelengthRange wavelengthRange() const override { return mOp1->wavelengthRange(); } \
-		std::string dumpInformation() const override                                         \
-		{                                                                                    \
-			std::stringstream sstream;                                                       \
-			sstream << PR_STRINGIFY(Op) " (" << mOp1->dumpInformation() << ")";              \
-			return sstream.str();                                                            \
-		}                                                                                    \
-                                                                                             \
-	private:                                                                                 \
-		const std::shared_ptr<FloatScalarNode> mOp1;                                         \
+#define _OP1(Prefix, Op)                                                               \
+	class Prefix##Math : public FloatScalarNode {                                      \
+	public:                                                                            \
+		explicit Prefix##Math(const std::shared_ptr<FloatScalarNode>& op1)             \
+			: FloatScalarNode(op1->flags())                                            \
+			, mOp1(op1)                                                                \
+		{                                                                              \
+		}                                                                              \
+		float eval(const ShadingContext& ctx) const override                           \
+		{                                                                              \
+			return Op mOp1->eval(ctx);                                                 \
+		}                                                                              \
+		SpectralRange spectralRange() const override { return mOp1->spectralRange(); } \
+		std::string dumpInformation() const override                                   \
+		{                                                                              \
+			std::stringstream sstream;                                                 \
+			sstream << PR_STRINGIFY(Op) " (" << mOp1->dumpInformation() << ")";        \
+			return sstream.str();                                                      \
+		}                                                                              \
+                                                                                       \
+	private:                                                                           \
+		const std::shared_ptr<FloatScalarNode> mOp1;                                   \
 	};
 
-#define _OPF1(Prefix, F)                                                                     \
-	class Prefix##Math : public FloatScalarNode {                                            \
-	public:                                                                                  \
-		explicit Prefix##Math(const std::shared_ptr<FloatScalarNode>& op1)                   \
-			: FloatScalarNode(op1->flags())                                                  \
-			, mOp1(op1)                                                                      \
-		{                                                                                    \
-		}                                                                                    \
-		float eval(const ShadingContext& ctx) const override                                 \
-		{                                                                                    \
-			return F(mOp1->eval(ctx));                                                       \
-		}                                                                                    \
-		WavelengthRange wavelengthRange() const override { return mOp1->wavelengthRange(); } \
-		std::string dumpInformation() const override                                         \
-		{                                                                                    \
-			std::stringstream sstream;                                                       \
-			sstream << PR_STRINGIFY(F) " (" << mOp1->dumpInformation() << ")";               \
-			return sstream.str();                                                            \
-		}                                                                                    \
-                                                                                             \
-	private:                                                                                 \
-		const std::shared_ptr<FloatScalarNode> mOp1;                                         \
+#define _OPF1(Prefix, F)                                                               \
+	class Prefix##Math : public FloatScalarNode {                                      \
+	public:                                                                            \
+		explicit Prefix##Math(const std::shared_ptr<FloatScalarNode>& op1)             \
+			: FloatScalarNode(op1->flags())                                            \
+			, mOp1(op1)                                                                \
+		{                                                                              \
+		}                                                                              \
+		float eval(const ShadingContext& ctx) const override                           \
+		{                                                                              \
+			return F(mOp1->eval(ctx));                                                 \
+		}                                                                              \
+		SpectralRange spectralRange() const override { return mOp1->spectralRange(); } \
+		std::string dumpInformation() const override                                   \
+		{                                                                              \
+			std::stringstream sstream;                                                 \
+			sstream << PR_STRINGIFY(F) " (" << mOp1->dumpInformation() << ")";         \
+			return sstream.str();                                                      \
+		}                                                                              \
+                                                                                       \
+	private:                                                                           \
+		const std::shared_ptr<FloatScalarNode> mOp1;                                   \
 	};
 
-#define _OP2(Prefix, Op)                                                                                                          \
-	class Prefix##Math : public FloatScalarNode {                                                                                 \
-	public:                                                                                                                       \
-		explicit Prefix##Math(const std::shared_ptr<FloatScalarNode>& op1,                                                        \
-							  const std::shared_ptr<FloatScalarNode>& op2)                                                        \
-			: FloatScalarNode(op1->flags() | op2->flags())                                                                        \
-			, mOp1(op1)                                                                                                           \
-			, mOp2(op2)                                                                                                           \
-		{                                                                                                                         \
-		}                                                                                                                         \
-		float eval(const ShadingContext& ctx) const override                                                                      \
-		{                                                                                                                         \
-			return mOp1->eval(ctx) Op mOp2->eval(ctx);                                                                            \
-		}                                                                                                                         \
-		WavelengthRange wavelengthRange() const override { return unionRange(mOp1->wavelengthRange(), mOp2->wavelengthRange()); } \
-		std::string dumpInformation() const override                                                                              \
-		{                                                                                                                         \
-			std::stringstream sstream;                                                                                            \
-			sstream << "(" << mOp1->dumpInformation() << ") " PR_STRINGIFY(Op) " (" << mOp2->dumpInformation() << ")";            \
-			return sstream.str();                                                                                                 \
-		}                                                                                                                         \
-                                                                                                                                  \
-	private:                                                                                                                      \
-		const std::shared_ptr<FloatScalarNode> mOp1;                                                                              \
-		const std::shared_ptr<FloatScalarNode> mOp2;                                                                              \
+#define _OP2(Prefix, Op)                                                                                               \
+	class Prefix##Math : public FloatScalarNode {                                                                      \
+	public:                                                                                                            \
+		explicit Prefix##Math(const std::shared_ptr<FloatScalarNode>& op1,                                             \
+							  const std::shared_ptr<FloatScalarNode>& op2)                                             \
+			: FloatScalarNode(op1->flags() | op2->flags())                                                             \
+			, mOp1(op1)                                                                                                \
+			, mOp2(op2)                                                                                                \
+		{                                                                                                              \
+		}                                                                                                              \
+		float eval(const ShadingContext& ctx) const override                                                           \
+		{                                                                                                              \
+			return mOp1->eval(ctx) Op mOp2->eval(ctx);                                                                 \
+		}                                                                                                              \
+		SpectralRange spectralRange() const override { return mOp1->spectralRange() + mOp2->spectralRange(); }         \
+		std::string dumpInformation() const override                                                                   \
+		{                                                                                                              \
+			std::stringstream sstream;                                                                                 \
+			sstream << "(" << mOp1->dumpInformation() << ") " PR_STRINGIFY(Op) " (" << mOp2->dumpInformation() << ")"; \
+			return sstream.str();                                                                                      \
+		}                                                                                                              \
+                                                                                                                       \
+	private:                                                                                                           \
+		const std::shared_ptr<FloatScalarNode> mOp1;                                                                   \
+		const std::shared_ptr<FloatScalarNode> mOp2;                                                                   \
 	};
 
-#define _OPF2(Prefix, F)                                                                                                          \
-	class Prefix##Math : public FloatScalarNode {                                                                                 \
-	public:                                                                                                                       \
-		explicit Prefix##Math(const std::shared_ptr<FloatScalarNode>& op1,                                                        \
-							  const std::shared_ptr<FloatScalarNode>& op2)                                                        \
-			: FloatScalarNode(op1->flags() | op2->flags())                                                                        \
-			, mOp1(op1)                                                                                                           \
-			, mOp2(op2)                                                                                                           \
-		{                                                                                                                         \
-		}                                                                                                                         \
-		float eval(const ShadingContext& ctx) const override                                                                      \
-		{                                                                                                                         \
-			return F(mOp1->eval(ctx), mOp2->eval(ctx));                                                                           \
-		}                                                                                                                         \
-		WavelengthRange wavelengthRange() const override { return unionRange(mOp1->wavelengthRange(), mOp2->wavelengthRange()); } \
-		std::string dumpInformation() const override                                                                              \
-		{                                                                                                                         \
-			std::stringstream sstream;                                                                                            \
-			sstream << PR_STRINGIFY(F) " (" << mOp1->dumpInformation() << " , " << mOp2->dumpInformation() << ")";                \
-			return sstream.str();                                                                                                 \
-		}                                                                                                                         \
-                                                                                                                                  \
-	private:                                                                                                                      \
-		const std::shared_ptr<FloatScalarNode> mOp1;                                                                              \
-		const std::shared_ptr<FloatScalarNode> mOp2;                                                                              \
+#define _OPF2(Prefix, F)                                                                                           \
+	class Prefix##Math : public FloatScalarNode {                                                                  \
+	public:                                                                                                        \
+		explicit Prefix##Math(const std::shared_ptr<FloatScalarNode>& op1,                                         \
+							  const std::shared_ptr<FloatScalarNode>& op2)                                         \
+			: FloatScalarNode(op1->flags() | op2->flags())                                                         \
+			, mOp1(op1)                                                                                            \
+			, mOp2(op2)                                                                                            \
+		{                                                                                                          \
+		}                                                                                                          \
+		float eval(const ShadingContext& ctx) const override                                                       \
+		{                                                                                                          \
+			return F(mOp1->eval(ctx), mOp2->eval(ctx));                                                            \
+		}                                                                                                          \
+		SpectralRange spectralRange() const override { return mOp1->spectralRange() + mOp2->spectralRange(); }     \
+		std::string dumpInformation() const override                                                               \
+		{                                                                                                          \
+			std::stringstream sstream;                                                                             \
+			sstream << PR_STRINGIFY(F) " (" << mOp1->dumpInformation() << " , " << mOp2->dumpInformation() << ")"; \
+			return sstream.str();                                                                                  \
+		}                                                                                                          \
+                                                                                                                   \
+	private:                                                                                                       \
+		const std::shared_ptr<FloatScalarNode> mOp1;                                                               \
+		const std::shared_ptr<FloatScalarNode> mOp2;                                                               \
 	};
 
 #define ADD_OP +

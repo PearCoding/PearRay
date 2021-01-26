@@ -6,6 +6,7 @@ https://www.thermofisher.com/de/de/home/life-science/cell-analysis/labeling-chem
 
 Necessary fluorophores are:
 
- - MarinaBlue.csv (Marina Blue)
- - HypoxiaGreen.csv (Hypoxia Green)
-
+ - MarinaBlue.csv            (Marina Blue)
+ - HypoxiaGreen.csv          (Hypoxia Green)
+ - FixableDye.csv            (Fixable Viability Dye eFluor 455UV)
+ - BrilliantUltraviolet.csv  (Brilliant Ultraviolet 496 (BUV496))

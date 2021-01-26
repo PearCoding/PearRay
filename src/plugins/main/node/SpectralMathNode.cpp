@@ -5,63 +5,63 @@
 
 namespace PR {
 
-#define _OPF1(Prefix, F)                                                                     \
-	class Prefix##SpectralMath : public FloatSpectralNode {                                  \
-	public:                                                                                  \
-		explicit Prefix##SpectralMath(const std::shared_ptr<FloatSpectralNode>& op1)         \
-			: FloatSpectralNode(op1->flags())                                                \
-			, mOp1(op1)                                                                      \
-		{                                                                                    \
-		}                                                                                    \
-		SpectralBlob eval(const ShadingContext& ctx) const override                          \
-		{                                                                                    \
-			return F(mOp1->eval(ctx));                                                       \
-		}                                                                                    \
-		Vector2i queryRecommendedSize() const override                                       \
-		{                                                                                    \
-			return mOp1->queryRecommendedSize();                                             \
-		}                                                                                    \
-		WavelengthRange wavelengthRange() const override { return mOp1->wavelengthRange(); } \
-		std::string dumpInformation() const override                                         \
-		{                                                                                    \
-			std::stringstream sstream;                                                       \
-			sstream << PR_STRINGIFY(F) " (" << mOp1->dumpInformation() << ")";               \
-			return sstream.str();                                                            \
-		}                                                                                    \
-                                                                                             \
-	private:                                                                                 \
-		const std::shared_ptr<FloatSpectralNode> mOp1;                                       \
+#define _OPF1(Prefix, F)                                                               \
+	class Prefix##SpectralMath : public FloatSpectralNode {                            \
+	public:                                                                            \
+		explicit Prefix##SpectralMath(const std::shared_ptr<FloatSpectralNode>& op1)   \
+			: FloatSpectralNode(op1->flags())                                          \
+			, mOp1(op1)                                                                \
+		{                                                                              \
+		}                                                                              \
+		SpectralBlob eval(const ShadingContext& ctx) const override                    \
+		{                                                                              \
+			return F(mOp1->eval(ctx));                                                 \
+		}                                                                              \
+		Vector2i queryRecommendedSize() const override                                 \
+		{                                                                              \
+			return mOp1->queryRecommendedSize();                                       \
+		}                                                                              \
+		SpectralRange spectralRange() const override { return mOp1->spectralRange(); } \
+		std::string dumpInformation() const override                                   \
+		{                                                                              \
+			std::stringstream sstream;                                                 \
+			sstream << PR_STRINGIFY(F) " (" << mOp1->dumpInformation() << ")";         \
+			return sstream.str();                                                      \
+		}                                                                              \
+                                                                                       \
+	private:                                                                           \
+		const std::shared_ptr<FloatSpectralNode> mOp1;                                 \
 	};
 
-#define _OPF2(Prefix, F)                                                                                                          \
-	class Prefix##SpectralMath : public FloatSpectralNode {                                                                       \
-	public:                                                                                                                       \
-		explicit Prefix##SpectralMath(const std::shared_ptr<FloatSpectralNode>& op1,                                              \
-									  const std::shared_ptr<FloatSpectralNode>& op2)                                              \
-			: FloatSpectralNode(op1->flags() | op2->flags())                                                                      \
-			, mOp1(op1)                                                                                                           \
-			, mOp2(op2)                                                                                                           \
-		{                                                                                                                         \
-		}                                                                                                                         \
-		SpectralBlob eval(const ShadingContext& ctx) const override                                                               \
-		{                                                                                                                         \
-			return F(mOp1->eval(ctx), mOp2->eval(ctx));                                                                           \
-		}                                                                                                                         \
-		Vector2i queryRecommendedSize() const override                                                                            \
-		{                                                                                                                         \
-			return mOp1->queryRecommendedSize().cwiseMax(mOp2->queryRecommendedSize());                                           \
-		}                                                                                                                         \
-		WavelengthRange wavelengthRange() const override { return unionRange(mOp1->wavelengthRange(), mOp2->wavelengthRange()); } \
-		std::string dumpInformation() const override                                                                              \
-		{                                                                                                                         \
-			std::stringstream sstream;                                                                                            \
-			sstream << PR_STRINGIFY(F) " (" << mOp1->dumpInformation() << " , " << mOp2->dumpInformation() << ")";                \
-			return sstream.str();                                                                                                 \
-		}                                                                                                                         \
-                                                                                                                                  \
-	private:                                                                                                                      \
-		const std::shared_ptr<FloatSpectralNode> mOp1;                                                                            \
-		const std::shared_ptr<FloatSpectralNode> mOp2;                                                                            \
+#define _OPF2(Prefix, F)                                                                                           \
+	class Prefix##SpectralMath : public FloatSpectralNode {                                                        \
+	public:                                                                                                        \
+		explicit Prefix##SpectralMath(const std::shared_ptr<FloatSpectralNode>& op1,                               \
+									  const std::shared_ptr<FloatSpectralNode>& op2)                               \
+			: FloatSpectralNode(op1->flags() | op2->flags())                                                       \
+			, mOp1(op1)                                                                                            \
+			, mOp2(op2)                                                                                            \
+		{                                                                                                          \
+		}                                                                                                          \
+		SpectralBlob eval(const ShadingContext& ctx) const override                                                \
+		{                                                                                                          \
+			return F(mOp1->eval(ctx), mOp2->eval(ctx));                                                            \
+		}                                                                                                          \
+		Vector2i queryRecommendedSize() const override                                                             \
+		{                                                                                                          \
+			return mOp1->queryRecommendedSize().cwiseMax(mOp2->queryRecommendedSize());                            \
+		}                                                                                                          \
+		SpectralRange spectralRange() const override { return mOp1->spectralRange() + mOp2->spectralRange(); }     \
+		std::string dumpInformation() const override                                                               \
+		{                                                                                                          \
+			std::stringstream sstream;                                                                             \
+			sstream << PR_STRINGIFY(F) " (" << mOp1->dumpInformation() << " , " << mOp2->dumpInformation() << ")"; \
+			return sstream.str();                                                                                  \
+		}                                                                                                          \
+                                                                                                                   \
+	private:                                                                                                       \
+		const std::shared_ptr<FloatSpectralNode> mOp1;                                                             \
+		const std::shared_ptr<FloatSpectralNode> mOp2;                                                             \
 	};
 
 inline static SpectralBlob abs(const SpectralBlob& v)
@@ -133,7 +133,7 @@ public:
 		return mOp1->queryRecommendedSize().cwiseMax(mOp2->queryRecommendedSize());
 	}
 
-	WavelengthRange wavelengthRange() const override { return unionRange(mOp1->wavelengthRange(), mOp2->wavelengthRange()); }
+	SpectralRange spectralRange() const override { return mOp1->spectralRange() + mOp2->spectralRange(); }
 
 	std::string dumpInformation() const override
 	{
@@ -170,7 +170,7 @@ public:
 		return mOp1->queryRecommendedSize().cwiseMax(mOp2->queryRecommendedSize());
 	}
 
-	WavelengthRange wavelengthRange() const override { return unionRange(mOp1->wavelengthRange(), mOp2->wavelengthRange()); }
+	SpectralRange spectralRange() const override { return mOp1->spectralRange() + mOp2->spectralRange(); }
 
 	std::string dumpInformation() const override
 	{

@@ -130,6 +130,8 @@ void LocalFrameOutputDevice::commitSpectrals2(StreamPipeline* pipeline, const Ou
 		const SpectralBlob contrib = factor * entry.contribution();
 		const float iterWeight	   = isMono ? grp.BlendWeight[0] : grp.BlendWeight.mean();
 
+		const SpectralBlob wvls = grp.WavelengthNM; // entry.Wavelengths
+
 #ifndef PR_NO_SPECTRAL_CHECKS
 		// Check for valid samples
 		const bool isInf	 = contrib.isInf().any();
@@ -150,7 +152,7 @@ void LocalFrameOutputDevice::commitSpectrals2(StreamPipeline* pipeline, const Ou
 		}
 #endif
 
-		const CIETriplet triplet = mapSpectral<IsMono>(contrib, entry.Wavelengths);
+		const CIETriplet triplet = mapSpectral<IsMono>(contrib, wvls);
 		const LightPathView path = LightPathView(entry.Path);
 
 		if constexpr (HasFilter) {

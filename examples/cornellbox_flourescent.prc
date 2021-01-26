@@ -54,7 +54,7 @@
 	(emission
 		:name 'light_em'
 		:type 'standard'
-		:radiance (smul (spd 'UVLight.csv') 20)
+		:radiance (smul (spd 'UVLight.csv') 5000)
 	)
 	; Materials
 	(material
@@ -91,15 +91,15 @@
 		:name 'shortBox'
 		:type 'flourescent'
 		:albedo 1
-		:absorption (spd 'fluorophores/MarinaBlue.csv' 1 true)
-		:emission (spd 'fluorophores/MarinaBlue.csv' 2 true)
+		:absorption (spd 'fluorophores/FixableDye.csv' 1 true)
+		:emission (spd 'fluorophores/FixableDye.csv' 2 true)
 	)
 	(material
 		:name 'tallBox'
 		:type 'flourescent'
 		:albedo 1
-		:absorption (spd 'fluorophores/HypoxiaGreen.csv' 1 true)
-		:emission (spd 'fluorophores/HypoxiaGreen.csv' 2 true)
+		:absorption (spd 'fluorophores/BrilliantUltraviolet.csv' 1 true)
+		:emission (spd 'fluorophores/BrilliantUltraviolet.csv' 2 true)
 	)
 
 	(include "cornellbox_mesh.prc.inc")

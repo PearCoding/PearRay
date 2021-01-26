@@ -108,6 +108,7 @@ public:
 	}
 
 	SpectralBlob power(const SpectralBlob& wvl) const override { return radiance(wvl, ElevationAzimuth::fromDirection(Vector3f(0, 0, 1))); }
+	SpectralRange spectralRange() const override { return SpectralRange(); }
 
 	std::string dumpInformation() const override
 	{

@@ -34,13 +34,12 @@ public:
 
 	void sample(const EmissionSampleInput& in, EmissionSampleOutput& out, const RenderTileSession& session) const
 	{
-		// TODO: Wavelength???
-
 		out.L	  = Sampling::cos_hemi(in.RND.getFloat(), in.RND.getFloat());
 		out.PDF_S = Sampling::cos_hemi_pdf(out.L(2));
 	}
 
 	SpectralBlob power(const SpectralBlob& wvl) const override { return NodeUtils::average(wvl, mRadiance.get()); }
+	SpectralRange spectralRange() const override { return mRadiance->spectralRange(); }
 
 	std::string dumpInformation() const override
 	{

@@ -168,6 +168,7 @@ set(PR_Src
   spectral/RGBConverter.cpp
   spectral/RGBConverter.h
   spectral/SpectralBlob.h
+  spectral/SpectralRange.h
   spectral/SpectralUpsampler.cpp
   spectral/SpectralUpsampler.h
   spectral/ToneMapper.cpp

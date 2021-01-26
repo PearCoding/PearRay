@@ -50,6 +50,17 @@ SpectralBlob Light::averagePower(const SpectralBlob& wavelengths) const
 	}
 }
 
+SpectralRange Light::spectralRange() const
+{
+	if (isInfinite()) {
+		IInfiniteLight* infL = reinterpret_cast<IInfiniteLight*>(mEntity);
+		return infL->spectralRange();
+	} else {
+		PR_ASSERT(mEmission, "Invalid light given!");
+		return mEmission->spectralRange();
+	}
+}
+
 void Light::eval(const LightEvalInput& in, LightEvalOutput& out, const RenderTileSession& session) const
 {
 	if (isInfinite()) {

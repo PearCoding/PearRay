@@ -52,7 +52,7 @@ public:
 		return mOp1->queryRecommendedSize().cwiseMax(mOp2->queryRecommendedSize());
 	}
 
-	WavelengthRange wavelengthRange() const override { return unionRange(mOp1->wavelengthRange(), mOp2->wavelengthRange()); }
+	SpectralRange spectralRange() const override { return mOp1->spectralRange() + mOp2->spectralRange(); }
 
 	std::string dumpInformation() const override
 	{

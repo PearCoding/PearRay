@@ -8,11 +8,12 @@
 
 namespace PR {
 
-LightSampler::LightSampler(Scene* scene)
+LightSampler::LightSampler(Scene* scene, const SpectralRange& globalDomain)
 	: mInfLightSelectionProbability(0)
 	, mEmissiveSurfaceArea(0)
 	, mEmissiveSurfacePower(0)
 	, mEmissivePower(0)
+	, mSpectralRange(globalDomain)
 {
 	const float scene_area = 2 * PR_PI * scene->boundingSphere().radius(); /*Approximative*/ //scene->boundingSphere().surfaceArea();
 
@@ -30,7 +31,7 @@ LightSampler::LightSampler(Scene* scene)
 	if (light_count == 0)
 		return;
 
-	const SpectralBlob test_wvl(550, 520, 460, 620);
+	const SpectralBlob test_wvl_distr(0.2f, 0.4f, 0.6f, 0.8f);
 
 	// Setup intensities
 	std::vector<float> intensities;
@@ -48,13 +49,16 @@ LightSampler::LightSampler(Scene* scene)
 
 		const IEmission* emission = emissions[ems_id].get();
 
+		const SpectralRange range   = emission->spectralRange().bounded(mSpectralRange);
+		const SpectralBlob test_wvl = range.Start + range.span() * test_wvl_distr;
+
 		const float area	  = e->worldSurfaceArea();
 		const float intensity = area * emission->power(test_wvl).mean();
 
 		mEmissiveSurfaceArea += area;
 		mEmissiveSurfacePower += intensity;
 
-		PR_LOG(L_DEBUG) << "(Area) Light '" << e->name() << "' Area " << area << "m2 Intensity " << intensity << "W" << std::endl;
+		PR_LOG(L_INFO) << "(Area) Light '" << e->name() << "' Area " << area << "m2 Intensity " << intensity << "W [" << range.Start << ", " << range.End << "]" << std::endl;
 
 		intensities.push_back(intensity);
 	}
@@ -62,10 +66,13 @@ LightSampler::LightSampler(Scene* scene)
 	// Add infinite lights (approx) intensities
 	mEmissivePower = mEmissiveSurfacePower;
 	for (const auto& infL : inflights) {
+		const SpectralRange range   = infL->spectralRange().bounded(mSpectralRange);
+		const SpectralBlob test_wvl = range.Start + range.span() * test_wvl_distr;
+
 		const float intensity = scene_area * infL->power(test_wvl).mean();
 		mEmissivePower += intensity;
 
-		PR_LOG(L_DEBUG) << "(Inf) Light '" << infL->name() << "' Area " << scene_area << "m2 Intensity " << intensity << "W" << std::endl;
+		PR_LOG(L_INFO) << "(Inf) Light '" << infL->name() << "' Area " << scene_area << "m2 Intensity " << intensity << "W [" << range.Start << ", " << range.End << "]" << std::endl;
 
 		intensities.push_back(intensity);
 	}
@@ -77,7 +84,7 @@ LightSampler::LightSampler(Scene* scene)
 
 	// Normalize intensities
 	if (full_approx_intensity <= PR_EPSILON) {
-		PR_LOG(L_WARNING) << "Lights are available but have no power" << std::endl;
+		PR_LOG(L_WARNING) << "Lights are available but seems like they have no power" << std::endl;
 	} else {
 		// Normalize
 		float invI = 1 / full_approx_intensity;
@@ -113,7 +120,12 @@ LightSampler::LightSampler(Scene* scene)
 		++k;
 	}
 
-	mInfLightSelectionProbability = (mEmissivePower - mEmissiveSurfacePower) / mEmissivePower;
+	if (mEmissivePower <= PR_EPSILON) {
+		// Special case: If no emissive power in the given spectral domain is available but we still have infinite lights, fix it to 50%
+		mInfLightSelectionProbability = inflights.empty() ? 0.0f : 0.5f;
+	} else {
+		mInfLightSelectionProbability = (mEmissivePower - mEmissiveSurfacePower) / mEmissivePower;
+	}
 }
 
 } // namespace PR

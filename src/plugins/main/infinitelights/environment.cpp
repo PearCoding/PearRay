@@ -115,6 +115,7 @@ public:
 	}
 
 	SpectralBlob power(const SpectralBlob& wvl) const override { return NodeUtils::average(wvl, mRadiance.get()); }
+	SpectralRange spectralRange() const override { return mRadiance->spectralRange(); }
 
 	std::string dumpInformation() const override
 	{

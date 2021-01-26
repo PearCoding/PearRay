@@ -35,7 +35,10 @@ public:
 		return sstream.str();
 	}
 
-	virtual WavelengthRange wavelengthRange() const override { return { (float)mSpectrum.wavelengthStart(), (float)mSpectrum.wavelengthEnd() }; }
+	virtual SpectralRange spectralRange() const override
+	{
+		return SpectralRange(mSpectrum.wavelengthStart(), mSpectrum.wavelengthEnd());
+	}
 
 private:
 	T mSpectrum;

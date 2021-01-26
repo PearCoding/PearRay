@@ -14,11 +14,21 @@
 #include <mutex>
 
 namespace PR {
+struct SPDContext {
+	Distribution1D Distribution;
+	std::vector<Distribution1D> LightDistributions;
+
+	inline SPDContext(size_t bins)
+		: Distribution(bins)
+	{
+	}
+};
+
 class SPDSpectralMapper : public ISpectralMapper {
 public:
-	SPDSpectralMapper(float start, float end, const Distribution1D& distribution)
+	SPDSpectralMapper(float start, float end, const SPDContext& context)
 		: ISpectralMapper(start, end)
-		, mDistribution(distribution)
+		, mContext(context)
 	{
 	}
 
@@ -28,25 +38,52 @@ public:
 	{
 		const float u = in.RND.getFloat();
 
-		PR_OPT_LOOP
-		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
-			const float k		= std::fmod(u + i / (float)PR_SPECTRAL_BLOB_SIZE, 1.0f);
-			out.WavelengthNM(i) = mDistribution.sampleContinuous(k, out.PDF(i)) * (wavelengthEnd() - wavelengthStart()) + wavelengthStart();
+		if (in.Purpose == SpectralSamplePurpose::Pixel) {
+			const Distribution1D& distr = mContext.Distribution;
+
+			PR_OPT_LOOP
+			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
+				const float k		= std::fmod(u + i / (float)PR_SPECTRAL_BLOB_SIZE, 1.0f);
+				out.WavelengthNM(i) = distr.sampleContinuous(k, out.PDF(i)) * (wavelengthEnd() - wavelengthStart()) + wavelengthStart();
+			}
+		} else {
+			const Distribution1D& distr = mContext.LightDistributions[in.Light->lightID()];
+			const SpectralRange range	= in.Light->spectralRange().bounded(SpectralRange(wavelengthStart(), wavelengthEnd()));
+
+			PR_OPT_LOOP
+			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
+				const float k		= std::fmod(u + i / (float)PR_SPECTRAL_BLOB_SIZE, 1.0f);
+				out.WavelengthNM(i) = distr.sampleContinuous(k, out.PDF(i)) * range.span() + range.Start;
+			}
 		}
 	}
 
 	// Do not apply the jacobian of the mapping from [0, 1] to [start, end], as we do not divide by it
-	SpectralBlob pdf(const SpectralEvalInput&, const SpectralBlob& wavelength) const override
+	SpectralBlob pdf(const SpectralEvalInput& in, const SpectralBlob& wavelength) const override
 	{
-		SpectralBlob res;
-		PR_OPT_LOOP
-		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-			res(i) = mDistribution.continuousPdf((wavelength(i) - wavelengthStart()) / (wavelengthEnd() - wavelengthStart()));
-		return res;
+		if (in.Purpose == SpectralSamplePurpose::Pixel) {
+			const Distribution1D& distr = mContext.Distribution;
+
+			SpectralBlob res;
+			PR_OPT_LOOP
+			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
+				res(i) = distr.continuousPdf((wavelength(i) - wavelengthStart()) / (wavelengthEnd() - wavelengthStart()));
+			return res;
+		} else {
+			const Distribution1D& distr = mContext.LightDistributions[in.Light->lightID()];
+			const SpectralRange range	= in.Light->spectralRange().bounded(SpectralRange(wavelengthStart(), wavelengthEnd()));
+
+			SpectralBlob res;
+			PR_OPT_LOOP
+			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
+				res(i) = distr.continuousPdf((wavelength(i) - range.Start) / range.span());
+
+			return res;
+		}
 	}
 
 private:
-	const Distribution1D mDistribution;
+	const SPDContext& mContext;
 };
 
 enum class WeightingMethod {
@@ -58,7 +95,10 @@ enum class WeightingMethod {
 
 struct SPDParameters {
 	/* This one can be high quality, as we sample each single wavelength!*/
-	uint32 NumberOfBins			= PR_VISIBLE_WAVELENGTH_END - PR_VISIBLE_WAVELENGTH_START;
+	uint32 NumberOfBins = PR_VISIBLE_WAVELENGTH_END - PR_VISIBLE_WAVELENGTH_START;
+	// Number of bins for single light distributions
+	uint32 NumberOfLightBins = (PR_VISIBLE_WAVELENGTH_END - PR_VISIBLE_WAVELENGTH_START) / 2;
+
 	WeightingMethod Method		= WeightingMethod::CIE_XYZ;
 	bool UseNormalizedLights	= true;
 	bool EnsureCompleteSampling = true;
@@ -80,7 +120,7 @@ class SPDSpectralMapperFactory : public ISpectralMapperFactory {
 public:
 	SPDSpectralMapperFactory(const SPDParameters& parameters)
 		: mParameters(parameters)
-		, mDistribution(mParameters.NumberOfBins)
+		, mContext(mParameters.NumberOfBins)
 		, mAlreadBuilt(false)
 	{
 	}
@@ -91,22 +131,98 @@ public:
 		mMutex.lock();
 		if (!mAlreadBuilt) {
 			buildDistribution(spectralStart, spectralEnd, ctx);
+			// TODO: Light distributions will not be used always... maybe make it optional??
+			buildLightDistributions(spectralStart, spectralEnd, ctx);
 			mAlreadBuilt = true;
 		}
 		mMutex.unlock();
 
-		return std::make_shared<SPDSpectralMapper>(spectralStart, spectralEnd, mDistribution);
+		return std::make_shared<SPDSpectralMapper>(spectralStart, spectralEnd, mContext);
 	}
 
 private:
-	void buildDistribution(float spectralStart, float spectralEnd, RenderContext* ctx)
+	void calcLightDistribution(std::vector<float>& lightPower, float spectralStart, float spectralEnd, Light* light)
 	{
+		const size_t bins  = lightPower.size();
+		const auto bin2wvl = [=](uint32 bin) { return spectralStart + (bin / float(bins - 1)) * (spectralEnd - spectralStart); };
+
+		// Calculate average power per spectral band
+		for (uint32 i = 0; i < bins; i += PR_SPECTRAL_BLOB_SIZE) {
+			const uint32 k = std::min<uint32>(bins - i, PR_SPECTRAL_BLOB_SIZE);
+
+			SpectralBlob wavelengths = SpectralBlob::Zero();
+			for (uint32 j = 0; j < k; ++j)
+				wavelengths(j) = bin2wvl(i + j);
+			// Let non active wavelengths at least have some reasonable garbage
+			for (uint32 j = k; j < PR_SPECTRAL_BLOB_SIZE; ++j)
+				wavelengths(j) = wavelengths(0);
+
+			const SpectralBlob output = light->averagePower(wavelengths);
+
+			for (uint32 j = 0; j < k; ++j)
+				lightPower[i + j] = output(j);
+		}
+
+		// Normalize the given spd if necessary
+		if (mParameters.UseNormalizedLights) {
+			const float dt = 1.0f / (bins - 1);
+			float integral = 0;
+			for (float f : lightPower)
+				integral += f * dt;
+			if (integral > PR_EPSILON) {
+				const float invnorm = 1 / integral;
+				for (float& f : lightPower)
+					f *= invnorm;
+			}
+		}
+	}
+
+	void applyPostprocessing(std::vector<float>& distr, float spectralStart, float spectralEnd)
+	{
+		const size_t bins  = distr.size();
+		const auto bin2wvl = [=](uint32 bin) { return spectralStart + (bin / float(bins - 1)) * (spectralEnd - spectralStart); };
+
 		WeightingMethod method = mParameters.Method;
 		// If the given spectral domain does not cross the cie domain, disable weighting
 		if (spectralStart > PR_CIE_WAVELENGTH_END || spectralEnd < PR_CIE_WAVELENGTH_START)
 			method = WeightingMethod::None;
 
-		const auto bin2wvl		= [=](uint32 bin) { return spectralStart + (bin / float(mParameters.NumberOfBins - 1)) * (spectralEnd - spectralStart); };
+		// Weight given spd entry by "camera" response
+		switch (method) {
+		case WeightingMethod::None:
+			break;
+		case WeightingMethod::CIE_Y:
+			for (uint32 i = 0; i < bins; ++i)
+				distr[i] *= CIE::eval_y(bin2wvl(i));
+			break;
+		case WeightingMethod::CIE_XYZ:
+			for (uint32 i = 0; i < bins; ++i)
+				distr[i] *= CIE::eval(bin2wvl(i)).sum();
+			break;
+		case WeightingMethod::SRGB:
+			for (uint32 i = 0; i < bins; ++i) {
+				const CIETriplet tripletXYZ = CIE::eval(bin2wvl(i));
+				CIETriplet tripletRGB;
+				RGBConverter::fromXYZ(tripletXYZ.data(), tripletRGB.data(), 3, 1);
+				distr[i] *= tripletRGB.sum();
+			}
+			break;
+		}
+
+		// Smooth spd if necessary
+		for (uint32 i = 0; i < mParameters.SmoothIterations; ++i)
+			movingAverage(distr);
+
+		// Ensure that all wavelengths will be sampled if necessary
+		if (mParameters.EnsureCompleteSampling) {
+			constexpr float MIN_POWER = 1e-3f;
+			for (float& f : distr)
+				f = std::max(MIN_POWER, f);
+		}
+	}
+
+	void buildDistribution(float spectralStart, float spectralEnd, RenderContext* ctx)
+	{
 		const auto lightSampler = ctx->lightSampler();
 
 		// Temporary arrays
@@ -114,73 +230,14 @@ private:
 		std::vector<float> lightPower(mParameters.NumberOfBins, 0.0f);
 
 		for (const auto& light : lightSampler->lights()) {
-			// Calculate average power per spectral band
-			for (uint32 i = 0; i < mParameters.NumberOfBins; i += PR_SPECTRAL_BLOB_SIZE) {
-				const uint32 k = std::min<uint32>(mParameters.NumberOfBins - i, PR_SPECTRAL_BLOB_SIZE);
-
-				SpectralBlob wavelengths = SpectralBlob::Zero();
-				for (uint32 j = 0; j < k; ++j)
-					wavelengths(j) = bin2wvl(i + j);
-				// Let non active wavelengths at least have some reasonable garbage
-				for (uint32 j = k; j < PR_SPECTRAL_BLOB_SIZE; ++j)
-					wavelengths(j) = wavelengths(0);
-
-				const SpectralBlob output = light->averagePower(wavelengths);
-
-				for (uint32 j = 0; j < k; ++j)
-					lightPower[i + j] = output(j);
-			}
-
-			// Normalize the given spd if necessary
-			if (mParameters.UseNormalizedLights) {
-				const float dt = 1.0f / (mParameters.NumberOfBins - 1);
-				float integral = 0;
-				for (float f : lightPower)
-					integral += f * dt;
-				if (integral > PR_EPSILON) {
-					const float invnorm = 1 / integral;
-					for (float& f : lightPower)
-						f *= invnorm;
-				}
-			}
+			calcLightDistribution(lightPower, spectralStart, spectralEnd, light.get());
 
 			// Add it to the full spd
 			for (uint32 i = 0; i < mParameters.NumberOfBins; ++i)
 				fullPower[i] += lightPower[i];
 		}
 
-		// Weight given spd entry by "camera" response
-		switch (method) {
-		case WeightingMethod::None:
-			break;
-		case WeightingMethod::CIE_Y:
-			for (uint32 i = 0; i < mParameters.NumberOfBins; ++i)
-				fullPower[i] *= CIE::eval_y(bin2wvl(i));
-			break;
-		case WeightingMethod::CIE_XYZ:
-			for (uint32 i = 0; i < mParameters.NumberOfBins; ++i)
-				fullPower[i] *= CIE::eval(bin2wvl(i)).sum();
-			break;
-		case WeightingMethod::SRGB:
-			for (uint32 i = 0; i < mParameters.NumberOfBins; ++i) {
-				const CIETriplet tripletXYZ = CIE::eval(bin2wvl(i));
-				CIETriplet tripletRGB;
-				RGBConverter::fromXYZ(tripletXYZ.data(), tripletRGB.data(), 3, 1);
-				fullPower[i] *= tripletRGB.sum();
-			}
-			break;
-		}
-
-		// Smooth spd if necessary
-		for (uint32 i = 0; i < mParameters.SmoothIterations; ++i)
-			movingAverage(fullPower);
-
-		// Ensure that all wavelengths will be sampled if necessary
-		if (mParameters.EnsureCompleteSampling) {
-			constexpr float MIN_POWER = 1e-3f;
-			for (float& f : fullPower)
-				f = std::max(MIN_POWER, f);
-		}
+		applyPostprocessing(fullPower, spectralStart, spectralEnd);
 
 		if (mParameters.Verbose) {
 			// Debug
@@ -190,11 +247,35 @@ private:
 		}
 
 		// Generate actual distribution
-		mDistribution.generate([&](uint32 bin) { return fullPower[bin]; });
+		mContext.Distribution.generate([&](uint32 bin) { return fullPower[bin]; });
+	}
+
+	void buildLightDistributions(float spectralStart, float spectralEnd, RenderContext* ctx)
+	{
+		const auto lightSampler = ctx->lightSampler();
+
+		if (lightSampler->lightCount() == 0)
+			return;
+
+		mContext.LightDistributions.resize(lightSampler->lightCount(), Distribution1D(mParameters.NumberOfLightBins));
+
+		// Temporary arrays
+		std::vector<float> lightPower(mParameters.NumberOfLightBins, 0.0f);
+
+		for (const auto& light : lightSampler->lights()) {
+			const SpectralRange range = light->spectralRange();
+			const float wvlStart	  = range.isStartUnbounded() ? spectralStart : range.Start;
+			const float wvlEnd		  = range.isEndUnbounded() ? spectralEnd : range.End;
+
+			calcLightDistribution(lightPower, wvlStart, wvlEnd, light.get());
+			applyPostprocessing(lightPower, wvlStart, wvlEnd);
+
+			mContext.LightDistributions[light->lightID()].generate([&](uint32 bin) { return lightPower[bin]; });
+		}
 	}
 	const SPDParameters mParameters;
 
-	Distribution1D mDistribution;
+	SPDContext mContext;
 	bool mAlreadBuilt;
 	std::mutex mMutex;
 };

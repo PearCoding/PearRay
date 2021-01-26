@@ -74,7 +74,7 @@ public:
 			const float expectedWvl = i * delta + start;
 			if (std::abs(csv(i, 0) - expectedWvl) > PR_EPSILON)
 				hasNonEquidistantData = true;
-			spectrum.at(i) = csv(i, dataColumn) * normF;
+			spectrum.at(i) = std::max(0.0f, csv(i, dataColumn) * normF);
 		}
 
 		if (hasNonEquidistantData)

@@ -80,7 +80,7 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 		mThreads.emplace_back(std::make_unique<RenderThread>(i, this));
 
 	// Setup light sampler
-	mLightSampler = std::make_shared<LightSampler>(mScene.get());
+	mLightSampler = std::make_shared<LightSampler>(mScene.get(), SpectralRange(mRenderSettings.spectralStart, mRenderSettings.spectralEnd));
 
 	// Setup tile map
 	mTileMap = std::make_unique<RenderTileMap>();

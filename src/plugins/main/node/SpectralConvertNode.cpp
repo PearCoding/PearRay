@@ -72,32 +72,32 @@ static inline void hsv(const SpectralBlob& w, const SpectralBlob& wvl, SpectralB
 	saturation = (diff == 0).select(SpectralBlob::Zero(), saturation);
 }
 
-#define _OP(Prefix, F)                                                                 \
-	class Prefix##SpectralConvert : public FloatSpectralNode {                         \
-	public:                                                                            \
-		explicit Prefix##SpectralConvert(const std::shared_ptr<FloatSpectralNode>& op) \
-			: FloatSpectralNode(op->flags() | NodeFlag::SpectralVarying)               \
-			, mOperand(op)                                                             \
-		{                                                                              \
-		}                                                                              \
-		SpectralBlob eval(const ShadingContext& ctx) const override                    \
-		{                                                                              \
-			return F(mOperand->eval(ctx), ctx.WavelengthNM);                           \
-		}                                                                              \
-		Vector2i queryRecommendedSize() const override                                 \
-		{                                                                              \
-			return mOperand->queryRecommendedSize();                                   \
-		}                                                                              \
-		WavelengthRange wavelengthRange() const override { return mOperand->wavelengthRange(); } \
-		std::string dumpInformation() const override                                   \
-		{                                                                              \
-			std::stringstream sstream;                                                 \
-			sstream << PR_STRINGIFY(F) " (" << mOperand->dumpInformation() << ")";     \
-			return sstream.str();                                                      \
-		}                                                                              \
-                                                                                       \
-	private:                                                                           \
-		const std::shared_ptr<FloatSpectralNode> mOperand;                             \
+#define _OP(Prefix, F)                                                                     \
+	class Prefix##SpectralConvert : public FloatSpectralNode {                             \
+	public:                                                                                \
+		explicit Prefix##SpectralConvert(const std::shared_ptr<FloatSpectralNode>& op)     \
+			: FloatSpectralNode(op->flags() | NodeFlag::SpectralVarying)                   \
+			, mOperand(op)                                                                 \
+		{                                                                                  \
+		}                                                                                  \
+		SpectralBlob eval(const ShadingContext& ctx) const override                        \
+		{                                                                                  \
+			return F(mOperand->eval(ctx), ctx.WavelengthNM);                               \
+		}                                                                                  \
+		Vector2i queryRecommendedSize() const override                                     \
+		{                                                                                  \
+			return mOperand->queryRecommendedSize();                                       \
+		}                                                                                  \
+		SpectralRange spectralRange() const override { return mOperand->spectralRange(); } \
+		std::string dumpInformation() const override                                       \
+		{                                                                                  \
+			std::stringstream sstream;                                                     \
+			sstream << PR_STRINGIFY(F) " (" << mOperand->dumpInformation() << ")";         \
+			return sstream.str();                                                          \
+		}                                                                                  \
+                                                                                           \
+	private:                                                                               \
+		const std::shared_ptr<FloatSpectralNode> mOperand;                                 \
 	}
 
 inline static SpectralBlob sciex(const SpectralBlob& v, const SpectralBlob& wvl)

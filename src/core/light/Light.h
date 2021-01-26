@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Random.h"
+#include "spectral/SpectralRange.h"
 #include "trace/IntersectionPoint.h"
 
 namespace PR {
@@ -63,6 +64,8 @@ public:
 	inline float relativeContribution() const { return mRelativeContribution; }
 
 	SpectralBlob averagePower(const SpectralBlob& wavelengths) const;
+	/// Returns wavelength range this light emits in. If unbounded, the framework will use the global spectral domain
+	SpectralRange spectralRange() const;
 
 	void eval(const LightEvalInput& in, LightEvalOutput& out, const RenderTileSession& session) const;
 	void sample(const LightSampleInput& in, LightSampleOutput& out, const RenderTileSession& session) const;

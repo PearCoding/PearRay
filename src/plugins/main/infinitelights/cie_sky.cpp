@@ -79,6 +79,7 @@ public:
 	}
 
 	SpectralBlob power(const SpectralBlob& wvl) const override { return radiance(wvl, Vector3f(0, 0, 1)); }
+	SpectralRange spectralRange() const override { return SpectralRange(); }
 
 	std::string dumpInformation() const override
 	{

@@ -2,6 +2,7 @@
 
 #include "material/MaterialType.h"
 #include "shader/ShadingContext.h"
+#include "spectral/SpectralRange.h"
 
 namespace PR {
 
@@ -19,17 +20,6 @@ enum class NodeType {
 	FloatSpectral = 1,
 	FloatVector	  = 2
 };
-
-using WavelengthRange = std::pair<float, float>;
-/// Merge two wavelength ranges and respect the given unbounded information. 
-/// An unbounded value will be replaced if not both values of the same side are unbounded
-inline WavelengthRange unionRange(const WavelengthRange& a, const WavelengthRange& b)
-{
-	return {
-		a.first < 0 ? b.first : (b.first < 0 ? a.first : std::min(a.first, b.first)),
-		std::max(a.second, b.second)
-	};
-}
 
 class INode {
 public:
@@ -55,7 +45,7 @@ public:
 	/// Return the wavelength boundary this node prefers to operates in.
 	/// A negative values means unbounded, and the global wavelength range shall be used if necessary
 	/// Keep in mind that a node has to operate on all wavelengths and should return 0 if called for wavelengths outside the given range
-	inline virtual WavelengthRange wavelengthRange() const { return { -1.0f, -1.0f }; }
+	inline virtual SpectralRange spectralRange() const { return SpectralRange(); }
 
 protected:
 	inline explicit INode(NodeFlags flags, NodeType type)

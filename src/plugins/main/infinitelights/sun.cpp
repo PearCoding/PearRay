@@ -109,6 +109,7 @@ public:
 			res[i] = mSpectrum.lookup(wvl[i]);
 		return res;
 	}
+	SpectralRange spectralRange() const override { return SpectralRange(mSpectrum.wavelengthStart(), mSpectrum.wavelengthEnd()); }
 
 	std::string dumpInformation() const override
 	{
@@ -212,6 +213,7 @@ public:
 			res[i] = mSpectrum.lookup(wvl[i]);
 		return res;
 	}
+	SpectralRange spectralRange() const override { return SpectralRange(mSpectrum.wavelengthStart(), mSpectrum.wavelengthEnd()); }
 
 	std::string dumpInformation() const override
 	{

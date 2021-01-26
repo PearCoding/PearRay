@@ -1,7 +1,8 @@
 #pragma once
 
-#include "shader/ShadingContext.h"
 #include "EmissionData.h"
+#include "shader/ShadingContext.h"
+#include "spectral/SpectralRange.h"
 
 namespace PR {
 class RenderTileSession;
@@ -22,6 +23,9 @@ public:
 
 	/// Return average power (W/m^2) for given wavelengths
 	virtual SpectralBlob power(const SpectralBlob& wvl) const = 0;
+
+	/// Returns wavelength range this plugin emits light. If unbounded, the framework will use the global spectral domain
+	virtual SpectralRange spectralRange() const = 0;
 
 	/// Dump information
 	virtual std::string dumpInformation() const;
