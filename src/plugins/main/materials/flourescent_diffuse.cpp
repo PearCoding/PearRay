@@ -128,8 +128,8 @@ struct FlourescentDiffuseClosure {
 		b[0]			  = range.Start + distr.sampleContinuous(rnd.getFloat(), pdf) * w;
 		const float delta = w / PR_SPECTRAL_BLOB_SIZE;
 		PR_OPT_LOOP
-		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-			b[i] = std::fmodf(b[0] - range.Start + i * w, w) + range.Start;
+		for (size_t i = 1; i < PR_SPECTRAL_BLOB_SIZE; ++i)
+			b[i] = std::fmod(b[0] - range.Start + i * w, w) + range.Start;
 
 		return { b, pdf };
 	}
@@ -177,6 +177,11 @@ public:
 												   const SpectralBlob& flourescentWavelengthNM,
 												   bool light) const
 	{
+		const SpectralRange range	= light ? mEmission->spectralRange() : mAbsorption->spectralRange();
+		const Distribution1D& distr = light ? mDistributionEmission : mDistributionAbsorption;
+
+		PR_ASSERT(!range.hasUnbounded(), "Expected wavelength bounded emission data"); // TODO: Check user input!!!!
+
 		if ((sctx.WavelengthNM != flourescentWavelengthNM).any()) {
 			ShadingContext sctx2 = sctx;
 			sctx2.WavelengthNM	 = flourescentWavelengthNM;
@@ -187,21 +192,12 @@ public:
 			const ShadingContext& sctxIn  = light ? sctx : sctx2;
 			const ShadingContext& sctxOut = light ? sctx2 : sctx;
 
-			const SpectralRange range	= light ? mEmission->spectralRange() : mAbsorption->spectralRange();
-			const Distribution1D& distr = light ? mDistributionEmission : mDistributionAbsorption;
-
-			PR_ASSERT(!range.hasUnbounded(), "Expected wavelength bounded emission data"); // TODO: Check user input!!!!
 			return FlourescentDiffuseClosure(mAbsorption->eval(sctxIn), mAbsorption->eval(sctxOut),
 											 mEmission->eval(sctxOut) / mEmissionIntegral /* normalize it */,
 											 mAlbedo->eval(sctxIn), mAlbedo->eval(sctxOut),
 											 mAbsorpedEmissionFactor, mConcentration,
 											 range, distr, mAbsorptionIntegral);
 		} else {
-			const SpectralRange range	= light ? mEmission->spectralRange() : mAbsorption->spectralRange();
-			const Distribution1D& distr = light ? mDistributionEmission : mDistributionAbsorption;
-
-			PR_ASSERT(!range.hasUnbounded(), "Expected wavelength bounded emission data"); // TODO: Check user input!!!!
-
 			const SpectralBlob absorption = mAbsorption->eval(sctx);
 			const SpectralBlob albedo	  = mAlbedo->eval(sctx);
 
@@ -292,6 +288,7 @@ public:
 	}
 
 private:
+	// Actually, it would be better to sample the whole composition of emission etc
 	void buildEmissionDistribution()
 	{
 		const SpectralRange range = mEmission->spectralRange();
