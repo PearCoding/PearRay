@@ -187,7 +187,7 @@ public:
 		session.pushSPFragment(spt, path);
 
 		mCameraPathWalker.traverseBSDF(
-			session, SpectralBlob::Ones(), spt, entity, material,
+			session.random(spt.Ray.PixelIndex), session, SpectralBlob::Ones(), spt, entity, material,
 			[&](const SpectralBlob& weight, const IntersectionPoint& ip, IEntity* entity_hit, IMaterial* material_hit) {
 				session.tile()->statistics().add(RenderStatisticEntry::EntityHitCount);
 				session.tile()->statistics().add(RenderStatisticEntry::CameraDepthCount);
@@ -281,11 +281,12 @@ public:
 	{
 		// The actual photon count is the result of the multiplication with the hero wavelength component count
 		const float sampleInv = 1.0f / (PR_SPECTRAL_BLOB_SIZE * light.Photons);
+		Random& rnd			  = session.random(RandomSlot::Light);
 
 		size_t photonsShoot = 0;
 		for (; photonsShoot < light.Photons; ++photonsShoot) {
-			LightSampleInput lsin(session.random());
-			lsin.WavelengthNM	= sampleWavelength(session.random());
+			LightSampleInput lsin(rnd);
+			lsin.WavelengthNM	= sampleWavelength(rnd);
 			lsin.SamplePosition = true;
 			LightSampleOutput lsout;
 			light.Light->sample(lsin, lsout, session);
@@ -299,7 +300,7 @@ public:
 			const SpectralBlob radiance = lsout.Radiance * (sampleInv / pdf);
 
 			mLightPathWalker.traverseBSDFSimple(
-				session, radiance, ray,
+				rnd, session, radiance, ray,
 				[&](const SpectralBlob& weight, const IntersectionPoint& ip, IEntity* entity, IMaterial* material) {
 					session.tile()->statistics().add(RenderStatisticEntry::EntityHitCount);
 					session.tile()->statistics().add(RenderStatisticEntry::LightDepthCount);

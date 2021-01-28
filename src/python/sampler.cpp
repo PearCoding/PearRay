@@ -7,14 +7,14 @@ using namespace PR;
 namespace PRPY {
 class SamplerWrap : public ISampler {
 public:
-	inline float generate1D(uint32 index) override
+	inline float generate1D(Random& rnd, uint32 index) override
 	{
-		PYBIND11_OVERLOAD_PURE(float, ISampler, generate1D, index);
+		PYBIND11_OVERLOAD_PURE(float, ISampler, generate1D, rnd, index);
 	}
 
-	inline Vector2f generate2D(uint32 index) override
+	inline Vector2f generate2D(Random& rnd, uint32 index) override
 	{
-		PYBIND11_OVERLOAD_PURE(Vector2f, ISampler, generate2D, index);
+		PYBIND11_OVERLOAD_PURE(Vector2f, ISampler, generate2D, rnd, index);
 	}
 };
 

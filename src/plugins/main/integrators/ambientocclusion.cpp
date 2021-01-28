@@ -28,7 +28,6 @@ public:
 
 	void handleShadingGroup(RenderTileSession& session, const ShadingGroup& grp)
 	{
-		Random& random			= session.random();
 		const LightPath stdPath = LightPath::createCDL(1);
 
 		session.tile()->statistics().add(RenderStatisticEntry::EntityHitCount, grp.size());
@@ -36,6 +35,7 @@ public:
 		for (size_t i = 0; i < grp.size(); ++i) {
 			IntersectionPoint spt;
 			grp.computeShadingPoint(i, spt);
+			Random& random = session.random(spt.Ray.PixelIndex);
 
 			size_t occlusions = 0;
 			for (size_t i = 0; i < mSampleCount; ++i) {

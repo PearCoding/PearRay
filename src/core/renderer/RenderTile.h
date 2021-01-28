@@ -38,6 +38,16 @@ enum class RenderTileStatus {
 	Done	= 2
 };
 
+enum class RandomSlot {
+	General = 0,
+	AA,
+	Lens,
+	Time,
+	Spectral,
+	Light,
+	_COUNT_
+};
+
 class PR_LIB_CORE RenderTile {
 public:
 	RenderTile(const Point2i& start, const Point2i& end,
@@ -72,7 +82,8 @@ public:
 	std::pair<std::unique_ptr<RenderTile>, std::unique_ptr<RenderTile>>
 	split(int dim) const;
 
-	inline Random& random() { return mRandom; }
+	inline Random& random(RandomSlot slot) { return mRandomSlots[(int)slot]; }
+	inline Random& random(const Point2i& globalP) { return mRandoms[localLinearPoint(globalP)]; }
 
 	inline ISampler* aaSampler() const { return mAASampler.get(); }
 	inline ISampler* lensSampler() const { return mLensSampler.get(); }
@@ -89,6 +100,14 @@ public:
 	inline std::chrono::microseconds lastWorkTime() const { return mLastWorkTime; }
 
 private:
+	inline size_t localLinearPoint(const Point2i& globalP) const
+	{
+		PR_ASSERT(globalP(0) >= mStart(0) && globalP(0) < mEnd(0), "Expected valid global pixel position");
+		PR_ASSERT(globalP(1) >= mStart(1) && globalP(1) < mEnd(1), "Expected valid global pixel position");
+
+		return (globalP(1) - mStart(1)) * mViewSize.Width + (globalP(0) - mStart(0));
+	}
+
 #if ATOMIC_INT_LOCK_FREE == 2
 	using LockFreeAtomic = std::atomic<int>;
 #elif ATOMIC_LONG_LOCK_FREE == 2
@@ -115,7 +134,9 @@ private:
 	std::chrono::high_resolution_clock::time_point mWorkStart;
 	std::chrono::microseconds mLastWorkTime;
 
-	Random mRandom;
+	std::array<Random, (size_t)RandomSlot::_COUNT_> mRandomSlots; // Randomizer used for specific tasks
+	std::vector<Random> mRandoms;								  // For each pixel
+
 	std::shared_ptr<ISampler> mAASampler;
 	std::shared_ptr<ISampler> mLensSampler;
 	std::shared_ptr<ISampler> mTimeSampler;

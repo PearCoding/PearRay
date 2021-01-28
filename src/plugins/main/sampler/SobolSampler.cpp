@@ -57,22 +57,20 @@ public:
 
 	virtual ~SobolSampler() = default;
 
-	float generate1D(uint32 index)
+	float generate1D(Random& rnd, uint32 index) override
 	{
-		if (mSamples1D.size() <= index) {
+		if (mSamples1D.size() <= index)
 			return mRandom.getFloat();
-		} else {
+		else
 			return mSamples1D.at(index);
-		}
 	}
 
-	Vector2f generate2D(uint32 index)
+	Vector2f generate2D(Random&, uint32 index) override
 	{
-		if (mSamples2D.size() <= index) {
+		if (mSamples2D.size() <= index)
 			return mRandom.get2D();
-		} else {
+		else
 			return mSamples2D.at(index);
-		}
 	}
 
 private:
@@ -131,8 +129,6 @@ public:
 			.Specification()
 			.get();
 	}
-
-	
 };
 } // namespace PR
 

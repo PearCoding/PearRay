@@ -112,7 +112,7 @@ void Light::sample(const LightSampleInput& in, LightSampleOutput& out, const Ren
 
 	if (isInfinite()) {
 		if (in.SampleWavelength) {
-			SpectralSampleInput ssin(session.tile()->random());
+			SpectralSampleInput ssin(session.tile()->random(RandomSlot::Light));
 			ssin.Light	 = this;
 			ssin.Purpose = SpectralSamplePurpose::Light;
 
@@ -166,7 +166,7 @@ void Light::sample(const LightSampleInput& in, LightSampleOutput& out, const Ren
 		ent->provideGeometryPoint(qp, gp);
 
 		if (in.SampleWavelength) {
-			SpectralSampleInput ssin(session.tile()->random());
+			SpectralSampleInput ssin(session.tile()->random(RandomSlot::Light));
 			ssin.Light	  = this;
 			ssin.Position = pp.Position;
 			ssin.Purpose  = SpectralSamplePurpose::Light;

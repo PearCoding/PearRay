@@ -106,7 +106,7 @@ public:
 			PR_ASSERT(mLightPathCounter < mOptions.MaxLightSamples, "Do not call trace more than the expected number of light samples");
 
 		// Sample light
-		LightSampleInput lsin(tctx.Session.random());
+		LightSampleInput lsin(tctx.Session.random(RandomSlot::Light));
 		lsin.WavelengthNM	= wvl;
 		lsin.SamplePosition = true;
 		LightSampleOutput lsout;
@@ -276,11 +276,11 @@ private:
 	{
 		PR_ASSERT(entity, "Expected valid entity");
 
-		auto& rnd		= tctx.Session.random();
+		auto& rnd		= IsCamera ? tctx.Session.random(ip.Ray.PixelIndex) : tctx.Session.random(RandomSlot::Light);
 		LightPath& path = IsCamera ? tctx.ThreadContext.CameraPath : tctx.ThreadContext.LightPath;
 
 		// Russian roulette
-		const auto roulette = checkRoulette<IsCamera>(tctx.Session.random(), ip.Ray.IterationDepth + 1, material && material->hasOnlyDeltaDistribution());
+		const auto roulette = checkRoulette<IsCamera>(rnd, ip.Ray.IterationDepth + 1, material && material->hasOnlyDeltaDistribution());
 		if (!roulette.has_value())
 			return {};
 
@@ -509,7 +509,7 @@ private:
 		const EntitySamplingInfo sampleInfo = { cameraIP.P, cameraIP.Surface.N };
 
 		// Sample light
-		LightSampleInput lsin(tctx.Session.random());
+		LightSampleInput lsin(tctx.Session.random(cameraIP.Ray.PixelIndex));
 		lsin.WavelengthNM	= cameraIP.Ray.WavelengthNM;
 		lsin.Point			= &cameraIP;
 		lsin.SamplingInfo	= &sampleInfo;

@@ -10,19 +10,15 @@ constexpr uint32 DEF_SAMPLE_COUNT = 128;
 
 class RandomSampler : public ISampler {
 public:
-	RandomSampler(Random& random, uint32 samples)
+	RandomSampler(uint32 samples)
 		: ISampler(samples)
-		, mRandom(random)
 	{
 	}
 
 	virtual ~RandomSampler() = default;
 
-	inline float generate1D(uint32) override { return mRandom.getFloat(); }
-	inline Vector2f generate2D(uint32) override { return mRandom.get2D(); }
-
-private:
-	Random& mRandom;
+	inline float generate1D(Random& rnd, uint32) override { return rnd.getFloat(); }
+	inline Vector2f generate2D(Random& rnd, uint32) override { return rnd.get2D(); }
 };
 
 class RandomSamplerFactory : public ISamplerFactory {
@@ -37,9 +33,9 @@ public:
 		return mParams.getUInt("sample_count", DEF_SAMPLE_COUNT);
 	}
 
-	std::shared_ptr<ISampler> createInstance(uint32 sample_count, Random& rnd) const override
+	std::shared_ptr<ISampler> createInstance(uint32 sample_count, Random&) const override
 	{
-		return std::make_shared<RandomSampler>(rnd, sample_count);
+		return std::make_shared<RandomSampler>(sample_count);
 	}
 
 private:

@@ -11,9 +11,8 @@ constexpr uint32 DEF_SAMPLE_COUNT = 128;
 
 class PR_LIB_BASE StratifiedSampler : public ISampler {
 public:
-	StratifiedSampler(Random& random, uint32 samples, uint32 groups)
+	StratifiedSampler(uint32 samples, uint32 groups)
 		: ISampler(samples)
-		, mRandom(random)
 		, m2D_X(static_cast<uint32>(std::sqrt(groups)))
 		, mGroups(groups)
 	{
@@ -21,24 +20,22 @@ public:
 
 	virtual ~StratifiedSampler() = default;
 
-	float generate1D(uint32 index) override
+	float generate1D(Random& rnd, uint32 index) override
 	{
-		auto ret = Projection::stratified(mRandom.getFloat(), index, mGroups);
+		auto ret = Projection::stratified(rnd.getFloat(), index, mGroups);
 		return ret;
 	}
 
 	// Need better strategy for 2D and 3D
-	Vector2f generate2D(uint32 index) override
+	Vector2f generate2D(Random& rnd, uint32 index) override
 	{
-		auto x = Projection::stratified(mRandom.getFloat(), index % m2D_X, m2D_X);
-		auto y = Projection::stratified(mRandom.getFloat(), index / m2D_X, m2D_X);
+		auto x = Projection::stratified(rnd.getFloat(), index % m2D_X, m2D_X);
+		auto y = Projection::stratified(rnd.getFloat(), index / m2D_X, m2D_X);
 
 		return Vector2f(x, y);
 	}
 
 private:
-	Random& mRandom;
-
 	const uint32 m2D_X;
 	const uint32 mGroups;
 };
@@ -55,9 +52,9 @@ public:
 		return mParams.getUInt("sample_count", DEF_SAMPLE_COUNT);
 	}
 
-	std::shared_ptr<ISampler> createInstance(uint32 sample_count, Random& rnd) const override
+	std::shared_ptr<ISampler> createInstance(uint32 sample_count, Random&) const override
 	{
-		return std::make_shared<StratifiedSampler>(rnd, sample_count, mParams.getUInt("bins", std::max(1u, sample_count)));
+		return std::make_shared<StratifiedSampler>(sample_count, mParams.getUInt("bins", std::max(1u, sample_count)));
 	}
 
 private:
@@ -87,8 +84,6 @@ public:
 			.Specification()
 			.get();
 	}
-	
-	
 };
 } // namespace PR
 

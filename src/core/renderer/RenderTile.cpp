@@ -2,11 +2,14 @@
 #include "Profiler.h"
 #include "RenderContext.h"
 #include "camera/ICamera.h"
+#include "math/Hash.h"
 #include "sampler/ISampler.h"
 #include "scene/Scene.h"
 #include "spectral/ISpectralMapper.h"
 
 namespace PR {
+constexpr size_t SLOT_RND_PRIME = 4201321; // Just a random prime number to not have same randomizer as pixels
+
 RenderTile::RenderTile(const Point2i& start, const Point2i& end,
 					   RenderContext* context, const RenderTileContext& tileContext)
 	: mStatus(static_cast<LockFreeAtomic::value_type>(RenderTileStatus::Idle))
@@ -19,18 +22,29 @@ RenderTile::RenderTile(const Point2i& start, const Point2i& end,
 	, mContext(tileContext)
 	, mWorkStart()
 	, mLastWorkTime()
-	, mRandom(context->settings().seed + start(0) + start(1))
+	, mRandomSlots()
+	, mRandoms(mViewSize.area())
 	, mRenderContext(context)
 	, mCamera(context->scene()->activeCamera())
 {
 	PR_ASSERT(mViewSize.isValid(), "Invalid tile size");
 
+	// Initialize
+	for (size_t i = 0; i < mRandomSlots.size(); ++i)
+		mRandomSlots[i] = Random((context->settings().seed + start(0) + start(1) * mImageSize.Width) ^ (SLOT_RND_PRIME + i));
+
+	for (int32 y = 0; y < mViewSize.Height; ++y) {
+		for (int32 x = 0; x < mViewSize.Width; ++x) {
+			mRandoms[y * mViewSize.Width + x] = Random(context->settings().seed ^ hash_union(start(0) + x, start(1) + y));
+		}
+	}
+
 	// Even while each sampler has his own number of requested samples...
 	// each sampler deals with the combination of all requested samples
-	mAASampler		 = mRenderContext->settings().createAASampler(mRandom);
-	mLensSampler	 = mRenderContext->settings().createLensSampler(mRandom);
-	mTimeSampler	 = mRenderContext->settings().createTimeSampler(mRandom);
-	mSpectralSampler = mRenderContext->settings().createSpectralSampler(mRandom);
+	mAASampler		 = mRenderContext->settings().createAASampler(random(RandomSlot::AA));
+	mLensSampler	 = mRenderContext->settings().createLensSampler(random(RandomSlot::Lens));
+	mTimeSampler	 = mRenderContext->settings().createTimeSampler(random(RandomSlot::Time));
+	mSpectralSampler = mRenderContext->settings().createSpectralSampler(random(RandomSlot::Spectral));
 
 	mSpectralMapper = mRenderContext->settings().createSpectralMapper("pixel", mRenderContext);
 
@@ -59,10 +73,6 @@ RenderTile::~RenderTile()
 {
 }
 
-// TODO
-/* Our sample approach gives each pixel in a single tile the SAME samples (except for random sampler)! 
- * This may sometimes good, but also bad... more investigations required...
- */
 std::optional<CameraRay> RenderTile::constructCameraRay(const Point2i& p, const RenderIteration& iter)
 {
 	PR_ASSERT(mStatus == (int)RenderTileStatus::Working, "Trying to use a tile which is not acquired");
@@ -73,12 +83,14 @@ std::optional<CameraRay> RenderTile::constructCameraRay(const Point2i& p, const 
 	++mContext.PixelSamplesRendered;
 	const uint32 sample = iter.Iteration;
 
+	Random& rnd = random(p);
+
 	// Sample most information accesable by a camera
 	CameraSample cameraSample;
 	cameraSample.SensorSize	 = mImageSize;
-	cameraSample.Pixel		 = (p + mRenderContext->viewOffset()).cast<float>() + mAASampler->generate2D(sample).array() - Point2f(0.5f, 0.5f);
-	cameraSample.Lens		 = mLensSampler->generate2D(sample);
-	cameraSample.Time		 = mTimeAlpha * mTimeSampler->generate1D(sample) + mTimeBeta;
+	cameraSample.Pixel		 = (p + mRenderContext->viewOffset()).cast<float>() + mAASampler->generate2D(rnd, sample).array() - Point2f(0.5f, 0.5f);
+	cameraSample.Lens		 = mLensSampler->generate2D(rnd, sample);
+	cameraSample.Time		 = mTimeAlpha * mTimeSampler->generate1D(rnd, sample) + mTimeBeta;
 	cameraSample.BlendWeight = 1.0f;
 	cameraSample.Importance	 = 1.0f;
 
@@ -87,7 +99,7 @@ std::optional<CameraRay> RenderTile::constructCameraRay(const Point2i& p, const 
 		cameraSample.WavelengthNM  = SpectralBlob(mRenderContext->settings().spectralStart);
 		cameraSample.WavelengthPDF = 1.0f;
 	} else {
-		SpectralSampleInput ssin(mRandom); // TODO: Maybe use mSpectralSampler??
+		SpectralSampleInput ssin(rnd); // TODO: Maybe use mSpectralSampler??
 		ssin.Purpose = SpectralSamplePurpose::Pixel;
 		ssin.Pixel	 = p + mRenderContext->viewOffset();
 

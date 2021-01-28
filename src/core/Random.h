@@ -46,7 +46,7 @@ private:
 #endif
 
 public:
-	inline explicit Random(uint64 seed)
+	inline explicit Random(uint64 seed = 4203893)
 		:
 #if PR_RANDOM_ALGORITHM == 0
 		mGenerator(seed)

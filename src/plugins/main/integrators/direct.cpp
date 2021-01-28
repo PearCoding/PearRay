@@ -152,13 +152,13 @@ private:
 	{
 		PR_ASSERT(entity, "Expected valid entity");
 
-		auto& rnd = session.random();
+		auto& rnd = session.random(ip.Ray.PixelIndex);
 
 		current.LastPosition = ip.P;
 		current.LastNormal	 = ip.Surface.N;
 
 		// Russian roulette
-		const auto roulette = mCameraRR.check(session.random(), ip.Ray.IterationDepth + 1, material && material->hasOnlyDeltaDistribution());
+		const auto roulette = mCameraRR.check(rnd, ip.Ray.IterationDepth + 1, material && material->hasOnlyDeltaDistribution());
 		if (!roulette.has_value())
 			return {};
 
@@ -215,7 +215,7 @@ private:
 		const EntitySamplingInfo sampleInfo = { cameraIP.P, cameraIP.Surface.N };
 
 		// Sample light
-		LightSampleInput lsin(session.random());
+		LightSampleInput lsin(session.random(cameraIP.Ray.PixelIndex));
 		lsin.WavelengthNM	  = cameraIP.Ray.WavelengthNM;
 		lsin.Point			  = &cameraIP;
 		lsin.SamplingInfo	  = &sampleInfo;

@@ -27,7 +27,7 @@ struct PR_LIB_CORE Ray {
 	SpectralBlob WavelengthNM = SpectralBlob::Zero(); // Hero Quartett, first entry is hero wavelength
 	uint32 IterationDepth	  = 0;
 	RayFlags Flags			  = 0;
-	uint32 PixelIndex		  = 0;			   // Tile local pixel index
+	uint32 PixelIndex		  = 0;			   // Global pixel index
 	uint32 GroupID			  = PR_INVALID_ID; // Points to corresponding ray group if available
 
 public:

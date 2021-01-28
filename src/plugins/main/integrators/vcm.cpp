@@ -85,12 +85,13 @@ public:
 
 		const size_t iteration = session.context()->currentIteration().Iteration;
 		auto& threadContext	   = mTracer->threadContext(session.threadID());
+		Random& rnd			   = session.random(RandomSlot::Light);
 		typename Tracer::IterationContext tctx(iteration, mInitialGatherRadius, session, threadContext, mTracer->options());
 
 		// Construct light paths
 		const size_t maxLights = mTracer->options().MaxLightSamples / session.context()->tileCount();
 		for (size_t i = 0; i < maxLights; ++i) {
-			const SpectralBlob wavelength = VCM::sampleWavelength(session.random());
+			const SpectralBlob wavelength = VCM::sampleWavelength(rnd);
 			const Light* light			  = mTracer->traceLightPath(tctx, wavelength);
 			if (PR_UNLIKELY(!light))
 				return; // Giveup as no light is present

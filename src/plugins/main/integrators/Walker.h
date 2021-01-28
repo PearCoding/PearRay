@@ -51,11 +51,11 @@ public:
 	}
 
 	template <typename OnHitF, typename OnSampleF, typename OnNonHitF>
-	inline SpectralBlob traverseBSDF(RenderTileSession& session, const SpectralBlob& initial_weight, const Ray& initial_ray,
+	inline SpectralBlob traverseBSDF(Random& rnd, RenderTileSession& session, const SpectralBlob& initial_weight, const Ray& initial_ray,
 									 const OnHitF& onHit, const OnSampleF& onSample, const OnNonHitF& onNonHit) const
 	{
 		return traverseBSDF_Base(
-			session, initial_weight,
+			rnd, session, initial_weight,
 			[&](auto f1, auto f2) {
 				traverse(session, initial_ray, f1, f2);
 			},
@@ -64,12 +64,12 @@ public:
 
 	// Skip first trace -> useful for camera rays
 	template <typename OnHitF, typename OnSampleF, typename OnNonHitF>
-	inline SpectralBlob traverseBSDF(RenderTileSession& session, const SpectralBlob& initial_weight,
+	inline SpectralBlob traverseBSDF(Random& rnd, RenderTileSession& session, const SpectralBlob& initial_weight,
 									 const IntersectionPoint& ip, IEntity* entity, IMaterial* material,
 									 const OnHitF& onHit, const OnSampleF& onSample, const OnNonHitF& onNonHit) const
 	{
 		return traverseBSDF_Base(
-			session, initial_weight,
+			rnd, session, initial_weight,
 			[&](auto f1, auto f2) {
 				traverse(session, ip, entity, material, f1, f2);
 			},
@@ -77,11 +77,11 @@ public:
 	}
 
 	template <typename OnHitF, typename OnNonHitF>
-	inline SpectralBlob traverseBSDFSimple(RenderTileSession& session, const SpectralBlob& initial_weight, const Ray& initial_ray,
+	inline SpectralBlob traverseBSDFSimple(Random& rnd, RenderTileSession& session, const SpectralBlob& initial_weight, const Ray& initial_ray,
 										   const OnHitF& onHit, const OnNonHitF& onNonHit) const
 	{
 		return traverseBSDF(
-			session, initial_weight, initial_ray,
+			rnd, session, initial_weight, initial_ray,
 			onHit,
 			[](SpectralBlob& weight, const MaterialSampleInput&, const MaterialSampleOutput& sout, IEntity*, IMaterial*) {
 				weight *= sout.Weight;
@@ -91,10 +91,9 @@ public:
 
 private:
 	template <typename TraverseF, typename OnHitF, typename OnSampleF, typename OnNonHitF>
-	inline SpectralBlob traverseBSDF_Base(RenderTileSession& session, const SpectralBlob& initial_weight, const TraverseF& traverseFunc,
+	inline SpectralBlob traverseBSDF_Base(Random& rnd, RenderTileSession& session, const SpectralBlob& initial_weight, const TraverseF& traverseFunc,
 										  const OnHitF& onHit, const OnSampleF& onSample, const OnNonHitF& onNonHit) const
 	{
-		auto& rnd			= session.random();
 		SpectralBlob weight = initial_weight;
 		traverseFunc(
 			[&](const IntersectionPoint& ip, IEntity* entity, IMaterial* material) -> std::optional<Ray> {

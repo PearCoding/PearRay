@@ -47,18 +47,18 @@ public:
 
 	virtual ~HaltonSampler() = default;
 
-	float generate1D(uint32 index)
+	float generate1D(Random&, uint32 index) override
 	{
 		if (index < maxSamples())
-			return mBaseXSamples[index % maxSamples()];
+			return mBaseXSamples[index];
 		else // To allow adaptive methods with higher samples
 			return halton(index + mBurnin, mBaseX);
 	}
 
-	Vector2f generate2D(uint32 index)
+	Vector2f generate2D(Random&, uint32 index) override
 	{
 		if (index < maxSamples())
-			return Vector2f(mBaseXSamples[index % maxSamples()], mBaseYSamples[index % maxSamples()]);
+			return Vector2f(mBaseXSamples[index], mBaseYSamples[index]);
 		else // To allow adaptive methods with higher samples
 			return Vector2f(halton(index + mBurnin, mBaseX),
 							halton(index + mBurnin, mBaseY));
@@ -94,18 +94,18 @@ public:
 
 	virtual ~HammersleySampler() = default;
 
-	float generate1D(uint32 index)
+	float generate1D(Random&, uint32 index) override
 	{
 		if (index < maxSamples())
-			return mBaseXSamples[index % maxSamples()];
+			return mBaseXSamples[index];
 		else // To allow adaptive methods with higher samples
 			return halton(index + mBurnin, mBaseX);
 	}
 
-	Vector2f generate2D(uint32 index)
+	Vector2f generate2D(Random&, uint32 index) override
 	{
 		if (index < maxSamples())
-			return Vector2f(mBaseXSamples[index % maxSamples()], mBaseYSamples[index % maxSamples()]);
+			return Vector2f(mBaseXSamples[index], mBaseYSamples[index]);
 		else // To allow adaptive methods with higher samples (which is invalid for the hammersley sequence)
 			return Vector2f(halton(index + mBurnin, mBaseX),
 							halton(index + mBurnin, HAMMERSLEY_EVASIVE_BASE_Y));
@@ -210,8 +210,6 @@ public:
 				.Specification()
 				.get();
 	}
-
-	
 };
 } // namespace PR
 

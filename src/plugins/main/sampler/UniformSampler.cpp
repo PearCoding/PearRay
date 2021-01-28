@@ -18,12 +18,12 @@ public:
 
 	virtual ~UniformSampler() = default;
 
-	float generate1D(uint32) override
+	float generate1D(Random&, uint32) override
 	{
 		return 0.5f;
 	}
 
-	Vector2f generate2D(uint32) override
+	Vector2f generate2D(Random&, uint32) override
 	{
 		return Vector2f(0.5f, 0.5f);
 	}

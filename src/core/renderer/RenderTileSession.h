@@ -36,7 +36,9 @@ public:
 
 	inline RenderTile* tile() const { return mTile; }
 	inline const RenderContext* context() const { return mTile->context(); }
-	inline Random& random() { return mTile->random(); }
+	inline Random& random(RandomSlot slot) { return mTile->random(slot); }
+	inline Random& random(const Point2i& globalP) { return mTile->random(globalP); }
+	inline Random& random(const Point1i& rayLocalPixelIndex) { return random(globalCoordinates(rayLocalPixelIndex)); }
 	inline StreamPipeline* pipeline() const { return mPipeline; }
 
 	IEntity* getEntity(uint32 id) const;
@@ -60,6 +62,7 @@ public:
 	void pushCustomCounterFragment(uint32 queueID, const Ray& ray, uint32 value);
 
 private:
+	Point2i globalCoordinates(Point1i pixelIndex) const;
 	Point2i localCoordinates(Point1i pixelIndex) const;
 
 	uint32 currentIndex() const;

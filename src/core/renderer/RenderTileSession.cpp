@@ -111,7 +111,7 @@ bool RenderTileSession::traceShadowRay(const Ray& ray, float distance) const
 	return mTile->context()->scene()->traceShadowRay(ray, distance);
 }
 
-Point2i RenderTileSession::localCoordinates(Point1i pixelIndex) const
+Point2i RenderTileSession::globalCoordinates(Point1i pixelIndex) const
 {
 	const Size1i slice = mTile->context()->viewSize().Width;
 	Point1i gpx		   = pixelIndex % slice;
@@ -122,7 +122,12 @@ Point2i RenderTileSession::localCoordinates(Point1i pixelIndex) const
 	PR_ASSERT(gpy >= mTile->start().y() && gpy < mTile->end().y(),
 			  "Invalid fragment push operation");
 
-	return Point2i(gpx, gpy) - mTile->start();
+	return Point2i(gpx, gpy);
+}
+
+Point2i RenderTileSession::localCoordinates(Point1i pixelIndex) const
+{
+	return globalCoordinates(pixelIndex) - mTile->start();
 }
 
 void RenderTileSession::pushSpectralFragment(float mis, const SpectralBlob& importance, const SpectralBlob& radiance,

@@ -94,9 +94,8 @@ static inline float randfloat(uint32 i, uint32 p)
 
 class MultiJitteredSampler : public ISampler {
 public:
-	MultiJitteredSampler(Random& random, uint32 samples, uint32 bins, uint32 seed)
+	MultiJitteredSampler(uint32 samples, uint32 bins, uint32 seed)
 		: ISampler(samples)
-		, mRandom(random)
 		, m1D(bins)
 		, m2D_X(static_cast<uint32>(std::sqrt(bins)))
 		, m2D_Y((bins + m2D_X - 1) / m2D_X)
@@ -104,19 +103,19 @@ public:
 	{
 	}
 
-	float generate1D(uint32 index) override
+	float generate1D(Random& rnd, uint32 index) override
 	{
 #ifndef PR_MJS_USE_RANDOM
 		const float j = randfloat(index % m1D, mSeed * 0x711ad6a5);
 #else
-		const float j		= mRandom.getFloat();
+		const float j		= rnd.getFloat();
 #endif
 
 		const float r = (index % m1D + j) / m1D;
 		return r;
 	}
 
-	Vector2f generate2D(uint32 index) override
+	Vector2f generate2D(Random& rnd, uint32 index) override
 	{
 #ifdef PR_MJS_CLIP
 		constexpr uint32 FH = 0x51633e2d;
@@ -135,8 +134,8 @@ public:
 		const float jx = randfloat(index, mSeed * 0xa399d265);
 		const float jy = randfloat(index, mSeed * 0x711ad6a5);
 #else
-		const float jx		= mRandom.getFloat();
-		const float jy		= mRandom.getFloat();
+		const float jx		= rnd.getFloat();
+		const float jy		= rnd.getFloat();
 #endif
 
 #ifdef PR_MJS_CLIP
@@ -151,8 +150,6 @@ public:
 	}
 
 private:
-	Random& mRandom;
-
 	const uint32 m1D;
 	const uint32 m2D_X;
 	const uint32 m2D_Y;
@@ -174,7 +171,7 @@ public:
 	std::shared_ptr<ISampler> createInstance(uint32 sample_count, Random& rnd) const override
 	{
 		const uint32 PRIME = 14512081;
-		return std::make_shared<MultiJitteredSampler>(rnd, sample_count,
+		return std::make_shared<MultiJitteredSampler>(sample_count,
 													  mParams.getUInt("bins", std::max(1u, sample_count)),
 													  mParams.getUInt("seed", PRIME ^ rnd.get32()));
 	}
@@ -209,8 +206,6 @@ public:
 			.Specification()
 			.get();
 	}
-
-	
 };
 } // namespace PR
 
