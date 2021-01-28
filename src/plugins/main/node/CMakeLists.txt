@@ -1,6 +1,8 @@
 PR_ADD_PLUGIN(nod_blackbody CPP BlackbodyNode.cpp)
 PR_ADD_PLUGIN(nod_checkerboard CPP CheckerboardNode.cpp)
 PR_ADD_PLUGIN(nod_illuminant CPP IlluminantNode.cpp)
+PR_ADD_PLUGIN(nod_noise CPP NoiseNode.cpp)
+PR_ADD_PLUGIN(nod_perlin CPP PerlinNode.cpp)
 PR_ADD_PLUGIN(nod_reflective CPP ReflectiveNode.cpp)
 PR_ADD_PLUGIN(nod_scalarmath CPP ScalarMathNode.cpp)
 PR_ADD_PLUGIN(nod_scalarvalue CPP ScalarValueNode.cpp)
