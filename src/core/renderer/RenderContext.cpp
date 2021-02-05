@@ -79,6 +79,9 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 	for (uint32 i = 0; i < threadCount; ++i)
 		mThreads.emplace_back(std::make_unique<RenderThread>(i, this));
 
+	// Setup random map
+	mRandomMap = std::make_unique<RenderRandomMap>(this);
+
 	// Setup light sampler
 	mLightSampler = std::make_shared<LightSampler>(mScene.get(), SpectralRange(mRenderSettings.spectralStart, mRenderSettings.spectralEnd));
 

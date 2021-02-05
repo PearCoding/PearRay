@@ -43,9 +43,9 @@ struct PR_LIB_CORE EmissionSampleOutput {
 	ShadingVector L;
 	SpectralBlob PDF_S; // In respect to the radiance
 
-	inline Vector3f globalL(const IntersectionPoint& ip) const
+	inline Vector3f globalL(const Vector3f& N, const Vector3f& Nx, const Vector3f& Ny) const
 	{
-		return Tangent::fromTangentSpace(ip.Surface.N, ip.Surface.Nx, ip.Surface.Ny, L).normalized();
+		return Tangent::fromTangentSpace(N, Nx, Ny, L).normalized();
 	}
 
 	static inline EmissionSampleOutput Reject()

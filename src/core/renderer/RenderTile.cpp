@@ -22,21 +22,15 @@ RenderTile::RenderTile(const Point2i& start, const Point2i& end,
 	, mContext(tileContext)
 	, mWorkStart()
 	, mLastWorkTime()
-	, mRandomSlots()
-	, mRandoms(mViewSize.area())
 	, mRenderContext(context)
+	, mRenderRandomMap(context->randomMap())
 	, mCamera(context->scene()->activeCamera())
 {
 	PR_ASSERT(mViewSize.isValid(), "Invalid tile size");
 
 	// Initialize
-	for (size_t i = 0; i < mRandomSlots.size(); ++i)
-		mRandomSlots[i] = Random((context->settings().seed + start(0) + start(1) * mImageSize.Width) ^ (SLOT_RND_PRIME + i));
-
-	for (int32 y = 0; y < mViewSize.Height; ++y) {
-		for (int32 x = 0; x < mViewSize.Width; ++x) {
-			mRandoms[y * mViewSize.Width + x] = Random(context->settings().seed ^ hash_union(start(0) + x, start(1) + y));
-		}
+	for (size_t i = 0; i < mRandomSlots.size(); ++i) {
+		mRandomSlots[i] = Random(context->settings().seed ^ (SLOT_RND_PRIME + i));
 	}
 
 	// Even while each sampler has his own number of requested samples...

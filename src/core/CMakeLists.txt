@@ -120,6 +120,8 @@ set(PR_Src
   renderer/RenderEnums.h
   renderer/RenderFactory.cpp
   renderer/RenderFactory.h
+  renderer/RenderRandomMap.cpp
+  renderer/RenderRandomMap.h
   renderer/RenderSettings.cpp
   renderer/RenderSettings.h
   renderer/RenderStatistics.cpp

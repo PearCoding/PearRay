@@ -1,8 +1,9 @@
 #pragma once
 
+#include "RenderRandomMap.h"
 #include "RenderSettings.h"
-#include "RenderStatus.h"
 #include "RenderStatistics.h"
+#include "RenderStatus.h"
 
 #include <atomic>
 #include <condition_variable>
@@ -101,6 +102,7 @@ public:
 
 	inline std::shared_ptr<OutputSystem> output() const { return mOutputSystem; }
 	inline std::shared_ptr<Scene> scene() const { return mScene; }
+	inline RenderRandomMap* randomMap() const { return mRandomMap.get(); }
 	inline std::shared_ptr<LightSampler> lightSampler() const { return mLightSampler; }
 
 	/// Set a callback called each start of iteration. The internal state of the callee is undefined
@@ -134,6 +136,7 @@ private:
 
 	const RenderSettings mRenderSettings;
 
+	std::unique_ptr<RenderRandomMap> mRandomMap;
 	std::shared_ptr<LightSampler> mLightSampler;
 
 	const std::shared_ptr<IIntegrator> mIntegrator;

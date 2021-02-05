@@ -157,9 +157,9 @@ void Light::sample(const LightSampleInput& in, LightSampleOutput& out, const Ren
 		}
 		out.CosLight = 1;
 	} else {
-		IEntity* ent			   = reinterpret_cast<IEntity*>(mEntity);
-		const EntitySamplePoint pp = in.SamplingInfo ? ent->sampleParameterPoint(*in.SamplingInfo, in.RND.get2D())
-													 : ent->sampleParameterPoint(in.RND.get2D());
+		IEntity* ent					  = reinterpret_cast<IEntity*>(mEntity);
+		const EntitySamplePoint pp		  = in.SamplingInfo ? ent->sampleParameterPoint(*in.SamplingInfo, in.RND.get2D())
+															: ent->sampleParameterPoint(in.RND.get2D());
 		const EntityGeometryQueryPoint qp = pp.toQueryPoint(Vector3f::Zero());
 
 		GeometryPoint gp;
@@ -198,11 +198,13 @@ void Light::sample(const LightSampleInput& in, LightSampleOutput& out, const Ren
 			EmissionSampleOutput esout;
 			mEmission->sample(esin, esout, session);
 
-			out.Outgoing		= -esout.L;
+			out.Outgoing		= -esout.globalL(gp.N, gp.Nx, gp.Ny);
 			out.Direction_PDF_S = esout.PDF_S[0];
+			out.CosLight		= std::clamp(esout.L.cosTheta(), -1.0f, 1.0f);
 		} else { // Sample only wavelength if necessary
 			out.Outgoing		= (pp.Position - in.Point->P).normalized();
 			out.Direction_PDF_S = 1;
+			out.CosLight		= std::clamp(-out.Outgoing.dot(gp.N), -1.0f, 1.0f);
 		}
 
 		// Evaluate to get the radiance
@@ -220,7 +222,6 @@ void Light::sample(const LightSampleInput& in, LightSampleOutput& out, const Ren
 		out.Position_PDF.Value	= pp.PDF_A;
 		out.Position_PDF.IsArea = true;
 		out.LightPosition		= pp.Position;
-		out.CosLight			= -out.Outgoing.dot(gp.N);
 	}
 }
 
