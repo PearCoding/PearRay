@@ -8,6 +8,7 @@
 #include "RenderTileSession.h"
 #include "camera/ICamera.h"
 #include "entity/IEntity.h"
+#include "geometry/Triangle.h"
 #include "infinitelight/IInfiniteLight.h"
 #include "integrator/IIntegrator.h"
 #include "light/LightSampler.h"
@@ -332,6 +333,84 @@ RenderStatus RenderContext::status() const
 	status.setField("global.pass_count", (uint64)iter.Pass);
 
 	return status;
+}
+
+std::optional<float> RenderContext::computeAverageCameraSceneFootprint() const
+{
+	// Estimate the average scene camera ray footprint
+	static const std::array<Vector2f, 5> primarySamples = {
+		Vector2f(0.5f, 0.5f),
+		Vector2f(0.25f, 0.25f),
+		Vector2f(0.75f, 0.75f),
+		Vector2f(0.1f, 0.9f),
+		Vector2f(0.9f, 0.1f)
+	};
+
+	const auto camera		= mScene->activeCamera();
+	const Size2i sensorSize = Size2i(mRenderSettings.filmWidth, mRenderSettings.filmHeight);
+
+	const auto queryPos = [&](const Vector2f pixel, Vector3f& pos) {
+		CameraSample cameraSample;
+		cameraSample.SensorSize	   = sensorSize;
+		cameraSample.Lens		   = Vector2f(0.5f, 0.5f);
+		cameraSample.Time		   = 0;
+		cameraSample.BlendWeight   = 1.0f;
+		cameraSample.Importance	   = 1.0f;
+		cameraSample.WavelengthNM  = SpectralBlob(540.0f);
+		cameraSample.WavelengthPDF = 1.0f;
+		cameraSample.Pixel		   = pixel;
+
+		const auto camera_ray = camera->constructRay(cameraSample);
+		if (!camera_ray.has_value())
+			return false;
+
+		Ray ray;
+		ray.Origin		   = camera_ray.value().Origin;
+		ray.Direction	   = camera_ray.value().Direction;
+		ray.MaxT		   = camera_ray.value().MaxT;
+		ray.MinT		   = camera_ray.value().MinT;
+		ray.WavelengthNM   = camera_ray.value().WavelengthNM;
+		ray.IterationDepth = 0;
+		ray.GroupID		   = 0;
+		ray.PixelIndex	   = 0;
+		ray.Flags		   = RayFlag::Camera;
+
+		HitEntry entry;
+		if (!mScene->traceSingleRay(ray, entry))
+			return false;
+
+		pos = ray.t(entry.Parameter[2]);
+		return true;
+	};
+
+	size_t hits				= 0;
+	float acquiredFootprint = 0;
+	for (size_t i = 0; i < primarySamples.size(); ++i) {
+		constexpr float D	 = 0.25f;
+		const Vector2f pixel = Vector2f(primarySamples[i].x() * sensorSize.Width, primarySamples[i].y() * sensorSize.Height);
+
+		Vector3f p00;
+		if (!queryPos(pixel + Vector2f(-D, -D), p00))
+			continue;
+
+		Vector3f p10;
+		if (!queryPos(pixel + Vector2f(D, -D), p10))
+			continue;
+
+		Vector3f p01;
+		if (!queryPos(pixel + Vector2f(-D, D), p01))
+			continue;
+
+		Vector3f p11;
+		if (!queryPos(pixel + Vector2f(D, D), p11))
+			continue;
+
+		const float area = Triangle::surfaceArea(p00, p10, p01) + Triangle::surfaceArea(p10, p01, p11);
+		acquiredFootprint += area / (D * D);
+		++hits;
+	}
+
+	return hits == 0 ? std::optional<float>{} : std::optional<float>{ acquiredFootprint / hits };
 }
 
 } // namespace PR

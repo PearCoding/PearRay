@@ -108,6 +108,10 @@ public:
 	/// Set a callback called each start of iteration. The internal state of the callee is undefined
 	inline void addIterationCallback(const RenderIterationCallback& clb) { mIterationCallbacks.push_back(clb); }
 
+	/// Compute approximative average camera scene footprint of one pixel
+	/// The computation might fail
+	std::optional<float> computeAverageCameraSceneFootprint() const;
+
 protected:
 	RenderTile* getNextTile();
 

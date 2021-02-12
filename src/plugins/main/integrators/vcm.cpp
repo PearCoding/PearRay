@@ -2,9 +2,7 @@
 #include "Profiler.h"
 #include "SceneLoadContext.h"
 #include "ServiceObserver.h"
-#include "camera/ICamera.h"
 #include "emission/IEmission.h"
-#include "geometry/Triangle.h"
 #include "infinitelight/IInfiniteLight.h"
 #include "integrator/IIntegrator.h"
 #include "integrator/IIntegratorFactory.h"
@@ -160,91 +158,16 @@ public:
 
 	inline void initialize(RenderContext* ctx)
 	{
-		// Estimate the average scene camera ray footprint
-		static const std::array<Vector2f, 5> primarySamples = {
-			Vector2f(0.5f, 0.5f),
-			Vector2f(0.25f, 0.25f),
-			Vector2f(0.75f, 0.75f),
-			Vector2f(0.1f, 0.9f),
-			Vector2f(0.9f, 0.1f)
-		};
+		const auto footprint = ctx->computeAverageCameraSceneFootprint();
 
-		const auto scene		= ctx->scene();
-		const auto camera		= scene->activeCamera();
-		const Size2i sensorSize = Size2i(ctx->settings().filmWidth, ctx->settings().filmHeight);
-
-		const auto queryPos = [&](const Vector2f pixel, Vector3f& pos) {
-			CameraSample cameraSample;
-			cameraSample.SensorSize	   = sensorSize;
-			cameraSample.Lens		   = Vector2f(0.5f, 0.5f);
-			cameraSample.Time		   = 0;
-			cameraSample.BlendWeight   = 1.0f;
-			cameraSample.Importance	   = 1.0f;
-			cameraSample.WavelengthNM  = SpectralBlob(540.0f);
-			cameraSample.WavelengthPDF = 1.0f;
-			cameraSample.Pixel		   = pixel;
-
-			const auto camera_ray = camera->constructRay(cameraSample);
-			if (!camera_ray.has_value())
-				return false;
-
-			Ray ray;
-			ray.Origin		   = camera_ray.value().Origin;
-			ray.Direction	   = camera_ray.value().Direction;
-			ray.MaxT		   = camera_ray.value().MaxT;
-			ray.MinT		   = camera_ray.value().MinT;
-			ray.WavelengthNM   = camera_ray.value().WavelengthNM;
-			ray.IterationDepth = 0;
-			ray.GroupID		   = 0;
-			ray.PixelIndex	   = 0;
-			ray.Flags		   = RayFlag::Camera;
-
-			HitEntry entry;
-			if (!scene->traceSingleRay(ray, entry))
-				return false;
-
-			pos = ray.t(entry.Parameter[2]);
-			return true;
-		};
-
-		size_t hits				= 0;
-		float acquiredFootprint = 0;
-		for (size_t i = 0; i < primarySamples.size(); ++i) {
-			constexpr float D	 = 0.25f;
-			const Vector2f pixel = Vector2f(primarySamples[i].x() * sensorSize.Width, primarySamples[i].y() * sensorSize.Height);
-
-			Vector3f p00;
-			if (!queryPos(pixel + Vector2f(-D, -D), p00))
-				continue;
-
-			Vector3f p10;
-			if (!queryPos(pixel + Vector2f(D, -D), p10))
-				continue;
-
-			Vector3f p01;
-			if (!queryPos(pixel + Vector2f(-D, D), p01))
-				continue;
-
-			Vector3f p11;
-			if (!queryPos(pixel + Vector2f(D, D), p11))
-				continue;
-
-			const float area = Triangle::surfaceArea(p00, p10, p01) + Triangle::surfaceArea(p10, p01, p11);
-			acquiredFootprint += area / (D * D);
-			++hits;
-		}
-
-		const auto& bbox = scene->boundingBox();
-		if (hits == 0) {
+		if (!footprint.has_value()) {
 			PR_LOG(L_WARNING) << "Could not acquire average footprint. Using bounding box information instead" << std::endl;
-			mInitialGatherRadius = std::max(0.0001f, mParameters.GatherRadiusFactor * bbox.longestEdge() / 100.0f);
+			mInitialGatherRadius = std::max(0.0001f, mParameters.GatherRadiusFactor * ctx->scene()->boundingBox().longestEdge() / 100.0f);
+			PR_LOG(L_DEBUG) << "VCM: Initial gather radius " << mInitialGatherRadius << std::endl;
 		} else {
-			// Set initial gather radius based on the footprint
-			acquiredFootprint /= hits;
-			mInitialGatherRadius = std::max(0.0001f, std::sqrt(acquiredFootprint * PR_INV_PI) * mParameters.GatherRadiusFactor);
+			mInitialGatherRadius = std::max(0.0001f, std::sqrt(footprint.value() * PR_INV_PI) * mParameters.GatherRadiusFactor);
+			PR_LOG(L_DEBUG) << "VCM: Avg. footprint " << footprint.value() << ", initial gather radius " << mInitialGatherRadius << std::endl;
 		}
-
-		PR_LOG(L_DEBUG) << "VCM: Avg. footprint " << acquiredFootprint << ", initial gather radius " << mInitialGatherRadius << std::endl;
 	}
 
 private:

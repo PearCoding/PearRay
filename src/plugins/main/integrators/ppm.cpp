@@ -1,6 +1,7 @@
 #include "Environment.h"
 #include "Profiler.h"
 #include "SceneLoadContext.h"
+#include "ServiceObserver.h"
 #include "emission/IEmission.h"
 #include "infinitelight/IInfiniteLight.h"
 #include "integrator/IIntegrator.h"
@@ -45,7 +46,7 @@ struct PPMParameters {
 	size_t MaxLightRayDepthHard	 = 8;
 	size_t MaxLightRayDepthSoft	 = 2;
 	size_t MaxPhotonsPerPass	 = 1000000;
-	float MaxGatherRadius		 = 0.1f;
+	float GatherRadiusFactor	 = 0.9f; // In respect to pixel area
 	float SqueezeWeight2		 = 0.0f;
 	float ContractRatio			 = 0.4f;
 };
@@ -365,9 +366,17 @@ private:
 template <GatherMode GM>
 class IntPPM : public IIntegrator {
 public:
-	explicit IntPPM(const PPMParameters& parameters)
+	explicit IntPPM(const PPMParameters& parameters, const std::shared_ptr<ServiceObserver>& service)
 		: mParameters(parameters)
+		, mServiceObserver(service)
+		, mCBID(0)
+		, mInitialGatherRadius(0)
 	{
+		if (mServiceObserver) {
+			mCBID = mServiceObserver->registerBeforeRender([this](RenderContext* ctx) {
+				initialize(ctx);
+			});
+		}
 	}
 
 	virtual ~IntPPM() = default;
@@ -376,8 +385,11 @@ public:
 	{
 		mThreadMutex.lock();
 		if (!mContext) {
-			const float edge = std::max(0.1f, renderer->scene()->boundingBox().shortestEdge());
-			mContext		 = std::make_unique<PPMContext>(renderer->scene()->boundingBox(), edge / 100);
+			constexpr size_t MAX_ELEMS = 256;
+
+			// Make sure the memory use is reasonable
+			const float gridDelta = std::max(renderer->scene()->boundingBox().longestEdge() / float(MAX_ELEMS), 2 * mInitialGatherRadius);
+			mContext			  = std::make_unique<PPMContext>(renderer->scene()->boundingBox(), gridDelta);
 			setupContext(renderer);
 		}
 		mThreadMutex.unlock();
@@ -385,6 +397,20 @@ public:
 	}
 
 	IntegratorConfiguration configuration() const override { return IntegratorConfiguration{ 2 /*Pass Count*/ }; }
+
+	inline void initialize(RenderContext* ctx)
+	{
+		const auto footprint = ctx->computeAverageCameraSceneFootprint();
+
+		if (!footprint.has_value()) {
+			PR_LOG(L_WARNING) << "Could not acquire average footprint. Using bounding box information instead" << std::endl;
+			mInitialGatherRadius = std::max(0.0001f, mParameters.GatherRadiusFactor * ctx->scene()->boundingBox().longestEdge() / 100.0f);
+			PR_LOG(L_DEBUG) << "PPM: Initial gather radius " << mInitialGatherRadius << std::endl;
+		} else {
+			mInitialGatherRadius = std::max(0.0001f, std::sqrt(footprint.value() * PR_INV_PI) * mParameters.GatherRadiusFactor);
+			PR_LOG(L_DEBUG) << "PPM: Avg. footprint " << footprint.value() << ", initial gather radius " << mInitialGatherRadius << std::endl;
+		}
+	}
 
 private:
 	void beforePhotonPass(uint32 photonPass)
@@ -394,7 +420,7 @@ private:
 			td.Handled = false;
 
 		if (photonPass == 0)
-			mContext->CurrentSearchRadius2 = mParameters.MaxGatherRadius * mParameters.MaxGatherRadius;
+			mContext->CurrentSearchRadius2 = mInitialGatherRadius * mInitialGatherRadius;
 		else
 			mContext->CurrentSearchRadius2 *= (photonPass + 1 + mParameters.ContractRatio) / (photonPass + 2);
 
@@ -488,13 +514,17 @@ private:
 	}
 
 	const PPMParameters mParameters;
+	const std::shared_ptr<ServiceObserver> mServiceObserver;
+	ServiceObserver::CallbackID mCBID;
+
 	std::mutex mThreadMutex;
 	std::unique_ptr<PPMContext> mContext;
+	float mInitialGatherRadius;
 };
 
 class IntPPMFactory : public IIntegratorFactory {
 public:
-	explicit IntPPMFactory(const ParameterGroup& params)
+	explicit IntPPMFactory(const ParameterGroup& params, const std::shared_ptr<ServiceObserver>& service)
 	{
 		mParameters.MaxPhotonsPerPass = std::max<size_t>(100, params.getUInt("photons", mParameters.MaxPhotonsPerPass));
 
@@ -507,7 +537,7 @@ public:
 		mParameters.MaxLightRayDepthHard  = std::min<size_t>(maximumDepth, params.getUInt("max_light_ray_depth", mParameters.MaxLightRayDepthHard));
 		mParameters.MaxLightRayDepthSoft  = std::min(mParameters.MaxLightRayDepthHard, (size_t)params.getUInt("soft_max_light_ray_depth", mParameters.MaxLightRayDepthSoft));
 
-		mParameters.MaxGatherRadius = std::max(0.00001f, params.getNumber("max_gather_radius", mParameters.MaxGatherRadius));
+		mParameters.GatherRadiusFactor = std::max(0.00001f, params.getNumber("gather_radius_factor", mParameters.GatherRadiusFactor));
 
 		mParameters.SqueezeWeight2 = std::max(0.0f, std::min(1.0f, params.getNumber("squeeze_weight", std::sqrt(mParameters.SqueezeWeight2))));
 		mParameters.SqueezeWeight2 *= mParameters.SqueezeWeight2;
@@ -526,23 +556,24 @@ public:
 	{
 		switch (mGatherMode) {
 		case GatherMode::Dome:
-			return std::make_shared<IntPPM<GatherMode::Dome>>(mParameters);
+			return std::make_shared<IntPPM<GatherMode::Dome>>(mParameters, mServiceObserver);
 		case GatherMode::Sphere:
 		default:
-			return std::make_shared<IntPPM<GatherMode::Sphere>>(mParameters);
+			return std::make_shared<IntPPM<GatherMode::Sphere>>(mParameters, mServiceObserver);
 		}
 	}
 
 private:
 	PPMParameters mParameters;
 	GatherMode mGatherMode;
+	const std::shared_ptr<ServiceObserver> mServiceObserver;
 };
 
 class IntPPMPlugin : public IIntegratorPlugin {
 public:
 	std::shared_ptr<IIntegratorFactory> create(const std::string&, const SceneLoadContext& ctx) override
 	{
-		return std::make_shared<IntPPMFactory>(ctx.parameters());
+		return std::make_shared<IntPPMFactory>(ctx.parameters(), ctx.environment()->serviceObserver());
 	}
 
 	const std::vector<std::string>& getNames() const override
@@ -562,7 +593,7 @@ public:
 			.UInt("soft_max_camera_ray_depth", "Maximum ray depth after which russian roulette for camera rays starts", parameters.MaxCameraRayDepthSoft)
 			.UInt("max_light_ray_depth", "Maximum ray depth allowed for light rays", parameters.MaxLightRayDepthHard)
 			.UInt("soft_max_light_ray_depth", "Maximum ray depth after which russian roulette for light rays starts", parameters.MaxLightRayDepthSoft)
-			.Number("max_gather_radius", "Initial gather radius", parameters.MaxGatherRadius)
+			.Number("gather_radius_factor", "Factor for automatic initial gather radius calculation", parameters.GatherRadiusFactor)
 			.Number("squeeze_weight", "Squeeze weight to prevent surface leaks", std::sqrt(parameters.SqueezeWeight2))
 			.Number("contract_ratio", "Contract ratio", parameters.ContractRatio)
 			.Option("gather_mode", "Gathering mode", "dome", { "dome", "sphere" })
