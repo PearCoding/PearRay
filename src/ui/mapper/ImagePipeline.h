@@ -16,6 +16,15 @@ enum class ColorFormat {
 	LUV
 };
 
+enum class GammaType {
+	None = 0,
+	SRGB,
+	ReverseSRGB,
+	AdobeRGB,
+	ReverseAdobeRGB,
+	Custom
+};
+
 // TODO: Maybe make it adaptable?
 /*constexpr float REF_WHITE_X = 1 / 3.0f;
 constexpr float REF_WHITE_Y = 1 / 3.0f;
@@ -54,6 +63,7 @@ public:
 		, mTripletFormatSrc(ColorFormat::XYZ)
 		, mTripletFormatDst(ColorFormat::XYZ)
 		, mToneMapping(ToneMappingMode::None)
+		, mGammaType(GammaType::SRGB)
 		, mGamma(-1)
 	{
 	}
@@ -72,6 +82,7 @@ public:
 	}
 
 	inline void setGamma(float gamma) { mGamma = gamma; }
+	inline void setGammaType(GammaType type) { mGammaType = type; }
 
 	inline void mapTriplet(float x, float y, float z, float& r, float& g, float& b) const
 	{
@@ -280,7 +291,23 @@ private:
 
 	float applyGamma(float x) const
 	{
-		return mGamma <= 0.0f ? x : std::pow(std::max(0.0f, x), mGamma);
+		constexpr float AdobeRGBGamma = 2.19921875f;
+
+		switch (mGammaType) {
+		default:
+		case GammaType::None:
+			return x;
+		case GammaType::SRGB:
+			return x <= 0.0031308f ? x * 12.92f : (1.055f * std::pow(x, 1 / 2.4f) - 0.055f);
+		case GammaType::ReverseSRGB:
+			return x <= 0.04045f ? x / 12.92f : std::pow((x + 0.055f) / 1.055f, 2.4f);
+		case GammaType::AdobeRGB:
+			return std::pow(std::max(0.0f, x), 1 / AdobeRGBGamma);
+		case GammaType::ReverseAdobeRGB:
+			return std::pow(std::max(0.0f, x), AdobeRGBGamma);
+		case GammaType::Custom:
+			return std::pow(std::max(0.0f, x), mGamma);
+		}
 	}
 
 	float mExposureFactor;
@@ -290,6 +317,7 @@ private:
 	ColorFormat mTripletFormatSrc;
 	ColorFormat mTripletFormatDst;
 	ToneMappingMode mToneMapping;
+	GammaType mGammaType;
 	float mGamma;
 };
 } // namespace UI

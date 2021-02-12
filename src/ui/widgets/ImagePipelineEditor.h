@@ -22,6 +22,9 @@ public:
 signals:
 	void changed();
 
+private slots:
+	void gammaTypeChanged(int index);
+	
 private:
 	Ui::ImagePipelineEditorClass* ui;
 };
