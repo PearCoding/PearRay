@@ -7,12 +7,12 @@
 
 namespace PR {
 
-static inline float smoothstep(float x)
+[[maybe_unused]] static inline float smoothstep(float x)
 {
 	return x * x * (3 - 2 * x);
 }
 
-static inline float smootherstep(float x)
+[[maybe_unused]] static inline float smootherstep(float x)
 {
 	return x * x * x * (x * (x * 6 - 15) + 10);
 }

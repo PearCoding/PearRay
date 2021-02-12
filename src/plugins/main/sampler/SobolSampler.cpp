@@ -28,7 +28,6 @@ class SobolSampler : public ISampler {
 public:
 	SobolSampler(Random& random, uint32 samples)
 		: ISampler(samples)
-		, mRandom(random)
 	{
 		mSamples1D.resize(samples);
 		mSamples2D.resize(samples);
@@ -51,8 +50,8 @@ public:
 		}
 
 		// Shuffle the order of the samples
-		std::shuffle(mSamples1D.begin(), mSamples1D.end(), mRandom);
-		std::shuffle(mSamples2D.begin(), mSamples2D.end(), mRandom);
+		std::shuffle(mSamples1D.begin(), mSamples1D.end(), random);
+		std::shuffle(mSamples2D.begin(), mSamples2D.end(), random);
 	}
 
 	virtual ~SobolSampler() = default;
@@ -60,22 +59,20 @@ public:
 	float generate1D(Random& rnd, uint32 index) override
 	{
 		if (mSamples1D.size() <= index)
-			return mRandom.getFloat();
+			return rnd.getFloat();
 		else
 			return mSamples1D.at(index);
 	}
 
-	Vector2f generate2D(Random&, uint32 index) override
+	Vector2f generate2D(Random& rnd, uint32 index) override
 	{
 		if (mSamples2D.size() <= index)
-			return mRandom.get2D();
+			return rnd.get2D();
 		else
 			return mSamples2D.at(index);
 	}
 
 private:
-	Random& mRandom;
-
 	std::vector<float> mSamples1D;
 	std::vector<Vector2f> mSamples2D;
 };

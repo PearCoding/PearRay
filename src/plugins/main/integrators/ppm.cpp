@@ -525,6 +525,7 @@ private:
 class IntPPMFactory : public IIntegratorFactory {
 public:
 	explicit IntPPMFactory(const ParameterGroup& params, const std::shared_ptr<ServiceObserver>& service)
+		: mServiceObserver(service)
 	{
 		mParameters.MaxPhotonsPerPass = std::max<size_t>(100, params.getUInt("photons", mParameters.MaxPhotonsPerPass));
 

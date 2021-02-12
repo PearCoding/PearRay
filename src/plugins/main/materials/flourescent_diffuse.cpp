@@ -126,7 +126,6 @@ struct FlourescentDiffuseClosure {
 
 		SpectralBlob b;
 		b[0]			  = range.Start + distr.sampleContinuous(rnd.getFloat(), pdf) * w;
-		const float delta = w / PR_SPECTRAL_BLOB_SIZE;
 		PR_OPT_LOOP
 		for (size_t i = 1; i < PR_SPECTRAL_BLOB_SIZE; ++i)
 			b[i] = std::fmod(b[0] - range.Start + i * w, w) + range.Start;
@@ -150,7 +149,7 @@ struct FlourescentDiffuseClosure {
 	}
 };
 
-/* Based on Jung, A., J. Hanika, Steve Marschner and C. Dachsbacher. “A Simple Diffuse Fluorescent BBRRDF Model.” MAM@EGSR (2018). */
+/* Based on Jung, A., J. Hanika, Steve Marschner and C. Dachsbacher. ï¿½A Simple Diffuse Fluorescent BBRRDF Model.ï¿½ MAM@EGSR (2018). */
 class FlourescentDiffuse : public IMaterial {
 public:
 	FlourescentDiffuse(const std::shared_ptr<FloatSpectralNode>& absorption, const std::shared_ptr<FloatSpectralNode>& emission,
@@ -315,8 +314,8 @@ private:
 	const float mAbsorpedEmissionFactor;
 	const float mConcentration;
 
-	Distribution1D mDistributionAbsorption;
 	Distribution1D mDistributionEmission;
+	Distribution1D mDistributionAbsorption;
 	float mEmissionIntegral;
 	float mAbsorptionIntegral;
 };
