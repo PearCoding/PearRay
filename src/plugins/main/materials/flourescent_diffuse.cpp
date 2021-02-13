@@ -158,8 +158,8 @@ public:
 		: IMaterial()
 		, mAbsorption(absorption)
 		, mEmission(emission)
-		, mAbsorpedEmissionFactor(absorpedEmissionFactor) // Q
 		, mAlbedo(albedo)								  // Non-flourescent property
+		, mAbsorpedEmissionFactor(absorpedEmissionFactor) // Q
 		, mConcentration(concentration)
 		, mDistributionEmission(400)
 		, mDistributionAbsorption(400)

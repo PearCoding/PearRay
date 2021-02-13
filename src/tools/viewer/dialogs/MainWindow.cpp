@@ -7,6 +7,7 @@
 #include <QMessageBox>
 #include <QScreen>
 #include <QSettings>
+#include <QSortFilterProxyModel>
 #include <QStringBuilder>
 #include <QThread>
 
@@ -14,6 +15,8 @@
 
 #include "FrameBufferView.h"
 #include "Project.h"
+
+#include "Logger.h"
 
 constexpr int MAX_LAST_FILES = 10;
 
@@ -23,9 +26,22 @@ MainWindow::MainWindow(QWidget* parent)
 	, mRenderingStatus(nullptr)
 	, mRenderingProgress(nullptr)
 	, mWinExtras(nullptr)
+	, mLog()
+	, mLogListener()
 	, mImageUpdateIntervalMSecs(1000)
 {
 	ui.setupUi(this);
+
+	// Setup log
+	QSortFilterProxyModel* proxyModel = new QSortFilterProxyModel(this);
+	proxyModel->setSourceModel(&mLog);
+	ui.logLW->setModel(proxyModel);
+	ui.logLW->setSortingEnabled(true);
+    ui.logLW->sortByColumn(0, Qt::AscendingOrder);
+
+	mLogListener = std::make_shared<PR::UI::UILogListener>(&mLog);
+	PR_LOGGER.addListener(mLogListener);
+
 	mWinExtras = new WinExtraWidget(this);
 
 	mImageTimer.setTimerType(Qt::CoarseTimer);
@@ -83,6 +99,7 @@ MainWindow::MainWindow(QWidget* parent)
 
 MainWindow::~MainWindow()
 {
+	PR_LOGGER.removeListener(mLogListener);
 }
 
 void MainWindow::closeEvent(QCloseEvent* event)

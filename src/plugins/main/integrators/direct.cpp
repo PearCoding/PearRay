@@ -89,7 +89,7 @@ public:
 		if (!material->hasOnlyDeltaDistribution())
 			handleNEE(session, ip, material, current);
 
-		return handleScattering(session, ip, entity, material, current);
+		return handleScattering(session, ip, material, current);
 	}
 
 	// First camera vertex
@@ -148,9 +148,8 @@ public:
 private:
 	/// Handle scattering (aka, next ray direction)
 	std::optional<Ray> handleScattering(RenderTileSession& session, const IntersectionPoint& ip,
-										IEntity* entity, IMaterial* material, TraversalContext& current)
+										IMaterial* material, TraversalContext& current)
 	{
-		PR_ASSERT(entity, "Expected valid entity");
 
 		auto& rnd = session.random(ip.Ray.PixelIndex);
 

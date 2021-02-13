@@ -46,7 +46,7 @@ struct PPMParameters {
 	size_t MaxLightRayDepthHard	 = 8;
 	size_t MaxLightRayDepthSoft	 = 2;
 	size_t MaxPhotonsPerPass	 = 1000000;
-	float GatherRadiusFactor	 = 0.9f; // In respect to pixel area
+	float GatherRadiusFactor	 = 4.0f; // In respect to pixel area
 	float SqueezeWeight2		 = 0.0f;
 	float ContractRatio			 = 0.4f;
 };
@@ -408,7 +408,7 @@ public:
 			PR_LOG(L_DEBUG) << "PPM: Initial gather radius " << mInitialGatherRadius << std::endl;
 		} else {
 			mInitialGatherRadius = std::max(0.0001f, std::sqrt(footprint.value() * PR_INV_PI) * mParameters.GatherRadiusFactor);
-			PR_LOG(L_DEBUG) << "PPM: Avg. footprint " << footprint.value() << ", initial gather radius " << mInitialGatherRadius << std::endl;
+			PR_LOG(L_INFO) << "PPM: Avg. footprint " << footprint.value() << ", initial gather radius " << mInitialGatherRadius << std::endl;
 		}
 	}
 

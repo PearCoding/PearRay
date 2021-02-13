@@ -30,6 +30,8 @@ set(Src
   io/ImageBufferView.cpp
   io/ImageFile.cpp
   io/ImageLayer.cpp
+  log/LogTableModel.cpp
+  log/UILogListener.cpp
   properties/BoolProperty.cpp
   properties/ColorProperty.cpp
   properties/DoubleProperty.cpp
@@ -81,6 +83,9 @@ set(Hdr
   io/ImageBufferView.h
   io/ImageFile.h
   io/ImageLayer.h
+  log/LogEntry.h
+  log/LogTableModel.h
+  log/UILogListener.h
   mapper/ImagePipeline.h
   properties/BoolProperty.h
   properties/ColorProperty.h

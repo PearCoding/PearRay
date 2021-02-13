@@ -8,6 +8,8 @@
 #include <QSpinBox>
 #include <QTimer>
 
+#include "log/LogTableModel.h"
+#include "log/UILogListener.h"
 #include "widgets/WinExtraWidget.h"
 
 class Project;
@@ -78,6 +80,9 @@ private:
 	QSpinBox* mIterationOverride;
 
 	WinExtraWidget* mWinExtras;
+
+	PR::UI::LogTableModel mLog;
+	std::shared_ptr<PR::UI::UILogListener> mLogListener;
 
 	// Some settings
 	int mImageUpdateIntervalMSecs;

@@ -272,10 +272,8 @@ private:
 
 	template <bool IsCamera>
 	std::optional<Ray> handleScattering(IterationContext& tctx, const IntersectionPoint& ip,
-										IEntity* entity, IMaterial* material, BaseTraversalContext& current) const
+										IMaterial* material, BaseTraversalContext& current) const
 	{
-		PR_ASSERT(entity, "Expected valid entity");
-
 		auto& rnd		= IsCamera ? tctx.Session.random(ip.Ray.PixelIndex) : tctx.Session.random(RandomSlot::Light);
 		LightPath& path = IsCamera ? tctx.ThreadContext.CameraPath : tctx.ThreadContext.LightPath;
 
@@ -418,7 +416,7 @@ private:
 		}
 		// Our implementation does not support direct camera hits (no C_s0)
 
-		return handleScattering<false>(tctx, ip, entity, material, current);
+		return handleScattering<false>(tctx, ip, material, current);
 	}
 
 	std::optional<Ray> handleCameraVertex(IterationContext& tctx, const IntersectionPoint& ip,
@@ -472,7 +470,7 @@ private:
 				handleMerging(tctx, ip, material, current);
 		}
 
-		return handleScattering<true>(tctx, ip, entity, material, current);
+		return handleScattering<true>(tctx, ip, material, current);
 	}
 
 	inline SpectralBlob extractMaterial(const IterationContext& tctx,

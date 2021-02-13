@@ -32,7 +32,7 @@ public:
 		out.PDF_S = Sampling::cos_hemi_pdf(in.Context.NdotL());
 	}
 
-	void sample(const EmissionSampleInput& in, EmissionSampleOutput& out, const RenderTileSession& session) const override
+	void sample(const EmissionSampleInput& in, EmissionSampleOutput& out, const RenderTileSession&) const override
 	{
 		out.L	  = Sampling::cos_hemi(in.RND.getFloat(), in.RND.getFloat());
 		out.PDF_S = Sampling::cos_hemi_pdf(out.L(2));

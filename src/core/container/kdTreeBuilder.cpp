@@ -114,7 +114,7 @@ const BoundingBox& kdTreeBuilder::boundingBox() const
 
 void kdTreeBuilder::statElementsNode(kdNodeBuilder* node, size_t& sumV, float root_volume, uint32 depth)
 {
-	mDepth   = std::max(depth, mDepth);
+	mDepth	 = std::max(depth, mDepth);
 	node->id = mNodeCount;
 	++mNodeCount;
 
@@ -216,9 +216,9 @@ static inline float SAH(float costIntersection, const BoundingBox& V,
 }
 
 enum EventType : uint8 {
-	ET_EndOnPlane   = 0, // -
+	ET_EndOnPlane	= 0, // -
 	ET_OnPlane		= 1, // |
-	ET_StartOnPlane = 2  // +
+	ET_StartOnPlane = 2	 // +
 };
 
 struct Event {
@@ -280,7 +280,7 @@ static void findSplit(float costIntersection, const std::vector<Event>& events,
 		const int dim		= events[j].dim;
 		size_t onPlane		= 0;
 		size_t startOnPlane = 0;
-		size_t endOnPlane   = 0;
+		size_t endOnPlane	= 0;
 
 		while (j < events.size() && events[j].dim == dim
 			   && std::abs(events[j].v - v) <= PR_EPSILON
@@ -313,12 +313,12 @@ static void findSplit(float costIntersection, const std::vector<Event>& events,
 		const float c = SAH(costIntersection, V, dim, v, nl[dim], nr[dim], np[dim], side, vl, vr);
 
 		if (c < c_out) {
-			c_out	= c;
-			dim_out  = dim;
-			v_out	= v;
+			c_out	 = c;
+			dim_out	 = dim;
+			v_out	 = v;
 			side_out = side;
-			vl_out   = vl;
-			vr_out   = vr;
+			vl_out	 = vl;
+			vr_out	 = vr;
 		}
 
 		np[dim] = 0;
@@ -353,9 +353,11 @@ static void classify(const std::vector<Event>& events, const std::vector<Primiti
 		obj->side = S_Both;
 	}
 
+#ifndef PR_NO_ASSERTS
 	for (const Event& e : events) {
 		PR_ASSERT(e.primitive->side == S_Both, "Expected primitive to be S_Both");
 	}
+#endif
 
 	for (const Event& e : events) {
 		if (e.dim != dim)
@@ -479,7 +481,7 @@ static kdNodeBuilder* buildNode(void* observer,
 
 void kdTreeBuilder::build(size_t size)
 {
-	mDepth	 = 0;
+	mDepth	   = 0;
 	mMaxDepth  = 0;
 	mNodeCount = 0;
 	if (size == 0)
@@ -491,8 +493,8 @@ void kdTreeBuilder::build(size_t size)
 		leaf->objects.push_back(e);
 
 		mMaxDepth = 1;
-		mDepth	= 1;
-		mRoot	 = leaf;
+		mDepth	  = 1;
+		mRoot	  = leaf;
 		return;
 	}
 
