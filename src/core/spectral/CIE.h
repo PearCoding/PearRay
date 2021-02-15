@@ -8,17 +8,23 @@ namespace PR {
 using CIETriplet = Eigen::Array<float, 3, 1>;
 
 // The spectrum the CIE data is available
+#ifdef PR_USE_CIE_1931
 constexpr int PR_CIE_SAMPLE_COUNT		= 95;
 constexpr float PR_CIE_WAVELENGTH_START = 360;
 constexpr float PR_CIE_WAVELENGTH_END	= 830;
+#else
+constexpr int PR_CIE_SAMPLE_COUNT		= 441;
+constexpr float PR_CIE_WAVELENGTH_START = 390;
+constexpr float PR_CIE_WAVELENGTH_END	= 830;
+#endif
+
 constexpr float PR_CIE_WAVELENGTH_RANGE = PR_CIE_WAVELENGTH_END - PR_CIE_WAVELENGTH_START;
 constexpr float PR_CIE_WAVELENGTH_DELTA = PR_CIE_WAVELENGTH_RANGE / (PR_CIE_SAMPLE_COUNT - 1);
 
 // The default visible spectrum constants based on
 // Starr, Cecie (2005). Biology: Concepts and Applications. Thomson Brooks/Cole. p. 94. ISBN 978-0-534-46226-0.
-// but with a slightly larger domain [360,760] instead of [380,740]
-constexpr float PR_VISIBLE_WAVELENGTH_START = 360;
-constexpr float PR_VISIBLE_WAVELENGTH_END	= 760;
+constexpr float PR_VISIBLE_WAVELENGTH_START = 390;
+constexpr float PR_VISIBLE_WAVELENGTH_END	= 740;
 constexpr float PR_VISIBLE_WAVELENGTH_DELTA = PR_CIE_WAVELENGTH_DELTA;
 constexpr float PR_VISIBLE_WAVELENGTH_RANGE = PR_VISIBLE_WAVELENGTH_END - PR_VISIBLE_WAVELENGTH_START;
 constexpr int PR_VISIBLE_SAMPLE_COUNT		= PR_VISIBLE_WAVELENGTH_RANGE / PR_VISIBLE_WAVELENGTH_DELTA + 1;
