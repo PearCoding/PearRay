@@ -20,6 +20,8 @@ public:
 	bool hasField(const std::string& unique_name) const;
 	Field getField(const std::string& unique_name) const;
 
+	inline size_t fieldCount() const { return mFields.size(); }
+
 	map_t::const_iterator begin() const;
 	map_t::const_iterator end() const;
 

@@ -57,10 +57,12 @@ private:
 
 	void setupProjectContext();
 	void closeProject();
+	void clearData();
 
 	void updateStatus(bool running);
 	void updateProgress(int iteration);
 	void updateRenderTime(bool running);
+	void updateRenderStatus();
 
 	static QPixmap pixmapFromSVG(const QString& filename, const QSize& baseSize);
 
@@ -73,6 +75,7 @@ private:
 	QTimer mImageTimer;
 	QPointer<Project> mProject;
 
+	QLabel* mRenderingIteration;
 	QLabel* mRenderingTime;
 	QLabel* mRenderingStatus;
 	QProgressBar* mRenderingProgress;

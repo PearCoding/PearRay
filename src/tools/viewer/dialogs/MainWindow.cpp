@@ -37,7 +37,7 @@ MainWindow::MainWindow(QWidget* parent)
 	proxyModel->setSourceModel(&mLog);
 	ui.logLW->setModel(proxyModel);
 	ui.logLW->setSortingEnabled(true);
-    ui.logLW->sortByColumn(0, Qt::AscendingOrder);
+	ui.logLW->sortByColumn(0, Qt::AscendingOrder);
 
 	mLogListener = std::make_shared<PR::UI::UILogListener>(&mLog);
 	PR_LOGGER.addListener(mLogListener);
@@ -64,8 +64,10 @@ MainWindow::MainWindow(QWidget* parent)
 	mRenderingProgress->setMaximumWidth(150 * devicePixelRatio());
 
 	// Setup render time label
-	mRenderingTime = new QLabel(this);
+	mRenderingTime		= new QLabel(this);
+	mRenderingIteration = new QLabel(this);
 
+	ui.statusBar->addPermanentWidget(mRenderingIteration);
 	ui.statusBar->addPermanentWidget(mRenderingTime);
 	ui.statusBar->addPermanentWidget(mRenderingProgress);
 	ui.statusBar->addPermanentWidget(mRenderingStatus);
@@ -190,11 +192,14 @@ void MainWindow::openFile(const QString& file)
 			return;
 
 		closeProject();
+		QThread::msleep(500);
 	}
 
 	QApplication::setOverrideCursor(Qt::WaitCursor);
 
 	try {
+		clearData();
+
 		mProject = new Project(file);
 		connect(mProject, &Project::renderingStarted, this, &MainWindow::renderingStarted);
 		connect(mProject, &Project::renderingFinished, this, &MainWindow::renderingFinished);
@@ -235,7 +240,7 @@ void MainWindow::openWebsite()
 void MainWindow::setupDockWidgets()
 {
 	const std::vector<QDockWidget*> dockWidgets = {
-		ui.imagePipelineDW, ui.logDW, ui.outlineDW, ui.propertiesDW
+		ui.imagePipelineDW, ui.logDW, ui.outlineDW, ui.propertiesDW, ui.statusDW
 	};
 
 	for (auto dw : dockWidgets)
@@ -332,6 +337,13 @@ void MainWindow::closeProject()
 	setupProjectContext();
 }
 
+void MainWindow::clearData()
+{
+	ui.imageView->setView(nullptr);
+	ui.statusTW->setRowCount(0);
+	mLog.reset();
+}
+
 void MainWindow::exportImage()
 {
 	if (!ui.imageView->view())
@@ -357,6 +369,7 @@ void MainWindow::updateImage()
 	ui.imageView->updateImage();
 
 	updateRenderTime(true);
+	updateRenderStatus();
 	if (!mProject->isProgressive())
 		updateProgress(mProject->renderIteration());
 	updateThumbnail();
@@ -379,7 +392,9 @@ void MainWindow::renderingStarted()
 {
 	ui.statusBar->showMessage(tr("Started rendering"), 10);
 	mWinExtras->renderingStarted();
+	mRenderingIteration->clear();
 	updateStatus(true);
+	updateRenderStatus();
 
 	ui.imageView->setView(std::make_shared<FrameBufferView>(mProject->frame()));
 	ui.imageView->zoomToFit();
@@ -390,11 +405,11 @@ void MainWindow::renderingStarted()
 void MainWindow::renderingFinished()
 {
 	mImageTimer.stop();
-	//ui.imageView->setView(nullptr);
 	ui.imageView->setUpdateRegions({});
 
 	ui.statusBar->showMessage(tr("Finished rendering"), 10);
 	mWinExtras->renderingFinished();
+	updateRenderStatus();
 	updateStatus(false);
 }
 
@@ -435,6 +450,58 @@ void MainWindow::updateProgress(int iteration)
 {
 	mRenderingProgress->setValue(iteration);
 	mWinExtras->setProgressValue(iteration);
+}
+
+template <class>
+inline constexpr bool always_false_v = false;
+void MainWindow::updateRenderStatus()
+{
+	if (!mProject || !mProject->isRendering())
+		return;
+
+	const auto status = mProject->renderStatus();
+
+	if (ui.statusTW->rowCount() != status.fieldCount())
+		ui.statusTW->setRowCount(status.fieldCount());
+
+	int counter = 0;
+	for (auto it = status.begin(); it != status.end(); ++it) {
+		// Name
+		auto fieldName = ui.statusTW->item(counter, 0);
+		if (!fieldName) {
+			fieldName = new QTableWidgetItem(QString::fromStdString(it->first));
+			ui.statusTW->setItem(counter, 0, fieldName);
+		} else {
+			ui.statusTW->item(counter, 0)->setText(QString::fromStdString(it->first));
+		}
+
+		// Field
+		QString field;
+		std::visit([&](auto&& arg) {
+			using T = std::decay_t<decltype(arg)>;
+			if constexpr (std::is_arithmetic_v<T>)
+				field = QString::number(arg);
+			else if constexpr (std::is_same_v<T, std::string>)
+				field = QString::fromStdString(arg);
+			else
+				static_assert(always_false_v<T>, "Non-exhaustive visitor!");
+		},
+				   it->second);
+
+		// Value
+		auto fieldValue = ui.statusTW->item(counter, 1);
+		if (!fieldValue) {
+			fieldValue = new QTableWidgetItem(field);
+			ui.statusTW->setItem(counter, 1, fieldValue);
+		} else {
+			ui.statusTW->item(counter, 1)->setText(field);
+		}
+		++counter;
+	}
+
+	// Show iteration count if progressive
+	if (mProject->isProgressive())
+		mRenderingIteration->setText(QString("Iteration %1 |").arg(mProject->renderIteration()));
 }
 
 inline static QString timestr(const std::chrono::milliseconds& msecs)
