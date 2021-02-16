@@ -68,7 +68,7 @@ std::shared_ptr<IIntegrator> RenderSettings::createIntegrator() const
 std::shared_ptr<ISpectralMapper> RenderSettings::createSpectralMapper(const std::string& purpose, RenderContext* ctx) const
 {
 	if (spectralMapperFactories.count(purpose))
-		return spectralMapperFactories.at(purpose)->createInstance(spectralStart, spectralEnd, ctx);
+		return spectralMapperFactories.at(purpose)->createInstance(ctx);
 	else
 		return nullptr;
 }

@@ -1,6 +1,7 @@
 #include "Random.h"
 #include "Environment.h"
 #include "SceneLoadContext.h"
+#include "renderer/RenderContext.h"
 #include "spectral/CIE.h"
 #include "spectral/ISpectralMapper.h"
 #include "spectral/ISpectralMapperFactory.h"
@@ -9,8 +10,10 @@
 namespace PR {
 class RandomSpectralMapper : public ISpectralMapper {
 public:
-	RandomSpectralMapper(float spectralStart, float spectralEnd)
-		: ISpectralMapper(spectralStart, spectralEnd)
+	RandomSpectralMapper(const SpectralRange& cameraRange, const SpectralRange& lightRange)
+		: ISpectralMapper()
+		, mCameraRange(cameraRange)
+		, mLightRange(lightRange)
 	{
 	}
 
@@ -18,25 +21,30 @@ public:
 
 	void sample(const SpectralSampleInput& in, SpectralSampleOutput& out) const override
 	{
-		const float u = in.RND.getFloat();
+		const SpectralRange& range = in.Purpose == SpectralSamplePurpose::Pixel ? mCameraRange : mLightRange;
+		const float u			   = in.RND.getFloat();
 
-		const float span  = wavelengthEnd() - wavelengthStart();
+		const float span  = range.span();
 		const float delta = span / PR_SPECTRAL_BLOB_SIZE;
 
-		const float start	= u * span;					 // Wavelength inside the span
-		out.WavelengthNM(0) = start + wavelengthStart(); // Hero wavelength
+		const float start	= u * span;			   // Wavelength inside the span
+		out.WavelengthNM(0) = start + range.Start; // Hero wavelength
 		PR_OPT_LOOP
 		for (size_t i = 1; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-			out.WavelengthNM(i) = wavelengthStart() + std::fmod(start + i * delta, span);
+			out.WavelengthNM(i) = range.Start + std::fmod(start + i * delta, span);
 		out.PDF = 1;
 	}
+
+private:
+	SpectralRange mCameraRange;
+	SpectralRange mLightRange;
 };
 
 class RandomSpectralMapperFactory : public ISpectralMapperFactory {
 public:
-	std::shared_ptr<ISpectralMapper> createInstance(float spectralStart, float spectralEnd, RenderContext*) override
+	std::shared_ptr<ISpectralMapper> createInstance(RenderContext* ctx) override
 	{
-		return std::make_shared<RandomSpectralMapper>(spectralStart, spectralEnd);
+		return std::make_shared<RandomSpectralMapper>(ctx->cameraSpectralRange(), ctx->lightSpectralRange());
 	}
 };
 

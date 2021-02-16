@@ -26,8 +26,9 @@ struct SPDContext {
 
 class SPDSpectralMapper : public ISpectralMapper {
 public:
-	SPDSpectralMapper(float start, float end, const SPDContext& context)
-		: ISpectralMapper(start, end)
+	SPDSpectralMapper(const SpectralRange& range, const SPDContext& context)
+		: ISpectralMapper()
+		, mCameraRange(range)
 		, mContext(context)
 	{
 	}
@@ -44,11 +45,11 @@ public:
 			PR_OPT_LOOP
 			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
 				const float k		= std::fmod(u + i / (float)PR_SPECTRAL_BLOB_SIZE, 1.0f);
-				out.WavelengthNM(i) = distr.sampleContinuous(k, out.PDF(i)) * (wavelengthEnd() - wavelengthStart()) + wavelengthStart();
+				out.WavelengthNM(i) = distr.sampleContinuous(k, out.PDF(i)) * mCameraRange.span() + mCameraRange.Start;
 			}
 		} else {
 			const Distribution1D& distr = mContext.LightDistributions[in.Light->lightID()];
-			const SpectralRange range	= in.Light->spectralRange().bounded(SpectralRange(wavelengthStart(), wavelengthEnd()));
+			const SpectralRange range	= in.Light->spectralRange().bounded(mCameraRange);
 
 			PR_OPT_LOOP
 			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
@@ -67,11 +68,11 @@ public:
 			SpectralBlob res;
 			PR_OPT_LOOP
 			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-				res(i) = distr.continuousPdf((wavelength(i) - wavelengthStart()) / (wavelengthEnd() - wavelengthStart()));
+				res(i) = distr.continuousPdf((wavelength(i) - mCameraRange.Start) / mCameraRange.span());
 			return res;
 		} else {
 			const Distribution1D& distr = mContext.LightDistributions[in.Light->lightID()];
-			const SpectralRange range	= in.Light->spectralRange().bounded(SpectralRange(wavelengthStart(), wavelengthEnd()));
+			const SpectralRange range	= in.Light->spectralRange().bounded(mCameraRange);
 
 			SpectralBlob res;
 			PR_OPT_LOOP
@@ -83,6 +84,7 @@ public:
 	}
 
 private:
+	const SpectralRange mCameraRange;
 	const SPDContext& mContext;
 };
 
@@ -125,26 +127,26 @@ public:
 	{
 	}
 
-	std::shared_ptr<ISpectralMapper> createInstance(float spectralStart, float spectralEnd, RenderContext* ctx) override
+	std::shared_ptr<ISpectralMapper> createInstance(RenderContext* ctx) override
 	{
 		// TODO: We assume spectralStart, spectralEnd and ctx to never change. This is probably ok, but it should be better to check for special cases!
 		mMutex.lock();
 		if (!mAlreadBuilt) {
-			buildDistribution(spectralStart, spectralEnd, ctx);
+			buildDistribution(ctx);
 			// TODO: Light distributions will not be used always... maybe make it optional??
-			buildLightDistributions(spectralStart, spectralEnd, ctx);
+			buildLightDistributions(ctx);
 			mAlreadBuilt = true;
 		}
 		mMutex.unlock();
 
-		return std::make_shared<SPDSpectralMapper>(spectralStart, spectralEnd, mContext);
+		return std::make_shared<SPDSpectralMapper>(ctx->cameraSpectralRange(), mContext);
 	}
 
 private:
-	void calcLightDistribution(std::vector<float>& lightPower, float spectralStart, float spectralEnd, Light* light)
+	void calcLightDistribution(std::vector<float>& lightPower, const SpectralRange& range, Light* light)
 	{
 		const size_t bins  = lightPower.size();
-		const auto bin2wvl = [=](uint32 bin) { return spectralStart + (bin / float(bins - 1)) * (spectralEnd - spectralStart); };
+		const auto bin2wvl = [=](uint32 bin) { return range.Start + (bin / float(bins - 1)) * range.span(); };
 
 		// Calculate average power per spectral band
 		for (uint32 i = 0; i < bins; i += PR_SPECTRAL_BLOB_SIZE) {
@@ -177,14 +179,14 @@ private:
 		}
 	}
 
-	void applyPostprocessing(std::vector<float>& distr, float spectralStart, float spectralEnd)
+	void applyPostprocessing(std::vector<float>& distr, const SpectralRange& range)
 	{
 		const size_t bins  = distr.size();
-		const auto bin2wvl = [=](uint32 bin) { return spectralStart + (bin / float(bins - 1)) * (spectralEnd - spectralStart); };
+		const auto bin2wvl = [=](uint32 bin) { return range.Start + (bin / float(bins - 1)) * range.span(); };
 
 		WeightingMethod method = mParameters.Method;
 		// If the given spectral domain does not cross the cie domain, disable weighting
-		if (spectralStart > PR_CIE_WAVELENGTH_END || spectralEnd < PR_CIE_WAVELENGTH_START)
+		if (range.Start > PR_CIE_WAVELENGTH_END || range.End < PR_CIE_WAVELENGTH_START)
 			method = WeightingMethod::None;
 
 		// Weight given spd entry by "camera" response
@@ -221,23 +223,24 @@ private:
 		}
 	}
 
-	void buildDistribution(float spectralStart, float spectralEnd, RenderContext* ctx)
+	void buildDistribution(RenderContext* ctx)
 	{
-		const auto lightSampler = ctx->lightSampler();
+		const SpectralRange cameraRange = ctx->cameraSpectralRange();
+		const auto lightSampler			= ctx->lightSampler();
 
 		// Temporary arrays
 		std::vector<float> fullPower(mParameters.NumberOfBins, 0.0f);
 		std::vector<float> lightPower(mParameters.NumberOfBins, 0.0f);
 
 		for (const auto& light : lightSampler->lights()) {
-			calcLightDistribution(lightPower, spectralStart, spectralEnd, light.get());
+			calcLightDistribution(lightPower, cameraRange, light.get());
 
 			// Add it to the full spd
 			for (uint32 i = 0; i < mParameters.NumberOfBins; ++i)
 				fullPower[i] += lightPower[i];
 		}
 
-		applyPostprocessing(fullPower, spectralStart, spectralEnd);
+		applyPostprocessing(fullPower, cameraRange);
 
 		if (mParameters.Verbose) {
 			// Debug
@@ -250,9 +253,10 @@ private:
 		mContext.Distribution.generate([&](uint32 bin) { return fullPower[bin]; });
 	}
 
-	void buildLightDistributions(float spectralStart, float spectralEnd, RenderContext* ctx)
+	void buildLightDistributions(RenderContext* ctx)
 	{
-		const auto lightSampler = ctx->lightSampler();
+		const SpectralRange cameraRange = ctx->cameraSpectralRange();
+		const auto lightSampler			= ctx->lightSampler();
 
 		if (lightSampler->lightCount() == 0)
 			return;
@@ -263,12 +267,10 @@ private:
 		std::vector<float> lightPower(mParameters.NumberOfLightBins, 0.0f);
 
 		for (const auto& light : lightSampler->lights()) {
-			const SpectralRange range = light->spectralRange();
-			const float wvlStart	  = range.isStartUnbounded() ? spectralStart : range.Start;
-			const float wvlEnd		  = range.isEndUnbounded() ? spectralEnd : range.End;
+			const SpectralRange range = light->spectralRange().bounded(cameraRange);
 
-			calcLightDistribution(lightPower, wvlStart, wvlEnd, light.get());
-			applyPostprocessing(lightPower, wvlStart, wvlEnd);
+			calcLightDistribution(lightPower, range, light.get());
+			applyPostprocessing(lightPower, range);
 
 			mContext.LightDistributions[light->lightID()].generate([&](uint32 bin) { return lightPower[bin]; });
 		}

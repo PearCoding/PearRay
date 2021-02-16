@@ -41,9 +41,7 @@ struct PR_LIB_CORE SpectralSampleOutput {
 
 class PR_LIB_CORE ISpectralMapper {
 public:
-	inline ISpectralMapper(float start, float end)
-		: mStart(start)
-		, mEnd(end)
+	inline ISpectralMapper()
 	{
 	}
 
@@ -55,14 +53,6 @@ public:
 		PR_UNUSED(wavelength);
 		return SpectralBlob::Ones();
 	}
-
-	inline float wavelengthStart() const { return mStart; }
-	inline float wavelengthEnd() const { return mEnd; }
-	inline bool isMonochrome() const { return mStart == mEnd; }
-
-private:
-	const float mStart;
-	const float mEnd;
 };
 
 } // namespace PR

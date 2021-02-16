@@ -1,6 +1,7 @@
 #include "Environment.h"
 #include "Random.h"
 #include "SceneLoadContext.h"
+#include "renderer/RenderContext.h"
 #include "spectral/CIE.h"
 #include "spectral/ISpectralMapper.h"
 #include "spectral/ISpectralMapperFactory.h"
@@ -12,7 +13,7 @@ template <bool YOnly>
 class FullVisibleSpectralMapper : public ISpectralMapper {
 public:
 	FullVisibleSpectralMapper()
-		: ISpectralMapper(PR_VISIBLE_WAVELENGTH_START, PR_VISIBLE_WAVELENGTH_END)
+		: ISpectralMapper()
 	{
 	}
 
@@ -49,10 +50,11 @@ public:
 template <bool YOnly>
 class TruncatedVisibleSpectralMapper : public ISpectralMapper {
 public:
-	TruncatedVisibleSpectralMapper(float spectralStart, float spectralEnd)
-		: ISpectralMapper(spectralStart, spectralEnd)
+	TruncatedVisibleSpectralMapper(const SpectralRange& range)
+		: ISpectralMapper()
+		, mRange(range)
 	{
-		PR_ASSERT(spectralStart >= PR_VISIBLE_WAVELENGTH_START && spectralEnd <= PR_VISIBLE_WAVELENGTH_END,
+		PR_ASSERT(mRange.Start >= PR_VISIBLE_WAVELENGTH_START && mRange.End <= PR_VISIBLE_WAVELENGTH_END,
 				  "Expected truncated domain to be inside visible domain");
 	}
 
@@ -66,9 +68,9 @@ public:
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
 			const float k = std::fmod(u + i / (float)PR_SPECTRAL_BLOB_SIZE, 1.0f);
 			if constexpr (YOnly)
-				out.WavelengthNM(i) = CIE::sample_trunc_vis_y(k, out.PDF(i), wavelengthStart(), wavelengthEnd());
+				out.WavelengthNM(i) = CIE::sample_trunc_vis_y(k, out.PDF(i), mRange.Start, mRange.End);
 			else
-				out.WavelengthNM(i) = CIE::sample_trunc_vis_xyz(k, out.PDF(i), wavelengthStart(), wavelengthEnd());
+				out.WavelengthNM(i) = CIE::sample_trunc_vis_xyz(k, out.PDF(i), mRange.Start, mRange.End);
 		}
 	}
 
@@ -78,24 +80,29 @@ public:
 		PR_OPT_LOOP
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
 			if constexpr (YOnly)
-				res(i) = CIE::pdf_trunc_vis_y(wavelength(i), wavelengthStart(), wavelengthEnd());
+				res(i) = CIE::pdf_trunc_vis_y(wavelength(i), mRange.Start, mRange.End);
 			else
-				res(i) = CIE::pdf_trunc_vis_xyz(wavelength(i), wavelengthStart(), wavelengthEnd());
+				res(i) = CIE::pdf_trunc_vis_xyz(wavelength(i), mRange.Start, mRange.End);
 		}
 		return res;
 	}
+
+private:
+	const SpectralRange mRange;
 };
 
 template <bool YOnly>
 class VisibleSpectralMapperFactory : public ISpectralMapperFactory {
 public:
-	std::shared_ptr<ISpectralMapper> createInstance(float spectralStart, float spectralEnd, RenderContext*) override
+	std::shared_ptr<ISpectralMapper> createInstance(RenderContext* ctx) override
 	{
-		if (spectralStart == PR_VISIBLE_WAVELENGTH_START && spectralEnd == PR_VISIBLE_WAVELENGTH_END)
+		const auto cameraRange = ctx->cameraSpectralRange();
+
+		if (cameraRange.Start == PR_VISIBLE_WAVELENGTH_START && cameraRange.End == PR_VISIBLE_WAVELENGTH_END)
 			return std::make_shared<FullVisibleSpectralMapper<YOnly>>();
-		else if (spectralStart >= PR_VISIBLE_WAVELENGTH_START && spectralEnd <= PR_VISIBLE_WAVELENGTH_END) {
+		else if (cameraRange.Start >= PR_VISIBLE_WAVELENGTH_START && cameraRange.End <= PR_VISIBLE_WAVELENGTH_END) {
 			PR_LOG(L_INFO) << "Truncated spectral mapper" << std::endl;
-			return std::make_shared<TruncatedVisibleSpectralMapper<YOnly>>(spectralStart, spectralEnd);
+			return std::make_shared<TruncatedVisibleSpectralMapper<YOnly>>(cameraRange);
 		} else
 			return nullptr;
 	}
