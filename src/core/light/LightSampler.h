@@ -14,7 +14,7 @@ class PR_LIB_CORE LightSampler {
 public:
 	using LightList = std::vector<std::unique_ptr<Light>>;
 
-	LightSampler(Scene* scene, const SpectralRange& globalDomain);
+	LightSampler(Scene* scene, const SpectralRange& cameraSpectralRange);
 	virtual ~LightSampler() {}
 
 	inline const Light* sample(float rnd, float& pdf) const;
@@ -35,7 +35,8 @@ public:
 	inline float emissiveSurfaceArea() const { return mEmissiveSurfaceArea; }
 	inline float emissiveSurfacePower() const { return mEmissiveSurfacePower; }
 	inline float emissivePower() const { return mEmissivePower; }
-	inline const SpectralRange& spectralRange() const { return mSpectralRange; }
+	inline const SpectralRange& cameraSpectralRange() const { return mCameraSpectralRange; }
+	inline const SpectralRange& lightSpectralRange() const { return mLightSpectralRange; }
 
 	inline void setWavelengthSampler(const std::shared_ptr<ISpectralMapper>& mapper) { mWavelengthSampler = mapper; }
 	inline ISpectralMapper* wavelengthSampler() const { return mWavelengthSampler.get(); }
@@ -51,7 +52,8 @@ private:
 	float mEmissiveSurfaceArea;
 	float mEmissiveSurfacePower;
 	float mEmissivePower; // Including inf lights
-	const SpectralRange mSpectralRange;
+	const SpectralRange mCameraSpectralRange;
+	SpectralRange mLightSpectralRange;
 
 	std::shared_ptr<ISpectralMapper> mWavelengthSampler;
 };

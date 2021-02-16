@@ -84,7 +84,8 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 	mRandomMap = std::make_unique<RenderRandomMap>(this);
 
 	// Setup light sampler
-	mLightSampler = std::make_shared<LightSampler>(mScene.get(), SpectralRange(mRenderSettings.spectralStart, mRenderSettings.spectralEnd));
+	mLightSampler		= std::make_shared<LightSampler>(mScene.get(), cameraSpectralRange());
+	mLightSpectralRange = mLightSampler->lightSpectralRange();
 
 	// Setup tile map
 	mTileMap = std::make_unique<RenderTileMap>();
@@ -123,7 +124,8 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 				   << "  Emissive Power:         " << mLightSampler->emissivePower() << std::endl
 				   << "  Scene Extent:           " << mScene->boundingBox().width() << " x " << mScene->boundingBox().height() << " x " << mScene->boundingBox().depth() << std::endl
 				   << "  Scene Origin Radius:    " << mScene->boundingSphere().radius() << std::endl
-				   << "  Spectral Domain:        [" << mRenderSettings.spectralStart << ", " << mRenderSettings.spectralEnd << "]" << std::endl
+				   << "  Camera Spectral Domain: [" << cameraSpectralRange().Start << ", " << cameraSpectralRange().End << "]" << std::endl
+				   << "  Light Spectral Domain:  [" << lightSpectralRange().Start << ", " << lightSpectralRange().End << "]" << std::endl
 				   << "  Adaptive Tiling:        " << (mRenderSettings.useAdaptiveTiling ? "true" : "false") << std::endl
 				   << "  Progressive:            " << (mRenderSettings.progressive ? "true" : "false") << std::endl;
 

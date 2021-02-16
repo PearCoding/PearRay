@@ -4,6 +4,7 @@
 #include "RenderSettings.h"
 #include "RenderStatistics.h"
 #include "RenderStatus.h"
+#include "spectral/SpectralRange.h"
 
 #include <atomic>
 #include <condition_variable>
@@ -108,6 +109,11 @@ public:
 	/// Set a callback called each start of iteration. The internal state of the callee is undefined
 	inline void addIterationCallback(const RenderIterationCallback& clb) { mIterationCallbacks.push_back(clb); }
 
+	/// Return camera spectral range
+	inline SpectralRange cameraSpectralRange() const { return SpectralRange(mRenderSettings.spectralStart, mRenderSettings.spectralEnd); }
+	/// Return operating spectral range, which is based on the lights
+	inline const SpectralRange& lightSpectralRange() const { return mLightSpectralRange; }
+
 	/// Compute approximative average camera scene footprint of one pixel
 	/// The computation might fail
 	std::optional<float> computeAverageCameraSceneFootprint() const;
@@ -139,6 +145,7 @@ private:
 	std::vector<std::unique_ptr<RenderThread>> mThreads;
 
 	const RenderSettings mRenderSettings;
+	SpectralRange mLightSpectralRange;
 
 	std::unique_ptr<RenderRandomMap> mRandomMap;
 	std::shared_ptr<LightSampler> mLightSampler;

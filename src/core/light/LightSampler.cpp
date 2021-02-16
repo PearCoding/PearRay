@@ -8,12 +8,13 @@
 
 namespace PR {
 
-LightSampler::LightSampler(Scene* scene, const SpectralRange& globalDomain)
+LightSampler::LightSampler(Scene* scene, const SpectralRange& cameraSpectralRange)
 	: mInfLightSelectionProbability(0)
 	, mEmissiveSurfaceArea(0)
 	, mEmissiveSurfacePower(0)
 	, mEmissivePower(0)
-	, mSpectralRange(globalDomain)
+	, mCameraSpectralRange(cameraSpectralRange)
+	, mLightSpectralRange(cameraSpectralRange)
 {
 	const float scene_area = 2 * PR_PI * scene->boundingSphere().radius(); /*Approximative*/ //scene->boundingSphere().surfaceArea();
 
@@ -49,7 +50,7 @@ LightSampler::LightSampler(Scene* scene, const SpectralRange& globalDomain)
 
 		const IEmission* emission = emissions[ems_id].get();
 
-		const SpectralRange range   = emission->spectralRange().bounded(mSpectralRange);
+		const SpectralRange range	= emission->spectralRange().bounded(mCameraSpectralRange);
 		const SpectralBlob test_wvl = range.Start + range.span() * test_wvl_distr;
 
 		const float area	  = e->worldSurfaceArea();
@@ -61,12 +62,13 @@ LightSampler::LightSampler(Scene* scene, const SpectralRange& globalDomain)
 		PR_LOG(L_INFO) << "(Area) Light '" << e->name() << "' Area " << area << "m2 Intensity " << intensity << "W [" << range.Start << ", " << range.End << "]" << std::endl;
 
 		intensities.push_back(intensity);
+		mLightSpectralRange += range;
 	}
 
 	// Add infinite lights (approx) intensities
 	mEmissivePower = mEmissiveSurfacePower;
 	for (const auto& infL : inflights) {
-		const SpectralRange range   = infL->spectralRange().bounded(mSpectralRange);
+		const SpectralRange range	= infL->spectralRange().bounded(mCameraSpectralRange);
 		const SpectralBlob test_wvl = range.Start + range.span() * test_wvl_distr;
 
 		const float intensity = scene_area * infL->power(test_wvl).mean();
@@ -75,6 +77,7 @@ LightSampler::LightSampler(Scene* scene, const SpectralRange& globalDomain)
 		PR_LOG(L_INFO) << "(Inf) Light '" << infL->name() << "' Area " << scene_area << "m2 Intensity " << intensity << "W [" << range.Start << ", " << range.End << "]" << std::endl;
 
 		intensities.push_back(intensity);
+		mLightSpectralRange += range;
 	}
 
 	// Generate distribution
