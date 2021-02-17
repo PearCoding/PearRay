@@ -388,8 +388,8 @@ QString ImageView::valueAt(const QPoint& pixel) const
 
 	if (mView->channelCount() == 3) { // RGB
 		float r, g, b;
-		mPipeline.mapTriplet(mView->value(pixel.x(), pixel.y(), 0), mView->value(pixel.x(), pixel.y(), 1), mView->value(pixel.x(), pixel.y(), 2),
-							 r, g, b);
+		mPipeline.mapTripletUnbounded(mView->value(pixel.x(), pixel.y(), 0), mView->value(pixel.x(), pixel.y(), 1), mView->value(pixel.x(), pixel.y(), 2),
+									  r, g, b);
 		str += "-> " + QString::number(r, 'g', 2) + " " + QString::number(g, 'g', 2) + " " + QString::number(b, 'g', 2);
 	}
 

@@ -52,16 +52,9 @@
 		:type 'standard'
 		:width 1
 		:height 1
-		:zoom 1.000000
-		:fstop 0.000000
-		:apertureRadius 0.500000
 		:local_direction [0,0,-1]
 		:local_up [0,1,0]
 		:local_right [1,0,0]
-		:transform [1,0,0,0,
-		0,1,0,0,
-		0,0,1,0,
-		0,0,0,1]
 	)
 	(light
 		:name 'env'

@@ -7,7 +7,7 @@
 
 	; Settings
 	(integrator
-		:type 'DIRECT'
+		:type 'direct'
 		:max_ray_depth 1
 		:light_sampe_count 1
 	)
@@ -18,7 +18,7 @@
 	)
 	(filter
 		:slot 'pixel'
-		:type 'BLOCK'
+		:type 'block'
 		:radius 0
 	)
 	; Outputs
@@ -35,7 +35,7 @@
 		:local_direction [0,0,1]
 		:local_up [0,1,0]
 		:local_right [1,0,0]
-		:position [0,0,-1.0005]
+		:position [0,0,-1.05]
 	)
 	; Background
 	(light

@@ -7,9 +7,8 @@
 	:camera 'Camera'
 	; Settings
 	(integrator
-		:type 'ppm'
+		:type 'vcm'
 		:max_ray_depth 10
-		:contract_ratio 0.2
 	)
 	(sampler
 		:slot 'aa'
@@ -25,16 +24,11 @@
 	(camera
 		:name 'Camera'
 		:type 'standard'
-		:width 0.720000
-		:height 0.720000
-		:zoom 1.000000
-		:fstop 0.000000
-		:apertureRadius 0.500000
+		:width 0.72
+		:height 0.72
 		:local_direction [0,0,-1]
 		:local_up [0,1,0]
 		:local_right [1,0,0]
-		:near 0.100000
-		:far 100.000000
 		:transform [1.0,0.0,0.0,0.0,0.0,0.0,-1.0,-3.93462872505188,0.0,1.0,0.0,1.0,0.0,0.0,0.0,1.0]
 	)
 	; Lights

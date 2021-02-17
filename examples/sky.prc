@@ -1,7 +1,7 @@
 (scene
 	:name 'sky_sphere'
-	:render_width 1000
-	:render_height 1000
+	:render_width 800
+	:render_height 400
 	(sampler 
 	  :slot 'aa'
 	  :type 'sobol'

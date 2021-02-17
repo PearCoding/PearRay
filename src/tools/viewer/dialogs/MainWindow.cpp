@@ -499,9 +499,7 @@ void MainWindow::updateRenderStatus()
 		++counter;
 	}
 
-	// Show iteration count if progressive
-	if (mProject->isProgressive())
-		mRenderingIteration->setText(QString("Iteration %1 |").arg(mProject->renderIteration()));
+	mRenderingIteration->setText(QString("Iteration %1 |").arg(mProject->renderIteration()));
 }
 
 inline static QString timestr(const std::chrono::milliseconds& msecs)

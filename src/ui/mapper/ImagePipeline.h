@@ -84,7 +84,7 @@ public:
 	inline void setGamma(float gamma) { mGamma = gamma; }
 	inline void setGammaType(GammaType type) { mGammaType = type; }
 
-	inline void mapTriplet(float x, float y, float z, float& r, float& g, float& b) const
+	inline void mapTripletUnbounded(float x, float y, float z, float& r, float& g, float& b) const
 	{
 		// (1)
 		x = mapRange(x);
@@ -110,9 +110,18 @@ public:
 		formatTripletFromXYZ(mTripletFormatDst, x, y, z, r, g, b);
 
 		// (6)
-		r = clamp01(applyGamma(r));
-		g = clamp01(applyGamma(g));
-		b = clamp01(applyGamma(b));
+		r = applyGamma(r);
+		g = applyGamma(g);
+		b = applyGamma(b);
+	}
+
+	inline void mapTriplet(float x, float y, float z, float& r, float& g, float& b) const
+	{
+		mapTripletUnbounded(x, y, z, r, g, b);
+		// (7)
+		r = clamp01(r);
+		g = clamp01(g);
+		b = clamp01(b);
 	}
 
 private:

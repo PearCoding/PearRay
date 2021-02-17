@@ -13,7 +13,7 @@
 	  :radius 1
 	)
 	(integrator 
-	  :type 'direct'
+	  :type 'vcm'
 	  :max_ray_depth 8
 	)
 	; Outputs
@@ -48,14 +48,14 @@
 	(emission
 		:name 'Area_em'
 		:type 'standard'
-		:radiance (illuminant "D65")
+		:radiance (smul (illuminant "D65") 10)
 	)
 	(entity
 		:name 'Area'
 		:type 'plane'
 		:centering true
-		:width 0.800000
-		:height -0.800000
+		:width 0.8
+		:height -0.8
 		:emission 'Area_em'
 		:transform [1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,1.9618895053863525,0.0,0.0,0.0,1.0]
 	)
@@ -64,38 +64,37 @@
 		:name 'Glass'
 		:type 'glass'
 		:specularity 1
-		:index 1.550000
+		:index (lookup_index "bk7")
 	)
 	(material
 		:name 'Material'
 		:type 'diffuse'
-		:albedo (refl 1.000000 1.000000 1.000000)
+		:albedo (refl 0.95 0.95 0.95)
 	)
 	(material
 		:name 'Material.001'
 		:type 'diffuse'
-		:albedo (refl 0.000000 0.000000 1.000000)
+		:albedo (refl 0.0 0.0 0.95)
 	)
 	(material
 		:name 'Material.002'
 		:type 'diffuse'
-		:albedo (refl 1.000000 0.000000 0.000000)
+		:albedo (refl 0.95 0.0 0.0)
 	)
 	(material
 		:name 'Material.003'
 		:type 'diffuse'
-		:albedo (refl 0.000000 1.000000 0.000000)
+		:albedo (refl 0.0 0.95 0.0)
 	)
 	(material
 		:name 'Material.004'
 		:type 'diffuse'
-		:albedo (refl 1.000000 0.500000 0.000000)
+		:albedo (refl 0.95 0.5 0.0)
 	)
 	(material
 		:name 'Mirror'
 		:type 'mirror'
-		:specularity (refl 1.000000 1.000000 1.000000)
-		:index 1.550000
+		:index (lookup_index "bk7")
 	)
 	; Primitives
 	(entity
