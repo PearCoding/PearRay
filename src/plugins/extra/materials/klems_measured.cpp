@@ -673,12 +673,12 @@ public:
 			out.L = mMeasurement.sample(in.RND.get2D(), in.Context.V, pdf, weight);
 
 		const bool refraction = !in.Context.V.sameHemisphere(out.L);
-		out.Weight			  = weight /* std::abs(ectx.NdotL())*/;
+		out.IntegralWeight	  = weight / pdf /* std::abs(ectx.NdotL())*/;
 		out.PDF_S			  = pdf;
 		out.Type			  = refraction ? MaterialScatteringType::DiffuseTransmission : MaterialScatteringType::DiffuseReflection;
 
 		if constexpr (HasTint)
-			out.Weight *= mTint->eval(in.ShadingContext);
+			out.IntegralWeight *= mTint->eval(in.ShadingContext);
 	}
 
 	std::string dumpInformation() const override
@@ -770,8 +770,6 @@ public:
 			.Specification()
 			.get();
 	}
-
-	
 };
 } // namespace PR
 

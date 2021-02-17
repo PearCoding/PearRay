@@ -104,15 +104,16 @@ public:
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
 			factor[i] = closure.evalConductor(out.L, in.Context.V, eta[i], k[i]);
 
-		out.Weight = mSpecularity->eval(in.ShadingContext) * factor;
-		out.Type   = MaterialScatteringType::SpecularReflection;
-		out.PDF_S  = closure.pdf(out.L, in.Context.V);
+		out.IntegralWeight = mSpecularity->eval(in.ShadingContext) * factor;
+		out.Type		   = MaterialScatteringType::SpecularReflection;
+		out.PDF_S		   = closure.pdf(out.L, in.Context.V);
+
+		if (out.PDF_S[0] > PR_EPSILON)
+			out.IntegralWeight /= out.PDF_S[0];
 
 		// If we handle a delta case, make sure the outgoing pdf will be 1
-		if (closure.isDelta() && out.PDF_S[0] > PR_EPSILON) {
-			out.Weight /= out.PDF_S[0];
+		if (closure.isDelta())
 			out.PDF_S = 1.0f;
-		}
 	}
 
 	std::string dumpInformation() const override

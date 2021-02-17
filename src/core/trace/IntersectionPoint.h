@@ -119,5 +119,21 @@ public:
 			return Ray.next(P, d, ray_flags, minT, maxT);
 		}
 	}
+
+	inline Vector3f toTangentSpace(const Vector3f& v) const
+	{
+		if (isAtSurface())
+			return Tangent::toTangentSpace(Surface.N, Surface.Nx, Surface.Ny, v);
+		else
+			return v;
+	}
+
+	inline Vector3f fromTangentSpace(const Vector3f& v) const
+	{
+		if (isAtSurface())
+			return Tangent::fromTangentSpace(Surface.N, Surface.Nx, Surface.Ny, v);
+		else
+			return v;
+	}
 };
 } // namespace PR

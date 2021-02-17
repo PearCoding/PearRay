@@ -111,12 +111,12 @@ public:
 		if (in.RND.getFloat() < (1 - prob)) {
 			mMaterials[0]->sample(in, out, session);
 
-			out.Weight *= (1 - prob);
+			out.IntegralWeight *= (1 - prob);
 			out.PDF_S *= (1 - prob);
 		} else {
 			mMaterials[1]->sample(in, out, session);
 
-			out.Weight *= prob;
+			out.IntegralWeight *= prob;
 			out.PDF_S *= prob;
 		}
 	}
@@ -190,8 +190,6 @@ public:
 			.Specification()
 			.get();
 	}
-
-	
 };
 } // namespace PR
 

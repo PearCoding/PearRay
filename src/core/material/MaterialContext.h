@@ -39,10 +39,11 @@ public:
 
 	inline void setVFromGlobal(const IntersectionPoint& sp, const Vector3f& gV)
 	{
-		V = Tangent::toTangentSpace(sp.Surface.N, sp.Surface.Nx, sp.Surface.Ny, gV);
+		V = sp.toTangentSpace(gV);
 	}
 
-	inline MaterialEvalContext expand(const Vector3f& L) const;
+	inline MaterialEvalContext expandLocal(const Vector3f& L) const;
+	inline MaterialEvalContext expandGlobal(const IntersectionPoint& sp, const Vector3f& gL) const;
 };
 
 class PR_LIB_CORE MaterialEvalContext : public MaterialSampleContext {
@@ -81,7 +82,7 @@ public:
 
 	inline void setLFromGlobal(const IntersectionPoint& sp, const Vector3f& gL)
 	{
-		L = Tangent::toTangentSpace(sp.Surface.N, sp.Surface.Nx, sp.Surface.Ny, gL);
+		L = sp.toTangentSpace(gL);
 	}
 
 	inline void swapVL()
@@ -90,12 +91,20 @@ public:
 	}
 };
 
-inline MaterialEvalContext MaterialSampleContext::expand(const Vector3f& L) const
+inline MaterialEvalContext MaterialSampleContext::expandLocal(const Vector3f& L) const
 {
 	MaterialEvalContext ctx;
 	*reinterpret_cast<MaterialSampleContext*>(&ctx) = *this;
 	ctx.L											= L;
 	ctx.FlourescentWavelengthNM						= ctx.WavelengthNM;
+	return ctx;
+}
+
+inline MaterialEvalContext MaterialSampleContext::expandGlobal(const IntersectionPoint& sp, const Vector3f& gL) const
+{
+	MaterialEvalContext ctx;
+	*reinterpret_cast<MaterialSampleContext*>(&ctx) = *this;
+	ctx.setLFromGlobal(sp, gL);
 	return ctx;
 }
 

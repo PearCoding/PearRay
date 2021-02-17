@@ -188,7 +188,7 @@ private:
 			return {};
 
 		// Update throughput
-		current.Throughput *= sout.Weight / pdf_s; // cosine term already applied inside material
+		current.Throughput *= sout.IntegralWeight; // cosine term and pdf already applied inside material
 
 		if (sout.isHeroCollapsing())
 			current.Throughput *= SpectralBlobUtils::HeroOnly();

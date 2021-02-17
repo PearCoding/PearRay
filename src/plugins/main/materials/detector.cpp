@@ -73,9 +73,9 @@ public:
 				out.L = -out.L;
 		}
 
-		const float NdotL = std::abs(out.L(2));
-		out.Weight		  = PR_INV_PI * calc(in.Context.V, out.L, in.ShadingContext) * NdotL;
-		out.PDF_S		  = Sampling::cos_hemi_pdf(NdotL);
+		const float NdotL  = std::abs(out.L(2));
+		out.IntegralWeight = calc(in.Context.V, out.L, in.ShadingContext);
+		out.PDF_S		   = Sampling::cos_hemi_pdf(NdotL);
 
 		if (out.L[2] < 0)
 			out.Type = MaterialScatteringType::DiffuseTransmission;
@@ -143,8 +143,6 @@ public:
 			.Specification()
 			.get();
 	}
-
-	
 };
 } // namespace PR
 

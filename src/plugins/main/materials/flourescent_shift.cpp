@@ -86,7 +86,7 @@ public:
 
 		out.L = Sampling::cos_hemi(in.RND.getFloat(), in.RND.getFloat());
 
-		out.Weight = mAlbedo->eval(in.ShadingContext) * out.L(2) * PR_INV_PI;
+		out.IntegralWeight = mAlbedo->eval(in.ShadingContext);
 
 		// We apply the forward stokes shift for lights and reverse stokes shift for camera lights
 		if (in.Context.RayFlags & RayFlag::Light)

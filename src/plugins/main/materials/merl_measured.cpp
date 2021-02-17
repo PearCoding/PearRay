@@ -158,9 +158,11 @@ public:
 		out.L			 = Sampling::cos_hemi(in.RND.getFloat(), in.RND.getFloat());
 		const Vector3f H = Scattering::halfway_reflection(in.Context.V, out.L);
 
-		out.Weight = mTint->eval(in.ShadingContext) * mMeasurement.eval(H, out.L, in.Context.WavelengthNM);
-		out.Type   = MaterialScatteringType::DiffuseReflection;
-		out.PDF_S  = Sampling::cos_hemi_pdf(out.L(2));
+		out.IntegralWeight = mTint->eval(in.ShadingContext) * mMeasurement.eval(H, out.L, in.Context.WavelengthNM);
+		out.Type		   = MaterialScatteringType::DiffuseReflection;
+		out.PDF_S		   = Sampling::cos_hemi_pdf(out.L(2));
+
+		out.IntegralWeight /= out.PDF_S[0];
 	}
 
 	std::string dumpInformation() const override
@@ -210,8 +212,6 @@ public:
 			.Specification()
 			.get();
 	}
-
-	
 };
 } // namespace PR
 

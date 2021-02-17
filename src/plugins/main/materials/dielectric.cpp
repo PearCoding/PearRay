@@ -76,9 +76,9 @@ public:
 
 		// Branch out
 		if (in.RND.getFloat() <= F) {
-			out.Type   = MaterialScatteringType::SpecularReflection;
-			out.L	   = Scattering::reflect(in.Context.V);
-			out.Weight = rWeight; // To make sure the pdf is 1, we do not apply the fresnel term to the outgoing weight
+			out.Type		   = MaterialScatteringType::SpecularReflection;
+			out.L			   = Scattering::reflect(in.Context.V);
+			out.IntegralWeight = rWeight; // To make sure the pdf is 1, we do not apply the fresnel term to the outgoing weight
 		} else {
 			SpectralBlob tWeight;
 			if constexpr (HasTransmissionColor)
@@ -87,9 +87,9 @@ public:
 				tWeight = rWeight;
 
 			if constexpr (IsThin) {
-				out.Type   = MaterialScatteringType::SpecularTransmission;
-				out.L	   = -in.Context.V; // Passthrough
-				out.Weight = tWeight;
+				out.Type		   = MaterialScatteringType::SpecularTransmission;
+				out.L			   = -in.Context.V; // Passthrough
+				out.IntegralWeight = tWeight;
 			} else {
 				// Only rays from lights are weighted by this factor
 				// as radiance flows in the opposite direction
@@ -101,11 +101,11 @@ public:
 				out.L = Scattering::refract(AIR / n2[0], in.Context.V);
 
 				if (out.L.sameHemisphere(in.Context.V)) { // TOTAL REFLECTION
-					out.Type   = MaterialScatteringType::SpecularReflection;
-					out.Weight = rWeight;
+					out.Type		   = MaterialScatteringType::SpecularReflection;
+					out.IntegralWeight = rWeight;
 				} else {
-					out.Type   = MaterialScatteringType::SpecularTransmission;
-					out.Weight = tWeight;
+					out.Type		   = MaterialScatteringType::SpecularTransmission;
+					out.IntegralWeight = tWeight;
 				}
 			}
 		}
@@ -195,8 +195,6 @@ public:
 			.Specification()
 			.get();
 	}
-	
-	
 };
 } // namespace PR
 

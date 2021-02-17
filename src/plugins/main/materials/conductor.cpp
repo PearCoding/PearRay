@@ -66,11 +66,11 @@ public:
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
 			fresnel[i] = Fresnel::conductor(in.Context.V.absCosTheta(), 1, eta[i], k[i]);
 
-		out.Weight = fresnel * mSpecularity->eval(in.ShadingContext);
-		out.Type   = MaterialScatteringType::SpecularReflection;
-		out.PDF_S  = 1;
-		out.L	   = Scattering::reflect(in.Context.V);
-		out.Flags  = MaterialSampleFlag::DeltaDistribution | mNodeContribFlags;
+		out.IntegralWeight = fresnel * mSpecularity->eval(in.ShadingContext);
+		out.Type		   = MaterialScatteringType::SpecularReflection;
+		out.PDF_S		   = 1;
+		out.L			   = Scattering::reflect(in.Context.V);
+		out.Flags		   = MaterialSampleFlag::DeltaDistribution | mNodeContribFlags;
 	}
 
 	std::string dumpInformation() const override
@@ -128,8 +128,6 @@ public:
 			.Specification()
 			.get();
 	}
-
-	
 };
 } // namespace PR
 

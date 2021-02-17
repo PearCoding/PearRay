@@ -57,7 +57,7 @@ struct PR_LIB_CORE MaterialSampleInput {
 struct PR_LIB_CORE MaterialSampleOutput : public MaterialBaseOutput {
 	ShadingVector L;
 
-	SpectralBlob Weight;
+	SpectralBlob IntegralWeight;		  // PDF already applied
 	SpectralBlob FlourescentWavelengthNM; // Only valid if isFlourescent() is true
 	MaterialScatteringType Type = MaterialScatteringType::DiffuseReflection;
 
@@ -69,11 +69,11 @@ struct PR_LIB_CORE MaterialSampleOutput : public MaterialBaseOutput {
 	static inline MaterialSampleOutput Reject(MaterialScatteringType type = MaterialScatteringType::DiffuseReflection, uint8 flags = 0)
 	{
 		MaterialSampleOutput out;
-		out.L	   = Vector3f::Zero();
-		out.Weight = SpectralBlob::Zero();
-		out.PDF_S  = SpectralBlob::Zero();
-		out.Type   = type;
-		out.Flags  = flags;
+		out.L			   = Vector3f::Zero();
+		out.IntegralWeight = SpectralBlob::Zero();
+		out.PDF_S		   = SpectralBlob::Zero();
+		out.Type		   = type;
+		out.Flags		   = flags;
 		return out;
 	}
 };

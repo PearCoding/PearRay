@@ -131,7 +131,7 @@ inline void checkSampleEval(PRT::Test* _test, const IntersectionPoint& ip)
 			PR_CHECK_NEARLY_EQ(mout.PDF_S[i], eout.PDF_S[i]);
 
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-			PR_CHECK_NEARLY_EQ(mout.Weight[i], eout.Weight[i]);
+			PR_CHECK_NEARLY_EQ(mout.IntegralWeight[i] * mout.PDF_S[i], eout.Weight[i]);
 	}
 }
 

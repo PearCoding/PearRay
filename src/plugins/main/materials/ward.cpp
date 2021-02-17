@@ -101,10 +101,10 @@ public:
 
 	void sampleDiffusePath(const MaterialSampleInput& in, const ShadingContext& sctx, MaterialSampleOutput& out) const
 	{
-		out.L	   = Sampling::cos_hemi(in.RND.getFloat(), in.RND.getFloat());
-		out.PDF_S  = Sampling::cos_hemi_pdf(out.L(2));
-		out.Weight = mAlbedo->eval(sctx) * out.L[2];
-		out.Type   = MaterialScatteringType::DiffuseReflection;
+		out.L			   = Sampling::cos_hemi(in.RND.getFloat(), in.RND.getFloat());
+		out.PDF_S		   = Sampling::cos_hemi_pdf(out.L(2));
+		out.IntegralWeight = mAlbedo->eval(sctx);
+		out.Type		   = MaterialScatteringType::DiffuseReflection;
 	}
 
 	void sampleSpecularPath(const MaterialSampleInput& in, const ShadingContext& sctx, MaterialSampleOutput& out) const
@@ -150,10 +150,10 @@ public:
 			out.PDF_S			  = tu / tb * std::exp(-tz * (1 - cosTheta2) / (cosTheta2));
 		}
 
-		Vector3f H = Spherical::cartesian(sinTheta, cosTheta, sinPhi, cosPhi);
-		out.L	   = Scattering::reflect(in.Context.V, H);
-		out.Type   = MaterialScatteringType::SpecularReflection;
-		out.Weight = mSpecularity->eval(sctx) * out.PDF_S * std::max(0.0f, out.L[2]);
+		Vector3f H		   = Spherical::cartesian(sinTheta, cosTheta, sinPhi, cosPhi);
+		out.L			   = Scattering::reflect(in.Context.V, H);
+		out.Type		   = MaterialScatteringType::SpecularReflection;
+		out.IntegralWeight = mSpecularity->eval(sctx) * std::max(0.0f, out.L[2]);
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -244,8 +244,6 @@ public:
 			.Specification()
 			.get();
 	}
-
-	
 };
 } // namespace PR
 

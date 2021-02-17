@@ -209,12 +209,13 @@ public:
 					MaterialPDFOutput pdf_out;
 					mat->pdf(eval_in, pdf_out, session);
 
-					float weightNorm = samp_out.Weight.cwiseAbs().sum();
+					// TODO: Rework this, most stuff is wrong!
+					float weightNorm = samp_out.IntegralWeight.cwiseAbs().sum();
 					weightNorm		 = weightNorm > PR_EPSILON ? 1 / weightNorm : 1.0f;
 					float pdfNorm	 = samp_out.PDF_S.cwiseAbs().sum();
 					pdfNorm			 = pdfNorm > PR_EPSILON ? 1 / pdfNorm : 1.0f;
 
-					const float weightDiff		   = (samp_out.Weight - eval_out.Weight).cwiseAbs().sum() * weightNorm;
+					const float weightDiff		   = (samp_out.IntegralWeight - eval_out.Weight).cwiseAbs().sum() * weightNorm;
 					const float relForwardPDFDiff  = (samp_out.PDF_S - eval_out.PDF_S).cwiseAbs().sum() * pdfNorm;
 					const float relBackwardPDFDiff = (samp_out.PDF_S - pdf_out.PDF_S).cwiseAbs().sum() * pdfNorm;
 

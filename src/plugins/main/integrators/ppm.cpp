@@ -226,7 +226,7 @@ public:
 				}
 			},
 			[&](SpectralBlob& weight, const MaterialSampleInput&, const MaterialSampleOutput& sout, IEntity*, IMaterial*) {
-				weight *= sout.Weight;
+				weight *= sout.IntegralWeight;
 				path.addToken(sout.Type);
 			},
 			[&](const SpectralBlob& weight, const Ray& ray) {

@@ -47,11 +47,11 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		out.Weight = 1;
-		out.PDF_S  = 1;
-		out.Type   = MaterialScatteringType::SpecularTransmission;
-		out.L	   = -in.Context.V;
-		out.Flags  = MaterialSampleFlag::Null | MaterialSampleFlag::DeltaDistribution;
+		out.IntegralWeight = 1;
+		out.PDF_S		   = 1;
+		out.Type		   = MaterialScatteringType::SpecularTransmission;
+		out.L			   = -in.Context.V;
+		out.Flags		   = MaterialSampleFlag::Null | MaterialSampleFlag::DeltaDistribution;
 	}
 
 	std::string dumpInformation() const override
@@ -84,8 +84,6 @@ public:
 			.Identifiers(getNames())
 			.get();
 	}
-
-	
 };
 } // namespace PR
 

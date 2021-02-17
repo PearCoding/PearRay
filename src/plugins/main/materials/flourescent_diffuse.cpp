@@ -13,6 +13,8 @@
 #include <sstream>
 
 namespace PR {
+static inline bool checkIfFlourescent(const SpectralBlob& aWvl, const SpectralBlob& bWvl) { return ((aWvl - bWvl).cwiseAbs() >= 0.5f).any(); }
+
 struct FlourescentDiffuseClosure {
 	const SpectralBlob AbsorptionIn;
 	const SpectralBlob AbsorptionOut; // Used in camera paths pdf
@@ -74,8 +76,11 @@ struct FlourescentDiffuseClosure {
 
 	inline SpectralBlob pdfWavelengthFlourescent(const MaterialEvalContext& ctx) const
 	{
-		const float wvl = ctx.FlourescentWavelengthNM[0];
-		return SpectralBlob(Distribution.continuousPdf((wvl - Range.Start) / Range.span()));
+		SpectralBlob blob;
+		PR_UNROLL_LOOP(PR_SPECTRAL_BLOB_SIZE)
+		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
+			blob[i] = Distribution.continuousPdf((ctx.FlourescentWavelengthNM[i] - Range.Start) / Range.span());
+		return blob;
 	}
 
 	inline SpectralBlob pdfDiffuse(const MaterialEvalContext& ctx) const
@@ -100,14 +105,27 @@ struct FlourescentDiffuseClosure {
 		}
 	}
 
-	inline SpectralBlob pdf(const MaterialEvalContext& ctx) const
+	inline SpectralBlob pdfFlourescent(const MaterialEvalContext& ctx) const
 	{
 		if (PR_UNLIKELY(ctx.V.absCosTheta() <= PR_EPSILON || ctx.L.absCosTheta() <= PR_EPSILON))
 			return SpectralBlob::Zero();
 
-		// Need a proof here...
 		const SpectralBlob flou = pdfSelectFlourescent(ctx);
-		return flou * pdfDiffuse(ctx) /* pdfWavelengthFlourescent(ctx)*/ + nonFlourescency(ctx) * (1 - flou) * pdfDiffuse(ctx);
+		return pdfDiffuse(ctx) * flou * pdfWavelengthFlourescent(ctx);
+	}
+
+	inline SpectralBlob pdfNonFlourescent(const MaterialEvalContext& ctx) const
+	{
+		if (PR_UNLIKELY(ctx.V.absCosTheta() <= PR_EPSILON || ctx.L.absCosTheta() <= PR_EPSILON))
+			return SpectralBlob::Zero();
+
+		const SpectralBlob flou = pdfSelectFlourescent(ctx);
+		return pdfDiffuse(ctx) * (1 - flou);
+	}
+
+	inline SpectralBlob pdf(const MaterialEvalContext& ctx) const
+	{
+		return pdfFlourescent(ctx) + nonFlourescency(ctx) * pdfNonFlourescent(ctx);
 	}
 
 	inline Vector3f sampleDiffuse(Random& rnd, const MaterialSampleContext& ctx) const
@@ -125,7 +143,7 @@ struct FlourescentDiffuseClosure {
 		const float w = range.span();
 
 		SpectralBlob b;
-		b[0]			  = range.Start + distr.sampleContinuous(rnd.getFloat(), pdf) * w;
+		b[0] = range.Start + distr.sampleContinuous(rnd.getFloat(), pdf) * w;
 		PR_OPT_LOOP
 		for (size_t i = 1; i < PR_SPECTRAL_BLOB_SIZE; ++i)
 			b[i] = std::fmod(b[0] - range.Start + i * w, w) + range.Start;
@@ -145,11 +163,16 @@ struct FlourescentDiffuseClosure {
 
 	inline bool isFlourescent(const MaterialEvalContext& ctx) const
 	{
-		return (ctx.WavelengthNM != ctx.FlourescentWavelengthNM).any();
+		return checkIfFlourescent(ctx.WavelengthNM, ctx.FlourescentWavelengthNM);
+	}
+
+	inline MaterialSampleFlags sampleFlags(const MaterialEvalContext& ctx) const
+	{
+		return isFlourescent(ctx) ? MaterialSampleFlag::Flourescent : (MaterialSampleFlags)0;
 	}
 };
 
-/* Based on Jung, A., J. Hanika, Steve Marschner and C. Dachsbacher. �A Simple Diffuse Fluorescent BBRRDF Model.� MAM@EGSR (2018). */
+/* Based on Jung, A., J. Hanika, Steve Marschner and C. Dachsbacher. "A Simple Diffuse Fluorescent BBRRDF Model." MAM@EGSR (2018). */
 class FlourescentDiffuse : public IMaterial {
 public:
 	FlourescentDiffuse(const std::shared_ptr<FloatSpectralNode>& absorption, const std::shared_ptr<FloatSpectralNode>& emission,
@@ -159,7 +182,7 @@ public:
 		, mAbsorption(absorption)
 		, mEmission(emission)
 		, mAlbedo(albedo)								  // Non-flourescent property
-		, mAbsorpedEmissionFactor(absorpedEmissionFactor) // Q
+		, mAbsorbedEmissionFactor(absorpedEmissionFactor) // Q
 		, mConcentration(concentration)
 		, mDistributionEmission(400)
 		, mDistributionAbsorption(400)
@@ -181,7 +204,7 @@ public:
 
 		PR_ASSERT(!range.hasUnbounded(), "Expected wavelength bounded emission data"); // TODO: Check user input!!!!
 
-		if ((sctx.WavelengthNM != flourescentWavelengthNM).any()) {
+		if (checkIfFlourescent(sctx.WavelengthNM, flourescentWavelengthNM)) {
 			ShadingContext sctx2 = sctx;
 			sctx2.WavelengthNM	 = flourescentWavelengthNM;
 
@@ -194,7 +217,7 @@ public:
 			return FlourescentDiffuseClosure(mAbsorption->eval(sctxIn), mAbsorption->eval(sctxOut),
 											 mEmission->eval(sctxOut) / mEmissionIntegral /* normalize it */,
 											 mAlbedo->eval(sctxIn), mAlbedo->eval(sctxOut),
-											 mAbsorpedEmissionFactor, mConcentration,
+											 mAbsorbedEmissionFactor, mConcentration,
 											 range, distr, mAbsorptionIntegral);
 		} else {
 			const SpectralBlob absorption = mAbsorption->eval(sctx);
@@ -203,7 +226,7 @@ public:
 			return FlourescentDiffuseClosure(absorption, absorption,
 											 mEmission->eval(sctx) / mEmissionIntegral /* normalize it */,
 											 albedo, albedo,
-											 mAbsorpedEmissionFactor, mConcentration,
+											 mAbsorbedEmissionFactor, mConcentration,
 											 range, distr, mAbsorptionIntegral);
 		}
 	}
@@ -220,11 +243,7 @@ public:
 		out.Weight = closure.eval(in.Context);
 		out.PDF_S  = closure.pdf(in.Context);
 		out.Type   = MaterialScatteringType::DiffuseReflection;
-
-		if (closure.isFlourescent(in.Context))
-			out.Flags = MaterialSampleFlag::Flourescent;
-		else
-			out.Flags = 0;
+		out.Flags  = closure.sampleFlags(in.Context);
 	}
 
 	void pdf(const MaterialEvalInput& in, MaterialPDFOutput& out,
@@ -234,11 +253,7 @@ public:
 		const auto closure = createClosure(in.ShadingContext, in.Context.FlourescentWavelengthNM, in.Context.RayFlags & RayFlag::Light);
 
 		out.PDF_S = closure.pdf(in.Context);
-
-		if (closure.isFlourescent(in.Context))
-			out.Flags = MaterialSampleFlag::Flourescent;
-		else
-			out.Flags = 0;
+		out.Flags = closure.sampleFlags(in.Context);
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -253,22 +268,18 @@ public:
 
 		const auto closure			= createClosure(in.ShadingContext, sampleW.first, isLight);
 		const auto lwp				= closure.sample(in.RND, in.Context);
-		out.L						= lwp.first;
+		out.L						= in.Context.V.makeSameHemisphere(lwp.first);
 		out.FlourescentWavelengthNM = lwp.second ? sampleW.first : in.Context.WavelengthNM;
 
-		auto extendedCtx					= in.Context.expand(out.L);
+		auto extendedCtx					= in.Context.expandLocal(out.L);
 		extendedCtx.FlourescentWavelengthNM = out.FlourescentWavelengthNM;
 
-		out.Weight = closure.eval(extendedCtx);
-		out.PDF_S  = closure.pdf(extendedCtx);
+		out.IntegralWeight = closure.eval(extendedCtx);
+		out.PDF_S		   = lwp.second ? closure.pdfFlourescent(extendedCtx) : closure.pdfNonFlourescent(extendedCtx);
+		out.IntegralWeight /= out.PDF_S[0];
 
-		out.Type = MaterialScatteringType::DiffuseReflection;
-		if (lwp.second /*Flourescent*/) {
-			out.Weight /= sampleW.second;
-			out.Flags = MaterialSampleFlag::Flourescent;
-		} else {
-			out.Flags = 0;
-		}
+		out.Type  = MaterialScatteringType::DiffuseReflection;
+		out.Flags = closure.sampleFlags(extendedCtx);
 	}
 
 	std::string dumpInformation() const override
@@ -280,7 +291,7 @@ public:
 			   << "    Absorption:    " << mAbsorption->dumpInformation() << std::endl
 			   << "    Emission:      " << mEmission->dumpInformation() << std::endl
 			   << "    Albedo:        " << mAlbedo->dumpInformation() << std::endl
-			   << "    AEFactor:      " << mAbsorpedEmissionFactor << std::endl
+			   << "    AEFactor:      " << mAbsorbedEmissionFactor << std::endl
 			   << "    Concentration: " << mConcentration << std::endl;
 
 		return stream.str();
@@ -311,7 +322,7 @@ private:
 	const std::shared_ptr<FloatSpectralNode> mAbsorption;
 	const std::shared_ptr<FloatSpectralNode> mEmission;
 	const std::shared_ptr<FloatSpectralNode> mAlbedo;
-	const float mAbsorpedEmissionFactor;
+	const float mAbsorbedEmissionFactor;
 	const float mConcentration;
 
 	Distribution1D mDistributionEmission;
@@ -319,8 +330,6 @@ private:
 	float mEmissionIntegral;
 	float mAbsorptionIntegral;
 };
-
-inline constexpr float stokesShiftDelta(float nm, float nm_shift) { return 1 / nm - 1 / (nm + nm_shift); }
 
 class FlourescentDiffuseMaterialPlugin : public IMaterialPlugin {
 public:
@@ -330,7 +339,7 @@ public:
 		const auto emission	  = ctx.lookupSpectralNode("emission", 1);
 		const auto albedo	  = ctx.lookupSpectralNode({ "albedo", "base", "diffuse" }, 1);
 
-		const auto aefactor		 = ctx.parameters().getNumber("aefactor", 1); // All absorped wavelengths will be emitted
+		const auto aefactor		 = ctx.parameters().getNumber("aefactor", 1); // All absorbed wavelengths will be emitted
 		const auto concentration = ctx.parameters().getNumber("concentration", 1);
 
 		return std::make_shared<FlourescentDiffuse>(absorption, emission, albedo, aefactor, concentration);
@@ -347,10 +356,10 @@ public:
 		return PluginSpecificationBuilder("Flourescent Diffuse BSDF", "A perfect diffuse BSDF with flourescent properties")
 			.Identifiers(getNames())
 			.Inputs()
-			.SpectralNode("absorption", "Amount of light which is absorpted and might be used for flourescent", 0.5f)
+			.SpectralNode("absorption", "Amount of light which is absorbed and might be used for flourescent", 0.5f)
 			.SpectralNode("emission", "Amount of light which is emitted as flourescent light", 1.0f)
 			.SpectralNodeV({ "albedo", "base", "diffuse" }, "Amount of light which is reflected for non-flourescent part", 1.0f)
-			.Number01("aefactor", "Amount of absorped light which is emitted as flourescent light", 1.0f)
+			.Number01("aefactor", "Amount of absorbed light which is emitted as flourescent light", 1.0f)
 			.Number01("concentration", "How much the flourescent part is affected", 1.0f)
 			.Specification()
 			.get();

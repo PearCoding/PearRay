@@ -43,7 +43,7 @@ public:
 			weight *= A + SpectralBlob::Ones() * (B * s / t);
 		}
 
-		return weight * PR_INV_PI * std::abs(NdotL);
+		return weight;
 	}
 
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
@@ -52,7 +52,7 @@ public:
 		PR_PROFILE_THIS;
 
 		const float dot = std::max(0.0f, in.Context.NdotL());
-		out.Weight		= calc(in.Context.L, dot, in.Context, in.ShadingContext);
+		out.Weight		= calc(in.Context.L, dot, in.Context, in.ShadingContext) * PR_INV_PI * dot;
 		out.Type		= MaterialScatteringType::DiffuseReflection;
 		out.PDF_S		= Sampling::cos_hemi_pdf(dot);
 	}
@@ -63,7 +63,7 @@ public:
 		PR_PROFILE_THIS;
 
 		const float dot = std::max(0.0f, in.Context.NdotL());
-		out.PDF_S		= Sampling::cos_hemi_pdf(dot);
+		out.PDF_S		= Sampling::cos_hemi_pdf(dot) * PR_INV_PI * dot;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -73,10 +73,10 @@ public:
 
 		out.L = Sampling::cos_hemi(in.RND.getFloat(), in.RND.getFloat());
 
-		float NdotL = std::max(0.0f, out.L(2));
-		out.Weight	= calc(out.L, NdotL, in.Context, in.ShadingContext);
-		out.Type	= MaterialScatteringType::DiffuseReflection;
-		out.PDF_S	= Sampling::cos_hemi_pdf(out.L(2));
+		float NdotL		   = std::max(0.0f, out.L(2));
+		out.IntegralWeight = calc(out.L, NdotL, in.Context, in.ShadingContext);
+		out.Type		   = MaterialScatteringType::DiffuseReflection;
+		out.PDF_S		   = Sampling::cos_hemi_pdf(out.L(2));
 	}
 
 	std::string dumpInformation() const override
@@ -120,8 +120,6 @@ public:
 			.Specification()
 			.get();
 	}
-
-	
 };
 } // namespace PR
 

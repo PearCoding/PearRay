@@ -53,11 +53,11 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		out.Weight = mSpecularity->eval(in.ShadingContext);
-		out.Type   = MaterialScatteringType::SpecularReflection;
-		out.PDF_S  = 1;
-		out.L	   = Scattering::reflect(in.Context.V);
-		out.Flags  = MaterialSampleFlag::DeltaDistribution;
+		out.IntegralWeight = mSpecularity->eval(in.ShadingContext);
+		out.Type		   = MaterialScatteringType::SpecularReflection;
+		out.PDF_S		   = 1;
+		out.L			   = Scattering::reflect(in.Context.V);
+		out.Flags		   = MaterialSampleFlag::DeltaDistribution;
 	}
 
 	std::string dumpInformation() const override
@@ -97,8 +97,6 @@ public:
 			.Specification()
 			.get();
 	}
-
-	
 };
 } // namespace PR
 

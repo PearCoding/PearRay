@@ -84,7 +84,7 @@ public:
 			rnd, session, initial_weight, initial_ray,
 			onHit,
 			[](SpectralBlob& weight, const MaterialSampleInput&, const MaterialSampleOutput& sout, IEntity*, IMaterial*) {
-				weight *= sout.Weight;
+				weight *= sout.IntegralWeight;
 			},
 			onNonHit);
 	}

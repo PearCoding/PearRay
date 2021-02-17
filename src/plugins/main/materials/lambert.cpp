@@ -64,7 +64,7 @@ public:
 
 		out.L = Sampling::cos_hemi(in.RND.getFloat(), in.RND.getFloat());
 
-		out.Weight = mAlbedo->eval(in.ShadingContext) * out.L(2) * PR_INV_PI;
+		out.IntegralWeight = mAlbedo->eval(in.ShadingContext);
 		out.PDF_S  = Sampling::cos_hemi_pdf(out.L(2));
 		out.Type   = MaterialScatteringType::DiffuseReflection;
 

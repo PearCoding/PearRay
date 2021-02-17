@@ -73,10 +73,10 @@ public:
 		float pdf;
 		mBRDF.sample(u, wi, &wo, &pdf);
 
-		out.Weight = mTint->eval(in.ShadingContext) * eval(wi, wo, in.Context.WavelengthNM);
-		out.Type   = MaterialScatteringType::DiffuseReflection;
-		out.L	   = Vector3f(wo[0], wo[1], wo[2]);
-		out.PDF_S  = pdf;
+		out.IntegralWeight = mTint->eval(in.ShadingContext) * eval(wi, wo, in.Context.WavelengthNM) / pdf;
+		out.Type		   = MaterialScatteringType::DiffuseReflection;
+		out.L			   = Vector3f(wo[0], wo[1], wo[2]);
+		out.PDF_S		   = pdf;
 	}
 
 	std::string dumpInformation() const override
@@ -142,8 +142,6 @@ public:
 			.Specification()
 			.get();
 	}
-
-	
 };
 } // namespace PR
 

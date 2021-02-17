@@ -298,7 +298,7 @@ private:
 		const Vector3f L   = sout.globalL(ip);
 		const bool isDelta = sout.isDelta();
 
-		if (sout.Weight.isZero()) {
+		if (sout.IntegralWeight.isZero()) {
 			path.popToken();
 			return {};
 		}
@@ -348,7 +348,7 @@ private:
 		}
 
 		// Update throughput
-		current.Throughput *= sout.Weight / forwardPDF_S;
+		current.Throughput *= sout.IntegralWeight;
 		if constexpr (!IsCamera)
 			current.Throughput *= correctShadingNormalForLight(-ip.Ray.Direction, L, ip.Surface.N, ip.Surface.Geometry.N);
 

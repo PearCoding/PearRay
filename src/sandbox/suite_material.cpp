@@ -98,9 +98,9 @@ static void handle_material_sample_case(const std::string& name,
 			fpdf[y * WIDTH * 3 + x * 3 + 0] = out.PDF_S[0];
 			fpdf[y * WIDTH * 3 + x * 3 + 1] = out.PDF_S[1];
 			fpdf[y * WIDTH * 3 + x * 3 + 2] = out.PDF_S[2];
-			rgb[y * WIDTH * 3 + x * 3 + 0]	= out.Weight[0];
-			rgb[y * WIDTH * 3 + x * 3 + 1]	= out.Weight[1];
-			rgb[y * WIDTH * 3 + x * 3 + 2]	= out.Weight[2];
+			rgb[y * WIDTH * 3 + x * 3 + 0]	= out.IntegralWeight[0];
+			rgb[y * WIDTH * 3 + x * 3 + 1]	= out.IntegralWeight[1];
+			rgb[y * WIDTH * 3 + x * 3 + 2]	= out.IntegralWeight[2];
 
 			size_t dx = std::max<int>(0,
 									  std::min<int>(WIDTH - 1,
