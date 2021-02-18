@@ -26,9 +26,10 @@ struct SPDContext {
 
 class SPDSpectralMapper : public ISpectralMapper {
 public:
-	SPDSpectralMapper(const SpectralRange& range, const SPDContext& context)
+	SPDSpectralMapper(const SpectralRange& cameraRange, const SpectralRange& lightRange, const SPDContext& context)
 		: ISpectralMapper()
-		, mCameraRange(range)
+		, mCameraRange(cameraRange)
+		, mLightRange(lightRange)
 		, mContext(context)
 	{
 	}
@@ -47,7 +48,7 @@ public:
 				const float k		= std::fmod(u + i / (float)PR_SPECTRAL_BLOB_SIZE, 1.0f);
 				out.WavelengthNM(i) = distr.sampleContinuous(k, out.PDF(i)) * mCameraRange.span() + mCameraRange.Start;
 			}
-		} else {
+		} else if (in.Purpose == SpectralSamplePurpose::Light) {
 			const Distribution1D& distr = mContext.LightDistributions[in.Light->lightID()];
 			const SpectralRange range	= in.Light->spectralRange().bounded(mCameraRange);
 
@@ -56,6 +57,20 @@ public:
 				const float k		= std::fmod(u + i / (float)PR_SPECTRAL_BLOB_SIZE, 1.0f);
 				out.WavelengthNM(i) = distr.sampleContinuous(k, out.PDF(i)) * range.span() + range.Start;
 			}
+		} else {
+			// For connections and cases with not enough information, we fallback to pure random sampling
+			const SpectralRange range = mLightRange;
+			const float u			  = in.RND.getFloat();
+
+			const float span  = range.span();
+			const float delta = span / PR_SPECTRAL_BLOB_SIZE;
+
+			const float start	= u * span;			   // Wavelength inside the span
+			out.WavelengthNM(0) = start + range.Start; // Hero wavelength
+			PR_OPT_LOOP
+			for (size_t i = 1; i < PR_SPECTRAL_BLOB_SIZE; ++i)
+				out.WavelengthNM(i) = range.Start + std::fmod(start + i * delta, span);
+			out.PDF = 1;
 		}
 	}
 
@@ -70,7 +85,7 @@ public:
 			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
 				res(i) = distr.continuousPdf((wavelength(i) - mCameraRange.Start) / mCameraRange.span());
 			return res;
-		} else {
+		} else if (in.Purpose == SpectralSamplePurpose::Light) {
 			const Distribution1D& distr = mContext.LightDistributions[in.Light->lightID()];
 			const SpectralRange range	= in.Light->spectralRange().bounded(mCameraRange);
 
@@ -80,11 +95,15 @@ public:
 				res(i) = distr.continuousPdf((wavelength(i) - range.Start) / range.span());
 
 			return res;
+		} else {
+			// For connections and cases with not enough information, we fallback to pure random sampling
+			return SpectralBlob::Ones();
 		}
 	}
 
 private:
 	const SpectralRange mCameraRange;
+	const SpectralRange mLightRange;
 	const SPDContext& mContext;
 };
 
@@ -139,7 +158,7 @@ public:
 		}
 		mMutex.unlock();
 
-		return std::make_shared<SPDSpectralMapper>(ctx->cameraSpectralRange(), mContext);
+		return std::make_shared<SPDSpectralMapper>(ctx->cameraSpectralRange(), ctx->lightSpectralRange(), mContext);
 	}
 
 private:

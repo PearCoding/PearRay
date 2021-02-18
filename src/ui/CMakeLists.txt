@@ -47,6 +47,7 @@ set(Src
   widgets/ColorButton.cpp
   widgets/ImagePipelineEditor.cpp
   widgets/ImageView.cpp
+  widgets/LogView.cpp
   widgets/PropertyView.cpp
   widgets/RangeSlider.cpp
   widgets/View3DWidget.cpp)
@@ -102,6 +103,7 @@ set(Hdr
   widgets/ColorButton.h
   widgets/ImagePipelineEditor.h
   widgets/ImageView.h
+  widgets/LogView.h
   widgets/PropertyView.h
   widgets/RangeSlider.h
   widgets/View3DWidget.h)
