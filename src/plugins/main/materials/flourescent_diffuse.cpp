@@ -111,6 +111,7 @@ struct FlourescentDiffuseClosure {
 			return SpectralBlob::Zero();
 
 		const SpectralBlob flou = pdfSelectFlourescent(ctx);
+		PR_ASSERT((flou >= 0).all() && (flou <= 1).all(), "Expected bounded selection propability");
 		return pdfDiffuse(ctx) * flou * pdfWavelengthFlourescent(ctx);
 	}
 
@@ -120,6 +121,7 @@ struct FlourescentDiffuseClosure {
 			return SpectralBlob::Zero();
 
 		const SpectralBlob flou = pdfSelectFlourescent(ctx);
+		PR_ASSERT((flou >= 0).all() && (flou <= 1).all(), "Expected bounded selection propability");
 		return pdfDiffuse(ctx) * (1 - flou);
 	}
 
@@ -177,13 +179,14 @@ class FlourescentDiffuse : public IMaterial {
 public:
 	FlourescentDiffuse(const std::shared_ptr<FloatSpectralNode>& absorption, const std::shared_ptr<FloatSpectralNode>& emission,
 					   const std::shared_ptr<FloatSpectralNode>& albedo,
-					   float absorpedEmissionFactor, float concentration)
+					   float absorpedEmissionFactor, float concentration, float scale)
 		: IMaterial()
 		, mAbsorption(absorption)
 		, mEmission(emission)
 		, mAlbedo(albedo)								  // Non-flourescent property
 		, mAbsorbedEmissionFactor(absorpedEmissionFactor) // Q
 		, mConcentration(concentration)
+		, mScale(scale)
 		, mDistributionEmission(400)
 		, mDistributionAbsorption(400)
 		, mEmissionIntegral(0)
@@ -240,7 +243,7 @@ public:
 
 		const auto closure = createClosure(in.ShadingContext, in.Context.FlourescentWavelengthNM, in.Context.RayFlags & RayFlag::Light);
 
-		out.Weight = closure.eval(in.Context);
+		out.Weight = mScale * closure.eval(in.Context);
 		out.PDF_S  = closure.pdf(in.Context);
 		out.Type   = MaterialScatteringType::DiffuseReflection;
 		out.Flags  = closure.sampleFlags(in.Context);
@@ -274,7 +277,7 @@ public:
 		auto extendedCtx					= in.Context.expandLocal(out.L);
 		extendedCtx.FlourescentWavelengthNM = out.FlourescentWavelengthNM;
 
-		out.IntegralWeight = closure.eval(extendedCtx);
+		out.IntegralWeight = mScale * closure.eval(extendedCtx);
 		out.PDF_S		   = lwp.second ? closure.pdfFlourescent(extendedCtx) : closure.pdfNonFlourescent(extendedCtx);
 		out.IntegralWeight /= out.PDF_S[0];
 
@@ -292,7 +295,8 @@ public:
 			   << "    Emission:      " << mEmission->dumpInformation() << std::endl
 			   << "    Albedo:        " << mAlbedo->dumpInformation() << std::endl
 			   << "    AEFactor:      " << mAbsorbedEmissionFactor << std::endl
-			   << "    Concentration: " << mConcentration << std::endl;
+			   << "    Concentration: " << mConcentration << std::endl
+			   << "    Scale:         " << mScale << std::endl;
 
 		return stream.str();
 	}
@@ -324,6 +328,7 @@ private:
 	const std::shared_ptr<FloatSpectralNode> mAlbedo;
 	const float mAbsorbedEmissionFactor;
 	const float mConcentration;
+	const float mScale;
 
 	Distribution1D mDistributionEmission;
 	Distribution1D mDistributionAbsorption;
@@ -341,8 +346,9 @@ public:
 
 		const auto aefactor		 = ctx.parameters().getNumber("aefactor", 1); // All absorbed wavelengths will be emitted
 		const auto concentration = ctx.parameters().getNumber("concentration", 1);
+		const auto scale		 = ctx.parameters().getNumber("scale", 1);
 
-		return std::make_shared<FlourescentDiffuse>(absorption, emission, albedo, aefactor, concentration);
+		return std::make_shared<FlourescentDiffuse>(absorption, emission, albedo, aefactor, concentration, scale);
 	}
 
 	const std::vector<std::string>& getNames() const override
@@ -361,6 +367,7 @@ public:
 			.SpectralNodeV({ "albedo", "base", "diffuse" }, "Amount of light which is reflected for non-flourescent part", 1.0f)
 			.Number01("aefactor", "Amount of absorbed light which is emitted as flourescent light", 1.0f)
 			.Number01("concentration", "How much the flourescent part is affected", 1.0f)
+			.Number("scale", "Artificial scale factor to scale up the bsdf eval value", 1.0f)
 			.Specification()
 			.get();
 	}

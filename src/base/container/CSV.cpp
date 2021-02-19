@@ -16,7 +16,7 @@ CSV::CSV(size_t rows, size_t cols)
 
 static inline bool isSeparator(int c)
 {
-	return std::isspace(c) || c == ',' || c == ';';
+	return c == ',' || c == ';';
 }
 
 CSV::CSV(const std::filesystem::path& path)
@@ -74,6 +74,9 @@ bool CSV::read(std::istream& stream)
 	if (mColumnCount == 0)
 		return false;
 
+	// Make sure the locale is correct
+	const char* oldLocale = std::setlocale(LC_ALL, "C");
+
 	// Check if first row is the header...
 	// There is no standard way, but we just assume the first row has strings, the data does not
 	bool hasHeader = false;
@@ -129,9 +132,15 @@ bool CSV::read(std::istream& stream)
 		// Convert tokens to floating point numbers
 		for (const auto& value : first_row) {
 			try {
-				mData.push_back(std::stof(value));
-			} catch (...) {
+				size_t pos = 0;
+				mData.push_back(std::stof(value, &pos));
+				if (pos != value.size())
+					hadInvalidConvertion = true;
+			} catch (const std::invalid_argument&) {
 				hadInvalidConvertion = true;
+				mData.push_back(0.0f);
+			} catch (const std::out_of_range&) {
+				// Silently accept
 				mData.push_back(0.0f);
 			}
 		}
@@ -148,6 +157,9 @@ bool CSV::read(std::istream& stream)
 
 	mRowCount = mData.size() / mColumnCount;
 	mData.shrink_to_fit();
+
+	// Set locale back to the original
+	std::setlocale(LC_ALL, oldLocale);
 
 	return true;
 }
