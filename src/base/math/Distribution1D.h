@@ -23,6 +23,8 @@ public:
 			for (size_t i = 1; i < SampleCount + 1; ++i)
 				mData[i] /= mData[SampleCount];
 		}
+		// Make sure floating point inaccuracies are fixed
+		mData[SampleCount] = 1.0f;
 	}
 
 	// Sum
@@ -39,6 +41,8 @@ public:
 			for (size_t i = 1; i < SampleCount + 1; ++i)
 				mData[i] /= mData[SampleCount];
 		}
+		// Make sure floating point inaccuracies are fixed
+		mData[SampleCount] = 1.0f;
 	}
 
 	constexpr const float* data() const { return mData.data(); }

@@ -54,7 +54,7 @@
 	(emission
 		:name 'light_em'
 		:type 'standard'
-		:radiance (smul (spd 'UVLight.csv') 5000)
+		:radiance (spd 'UVLight.csv')
 	)
 	; Materials
 	(material

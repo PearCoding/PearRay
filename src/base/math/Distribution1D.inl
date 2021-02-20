@@ -27,6 +27,8 @@ inline void Distribution1D::generate(Func func, float* integral)
 		for (size_t i = 1; i < n + 1; ++i)
 			mCDF[i] /= intr;
 	}
+	// Make sure floating point inaccuracies are fixed
+	mCDF[n] = 1.0f;
 }
 
 inline void Distribution1D::reducePDFBy(float v, float* integral)
@@ -79,7 +81,6 @@ inline float Distribution1D::sampleContinuous(float u, float& pdf, const float* 
 	if (offset)
 		*offset = off;
 
-	pdf *= (size - 1);
 	return (off + rem) / (size - 1);
 }
 
@@ -93,7 +94,7 @@ inline float Distribution1D::continuousPdf(float x, const float* cdf, size_t siz
 	const size_t off = std::min<size_t>(size - 2, x * (size - 1));
 	if (offset)
 		*offset = off;
-	return discretePdf(off, cdf, size) * (size - 1);
+	return discretePdf(off, cdf, size);
 }
 
 inline float Distribution1D::evalContinuous(float u) const
