@@ -8,6 +8,7 @@ namespace PR {
 using CIETriplet = Eigen::Array<float, 3, 1>;
 
 // The spectrum the CIE data is available
+//#define PR_USE_CIE_1931
 #ifdef PR_USE_CIE_1931
 constexpr int PR_CIE_SAMPLE_COUNT		= 95;
 constexpr float PR_CIE_WAVELENGTH_START = 360;
@@ -20,18 +21,6 @@ constexpr float PR_CIE_WAVELENGTH_END	= 830;
 
 constexpr float PR_CIE_WAVELENGTH_RANGE = PR_CIE_WAVELENGTH_END - PR_CIE_WAVELENGTH_START;
 constexpr float PR_CIE_WAVELENGTH_DELTA = PR_CIE_WAVELENGTH_RANGE / (PR_CIE_SAMPLE_COUNT - 1);
-
-// The default visible spectrum constants based on
-// Starr, Cecie (2005). Biology: Concepts and Applications. Thomson Brooks/Cole. p. 94. ISBN 978-0-534-46226-0.
-constexpr float PR_VISIBLE_WAVELENGTH_START = 390;
-constexpr float PR_VISIBLE_WAVELENGTH_END	= 740;
-constexpr float PR_VISIBLE_WAVELENGTH_DELTA = PR_CIE_WAVELENGTH_DELTA;
-constexpr float PR_VISIBLE_WAVELENGTH_RANGE = PR_VISIBLE_WAVELENGTH_END - PR_VISIBLE_WAVELENGTH_START;
-constexpr int PR_VISIBLE_SAMPLE_COUNT		= PR_VISIBLE_WAVELENGTH_RANGE / PR_VISIBLE_WAVELENGTH_DELTA + 1;
-
-static_assert(PR_CIE_WAVELENGTH_START <= PR_VISIBLE_WAVELENGTH_START
-				  && PR_VISIBLE_WAVELENGTH_END <= PR_CIE_WAVELENGTH_END,
-			  "The default visible spectrum has to be a subset of the CIE spectrum");
 
 class PR_LIB_CORE CIE {
 public:
@@ -129,65 +118,6 @@ public:
 		return pdf_trunc(pdf_xyz(wvl), norm_start, norm_end, CDF_XYZ);
 	}
 
-	//////////////// VISIBLE
-	////////////////
-	static inline float sample_vis_y(float u, float& pdf)
-	{
-		const float v = Distribution1D::sampleContinuous(u, pdf, CDF_VIS_Y);
-		return v * PR_VISIBLE_WAVELENGTH_RANGE + PR_VISIBLE_WAVELENGTH_START;
-	}
-
-	static inline float pdf_vis_y(float wvl)
-	{
-		return Distribution1D::continuousPdf((wvl - PR_VISIBLE_WAVELENGTH_START) / PR_VISIBLE_WAVELENGTH_RANGE, CDF_VIS_Y);
-	}
-
-	////////////////
-	static inline float sample_trunc_vis_y(float u, float& pdf, float start, float end)
-	{
-		const float norm_start = (start - PR_VISIBLE_WAVELENGTH_START) / PR_VISIBLE_WAVELENGTH_RANGE;
-		const float norm_end   = (end - PR_VISIBLE_WAVELENGTH_START) / PR_VISIBLE_WAVELENGTH_RANGE;
-
-		const float v = sample_trunc(u, pdf, norm_start, norm_end, CDF_VIS_Y);
-		return v * (end - start) + start;
-	}
-
-	static inline float pdf_trunc_vis_y(float wvl, float start, float end)
-	{
-		const float norm_start = (start - PR_VISIBLE_WAVELENGTH_START) / PR_VISIBLE_WAVELENGTH_RANGE;
-		const float norm_end   = (end - PR_VISIBLE_WAVELENGTH_START) / PR_VISIBLE_WAVELENGTH_RANGE;
-		return pdf_trunc(pdf_vis_y(wvl), norm_start, norm_end, CDF_VIS_Y);
-	}
-
-	////////////////
-	static inline float sample_vis_xyz(float u, float& pdf)
-	{
-		const float v = Distribution1D::sampleContinuous(u, pdf, CDF_VIS_XYZ);
-		return v * PR_VISIBLE_WAVELENGTH_RANGE + PR_VISIBLE_WAVELENGTH_START;
-	}
-
-	static inline float pdf_vis_xyz(float wvl)
-	{
-		return Distribution1D::continuousPdf((wvl - PR_VISIBLE_WAVELENGTH_START) / PR_VISIBLE_WAVELENGTH_RANGE, CDF_VIS_XYZ);
-	}
-
-	////////////////
-	static inline float sample_trunc_vis_xyz(float u, float& pdf, float start, float end)
-	{
-		const float norm_start = (start - PR_VISIBLE_WAVELENGTH_START) / PR_VISIBLE_WAVELENGTH_RANGE;
-		const float norm_end   = (end - PR_VISIBLE_WAVELENGTH_START) / PR_VISIBLE_WAVELENGTH_RANGE;
-
-		const float v = sample_trunc(u, pdf, norm_start, norm_end, CDF_VIS_XYZ);
-		return v * (end - start) + start;
-	}
-
-	static inline float pdf_trunc_vis_xyz(float wvl, float start, float end)
-	{
-		const float norm_start = (start - PR_VISIBLE_WAVELENGTH_START) / PR_VISIBLE_WAVELENGTH_RANGE;
-		const float norm_end   = (end - PR_VISIBLE_WAVELENGTH_START) / PR_VISIBLE_WAVELENGTH_RANGE;
-		return pdf_trunc(pdf_vis_xyz(wvl), norm_start, norm_end, CDF_VIS_XYZ);
-	}
-
 private:
 	template <size_t N>
 	static inline float sample_trunc(float u, float& pdf, float norm_start, float norm_end, const StaticCDF<N>& cdf)
@@ -215,8 +145,5 @@ private:
 
 	static const StaticCDF<PR_CIE_SAMPLE_COUNT> CDF_XYZ;
 	static const StaticCDF<PR_CIE_SAMPLE_COUNT> CDF_Y;
-
-	static const StaticCDF<PR_VISIBLE_SAMPLE_COUNT> CDF_VIS_XYZ;
-	static const StaticCDF<PR_VISIBLE_SAMPLE_COUNT> CDF_VIS_Y;
 };
 } // namespace PR

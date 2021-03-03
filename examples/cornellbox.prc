@@ -1,24 +1,18 @@
 ; Original CornellBox converted to PearRay format
 (scene
-	:render_width 1000
-	:render_height 1000
+	:render_width 500
+	:render_height 500
 	:camera 'Camera'
 	
 	; Settings
 	(integrator
-		:type 'direct'
-		:max_ray_depth 16
-		:max_camera_ray_depth 4
-		:max_light_ray_depth 4
-		:mis 'power'
-		:contract_ratio 0.2
-		:max_light_ray_depth 16
-		:soft_max_light_ray_depth 6
+		:type 'vcm'
+		:max_ray_depth 6	
 	)
 	(sampler
 		:slot 'aa'
 		:type 'mjitt'
-		:sample_count 128
+		:sample_count 1024
 	)
 	; Outputs
 	(output

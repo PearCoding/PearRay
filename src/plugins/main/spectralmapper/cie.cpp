@@ -110,7 +110,7 @@ class CIESpectralMapperPlugin : public ISpectralMapperPlugin {
 public:
 	std::shared_ptr<ISpectralMapperFactory> create(const std::string& type_name, const SceneLoadContext& ctx) override
 	{
-		if (type_name == "cie_y" || ctx.parameters().getBool("only_y", false))
+		if (type_name == "cie_y" || type_name == "visible_y" || ctx.parameters().getBool("only_y", false))
 			return std::make_shared<CIESpectralMapperFactory<true>>();
 		else
 			return std::make_shared<CIESpectralMapperFactory<false>>();
@@ -118,7 +118,7 @@ public:
 
 	const std::vector<std::string>& getNames() const override
 	{
-		const static std::vector<std::string> names({ "cie" });
+		const static std::vector<std::string> names({ "cie", "cie_y", "visible", "visible_y" });
 		return names;
 	}
 

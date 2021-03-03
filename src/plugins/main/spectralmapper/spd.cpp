@@ -116,9 +116,9 @@ enum class WeightingMethod {
 
 struct SPDParameters {
 	/* This one can be high quality, as we sample each single wavelength!*/
-	uint32 NumberOfBins = PR_VISIBLE_WAVELENGTH_END - PR_VISIBLE_WAVELENGTH_START;
+	uint32 NumberOfBins = PR_CIE_WAVELENGTH_END - PR_CIE_WAVELENGTH_START;
 	// Number of bins for single light distributions
-	uint32 NumberOfLightBins = (PR_VISIBLE_WAVELENGTH_END - PR_VISIBLE_WAVELENGTH_START) / 2;
+	uint32 NumberOfLightBins = (PR_CIE_WAVELENGTH_END - PR_CIE_WAVELENGTH_START) / 2;
 
 	WeightingMethod Method		= WeightingMethod::CIE_XYZ;
 	bool UseNormalizedLights	= true;
