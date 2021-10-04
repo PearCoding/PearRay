@@ -26,9 +26,16 @@
 
 namespace PR {
 
+inline static auto safeDiv(const SpectralBlob& a, const SpectralBlob& b)
+{
+	return (b.cwiseAbs() <= PR_EPSILON).select(SpectralBlob::Zero(), a / b);
+}
+
 struct DiParameters {
 	size_t MaxCameraRayDepthHard = 64;
 	size_t MaxCameraRayDepthSoft = 4;
+	bool DoNEE					 = true;
+	bool DoDirect				 = true;
 };
 
 /// Standard path tracing
@@ -41,7 +48,8 @@ private:
 	struct TraversalContext {
 		SpectralBlob Throughput;
 		bool LastWasDelta;
-		float LastPDF_S;
+		bool LastWasFlourescent;
+		SpectralBlob LastPDF_S;
 		Vector3f LastPosition; // Used in NEE
 		Vector3f LastNormal;
 	};
@@ -76,7 +84,7 @@ public:
 		if (pathLength == 1)
 			session.pushSPFragment(ip, mCameraPath);
 
-		if (entity->hasEmission()) {
+		if (mParameters.DoDirect && entity->hasEmission()) {
 			handleDirectHit(session, ip, entity, current);
 			if constexpr (!EmissiveScatter)
 				return {};
@@ -86,7 +94,7 @@ public:
 		if (PR_UNLIKELY(!material))
 			return {};
 
-		if (!material->hasOnlyDeltaDistribution())
+		if (mParameters.DoNEE && !material->hasOnlyDeltaDistribution())
 			handleNEE(session, ip, material, current);
 
 		return handleScattering(session, ip, material, current);
@@ -99,7 +107,7 @@ public:
 		PR_PROFILE_THIS;
 
 		// Initial camera vertex
-		TraversalContext current = TraversalContext{ SpectralBlob::Ones(), true, 1, Vector3f::Zero(), Vector3f::Zero() };
+		TraversalContext current = TraversalContext{ SpectralBlob::Ones(), true, false, SpectralBlob::Ones(), Vector3f::Zero(), Vector3f::Zero() };
 
 		mCameraWalker.traverse(
 			session, initial_hit, entity, material,
@@ -109,10 +117,14 @@ public:
 			},
 			[&](const Ray& ray) {
 				mCameraPath.addToken(LightPathToken::Background());
-				if constexpr (HasInfLights)
-					handleInfLights(session, current, ray);
-				else
+				if constexpr (HasInfLights) {
+					if (mParameters.DoDirect)
+						handleInfLights(session, current, ray);
+					else
+						handleZero(session, current, ray);
+				} else {
 					handleZero(session, current, ray);
+				}
 				mCameraPath.popToken();
 			});
 
@@ -150,7 +162,6 @@ private:
 	std::optional<Ray> handleScattering(RenderTileSession& session, const IntersectionPoint& ip,
 										IMaterial* material, TraversalContext& current)
 	{
-
 		auto& rnd = session.random(ip.Ray.PixelIndex);
 
 		current.LastPosition = ip.P;
@@ -177,21 +188,21 @@ private:
 
 		mCameraPath.addToken(sout.Type);
 
-		const Vector3f L	 = sout.globalL(ip);
-		const bool isDelta	 = sout.isDelta();
-		current.LastWasDelta = isDelta;
+		const Vector3f L		   = sout.globalL(ip);
+		current.LastWasDelta	   = sout.isDelta();
+		current.LastWasFlourescent = sout.isFlourescent();
+		current.LastPDF_S		   = sout.PDF_S * scatProb;
 
-		const float pdf_s = sout.PDF_S[0] * scatProb;
-		current.LastPDF_S = pdf_s;
-
-		if (pdf_s <= PDF_EPS) // Catch this case, or everything will explode
+		if ((current.LastPDF_S <= PDF_EPS).all()) // Catch this case, or everything will explode
 			return {};
 
 		// Update throughput
 		current.Throughput *= sout.IntegralWeight; // cosine term and pdf already applied inside material
 
-		if (sout.isHeroCollapsing())
+		if (sout.isHeroCollapsing()) {
 			current.Throughput *= SpectralBlobUtils::HeroOnly();
+			current.LastPDF_S *= SpectralBlobUtils::HeroOnly();
+		}
 
 		if (current.Throughput.isZero(PR_EPSILON))
 			return {};
@@ -202,7 +213,7 @@ private:
 			rflags |= RayFlag::Monochrome;
 
 		Ray nextRay = ip.nextRay(L, rflags, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX);
-		if (sout.isFlourescent())
+		if (current.LastWasFlourescent)
 			nextRay.WavelengthNM = sout.FlourescentWavelengthNM;
 
 		return std::make_optional(nextRay);
@@ -226,9 +237,6 @@ private:
 		if (PR_UNLIKELY(!light))
 			return;
 
-		// TODO: Integrate this into MIS
-		lsout.Radiance /= lsout.Wavelength_PDF;
-
 		// Calculate geometry stuff
 		const float sqrD	  = (lsout.LightPosition - cameraIP.P).squaredNorm();
 		const Vector3f L	  = lsout.Outgoing;
@@ -236,7 +244,7 @@ private:
 		const float cosL	  = std::abs(lsout.CosLight);
 		const bool front	  = lsout.CosLight >= 0.0f;
 		const float Geometry  = cosC * cosL / sqrD;
-		const bool isFeasible = Geometry > GEOMETRY_EPS && sqrD > DISTANCE_EPS;
+		const bool isFeasible = /*Geometry > GEOMETRY_EPS &&*/ sqrD > DISTANCE_EPS;
 
 		if (!isFeasible) // MIS is zero
 			return;
@@ -249,11 +257,19 @@ private:
 		MaterialEvalOutput mout;
 		cameraMaterial->eval(min, mout, session);
 
-		if (mout.isDelta())
+		// Due to fancy material evaluation we might get a delta here
+		if (PR_UNLIKELY(mout.isDelta()))
 			return;
 
-		const float bsdfWvlPdfS = (cameraIP.Ray.Flags & RayFlag::Monochrome) ? mout.PDF_S[0] : mout.PDF_S.sum(); // Each wavelength could have generated the path
-		if (bsdfWvlPdfS <= PDF_EPS)																				 // Its impossible to sample the bsdf, so skip it
+		// Each wavelength could have generated the path
+		const bool rayMonochrome		 = cameraIP.Ray.isMonochrome();
+		const bool bsdfMonochrome		 = mout.isHeroCollapsing() || rayMonochrome;
+		const SpectralBlob rayHeroFactor = rayMonochrome ? SpectralBlobUtils::HeroOnly() : SpectralBlob::Ones();
+		const SpectralBlob heroFactor	 = bsdfMonochrome ? SpectralBlobUtils::HeroOnly() : SpectralBlob::Ones();
+		const SpectralBlob bsdfWvlPdfS	 = mout.PDF_S * heroFactor;
+
+		// Its impossible to sample the bsdf, so skip it
+		if ((bsdfWvlPdfS <= PDF_EPS).all())
 			return;
 
 		// Check if a check between point and light is necessary
@@ -273,30 +289,34 @@ private:
 				if (lsout.Position_PDF.IsArea)
 					lightPdfS = IS::toSolidAngle(lightPdfS, sqrD, cosL);
 			}
-			lightPdfS *= lsample.second;
-			if (lightPdfS <= PDF_EPS)
+			lightPdfS *= lsample.second; /* Apply selection probability */
+			if (!std::isnormal(lightPdfS) || lightPdfS <= PDF_EPS)
 				return;
 		}
+
+		// lightPdfS is the sampled pdf, there only affected by the hero wavelength
+		const SpectralBlob lightPdfS2 = lightPdfS * lsout.Wavelength_PDF * rayHeroFactor;
+		if ((lightPdfS2 <= PDF_EPS).all())
+			return;
 
 		// Calculate MIS
 		const uint32 cameraPathLength = cameraIP.Ray.IterationDepth + 1;
 		const float cameraRoulette	  = mCameraRR.probability(cameraPathLength);
 
-		const float bsdfPdfS = bsdfWvlPdfS * cameraRoulette;
-		const float mis		 = light->hasDeltaDistribution() ? 1 : 1 / (1 + VCM::mis_term<MISMode>(bsdfPdfS / lightPdfS));
+		const SpectralBlob bsdfPdfS = bsdfWvlPdfS * cameraRoulette;
+		const float denom			= VCM::mis_term<MISMode>(lightPdfS2).sum() + VCM::mis_term<MISMode>(bsdfPdfS).sum();
+		const SpectralBlob mis		= light->hasDeltaDistribution() ? (heroFactor / heroFactor.sum()) : (VCM::mis_term<MISMode>(lightPdfS2) / denom);
 
-		if (mis <= MIS_EPS)
-			return;
-
-		PR_ASSERT(mis <= 1.0f, "MIS must be between 0 and 1");
+		PR_ASSERT((mis <= 1.0f).all(), "MIS must be between 0 and 1");
 
 		// Trace shadow ray
 		const float distance = light->isInfinite() ? PR_INF : std::sqrt(sqrD);
-		const Ray shadow	 = cameraIP.nextRay(L, RayFlag::Shadow, SHADOW_RAY_MIN, distance);
+		Ray shadow			 = cameraIP.nextRay(L, RayFlag::Shadow, SHADOW_RAY_MIN, distance);
+		shadow.WavelengthNM	 = min.Context.FlourescentWavelengthNM;
 		const bool isVisible = worthACheck && !session.traceShadowRay(shadow, distance);
 
-		// Calculate contribution (cosinus term already applied inside material)
-		const SpectralBlob contrib = isVisible ? (connectionW / lightPdfS).eval() : SpectralBlob::Zero();
+		// Calculate contribution (cosine term already applied inside material)
+		const SpectralBlob contrib = isVisible ? safeDiv(connectionW, lightPdfS2).eval() : SpectralBlob::Zero();
 
 		// Construct LPE path
 		mCameraPath.addToken(mout.Type);
@@ -309,8 +329,8 @@ private:
 			mCameraPath.addToken(LightPathToken::Emissive());
 		}
 
-		session.pushSpectralFragment(mis, current.Throughput, contrib,
-									 cameraIP.Ray, mCameraPath);
+		session.pushSpectralFragment(mParameters.DoDirect ? mis.sum() : 1, current.Throughput, contrib,
+									 shadow, mCameraPath);
 
 		mCameraPath.popToken(2);
 	}
@@ -320,7 +340,6 @@ private:
 						 const IEntity* cameraEntity, TraversalContext& current)
 	{
 		const EntitySamplingInfo sampleInfo = { current.LastPosition, current.LastNormal };
-		const uint32 cameraPathLength		= cameraIP.Ray.IterationDepth + 1;
 
 		const IEmission* ems = session.getEmission(cameraIP.Surface.Geometry.EmissionID);
 		if (PR_UNLIKELY(!ems))
@@ -330,9 +349,10 @@ private:
 		const float cosC = -cameraIP.Surface.NdotV;
 		if (std::abs(cosC) <= PR_EPSILON)
 			return;
+		const bool hitFromBehind = cosC < 0.0f;
 
 		SpectralBlob radiance;
-		if (cosC < 0.0f) {
+		if (hitFromBehind) {
 			radiance = SpectralBlob::Zero();
 		} else {
 			// Evaluate emission
@@ -344,44 +364,45 @@ private:
 			radiance = eout.Radiance;
 		}
 
-		// If directly visible from camera, do not calculate mis weights
-		if (cameraPathLength == 1 || current.LastWasDelta) {
+		const SpectralBlob heroFactor = cameraIP.Ray.isMonochrome() ? SpectralBlobUtils::HeroOnly() : SpectralBlob::Ones();
+
+		// If the given contribution can not be determined by NEE as well, do not calculate MIS
+		if (!mParameters.DoNEE || hitFromBehind || current.LastWasDelta) {
 			mCameraPath.addToken(LightPathToken::Emissive());
 			session.pushSpectralFragment(1, current.Throughput, radiance, cameraIP.Ray, mCameraPath);
 			mCameraPath.popToken();
 			return;
 		}
 
-		// TODO: Something wrong here!
-		//return;
-
 		// Evaluate PDF
 		const float selProb = mLightSampler->pdfEntitySelection(cameraEntity);
 		auto posPDF			= mLightSampler->pdfPosition(cameraEntity, cameraIP.P, &sampleInfo);
 		if (posPDF.IsArea)
 			posPDF.Value = IS::toSolidAngle(posPDF.Value, cameraIP.Depth2, std::abs(cosC));
-		const float posPDF_S = posPDF.Value * selProb;
+		const float posPDF_S	   = posPDF.Value * selProb;
+		const SpectralBlob wvlProb = SpectralBlob::Ones();
+		/*cameraIP.Ray.IterationDepth > 0 && current.LastWasFlourescent ? mLightSampler->pdfWavelength(cameraIP.Ray.WavelengthNM, cameraIP.P, cameraEntity)
+																								   : SpectralBlob::Ones();*/
 
-		// Calculate MIS
-		const float mis = 1 / (1 + VCM::mis_term<MISMode>(posPDF_S / current.LastPDF_S));
+		const SpectralBlob mis = heroFactor * VCM::mis_term<MISMode>(current.LastPDF_S) / (VCM::mis_term<MISMode>(heroFactor * wvlProb * posPDF_S).sum() + VCM::mis_term<MISMode>(heroFactor * current.LastPDF_S).sum());
 
 		// Note: No need to check LastPDF_S as handleScattering checks it already
-		if (mis <= MIS_EPS)
+		if ((mis <= MIS_EPS).all())
 			return;
 
-		PR_ASSERT(mis <= 1.0f, "MIS must be between 0 and 1");
+		PR_ASSERT((mis <= 1.0f).all(), "MIS must be between 0 and 1");
 
 		// Splat
 		mCameraPath.addToken(LightPathToken::Emissive());
-		session.pushSpectralFragment(mis, current.Throughput, radiance, cameraIP.Ray, mCameraPath);
+		session.pushSpectralFragment(mis.sum(), current.Throughput, radiance, cameraIP.Ray, mCameraPath);
 		mCameraPath.popToken();
 	}
 
 	/// Handle case where camera ray hits nothing (inf light contribution)
 	void handleInfLights(const RenderTileSession& session, TraversalContext& current, const Ray& ray) const
 	{
-		const uint32 cameraPathLength = ray.IterationDepth + 1;
 		session.tile()->statistics().add(RenderStatisticEntry::BackgroundHitCount);
+		const SpectralBlob heroFactor = (ray.Flags & RayFlag::Monochrome) ? SpectralBlobUtils::HeroOnly() : SpectralBlob::Ones();
 
 		// Evaluate radiance
 		float denom_mis		  = 0;
@@ -397,35 +418,37 @@ private:
 			InfiniteLightEvalOutput lout;
 			light->asInfiniteLight()->eval(lin, lout, session);
 
-			const float selProb = mLightSampler->pdfLightSelection(light);
-			const float pdf_S	= lout.Direction_PDF_S * selProb;
+			const float selProb		   = mLightSampler->pdfLightSelection(light);
+			const float pdf_S		   = lout.Direction_PDF_S * selProb;
+			const SpectralBlob wvlProb = SpectralBlob::Ones();
+			//ray.IterationDepth > 0 && current.LastWasFlourescent ? mLightSampler->pdfWavelength(ray.WavelengthNM, ray.Origin, light) : SpectralBlob::Ones();
 			radiance += lout.Radiance;
-			denom_mis += VCM::mis_term<MISMode>(pdf_S / current.LastPDF_S);
+			denom_mis += VCM::mis_term<MISMode>(heroFactor * wvlProb * pdf_S).sum();
 		}
 
-		// If directly visible from camera or last one was a delta distribution, do not calculate mis weights
-		if (cameraPathLength == 1 || current.LastWasDelta) {
+		// If the given contribution can not be determined by NEE as well, do not calculate MIS
+		if (!mParameters.DoNEE || current.LastWasDelta) {
 			session.pushSpectralFragment(1, current.Throughput, radiance, ray, mCameraPath);
 			return;
 		}
 
 		// Calculate MIS
-		const float mis = 1 / (1 + denom_mis);
+		const SpectralBlob mis = heroFactor * VCM::mis_term<MISMode>(current.LastPDF_S) / (VCM::mis_term<MISMode>(heroFactor * current.LastPDF_S).sum() + denom_mis);
 
-		if (mis <= MIS_EPS)
+		if ((mis <= MIS_EPS).all())
 			return;
 
-		PR_ASSERT(mis <= 1.0f, "MIS must be between 0 and 1");
+		PR_ASSERT((mis <= 1.0f).all(), "MIS must be between 0 and 1");
 
 		// Splat
-		session.pushSpectralFragment(mis, current.Throughput, radiance, ray, mCameraPath);
+		session.pushSpectralFragment(mis.sum(), current.Throughput, radiance, ray, mCameraPath);
 	}
 
 	/// Handle case where camera ray hits nothing and there is no inf-lights
 	inline void handleZero(const RenderTileSession& session, TraversalContext& current, const Ray& ray) const
 	{
 		session.tile()->statistics().add(RenderStatisticEntry::BackgroundHitCount);
-		session.pushSpectralFragment(1, current.Throughput, SpectralBlob::Zero(), ray, mCameraPath);
+		//session.pushSpectralFragment(1, current.Throughput, SpectralBlob::Zero(), ray, mCameraPath);
 	}
 
 private:
@@ -474,7 +497,9 @@ public:
 		else
 			mMISMode = VCM::MISMode::Balance;
 
-		mEmissiveScatter = params.getBool("emissive_scatter", true);
+		mParameters.DoNEE	 = params.getBool("nee", true);
+		mParameters.DoDirect = params.getBool("direct", true);
+		mEmissiveScatter	 = params.getBool("emissive_scatter", true);
 	}
 
 	std::shared_ptr<IIntegrator> createInstance() const override

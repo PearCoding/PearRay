@@ -18,5 +18,14 @@ inline float mis_term(float a)
 	else
 		return a;
 }
+
+template <MISMode Mode>
+inline SpectralBlob mis_term(const SpectralBlob& a)
+{
+	if constexpr (Mode == MISMode::Power)
+		return a.square();
+	else
+		return a;
+}
 } // namespace VCM
 } // namespace PR

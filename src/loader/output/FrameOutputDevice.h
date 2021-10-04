@@ -20,7 +20,7 @@ public:
 
 	void clear(bool force = false) override;
 	std::shared_ptr<LocalOutputDevice> createLocal(const Size2i& size) const override;
-	void mergeLocal(const Point2i& p, const std::shared_ptr<LocalOutputDevice>& bucket) override;
+	void mergeLocal(const Point2i& p, const std::shared_ptr<LocalOutputDevice>& bucket, size_t iteration) override;
 
 	void enable1DChannel(AOV1D var) override;
 	void enableCounterChannel(AOVCounter var) override;

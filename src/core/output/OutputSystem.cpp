@@ -35,11 +35,11 @@ std::shared_ptr<LocalOutputSystem> OutputSystem::createLocal(const RenderTile* t
 	return local;
 }
 
-void OutputSystem::mergeLocal(const Point2i& p, const std::shared_ptr<LocalOutputSystem>& local)
+void OutputSystem::mergeLocal(const Point2i& p, const std::shared_ptr<LocalOutputSystem>& local, size_t iteration)
 {
 	local->beforeMerge();
 	for (size_t i = 0; i < mOutputDevices.size(); ++i)
-		mOutputDevices[i]->mergeLocal(p, local->localOutputDevice(i));
+		mOutputDevices[i]->mergeLocal(p, local->localOutputDevice(i), iteration);
 }
 
 void OutputSystem::enableVarianceEstimation()

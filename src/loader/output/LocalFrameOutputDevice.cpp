@@ -90,20 +90,11 @@ void LocalFrameOutputDevice::commitSpectrals2(StreamPipeline* pipeline, const Ou
 	const int32 filterRadius = mFilter.radius();
 	const Size2i filterSize	 = Size2i(filterRadius, filterRadius);
 
-	const auto spectralCh	  = mData.getInternalChannel_Spectral(AOV_Output);
-	const auto pixelWeightCh  = mData.getInternalChannel_1D(AOV_PixelWeight);
-	const auto pixelCounterCh = mData.getInternalChannel_Counter(AOV_PixelContributionCount); // This is the LOCAL pixel contribution count, which is reset each iteration!
+	const auto spectralCh = mData.getInternalChannel_Spectral(AOV_Output);
 
 	PR_ASSERT(HasFilter || filterRadius == 0, "If no filter is choosen, radius must be zero");
 
-	const auto addContribution = [&](const Point2i& sp, float iterWeight, const CIETriplet& triplet, const LightPathView& path) {
-		float& pixelWeight	 = pixelWeightCh->getFragment(sp, 0);
-		uint32& contribCount = pixelCounterCh->getFragment(sp, 0);
-
-		// Update weights
-		pixelWeight = std::fma(pixelWeight, contribCount, iterWeight) / (contribCount + 1);
-		contribCount += 1;
-
+	const auto addContribution = [&](const Point2i& sp, const CIETriplet& triplet, const LightPathView& path) {
 		// Add contribution to main channel
 		PR_UNROLL_LOOP(3)
 		for (Size1i k = 0; k < 3; ++k)
@@ -126,11 +117,10 @@ void LocalFrameOutputDevice::commitSpectrals2(StreamPipeline* pipeline, const Ou
 		const Point2i rp		   = entry.Position + filterSize;
 		const bool isMono		   = IsMono || (entry.Flags & OutputSpectralEntryFlag::Mono);
 		const RayGroup& grp		   = pipeline->getRayGroup(entry.RayGroupID);
-		const SpectralBlob factor  = isMono ? (SpectralBlobUtils::HeroOnly() * PR_SPECTRAL_BLOB_SIZE).eval() : SpectralBlob::Ones();
-		const SpectralBlob contrib = factor * entry.contribution();
-		const float iterWeight	   = isMono ? grp.BlendWeight[0] : grp.BlendWeight.mean();
+		const SpectralBlob contrib = entry.contribution();
+		const float misSum		   = entry.MIS * (isMono ? 1 : PR_SPECTRAL_BLOB_SIZE); // TODO
 
-		const SpectralBlob wvls = grp.WavelengthNM; // entry.Wavelengths
+		const SpectralBlob wvls = grp.WavelengthNM;
 
 #ifndef PR_NO_SPECTRAL_CHECKS
 		// Check for valid samples
@@ -164,11 +154,11 @@ void LocalFrameOutputDevice::commitSpectrals2(StreamPipeline* pipeline, const Ou
 					const Point2i sp		 = Point2i(px, py);
 					const float filterWeight = mFilter.evalWeight(sp(0) - rp(0), sp(1) - rp(1));
 					if (filterWeight > PR_EPSILON)
-						addContribution(sp, filterWeight * iterWeight, filterWeight * triplet, path);
+						addContribution(sp, filterWeight * grp.BlendWeight * triplet, path);
 				}
 			}
 		} else {
-			addContribution(entry.Position, iterWeight, triplet, path);
+			addContribution(entry.Position, grp.BlendWeight * triplet, path);
 		}
 	}
 }
@@ -369,7 +359,7 @@ void LocalFrameOutputDevice::commitCustomSpectrals2(FrameBufferFloat* aov, Strea
 		const RayGroup& grp		   = pipeline->getRayGroup(entry.RayGroupID);
 		const SpectralBlob factor  = isMono ? SpectralBlobUtils::HeroOnly() : SpectralBlob::Ones();
 		const SpectralBlob contrib = factor * grp.BlendWeight * entry.Value;
-		const float iterWeight	   = isMono ? grp.BlendWeight[0] : grp.BlendWeight.mean();
+		const float iterWeight	   = grp.BlendWeight;
 
 		const CIETriplet triplet = mapSpectral<IsMono>(contrib, entry.Wavelengths);
 

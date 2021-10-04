@@ -6,9 +6,7 @@ FrameContainer::FrameContainer(const Size2i& size, Size1i specChannels)
 	mSpectral[AOV_Output] = std::make_shared<FrameBufferFloat>(std::max<Size1i>(3, specChannels), size, 0.0f);
 	PR_ASSERT(mSpectral[AOV_Output], "Spectral Output has to be available all the time");
 
-	mInt1D[AOV_PixelWeight]					= create1DBuffer();
 	mIntCounter[AOV_SampleCount]			= createCounterBuffer();
-	mIntCounter[AOV_PixelContributionCount] = createCounterBuffer();
 	mIntCounter[AOV_Feedback]				= createCounterBuffer();
 }
 

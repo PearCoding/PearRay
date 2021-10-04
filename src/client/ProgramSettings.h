@@ -33,7 +33,6 @@ public:
 	uint16 TevPort;
 	std::string TevIp;
 	bool TevVariance;
-	bool TevWeight;
 	bool TevFeedback;
 
 	// Network

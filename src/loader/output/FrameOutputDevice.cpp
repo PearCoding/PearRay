@@ -80,8 +80,10 @@ std::shared_ptr<LocalOutputDevice> FrameOutputDevice::createLocal(const Size2i& 
 	return bucket;
 }
 
-void FrameOutputDevice::mergeLocal(const Point2i& p,
-								   const std::shared_ptr<LocalOutputDevice>& local)
+void FrameOutputDevice::mergeLocal(
+	const Point2i& p,
+	const std::shared_ptr<LocalOutputDevice>& local,
+	size_t iteration)
 {
 	const auto bucket = std::dynamic_pointer_cast<LocalFrameOutputDevice>(local);
 	if (!bucket)
@@ -103,7 +105,7 @@ void FrameOutputDevice::mergeLocal(const Point2i& p,
 	if (mData.hasVarianceEstimator()) {
 		auto varianceEstimator = mData.varianceEstimator();
 		for (Size1i i = 0; i < mData.mSpectral[AOV_OnlineMean]->channels(); ++i)
-			varianceEstimator.addBlock(i, dst_off, dst_size, *mData.mInt1D[AOV_PixelWeight], src_off, src_size, *bucket->data().mInt1D[AOV_PixelWeight], *bucket->data().mSpectral[AOV_Output]);
+			varianceEstimator.addBlock(i, dst_off, dst_size, *bucket->data().mSpectral[AOV_Output], iteration);
 	}
 
 	// Add spectral AOVs

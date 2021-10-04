@@ -108,7 +108,7 @@ std::optional<CameraRay> RenderTile::constructCameraRay(const Point2i& p, const 
 	// Construct actual ray
 	std::optional<CameraRay> ray = mCamera->constructRay(cameraSample);
 	if (PR_LIKELY(ray.has_value())) {
-		if (PR_LIKELY(ray.value().BlendWeight.isZero()))
+		if (PR_LIKELY(ray.value().BlendWeight <= 0.0f))
 			ray.value().BlendWeight = cameraSample.BlendWeight;
 		if (PR_LIKELY(ray.value().Importance.isZero()))
 			ray.value().Importance = cameraSample.Importance;

@@ -146,10 +146,9 @@ bool ProgramSettings::parse(int argc, char** argv)
 
 		// Tev Image
 		TevVariance = vm.count("tev-var") != 0;
-		TevWeight	= vm.count("tev-weight") != 0;
 		TevFeedback = vm.count("tev-feedback") != 0;
 
-		if (vm.count("tev") || TevVariance || TevWeight || TevFeedback) {
+		if (vm.count("tev") || TevVariance || TevFeedback) {
 			TevUpdate = vm["tev-update"].as<uint32>();
 			TevPort	  = vm["tev-port"].as<uint16>();
 			TevIp	  = vm["tev-ip"].as<std::string>();

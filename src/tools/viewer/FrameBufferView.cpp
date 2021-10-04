@@ -57,7 +57,7 @@ QString FrameBufferView::channelName(int channel) const
 // TODO: Faster approach?
 float FrameBufferView::value(int x, int y, int channel) const
 {
-	const float weight = mFrame->data().getInternalChannel_1D(AOV_PixelWeight)->getFragment(Point2i(x, y), 0);
+	const float weight = 1;//mFrame->data().getInternalChannel_1D(AOV_PixelWeight)->getFragment(Point2i(x, y), 0);// TODO
 	if (weight > PR_EPSILON)
 		return mFrame->data().getInternalChannel_Spectral(AOV_Output)->getFragment(Point2i(x, y), channel) / weight;
 	else
@@ -78,7 +78,6 @@ void FrameBufferView::fillImage(QImage& image, const PR::UI::ImagePipeline& mapp
 
 	// Update output buffer
 	const auto& frame_output = mFrame->data().getInternalChannel_Spectral(AOV_Output);
-	const auto& frame_weight = mFrame->data().getInternalChannel_1D(AOV_PixelWeight);
 
 #ifndef PR_DIAG_NO_TBB
 	tbb::parallel_for(tbb::blocked_range<int>(0, mWeightedBuffer->size().area()), [&](const tbb::blocked_range<int>& r) {
@@ -90,7 +89,7 @@ void FrameBufferView::fillImage(QImage& image, const PR::UI::ImagePipeline& mapp
 	PR_OPT_LOOP
 #endif
 		for (Size1i i = si; i < ei; ++i) {
-			const float w = frame_weight->getFragment(i, 0);
+			const float w = 1;//frame_weight->getFragment(i, 0);
 			if (w > PR_EPSILON) {
 				const float iw = 1 / w;
 				PR_UNROLL_LOOP(3)

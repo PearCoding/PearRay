@@ -25,7 +25,6 @@ private:
 	FrameOutputDevice* mFrameOutputDevice;
 	uint64 mUpdateCycleSeconds;
 	bool mDisplayVariance;
-	bool mDisplayWeight;
 	bool mDisplayFeedback;
 
 	time_point_t mLastUpdate;

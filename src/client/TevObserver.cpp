@@ -54,7 +54,6 @@ TevObserver::TevObserver()
 	, mFrameOutputDevice(nullptr)
 	, mUpdateCycleSeconds(0)
 	, mDisplayVariance(false)
-	, mDisplayWeight(false)
 	, mDisplayFeedback(false)
 {
 }
@@ -72,7 +71,6 @@ void TevObserver::begin(RenderContext* renderContext, FrameOutputDevice* outputD
 	mConnection			= std::make_unique<TevConnection>(settings.TevIp, settings.TevPort);
 	mUpdateCycleSeconds = settings.TevUpdate;
 	mDisplayVariance	= settings.TevVariance;
-	mDisplayWeight		= settings.TevWeight;
 	mDisplayFeedback	= settings.TevFeedback;
 	mLastUpdate			= std::chrono::high_resolution_clock::now();
 
@@ -138,15 +136,6 @@ void TevObserver::calculateProtocolCache()
 			size_t channel_name_size = strlen(CHANNEL_NAMES_VAR[i]) + 1;
 			full_channel_name_size += channel_name_size;
 			mConnection->ChannelInfo.push_back(TevChannelInfo{ CHANNEL_NAMES_VAR[i], UPDATE_MESSAGE_HEADER_SIZE + channel_name_size });
-			mConnection->MaxUpdateMessageSize = std::max(mConnection->MaxUpdateMessageSize, UPDATE_MESSAGE_HEADER_SIZE + channel_name_size);
-		}
-	}
-
-	if (mDisplayWeight) {
-		for (size_t i = 0; i < MAX_CHANNEL_COUNT_F; i++) {
-			size_t channel_name_size = strlen(CHANNEL_NAMES_WEI[i]) + 1;
-			full_channel_name_size += channel_name_size;
-			mConnection->ChannelInfo.push_back(TevChannelInfo{ CHANNEL_NAMES_WEI[i], UPDATE_MESSAGE_HEADER_SIZE + channel_name_size });
 			mConnection->MaxUpdateMessageSize = std::max(mConnection->MaxUpdateMessageSize, UPDATE_MESSAGE_HEADER_SIZE + channel_name_size);
 		}
 	}
@@ -221,17 +210,17 @@ void TevObserver::closeImageProtocol()
 // float*W*H	Data
 void TevObserver::updateImageProtocol()
 {
-	const auto channel		 = mFrameOutputDevice->data().getInternalChannel_Spectral(AOV_Output);
-	const auto blend_channel = mFrameOutputDevice->data().getInternalChannel_1D(AOV_PixelWeight);
-	const auto var_channel	 = mFrameOutputDevice->data().getInternalChannel_Spectral(AOV_OnlineVariance);
-	const auto fdb_channel	 = mFrameOutputDevice->data().getInternalChannel_Counter(AOV_Feedback);
+	const auto channel	   = mFrameOutputDevice->data().getInternalChannel_Spectral(AOV_Output);
+	const auto var_channel = mFrameOutputDevice->data().getInternalChannel_Spectral(AOV_OnlineVariance);
+	const auto fdb_channel = mFrameOutputDevice->data().getInternalChannel_Counter(AOV_Feedback);
 
 	PR_ASSERT(channel->channels() == 3, "Expect spectral channel to have 3 channels");
 
 	const size_t tx = channel->width() / UPDATE_TILE_SIZE + 1;
 	const size_t ty = channel->height() / UPDATE_TILE_SIZE + 1;
 
-	const bool monotonic = mRenderContext->settings().spectralMono;
+	const bool monotonic	= mRenderContext->settings().spectralMono;
+	const float blendFactor = 1.0f / mRenderContext->currentIteration().Iteration;
 
 	// TODO: Better way?
 	for (size_t i = 0; i < ty; ++i) {
@@ -257,9 +246,6 @@ void TevObserver::updateImageProtocol()
 					for (size_t ix = 0; ix < w; ++ix) {
 						const auto p = Point2i(sx + ix, sy + iy);
 
-						const float blendWeight = blend_channel->getFragment(p, 0);
-						const float blendFactor = blendWeight <= PR_EPSILON ? 1.0f : 1.0f / blendWeight;
-
 						const float x = channel->getFragment(p, 0);
 						const float y = channel->getFragment(p, 1);
 						const float z = channel->getFragment(p, 2);
@@ -276,8 +262,6 @@ void TevObserver::updateImageProtocol()
 				for (size_t iy = 0; iy < h; ++iy) {
 					for (size_t ix = 0; ix < w; ++ix) {
 						const auto p			= Point2i(sx + ix, sy + iy);
-						const float blendWeight = blend_channel->getFragment(p, 0);
-						const float blendFactor = blendWeight <= PR_EPSILON ? 1.0f : 1.0f / blendWeight;
 						for (size_t k = 0; k < 3; ++k)
 							mConnection->Data[UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * k + iy * w + ix] = blendFactor * channel->getFragment(p, k);
 					}
@@ -290,26 +274,11 @@ void TevObserver::updateImageProtocol()
 				for (size_t iy = 0; iy < h; ++iy) {
 					for (size_t ix = 0; ix < w; ++ix) {
 						const auto p			= Point2i(sx + ix, sy + iy);
-						const float blendWeight = blend_channel->getFragment(p, 0);
-						const float blendFactor = blendWeight <= PR_EPSILON ? 1.0f : 1.0f / blendWeight;
 						for (size_t k = 0; k < 3; ++k)
 							mConnection->Data[UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * (k + delta) + iy * w + ix] = blendFactor * var_channel->getFragment(p, k);
 					}
 				}
 				delta += 3;
-			}
-
-			if (mDisplayWeight) {
-				PR_OPT_LOOP
-				for (size_t iy = 0; iy < h; ++iy) {
-					for (size_t ix = 0; ix < w; ++ix) {
-						const auto p			= Point2i(sx + ix, sy + iy);
-						const float blendWeight = blend_channel->getFragment(p, 0);
-
-						mConnection->Data[UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * (0 + delta) + iy * w + ix] = blendWeight;
-					}
-				}
-				delta += 1;
 			}
 
 			if (mDisplayFeedback) {

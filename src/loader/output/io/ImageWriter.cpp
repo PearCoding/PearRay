@@ -58,8 +58,9 @@ bool ImageWriter::save(FrameOutputDevice* outputDevice,
 	if (!mRenderer)
 		return false;
 
-	const Size2i viewSize = mRenderer->viewSize();
-	const Point2i viewOff = mRenderer->viewOffset();
+	const Size2i viewSize  = mRenderer->viewSize();
+	const Point2i viewOff  = mRenderer->viewOffset();
+	const size_t iteration = mRenderer->currentIteration().Iteration;
 
 	const size_t channelCount = chSpec.size() * 3 + ch1d.size() + chcounter.size() + ch3d.size() * 3;
 	if (channelCount == 0)
@@ -137,8 +138,7 @@ bool ImageWriter::save(FrameOutputDevice* outputDevice,
 			const Point2i p = Point2i(x, y);
 
 			// Blendweights are only used for spectral AOVs
-			const float blendWeight = data.getInternalChannel_1D(AOV_PixelWeight)->getFragment(p, 0);
-			const float blendFactor = blendWeight <= PR_EPSILON ? 1.0f : 1.0f / blendWeight;
+			const float blendFactor = 1.0f / iteration;
 
 			// Spectral
 			for (const IM_ChannelSettingSpec& sett : chSpec) {

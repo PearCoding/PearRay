@@ -13,10 +13,12 @@ using CIETriplet = Eigen::Array<float, 3, 1>;
 constexpr int PR_CIE_SAMPLE_COUNT		= 95;
 constexpr float PR_CIE_WAVELENGTH_START = 360;
 constexpr float PR_CIE_WAVELENGTH_END	= 830;
+constexpr float PR_CIE_Y_NORM			= 21.37140785047f;
 #else
 constexpr int PR_CIE_SAMPLE_COUNT		= 441;
 constexpr float PR_CIE_WAVELENGTH_START = 390;
 constexpr float PR_CIE_WAVELENGTH_END	= 830;
+constexpr float PR_CIE_Y_NORM			= 113.042314572337f;
 #endif
 
 constexpr float PR_CIE_WAVELENGTH_RANGE = PR_CIE_WAVELENGTH_END - PR_CIE_WAVELENGTH_START;
@@ -43,19 +45,19 @@ public:
 	static inline float eval_x(float wavelength)
 	{
 		static const EquidistantSpectrumView CIE_X(NM_TO_X, PR_CIE_SAMPLE_COUNT, PR_CIE_WAVELENGTH_START, PR_CIE_WAVELENGTH_END);
-		return CIE_X.lookup(wavelength);
+		return CIE_X.lookup(wavelength) / PR_CIE_Y_NORM * PR_CIE_WAVELENGTH_RANGE;
 	}
 
 	static inline float eval_y(float wavelength)
 	{
 		static const EquidistantSpectrumView CIE_Y(NM_TO_Y, PR_CIE_SAMPLE_COUNT, PR_CIE_WAVELENGTH_START, PR_CIE_WAVELENGTH_END);
-		return CIE_Y.lookup(wavelength);
+		return CIE_Y.lookup(wavelength) / PR_CIE_Y_NORM * PR_CIE_WAVELENGTH_RANGE;
 	}
 
 	static inline float eval_z(float wavelength)
 	{
 		static const EquidistantSpectrumView CIE_Z(NM_TO_Z, PR_CIE_SAMPLE_COUNT, PR_CIE_WAVELENGTH_START, PR_CIE_WAVELENGTH_END);
-		return CIE_Z.lookup(wavelength);
+		return CIE_Z.lookup(wavelength) / PR_CIE_Y_NORM * PR_CIE_WAVELENGTH_RANGE;
 	}
 
 	//////////////// CIE

@@ -61,7 +61,7 @@ void RenderThread::main()
 			break;
 		}
 		queue->commitAndFlush(localSystem.get());
-		outputSystem->mergeLocal(mTile->start(), localSystem);
+		outputSystem->mergeLocal(mTile->start(), localSystem, mRenderer->currentIteration().Iteration + 1);
 
 		mStatistics.addTileCount();
 		mTile->release();

@@ -34,7 +34,7 @@ struct PR_LIB_CORE SpectralSampleInput {
 };
 
 struct PR_LIB_CORE SpectralSampleOutput {
-	SpectralBlob BlendWeight = SpectralBlob::Ones(); // Only valid for Pixel samples
+	float BlendWeight = 1; // Only valid for Pixel samples
 	SpectralBlob WavelengthNM;
 	SpectralBlob PDF;
 };

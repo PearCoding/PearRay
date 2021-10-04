@@ -125,6 +125,8 @@ public:
 	{
 		return t >= MinT && t <= MaxT;
 	}
+
+	inline bool isMonochrome() const { return (Flags & RayFlag::Monochrome); }
 };
 
 } // namespace PR
