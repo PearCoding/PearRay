@@ -119,7 +119,8 @@ public:
 	std::optional<float> computeAverageCameraSceneFootprint() const;
 
 protected:
-	RenderTile* getNextTile();
+	/// Return next available tile for the given thread
+	RenderTile* getNextTile(const RenderThread* thread);
 
 private:
 	void requestInternalStop();

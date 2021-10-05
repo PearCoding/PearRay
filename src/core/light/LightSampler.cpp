@@ -32,7 +32,7 @@ LightSampler::LightSampler(Scene* scene, const SpectralRange& cameraSpectralRang
 	if (light_count == 0)
 		return;
 
-	const SpectralBlob test_wvl_distr(0.2f, 0.4f, 0.6f, 0.8f);
+	const SpectralBlob test_wvl_distr = SpectralBlob::LinSpaced(0.05f, 0.95f);
 
 	// Setup intensities
 	std::vector<float> intensities;

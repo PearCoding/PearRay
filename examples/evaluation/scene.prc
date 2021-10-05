@@ -2,7 +2,7 @@
   (integrator
     :type 'direct'
     :max_ray_depth 6
-    :direct false
+    ;:direct false
   )
   (sampler
     :slot 'aa'

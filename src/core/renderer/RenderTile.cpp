@@ -13,6 +13,7 @@ constexpr size_t SLOT_RND_PRIME = 4201321; // Just a random prime number to not 
 RenderTile::RenderTile(const Point2i& start, const Point2i& end,
 					   RenderContext* context, const RenderTileContext& tileContext)
 	: mStatus(static_cast<LockFreeAtomic::value_type>(RenderTileStatus::Idle))
+	, mCurrentThread(nullptr)
 	, mStart(start)
 	, mEnd(end)
 	, mViewSize(Size2i::fromPoints(start, end))
@@ -110,11 +111,11 @@ std::optional<CameraRay> RenderTile::constructCameraRay(const Point2i& p, const 
 	if (PR_LIKELY(ray.has_value())) {
 		if (PR_LIKELY(ray.value().BlendWeight <= 0.0f))
 			ray.value().BlendWeight = cameraSample.BlendWeight;
-		if (PR_LIKELY(ray.value().Importance.isZero()))
+		if (PR_LIKELY((ray.value().Importance <= 0.0f).any()))
 			ray.value().Importance = cameraSample.Importance;
-		if (PR_LIKELY(ray.value().WavelengthNM.isZero()))
+		if (PR_LIKELY((ray.value().WavelengthNM <= 0.0f).any()))
 			ray.value().WavelengthNM = cameraSample.WavelengthNM;
-		if (PR_LIKELY(ray.value().WavelengthPDF.isZero()))
+		if (PR_LIKELY((ray.value().WavelengthPDF <= 0.0f).any()))
 			ray.value().WavelengthPDF = cameraSample.WavelengthPDF;
 		if (PR_LIKELY(ray.value().Time <= 0.0f))
 			ray.value().Time = cameraSample.Time;
@@ -130,7 +131,7 @@ std::optional<CameraRay> RenderTile::constructCameraRay(const Point2i& p, const 
 	return ray;
 }
 
-bool RenderTile::accuire()
+bool RenderTile::accuire(const RenderThread* thread)
 {
 	if (isFinished())
 		return false;
@@ -139,7 +140,8 @@ bool RenderTile::accuire()
 	const bool res						= mStatus.compare_exchange_strong(expected, static_cast<LockFreeAtomic::value_type>(RenderTileStatus::Working));
 
 	if (res) {
-		mWorkStart = std::chrono::high_resolution_clock::now();
+		mCurrentThread = thread;
+		mWorkStart	   = std::chrono::high_resolution_clock::now();
 		return true;
 	} else {
 		return false;
@@ -152,8 +154,9 @@ void RenderTile::release()
 	const bool res						= mStatus.compare_exchange_strong(expected, static_cast<LockFreeAtomic::value_type>(RenderTileStatus::Done));
 
 	if (res) {
-		auto end	  = std::chrono::high_resolution_clock::now();
-		mLastWorkTime = std::chrono::duration_cast<std::chrono::microseconds>(end - mWorkStart);
+		auto end	   = std::chrono::high_resolution_clock::now();
+		mLastWorkTime  = std::chrono::duration_cast<std::chrono::microseconds>(end - mWorkStart);
+		mCurrentThread = nullptr;
 	}
 }
 

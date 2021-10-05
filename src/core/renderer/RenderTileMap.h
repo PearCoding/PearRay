@@ -10,6 +10,7 @@ namespace PR {
 
 class RenderContext;
 class RenderTile;
+class RenderThread;
 class PR_LIB_CORE RenderTileMap {
 public:
 	RenderTileMap();
@@ -23,7 +24,7 @@ public:
 	/// Split tiles to minimize workoverload on single tiles
 	void optimize();
 
-	RenderTile* getNextTile();
+	RenderTile* getNextTile(const RenderThread* thread);
 	bool allFinished() const;
 	void reset();
 	/// Unmark all tiles to prepare for next linear iteration

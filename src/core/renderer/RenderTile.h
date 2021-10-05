@@ -30,6 +30,7 @@ class ICamera;
 struct CameraRay;
 class RenderContext;
 struct RenderIteration;
+class RenderThread;
 class ISampler;
 class ISpectralMapper;
 
@@ -65,7 +66,7 @@ public:
 
 	inline RenderTileStatus status() const { return (RenderTileStatus)mStatus.load(); }
 	inline bool isWorking() const { return mStatus == static_cast<LockFreeAtomic::value_type>(RenderTileStatus::Working); }
-	bool accuire();
+	bool accuire(const RenderThread* thread);
 	void release();
 	inline void makeIdle() { mStatus = static_cast<LockFreeAtomic::value_type>(RenderTileStatus::Idle); }
 
@@ -97,6 +98,7 @@ public:
 	inline RenderStatistics& statistics() { return mContext.Statistics; }
 
 	inline const RenderContext* context() const { return mRenderContext; }
+	inline const RenderThread* currentThread() const { return mCurrentThread; }
 
 	inline std::chrono::microseconds lastWorkTime() const { return mLastWorkTime; }
 
@@ -115,6 +117,7 @@ private:
 	using LockFreeAtomic = std::atomic<int>;
 #endif
 	LockFreeAtomic mStatus;
+	const RenderThread* mCurrentThread;
 
 	const Point2i mStart;
 	const Point2i mEnd;

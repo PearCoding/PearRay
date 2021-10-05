@@ -174,8 +174,8 @@ public:
 		const float pdf_s = sq.S > PR_EPSILON ? 1 / sq.S : 0.0f;
 		const Vector3f L  = (p - info.Origin);
 		const float dist2 = L.squaredNorm();
-		const float ndotv = L.normalized().dot(normalMatrix() * mPlane.normal());
-		const float pdf_a = IS::toArea(pdf_s, dist2, std::abs(ndotv));
+		const float ndotv = std::abs(L.normalized().dot(normalMatrix() * mPlane.normal()));
+		const float pdf_a = ndotv <= PR_EPSILON ? 0 : IS::toArea(pdf_s, dist2, ndotv);
 
 		PR_ASSERT(pdf_a >= 0.0, "PDF has to be positive");
 		return EntitySamplePoint(p, mPlane.project(invTransform() * p), 0, pdf_a);
@@ -187,8 +187,8 @@ public:
 		const float pdf_s = s > PR_EPSILON ? 1 / s : 0.0f;
 		const Vector3f L  = (p - info.Origin);
 		const float dist2 = L.squaredNorm();
-		const float ndotv = L.normalized().dot(normalMatrix() * mPlane.normal());
-		const float pdf_a = IS::toArea(pdf_s, dist2, std::abs(ndotv));
+		const float ndotv = std::abs(L.normalized().dot(normalMatrix() * mPlane.normal()));
+		const float pdf_a = ndotv <= PR_EPSILON ? 0 : IS::toArea(pdf_s, dist2, std::abs(ndotv));
 
 		PR_ASSERT(pdf_a >= 0.0, "PDF has to be positive");
 		return pdf_a;

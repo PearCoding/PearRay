@@ -144,6 +144,30 @@
             ]
         },
         {
+            "name": "cbox",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${command:cmake.buildDirectory}/bin/pearray",
+            "args": [
+                "${workspaceFolder}/examples/evaluation/scene.prc",
+                "-v",
+                "-p"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "targetArchitecture": "x64",
+            "setupCommands": [
+                {
+                    "description": "Automatische Strukturierung und Einrückung für \"gdb\" aktivieren",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
             "name": "SpectralTest",
             "type": "cppdbg",
             "request": "launch",
@@ -528,6 +552,29 @@
                 "${workspaceFolder}/examples/shaded_sphere.prc",
                 "-v",
                 "-p"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "targetArchitecture": "x64",
+            "setupCommands": [
+                {
+                    "description": "Automatische Strukturierung und Einrückung für \"gdb\" aktivieren",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "PlaneRadiosity",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${command:cmake.buildDirectory}/bin/pearray",
+            "args": [
+                "${workspaceFolder}/examples/plane_radiosity.prc",
+                "-v"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build",

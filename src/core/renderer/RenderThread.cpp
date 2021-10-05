@@ -46,9 +46,9 @@ void RenderThread::main()
 	auto queue		  = std::make_shared<LocalOutputQueue>(outputSystem.get(), mPipeline.get(), QUEUE_SIZE, QUEUE_THRESHOLD);
 
 	integrator->onStart();
-	for (mTile = mRenderer->getNextTile();
+	for (mTile = mRenderer->getNextTile(this);
 		 mTile && !shouldStop();
-		 mTile = mRenderer->getNextTile()) {
+		 mTile = mRenderer->getNextTile(this)) {
 
 		auto localSystem = outputSystem->createLocal(mTile, mTile->viewSize());
 		RenderTileSession session(mThreadIndex, mTile, pipeline(), queue, localSystem);

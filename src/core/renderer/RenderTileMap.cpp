@@ -121,13 +121,13 @@ void RenderTileMap::init(RenderContext* context, uint32 rtx, uint32 rty, TileMod
 	}
 }
 
-RenderTile* RenderTileMap::getNextTile()
+RenderTile* RenderTileMap::getNextTile(const RenderThread* thread)
 {
 	PR_PROFILE_THIS;
 
 	Mutex::scoped_lock lock(mMutex, false);
 	for (size_t i = 0; i < mTiles.size(); ++i)
-		if (mTiles[i]->accuire())
+		if (mTiles[i]->accuire(thread))
 			return mTiles[i].get();
 
 	return nullptr;

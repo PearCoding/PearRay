@@ -9,7 +9,7 @@ inline Distribution1D::Distribution1D(size_t size)
 }
 
 template <typename Func>
-inline void Distribution1D::generate(Func func, float* integral)
+inline void Distribution1D::generate(Func func, float* sum)
 {
 	mCDF[0]		   = 0.0f;
 	const size_t n = numberOfValues();
@@ -17,8 +17,8 @@ inline void Distribution1D::generate(Func func, float* integral)
 		mCDF[i + 1] = mCDF[i] + func(i);
 
 	const float intr = mCDF[n];
-	if (integral)
-		*integral = intr;
+	if (sum)
+		*sum = intr;
 
 	if (intr <= PR_EPSILON) {
 		for (size_t i = 1; i < n + 1; ++i)
@@ -31,7 +31,7 @@ inline void Distribution1D::generate(Func func, float* integral)
 	mCDF[n] = 1.0f;
 }
 
-inline void Distribution1D::reducePDFBy(float v, float* integral)
+inline void Distribution1D::reducePDFBy(float v, float* sum)
 {
 	// Extract
 	std::vector<float> pdfs;
@@ -44,15 +44,15 @@ inline void Distribution1D::reducePDFBy(float v, float* integral)
 		p = std::max(0.0f, p - v);
 
 	// Rebuild
-	generate([&](size_t i) { return pdfs[i]; }, integral);
+	generate([&](size_t i) { return pdfs[i]; }, sum);
 }
 
-inline void Distribution1D::increasePDFBy(float v, float* integral)
+inline void Distribution1D::increasePDFBy(float v, float* sum)
 {
-	reducePDFBy(-v, integral);
+	reducePDFBy(-v, sum);
 }
 
-inline void Distribution1D::clampPDFBy(float v, float* integral)
+inline void Distribution1D::clampPDFBy(float v, float* sum)
 {
 	// Extract
 	std::vector<float> pdfs;
@@ -65,7 +65,7 @@ inline void Distribution1D::clampPDFBy(float v, float* integral)
 		p = std::max(v, p);
 
 	// Rebuild
-	generate([&](size_t i) { return pdfs[i]; }, integral);
+	generate([&](size_t i) { return pdfs[i]; }, sum);
 }
 
 inline float Distribution1D::sampleContinuous(float u, float& pdf, size_t* offset) const
@@ -81,6 +81,7 @@ inline float Distribution1D::sampleContinuous(float u, float& pdf, const float* 
 	if (offset)
 		*offset = off;
 
+	pdf *= (size - 1);
 	return (off + rem) / (size - 1);
 }
 
@@ -94,7 +95,7 @@ inline float Distribution1D::continuousPdf(float x, const float* cdf, size_t siz
 	const size_t off = std::min<size_t>(size - 2, x * (size - 1));
 	if (offset)
 		*offset = off;
-	return discretePdf(off, cdf, size);
+	return discretePdf(off, cdf, size) * (size - 1);
 }
 
 inline float Distribution1D::evalContinuous(float u) const

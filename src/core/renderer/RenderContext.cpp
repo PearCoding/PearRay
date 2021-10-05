@@ -231,7 +231,7 @@ void RenderContext::stop()
 		thread->join();
 }
 
-RenderTile* RenderContext::getNextTile()
+RenderTile* RenderContext::getNextTile(const RenderThread* thread)
 {
 	PR_PROFILE_THIS;
 
@@ -241,7 +241,7 @@ RenderTile* RenderContext::getNextTile()
 
 	// Try till we find a tile to render
 	while (tile == nullptr) {
-		tile = mTileMap->getNextTile();
+		tile = mTileMap->getNextTile(thread);
 		if (tile == nullptr) { // If no tile on this iteration was found sync all threads
 			std::unique_lock<std::mutex> lk(mIterationMutex);
 			++mThreadsWaitingForIteration;

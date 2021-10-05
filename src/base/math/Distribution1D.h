@@ -59,16 +59,17 @@ public:
 	inline explicit Distribution1D(size_t numberOfValues);
 	inline size_t numberOfValues() const { return mCDF.size() - 1; }
 	inline size_t numberOfEntries() const { return mCDF.size(); }
+	inline float operator[](size_t i) const { return mCDF[i]; }
 
 	template <typename Func>
-	inline void generate(Func func, float* integral = nullptr);
+	inline void generate(Func func, float* sum = nullptr);
 
 	/// Reduce pdf by v. Negative values will be clamped to zero. Everything will be normalized
-	inline void reducePDFBy(float v, float* integral = nullptr);
+	inline void reducePDFBy(float v, float* sum = nullptr);
 	/// Increase pdf by v. Everything will be normalized
-	inline void increasePDFBy(float v, float* integral = nullptr);
+	inline void increasePDFBy(float v, float* sum = nullptr);
 	/// Clamp pdf on the lower side by v. Everything will be normalized
-	inline void clampPDFBy(float v, float* integral = nullptr);
+	inline void clampPDFBy(float v, float* sum = nullptr);
 
 	inline float sampleContinuous(float u, float& pdf, size_t* offset = nullptr) const;
 	inline float continuousPdf(float x, size_t* offset = nullptr) const;

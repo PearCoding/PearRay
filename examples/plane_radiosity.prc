@@ -1,14 +1,16 @@
 (scene
 	:name 'radiosity_test'
-	:render_width 1000
-	:render_height 1000
-	:spectral_domain 520
+	:render_width 200
+	:render_height 200
+	;:spectral_domain 520
 
 	(integrator 
 	  :type 'direct'
 	  :max_ray_depth 1
-	  :light_sample_count 1
 	)
+  (spectral_mapper
+    :type 'random'
+  )
 	(sampler 
 	  :slot 'aa'
 	  :type 'hammersley'
@@ -22,27 +24,32 @@
 	; Outputs
 	(output
 		:name 'image'
-		(channel :type 'color' :color 'xyz' )
+		(channel :type 'color' :color 'rgb' )
 		(channel :type 'var' )
 	)
 	; Camera
 	(camera
 		:name 'Camera'
-		:type 'orthographic'
+		:type 'ortho'
 
-		:sensor_width 1
-		:sensor_height 1
-        :local_direction [0, 0,-1]
+		:width 1
+		:height 1
+        :local_direction [0, 0, -1]
         :local_up [0, 1, 0]
         :local_right [1, 0, 0]
         :position [0, 0, 1]
 	)
 
     ; Light Area
+    (material
+        :name 'Black'
+        :type 'diffuse'
+        :albedo 0
+    )
     (emission
         :name 'Area_em'
         :type 'diffuse'
-        :radiance (illuminant "E")
+        :radiance (smul (illuminant "D65") 10)
     )
     (entity
         :name 'Area'
@@ -51,6 +58,7 @@
         :width 1
         :height -1
         :emission 'Area_em'
+        :material 'Black'
         :position [0, 0, 2]
     )
 
@@ -65,6 +73,7 @@
         :type 'plane'
         :centering true
         :material 'Diffuse'
+        :position [0, 0, 0]
     )
 )
 

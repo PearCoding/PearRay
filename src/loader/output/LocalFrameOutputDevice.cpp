@@ -118,7 +118,7 @@ void LocalFrameOutputDevice::commitSpectrals2(StreamPipeline* pipeline, const Ou
 		const bool isMono			  = IsMono || (entry.Flags & OutputSpectralEntryFlag::Mono);
 		const SpectralBlob heroFactor = isMono ? SpectralBlobUtils::HeroOnly() : SpectralBlob::Ones();
 		const RayGroup& grp			  = pipeline->getRayGroup(entry.RayGroupID);
-		const SpectralBlob contrib	  = heroFactor * entry.Importance * entry.Radiance * entry.MIS;
+		const SpectralBlob contrib	  = heroFactor * entry.contribution();
 
 		const SpectralBlob wvls = grp.WavelengthNM;
 

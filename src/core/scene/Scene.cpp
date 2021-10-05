@@ -272,7 +272,7 @@ bool Scene::traceShadowRay(const Ray& ray, float distance) const
 	RTCRay rray;
 	assignRay(ray, rray);
 
-	rray.tfar = distance - 0.0001f;
+	rray.tfar = distance - 0.001f; // FIXME: What is the perfect value for that??
 
 	rtcOccluded1(mInternal->Scene, &ctx, &rray);
 

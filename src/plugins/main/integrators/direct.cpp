@@ -46,12 +46,12 @@ template <bool HasInfLights, VCM::MISMode MISMode, bool EmissiveScatter>
 class IntDirectInstance : public IIntegratorInstance {
 private:
 	struct TraversalContext {
-		SpectralBlob Throughput;
-		bool LastWasDelta;
-		bool LastWasFlourescent;
-		SpectralBlob LastPDF_S;
-		Vector3f LastPosition; // Used in NEE
-		Vector3f LastNormal;
+		SpectralBlob Throughput = SpectralBlob::Ones();
+		bool LastWasDelta		= true;
+		bool LastWasFlourescent = false;
+		SpectralBlob LastPDF_S	= SpectralBlob::Ones();
+		Vector3f LastPosition	= Vector3f::Zero(); // Used in NEE
+		Vector3f LastNormal		= Vector3f::Zero();
 	};
 
 public:
@@ -107,8 +107,8 @@ public:
 		PR_PROFILE_THIS;
 
 		// Initial camera vertex
-		TraversalContext current = TraversalContext{ SpectralBlob::Ones(), true, false, SpectralBlob::Ones(), Vector3f::Zero(), Vector3f::Zero() };
-
+		TraversalContext current;
+		
 		mCameraWalker.traverse(
 			session, initial_hit, entity, material,
 			[&](const IntersectionPoint& ip, IEntity* entity2, IMaterial* material2) -> std::optional<Ray> {
@@ -238,10 +238,10 @@ private:
 			return;
 
 		// Calculate geometry stuff
-		const float sqrD	  = (lsout.LightPosition - cameraIP.P).squaredNorm();
-		const Vector3f L	  = lsout.Outgoing;
-		const float cosC	  = std::abs(L.dot(cameraIP.Surface.N));
-		const float cosL	  = std::abs(lsout.CosLight);
+		const float sqrD = (lsout.LightPosition - cameraIP.P).squaredNorm();
+		const Vector3f L = lsout.Outgoing;
+		const float cosC = std::abs(L.dot(cameraIP.Surface.N));
+		const float cosL = std::abs(lsout.CosLight);
 		//const bool front	  = lsout.CosLight >= 0.0f;
 		const bool isFeasible = cosC * cosL > GEOMETRY_EPS && sqrD > DISTANCE_EPS;
 
@@ -273,7 +273,7 @@ private:
 
 		// Check if a check between point and light is necessary
 		const SpectralBlob connectionW = lsout.Radiance * mout.Weight;
-		const bool worthACheck		   = /*front &&*/ !connectionW.isZero();
+		const bool worthACheck		   = /*front &&*/ !connectionW.isZero(PR_EPSILON);
 
 		// Evaluate direct pdf
 		float lightPdfS = 0;

@@ -96,7 +96,7 @@ void Light::eval(const LightEvalInput& in, LightEvalOutput& out, const RenderTil
 
 		const float entPDF_A = ent->sampleParameterPointPDF();
 		out.Radiance		 = eeout.Radiance;
-		out.PDF.Value		 = entPDF_A * Sampling::cos_hemi_pdf(in.Point->Surface.NdotV);
+		out.PDF.Value		 = entPDF_A * Sampling::cos_hemi_pdf(std::abs(in.Point->Surface.NdotV));
 		out.PDF.IsArea		 = true;
 	} else { // No point information, giveup
 		out.Radiance   = SpectralBlob::Zero();
