@@ -1,0 +1,1 @@
+This is the same scene as in Mitsuba2 adapted to PearRay for the purpose of evaluating and comparing both implementations. The cbox.exr was rendered with Mitsuba2.
