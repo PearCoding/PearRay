@@ -609,7 +609,7 @@ private:
 		}
 
 		// Splat
-		tctx.Session.pushSpectralFragment(mis, current.Throughput, contrib,
+		tctx.Session.pushSpectralFragment(SpectralBlob(mis), current.Throughput, contrib,
 										  cameraIP.Ray, tctx.ThreadContext.TmpPath);
 	}
 
@@ -711,7 +711,7 @@ private:
 			tctx.ThreadContext.TmpPath.addToken(tctx.ThreadContext.LightPath.token(lightPathLength - 1 - s2));
 
 		// Splat
-		tctx.Session.pushSpectralFragment(mis, current.Throughput, contrib, cameraIP.Ray, tctx.ThreadContext.TmpPath);
+		tctx.Session.pushSpectralFragment(SpectralBlob(mis), current.Throughput, contrib, cameraIP.Ray, tctx.ThreadContext.TmpPath);
 	}
 
 	void handleMerging(IterationContext& tctx, const IntersectionPoint& cameraIP, const IMaterial* cameraMaterial, CameraTraversalContext& current) const
@@ -762,7 +762,7 @@ private:
 
 			const float mis = 1 / (1 + misLight + misCamera);
 
-			tctx.Session.pushSpectralFragment(mis, current.Throughput, lightW * cameraW, cameraIP.Ray, tctx.ThreadContext.CameraPath);
+			tctx.Session.pushSpectralFragment(SpectralBlob(mis), current.Throughput, lightW * cameraW, cameraIP.Ray, tctx.ThreadContext.CameraPath);
 		};
 
 		// Start gathering
@@ -804,7 +804,7 @@ private:
 
 		// If directly visible from camera, do not calculate mis weights
 		if (cameraPathLength == 1) {
-			tctx.Session.pushSpectralFragment(1, current.Throughput, radiance, cameraIP.Ray, tctx.ThreadContext.CameraPath);
+			tctx.Session.pushSpectralFragment(SpectralBlob::Ones(), current.Throughput, radiance, cameraIP.Ray, tctx.ThreadContext.CameraPath);
 			return;
 		}
 
@@ -826,7 +826,7 @@ private:
 		PR_ASSERT(mis <= 1.0f, "MIS must be between 0 and 1");
 
 		// Splat
-		tctx.Session.pushSpectralFragment(mis, current.Throughput, radiance, cameraIP.Ray, tctx.ThreadContext.CameraPath);
+		tctx.Session.pushSpectralFragment(SpectralBlob(mis), current.Throughput, radiance, cameraIP.Ray, tctx.ThreadContext.CameraPath);
 	}
 
 	// Handle case where camera ray hits nothing (inf light contribution)
@@ -875,7 +875,7 @@ private:
 
 		// If directly visible from camera, do not calculate mis weights
 		if (cameraPathLength == 1) {
-			tctx.Session.pushSpectralFragment(1, current.Throughput, radiance, ray, tctx.ThreadContext.CameraPath);
+			tctx.Session.pushSpectralFragment(SpectralBlob::Ones(), current.Throughput, radiance, ray, tctx.ThreadContext.CameraPath);
 			return;
 		}
 
@@ -888,7 +888,7 @@ private:
 		PR_ASSERT(mis <= 1.0f, "MIS must be between 0 and 1");
 
 		// Splat
-		tctx.Session.pushSpectralFragment(mis, current.Throughput, radiance, ray, tctx.ThreadContext.CameraPath);
+		tctx.Session.pushSpectralFragment(SpectralBlob(mis), current.Throughput, radiance, ray, tctx.ThreadContext.CameraPath);
 	}
 
 	inline std::pair<std::vector<PathVertex>::const_iterator, std::vector<PathVertex>::const_iterator>

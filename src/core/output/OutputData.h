@@ -12,7 +12,7 @@ PR_MAKE_FLAGS(OutputSpectralEntryFlag, OutputSpectralEntryFlags)
 
 struct PR_LIB_CORE OutputSpectralEntry {
 	Point2i Position;
-	float MIS;
+	SpectralBlob MIS;
 	SpectralBlob Importance;
 	SpectralBlob Radiance;
 	SpectralBlob Wavelengths;

@@ -114,11 +114,11 @@ void LocalFrameOutputDevice::commitSpectrals2(StreamPipeline* pipeline, const Ou
 	for (size_t i = 0; i < entry_count; ++i) {
 		const auto& entry = entries[i];
 
-		const Point2i rp		   = entry.Position + filterSize;
-		const bool isMono		   = IsMono || (entry.Flags & OutputSpectralEntryFlag::Mono);
-		const RayGroup& grp		   = pipeline->getRayGroup(entry.RayGroupID);
-		const SpectralBlob contrib = entry.contribution();
-		const float misSum		   = entry.MIS * (isMono ? 1 : PR_SPECTRAL_BLOB_SIZE); // TODO
+		const Point2i rp			  = entry.Position + filterSize;
+		const bool isMono			  = IsMono || (entry.Flags & OutputSpectralEntryFlag::Mono);
+		const SpectralBlob heroFactor = isMono ? SpectralBlobUtils::HeroOnly() : SpectralBlob::Ones();
+		const RayGroup& grp			  = pipeline->getRayGroup(entry.RayGroupID);
+		const SpectralBlob contrib	  = heroFactor * entry.Importance * entry.Radiance * entry.MIS;
 
 		const SpectralBlob wvls = grp.WavelengthNM;
 

@@ -242,9 +242,8 @@ private:
 		const Vector3f L	  = lsout.Outgoing;
 		const float cosC	  = std::abs(L.dot(cameraIP.Surface.N));
 		const float cosL	  = std::abs(lsout.CosLight);
-		const bool front	  = lsout.CosLight >= 0.0f;
-		const float Geometry  = cosC * cosL / sqrD;
-		const bool isFeasible = /*Geometry > GEOMETRY_EPS &&*/ sqrD > DISTANCE_EPS;
+		//const bool front	  = lsout.CosLight >= 0.0f;
+		const bool isFeasible = cosC * cosL > GEOMETRY_EPS && sqrD > DISTANCE_EPS;
 
 		if (!isFeasible) // MIS is zero
 			return;
@@ -274,7 +273,7 @@ private:
 
 		// Check if a check between point and light is necessary
 		const SpectralBlob connectionW = lsout.Radiance * mout.Weight;
-		const bool worthACheck		   = front && !connectionW.isZero();
+		const bool worthACheck		   = /*front &&*/ !connectionW.isZero();
 
 		// Evaluate direct pdf
 		float lightPdfS = 0;
@@ -300,14 +299,19 @@ private:
 			return;
 
 		// Calculate MIS
-		const uint32 cameraPathLength = cameraIP.Ray.IterationDepth + 1;
-		const float cameraRoulette	  = mCameraRR.probability(cameraPathLength);
+		SpectralBlob mis;
+		if (mParameters.DoDirect) {
+			const uint32 cameraPathLength = cameraIP.Ray.IterationDepth + 1;
+			const float cameraRoulette	  = mCameraRR.probability(cameraPathLength);
 
-		const SpectralBlob bsdfPdfS = bsdfWvlPdfS * cameraRoulette;
-		const float denom			= VCM::mis_term<MISMode>(lightPdfS2).sum() + VCM::mis_term<MISMode>(bsdfPdfS).sum();
-		const SpectralBlob mis		= light->hasDeltaDistribution() ? (heroFactor / heroFactor.sum()) : (VCM::mis_term<MISMode>(lightPdfS2) / denom);
+			const SpectralBlob bsdfPdfS = bsdfWvlPdfS * cameraRoulette;
+			const float denom			= VCM::mis_term<MISMode>(lightPdfS2).sum() + VCM::mis_term<MISMode>(bsdfPdfS).sum();
+			mis							= light->hasDeltaDistribution() ? (heroFactor / heroFactor.sum()) : (VCM::mis_term<MISMode>(lightPdfS2) / denom);
 
-		PR_ASSERT((mis <= 1.0f).all(), "MIS must be between 0 and 1");
+			PR_ASSERT((mis <= 1.0f).all(), "MIS must be between 0 and 1");
+		} else {
+			mis = heroFactor / heroFactor.sum();
+		}
 
 		// Trace shadow ray
 		const float distance = light->isInfinite() ? PR_INF : std::sqrt(sqrD);
@@ -329,7 +333,7 @@ private:
 			mCameraPath.addToken(LightPathToken::Emissive());
 		}
 
-		session.pushSpectralFragment(mParameters.DoDirect ? mis.sum() : 1, current.Throughput, contrib,
+		session.pushSpectralFragment(mis, current.Throughput, contrib,
 									 shadow, mCameraPath);
 
 		mCameraPath.popToken(2);
@@ -369,7 +373,7 @@ private:
 		// If the given contribution can not be determined by NEE as well, do not calculate MIS
 		if (!mParameters.DoNEE || hitFromBehind || current.LastWasDelta) {
 			mCameraPath.addToken(LightPathToken::Emissive());
-			session.pushSpectralFragment(1, current.Throughput, radiance, cameraIP.Ray, mCameraPath);
+			session.pushSpectralFragment(heroFactor / heroFactor.sum(), current.Throughput, radiance, cameraIP.Ray, mCameraPath);
 			mCameraPath.popToken();
 			return;
 		}
@@ -394,7 +398,7 @@ private:
 
 		// Splat
 		mCameraPath.addToken(LightPathToken::Emissive());
-		session.pushSpectralFragment(mis.sum(), current.Throughput, radiance, cameraIP.Ray, mCameraPath);
+		session.pushSpectralFragment(mis, current.Throughput, radiance, cameraIP.Ray, mCameraPath);
 		mCameraPath.popToken();
 	}
 
@@ -428,7 +432,7 @@ private:
 
 		// If the given contribution can not be determined by NEE as well, do not calculate MIS
 		if (!mParameters.DoNEE || current.LastWasDelta) {
-			session.pushSpectralFragment(1, current.Throughput, radiance, ray, mCameraPath);
+			session.pushSpectralFragment(heroFactor / heroFactor.sum(), current.Throughput, radiance, ray, mCameraPath);
 			return;
 		}
 
@@ -441,7 +445,7 @@ private:
 		PR_ASSERT((mis <= 1.0f).all(), "MIS must be between 0 and 1");
 
 		// Splat
-		session.pushSpectralFragment(mis.sum(), current.Throughput, radiance, ray, mCameraPath);
+		session.pushSpectralFragment(mis, current.Throughput, radiance, ray, mCameraPath);
 	}
 
 	/// Handle case where camera ray hits nothing and there is no inf-lights

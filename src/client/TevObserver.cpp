@@ -18,7 +18,6 @@ constexpr size_t MAX_CHANNEL_COUNT_RGB						= 3;
 constexpr size_t MAX_CHANNEL_COUNT_F						= 1;
 static const char* CHANNEL_NAMES_RGB[MAX_CHANNEL_COUNT_RGB] = { "R", "G", "B" };
 static const char* CHANNEL_NAMES_VAR[MAX_CHANNEL_COUNT_RGB] = { "Variance.R", "Variance.G", "Variance.B" };
-static const char* CHANNEL_NAMES_WEI[MAX_CHANNEL_COUNT_F]	= { "Weight" };
 static const char* CHANNEL_NAMES_FDB[MAX_CHANNEL_COUNT_RGB] = { "Feedback.R", "Feedback.G", "Feedback.B" };
 static const uint32 CREATE_MESSAGE_HEADER_SIZE				= 4 + 1 + IMAGE_NAME_SIZE + 1 + 4 + 4 + 4;
 static const uint32 CLOSE_MESSAGE_SIZE						= 4 + 1 + IMAGE_NAME_SIZE;

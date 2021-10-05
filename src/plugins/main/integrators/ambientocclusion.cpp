@@ -53,7 +53,7 @@ public:
 			const SpectralBlob weight = SpectralBlob(1.0f - occlusions / (float)mSampleCount);
 
 			session.pushSPFragment(spt, stdPath);
-			session.pushSpectralFragment(1, SpectralBlob::Ones(), weight, spt.Ray, stdPath);
+			session.pushSpectralFragment(SpectralBlob::Ones(), SpectralBlob::Ones(), weight, spt.Ray, stdPath);
 		}
 	}
 

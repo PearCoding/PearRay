@@ -51,7 +51,7 @@ public:
 	bool traceSingleRay(const Ray& ray, Vector3f& pos, GeometryPoint& pt, IEntity*& entity, IMaterial*& material) const;
 	bool traceShadowRay(const Ray& ray, float distance = PR_INF) const;
 
-	void pushSpectralFragment(float mis, const SpectralBlob& importance, const SpectralBlob& radiance,
+	void pushSpectralFragment(const SpectralBlob& mis, const SpectralBlob& importance, const SpectralBlob& radiance,
 							  const Ray& ray, const LightPath& path) const;
 	void pushSPFragment(const IntersectionPoint& pt, const LightPath& path) const;
 	void pushFeedbackFragment(uint32 feedback, const Ray& ray) const;

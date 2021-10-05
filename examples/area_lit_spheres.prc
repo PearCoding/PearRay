@@ -6,7 +6,7 @@
 	:camera 'Camera'
 	; Settings
 	(integrator
-		:type 'vcm'
+		:type 'direct'
 		:max_ray_depth 17
 	)
 	(sampler

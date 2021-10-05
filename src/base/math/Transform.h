@@ -6,7 +6,7 @@ namespace PR {
 
 namespace Transform {
 
-constexpr float RayOffsetEpsilon = 0.000001f;
+constexpr float RayOffsetEpsilon = 0.00001f;
 /** Translates original position a little bit
  * in direction of the view to ensure no self intersection.
  */

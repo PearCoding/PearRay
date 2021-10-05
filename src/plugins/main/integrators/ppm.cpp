@@ -207,7 +207,7 @@ public:
 						ems->eval(inL, outL, session);
 
 						path.addToken(LightPathToken::Emissive());
-						session.pushSpectralFragment(1, weight, outL.Radiance, ip.Ray, path);
+						session.pushSpectralFragment(SpectralBlob::Ones(), weight, outL.Radiance, ip.Ray, path);
 						path.popToken();
 					}
 					return false;
@@ -216,7 +216,7 @@ public:
 				if (!material_hit->hasOnlyDeltaDistribution()) {
 					const auto gather_contrib = gather(session, ip, material_hit);
 					path.addToken(LightPathToken::Emissive());
-					session.pushSpectralFragment(1,
+					session.pushSpectralFragment(SpectralBlob::Ones(),
 												 weight, gather_contrib,
 												 ip.Ray, path);
 					path.popToken(1);
@@ -233,12 +233,12 @@ public:
 				path.addToken(LightPathToken::Background());
 
 				const bool illuminated = IntegratorUtils::handleBackground(session, ray, [&](const InfiniteLightEvalOutput& ileout) {
-					session.pushSpectralFragment(1, weight, ileout.Radiance, ray, path);
+					session.pushSpectralFragment(SpectralBlob::Ones(), weight, ileout.Radiance, ray, path);
 				});
 
 				if (!illuminated) {
 					session.tile()->statistics().add(RenderStatisticEntry::BackgroundHitCount);
-					session.pushSpectralFragment(1, weight, SpectralBlob::Zero(), ray, path);
+					session.pushSpectralFragment(SpectralBlob::Ones(), weight, SpectralBlob::Zero(), ray, path);
 				}
 
 				path.popToken();

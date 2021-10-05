@@ -130,13 +130,13 @@ Point2i RenderTileSession::localCoordinates(Point1i pixelIndex) const
 	return globalCoordinates(pixelIndex) - mTile->start();
 }
 
-void RenderTileSession::pushSpectralFragment(float mis, const SpectralBlob& importance, const SpectralBlob& radiance,
+void RenderTileSession::pushSpectralFragment(const SpectralBlob& mis, const SpectralBlob& importance, const SpectralBlob& radiance,
 											 const Ray& ray, const LightPath& path) const
 {
 	PR_PROFILE_THIS;
 	auto coords		= localCoordinates(ray.PixelIndex);
 	const auto& grp = getRayGroup(ray);
-	mOutputQueue->pushSpectralFragment(coords, mis, grp.Importance * importance / grp.WavelengthPDF, radiance,
+	mOutputQueue->pushSpectralFragment(coords, mis, grp.Importance * importance/* / grp.WavelengthPDF*/, radiance,
 									   ray.WavelengthNM, ray.Flags & RayFlag::Monochrome, ray.GroupID, path);
 	if (mOutputQueue->isReadyToCommit())
 		mOutputQueue->commitAndFlush(mLocalSystem.get());
@@ -167,7 +167,7 @@ void RenderTileSession::pushCustomSpectralFragment(uint32 queueID, const Ray& ra
 	auto coords		= localCoordinates(ray.PixelIndex);
 	const auto& grp = getRayGroup(ray);
 	mOutputQueue->pushCustomSpectralFragment(queueID, coords,
-											 grp.Importance * value / grp.WavelengthPDF, ray.WavelengthNM,
+											 grp.Importance * value /*/ grp.WavelengthPDF*/, ray.WavelengthNM,
 											 ray.Flags & RayFlag::Monochrome, ray.GroupID);
 	if (mOutputQueue->isReadyToCommit())
 		mOutputQueue->commitAndFlush(mLocalSystem.get());

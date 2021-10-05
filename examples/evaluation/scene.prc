@@ -2,7 +2,7 @@
   (integrator
     :type 'direct'
     :max_ray_depth 6
-    ;:direct false
+    :direct false
   )
   (sampler
     :slot 'aa'
@@ -44,7 +44,6 @@
     :local_direction [0 0 1]
     :local_right [-1 0 0]
     :position [278 273 -800]
-    ;:transform [1.0, 0.0, 0.0, 278, 0.0, 0.0, -1.0, 273, 0.0, 1.0, 0.0, -800, 0.0, 0.0, 0.0, 1.0]
   )
   (material
     :type 'diffuse'
@@ -74,7 +73,7 @@
   (emission
     :name 'luminaire'
     :type 'diffuse'
-    :radiance (smul (illuminant 'd65') (spectrum :start 400 :end 700 0 8 15.6 18.4))
+    :radiance (spectrum :start 400 :end 700 0 8 15.6 18.4)
   )
   (embed
     :loader 'obj'
