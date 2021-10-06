@@ -31,6 +31,13 @@ void ShadingGroup::extractRay(size_t i, Ray& ray) const
 	ray		   = mPipeline->getTracedRay(rayID);
 }
 
+void ShadingGroup::extractRayGroup(size_t i, RayGroup& rayGroup) const
+{
+	Ray ray;
+	extractRay(i, ray);
+	rayGroup = mPipeline->getRayGroup(ray.GroupID);
+}
+
 void ShadingGroup::extractGeometryPoint(size_t i, GeometryPoint& pt) const
 {
 	auto entry = mBlock.Stream->get(mBlock.Start + i);

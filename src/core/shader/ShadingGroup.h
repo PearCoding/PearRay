@@ -4,6 +4,7 @@
 #include "ray/Ray.h"
 
 namespace PR {
+class RayGroup;
 class RenderTile;
 class RenderTileSession;
 class StreamPipeline;
@@ -27,6 +28,7 @@ public:
 	void extractHitEntry(size_t i, HitEntry& entry) const;
 	void extractRay(size_t i, Ray& ray) const;
 	void extractGeometryPoint(size_t i, GeometryPoint& pt) const;
+	void extractRayGroup(size_t i, RayGroup& rayGroup) const;
 	void computeShadingPoint(size_t i, IntersectionPoint& spt) const;
 
 private:

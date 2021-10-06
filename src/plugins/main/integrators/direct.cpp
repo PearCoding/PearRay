@@ -46,12 +46,13 @@ template <bool HasInfLights, VCM::MISMode MISMode, bool EmissiveScatter>
 class IntDirectInstance : public IIntegratorInstance {
 private:
 	struct TraversalContext {
-		SpectralBlob Throughput = SpectralBlob::Ones();
-		bool LastWasDelta		= true;
-		bool LastWasFlourescent = false;
-		SpectralBlob LastPDF_S	= SpectralBlob::Ones();
-		Vector3f LastPosition	= Vector3f::Zero(); // Used in NEE
-		Vector3f LastNormal		= Vector3f::Zero();
+		SpectralBlob Throughput	   = SpectralBlob::Ones();
+		bool LastWasDelta		   = true;
+		bool LastWasFlourescent	   = false;
+		SpectralBlob LastPDF_S	   = SpectralBlob::Ones();
+		SpectralBlob WavelengthPDF = SpectralBlob::Zero(); // Wavelength of the initial sampling
+		Vector3f LastPosition	   = Vector3f::Zero();	   // Used in NEE
+		Vector3f LastNormal		   = Vector3f::Zero();
 	};
 
 public:
@@ -102,13 +103,15 @@ public:
 
 	// First camera vertex
 	void traceCameraPath(RenderTileSession& session, const IntersectionPoint& initial_hit,
-						 IEntity* entity, IMaterial* material)
+						 const RayGroup& rayGroup, IEntity* entity, IMaterial* material)
 	{
 		PR_PROFILE_THIS;
 
 		// Initial camera vertex
 		TraversalContext current;
-		
+		current.WavelengthPDF = rayGroup.WavelengthPDF;
+		current.Throughput /= current.WavelengthPDF[0];
+
 		mCameraWalker.traverse(
 			session, initial_hit, entity, material,
 			[&](const IntersectionPoint& ip, IEntity* entity2, IMaterial* material2) -> std::optional<Ray> {
@@ -138,7 +141,9 @@ public:
 		for (size_t i = 0; i < sg.size(); ++i) {
 			IntersectionPoint spt;
 			sg.computeShadingPoint(i, spt);
-			traceCameraPath(session, spt, sg.entity(), session.getMaterial(spt.Surface.Geometry.MaterialID));
+			RayGroup rayGroup;
+			sg.extractRayGroup(i, rayGroup);
+			traceCameraPath(session, spt, rayGroup, sg.entity(), session.getMaterial(spt.Surface.Geometry.MaterialID));
 		}
 	}
 
@@ -306,7 +311,7 @@ private:
 
 			const SpectralBlob bsdfPdfS = bsdfWvlPdfS * cameraRoulette;
 			const float denom			= VCM::mis_term<MISMode>(lightPdfS2).sum() + VCM::mis_term<MISMode>(bsdfPdfS).sum();
-			mis							= light->hasDeltaDistribution() ? (heroFactor / heroFactor.sum()) : (VCM::mis_term<MISMode>(lightPdfS2) / denom);
+			mis							= light->hasDeltaDistribution() ? (heroFactor / heroFactor.sum()).eval() : safeDiv(VCM::mis_term<MISMode>(lightPdfS2 * current.WavelengthPDF[0]), (denom * VCM::mis_term<MISMode>(current.WavelengthPDF))).eval();
 
 			PR_ASSERT((mis <= 1.0f).all(), "MIS must be between 0 and 1");
 		} else {
@@ -388,7 +393,8 @@ private:
 		/*cameraIP.Ray.IterationDepth > 0 && current.LastWasFlourescent ? mLightSampler->pdfWavelength(cameraIP.Ray.WavelengthNM, cameraIP.P, cameraEntity)
 																								   : SpectralBlob::Ones();*/
 
-		const SpectralBlob mis = heroFactor * VCM::mis_term<MISMode>(current.LastPDF_S) / (VCM::mis_term<MISMode>(heroFactor * wvlProb * posPDF_S).sum() + VCM::mis_term<MISMode>(heroFactor * current.LastPDF_S).sum());
+		const float denom	   = VCM::mis_term<MISMode>(heroFactor * wvlProb * posPDF_S).sum() + VCM::mis_term<MISMode>(heroFactor * current.LastPDF_S).sum();
+		const SpectralBlob mis = heroFactor * VCM::mis_term<MISMode>(current.LastPDF_S * current.WavelengthPDF[0]) / (denom * VCM::mis_term<MISMode>(current.WavelengthPDF));
 
 		// Note: No need to check LastPDF_S as handleScattering checks it already
 		if ((mis <= MIS_EPS).all())
@@ -437,7 +443,8 @@ private:
 		}
 
 		// Calculate MIS
-		const SpectralBlob mis = heroFactor * VCM::mis_term<MISMode>(current.LastPDF_S) / (VCM::mis_term<MISMode>(heroFactor * current.LastPDF_S).sum() + denom_mis);
+		const float denom	   = VCM::mis_term<MISMode>(heroFactor * current.LastPDF_S).sum() + denom_mis;
+		const SpectralBlob mis = heroFactor * VCM::mis_term<MISMode>(current.LastPDF_S * current.WavelengthPDF[0]) / (denom * VCM::mis_term<MISMode>(current.WavelengthPDF));
 
 		if ((mis <= MIS_EPS).all())
 			return;

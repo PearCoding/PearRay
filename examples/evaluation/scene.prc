@@ -10,7 +10,7 @@
     :sample_count 128
   )
   (spectral_mapper
-    :type 'random'
+    :type 'spd'
   )
   (filter
     :slot 'pixel'
