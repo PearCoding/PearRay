@@ -15,7 +15,7 @@ inline void LocalOutputQueue::pushSpectralFragment(const Point2i& p, const Spect
 	PR_ASSERT(!radiance.hasNaN(), "Given Radiance term has NaNs");
 #endif
 #ifdef PR_CHECK_INFS
-	PR_ASSERT(!mis.hasInf().any(), "Given MIS term has Infs");
+	PR_ASSERT(!mis.isInf().any(), "Given MIS term has Infs");
 	PR_ASSERT(!importance.isInf().any(), "Given Importance term has Infs");
 	PR_ASSERT(!radiance.isInf().any(), "Given Radiance term has Infs");
 #endif

@@ -110,7 +110,7 @@ public:
 		// Initial camera vertex
 		TraversalContext current;
 		current.WavelengthPDF = rayGroup.WavelengthPDF;
-		current.Throughput /= current.WavelengthPDF[0];
+		//current.Throughput /= current.WavelengthPDF[0];
 
 		mCameraWalker.traverse(
 			session, initial_hit, entity, material,
@@ -311,10 +311,10 @@ private:
 
 			const SpectralBlob bsdfPdfS = bsdfWvlPdfS * cameraRoulette;
 			const float denom			= VCM::mis_term<MISMode>(lightPdfS2).sum() + VCM::mis_term<MISMode>(bsdfPdfS).sum();
-			mis							= light->hasDeltaDistribution() ? (heroFactor / heroFactor.sum()).eval() : safeDiv(VCM::mis_term<MISMode>(lightPdfS2 * current.WavelengthPDF[0]), (denom * VCM::mis_term<MISMode>(current.WavelengthPDF))).eval();
+			mis							= light->hasDeltaDistribution() ? (heroFactor / heroFactor.sum()).eval() : safeDiv(VCM::mis_term<MISMode>(lightPdfS2), (denom * VCM::mis_term<MISMode>(current.WavelengthPDF))).eval();
 
 			PR_ASSERT((mis <= 1.0f).all(), "MIS must be between 0 and 1");
-		} else {
+		} else { // TODO: CMIS
 			mis = heroFactor / heroFactor.sum();
 		}
 
@@ -377,7 +377,7 @@ private:
 
 		// If the given contribution can not be determined by NEE as well, do not calculate MIS
 		if (!mParameters.DoNEE || hitFromBehind || current.LastWasDelta) {
-			mCameraPath.addToken(LightPathToken::Emissive());
+			mCameraPath.addToken(LightPathToken::Emissive()); // TODO: CMIS
 			session.pushSpectralFragment(heroFactor / heroFactor.sum(), current.Throughput, radiance, cameraIP.Ray, mCameraPath);
 			mCameraPath.popToken();
 			return;
@@ -394,7 +394,7 @@ private:
 																								   : SpectralBlob::Ones();*/
 
 		const float denom	   = VCM::mis_term<MISMode>(heroFactor * wvlProb * posPDF_S).sum() + VCM::mis_term<MISMode>(heroFactor * current.LastPDF_S).sum();
-		const SpectralBlob mis = heroFactor * VCM::mis_term<MISMode>(current.LastPDF_S * current.WavelengthPDF[0]) / (denom * VCM::mis_term<MISMode>(current.WavelengthPDF));
+		const SpectralBlob mis = heroFactor * VCM::mis_term<MISMode>(current.LastPDF_S) / (denom * VCM::mis_term<MISMode>(current.WavelengthPDF));
 
 		// Note: No need to check LastPDF_S as handleScattering checks it already
 		if ((mis <= MIS_EPS).all())
@@ -437,14 +437,14 @@ private:
 		}
 
 		// If the given contribution can not be determined by NEE as well, do not calculate MIS
-		if (!mParameters.DoNEE || current.LastWasDelta) {
+		if (!mParameters.DoNEE || current.LastWasDelta) { // TODO
 			session.pushSpectralFragment(heroFactor / heroFactor.sum(), current.Throughput, radiance, ray, mCameraPath);
 			return;
 		}
 
 		// Calculate MIS
 		const float denom	   = VCM::mis_term<MISMode>(heroFactor * current.LastPDF_S).sum() + denom_mis;
-		const SpectralBlob mis = heroFactor * VCM::mis_term<MISMode>(current.LastPDF_S * current.WavelengthPDF[0]) / (denom * VCM::mis_term<MISMode>(current.WavelengthPDF));
+		const SpectralBlob mis = heroFactor * VCM::mis_term<MISMode>(current.LastPDF_S) / (denom * VCM::mis_term<MISMode>(current.WavelengthPDF));
 
 		if ((mis <= MIS_EPS).all())
 			return;
