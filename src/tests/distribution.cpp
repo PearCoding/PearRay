@@ -15,6 +15,48 @@ PR_TEST("Integral")
 	PR_CHECK_EQ(integral, 10.0f);
 }
 
+PR_TEST("PMF")
+{
+	Distribution1D dist(5);
+	dist.generate([](size_t i) { return 1; });
+
+	constexpr float PMF = 1 / 5.0f;
+	const float pmf1	= dist.discretePdf(0);
+	const float pmf2	= dist.discretePdf(2);
+	const float pmf3	= dist.discretePdf(4);
+	PR_CHECK_NEARLY_EQ(pmf1, PMF);
+	PR_CHECK_NEARLY_EQ(pmf2, PMF);
+	PR_CHECK_NEARLY_EQ(pmf3, PMF);
+}
+
+PR_TEST("PMF 2")
+{
+	Distribution1D dist(5);
+	dist.generate([](size_t i) { return i + 1.0f; });
+
+	auto PMF		 = [](int x) { return (x + 1) / 15.0f; };
+	const float pmf1 = dist.discretePdf(0);
+	const float pmf2 = dist.discretePdf(2);
+	const float pmf3 = dist.discretePdf(4);
+	PR_CHECK_NEARLY_EQ(pmf1, PMF(0));
+	PR_CHECK_NEARLY_EQ(pmf2, PMF(2));
+	PR_CHECK_NEARLY_EQ(pmf3, PMF(4));
+}
+
+PR_TEST("PDF")
+{
+	Distribution1D dist(5);
+	dist.generate([](size_t i) { return 1; });
+
+	constexpr float PDF = 1;
+	const float pdf1	= dist.continuousPdf(0.25f);
+	const float pdf2	= dist.continuousPdf(0.50f);
+	const float pdf3	= dist.continuousPdf(0.75f);
+	PR_CHECK_NEARLY_EQ(pdf1, PDF);
+	PR_CHECK_NEARLY_EQ(pdf2, PDF);
+	PR_CHECK_NEARLY_EQ(pdf3, PDF);
+}
+
 PR_TEST("Consistency Discrete")
 {
 	Distribution1D dist(5);

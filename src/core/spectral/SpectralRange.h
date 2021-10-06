@@ -30,15 +30,32 @@ struct PR_LIB_CORE SpectralRange {
 
 	/// Will bound start and end by the given range if they are not bounded.
 	/// This will not shrink the range except if unbounded!
-	inline SpectralRange bounded(const SpectralRange& other) const {
+	inline SpectralRange bounded(const SpectralRange& other) const
+	{
 		PR_ASSERT(!other.hasUnbounded(), "Expected other to be fully bounded!");
 		return SpectralRange(
 			isStartUnbounded() ? other.Start : Start,
-			isEndUnbounded() ? other.End : End
-		);
+			isEndUnbounded() ? other.End : End);
 	}
 
 	inline bool hasUnbounded() const { return isStartUnbounded() || isEndUnbounded(); }
+	inline bool isInRange(float wvl) const { return wvl >= Start && (isEndUnbounded() || wvl <= End); }
+
+	/// Map from [Start, End] to [0,1]
+	/// Only works if bounded
+	inline float mapToNormalized(float wvl) const
+	{
+		PR_ASSERT(!hasUnbounded(), "Range has to be bounded");
+		return (wvl - Start) / span();
+	}
+
+	/// Map from [0,1] to [Start, End]
+	/// Only works if bounded
+	inline float mapFromNormalized(float wvl) const
+	{
+		PR_ASSERT(!hasUnbounded(), "Range has to be bounded");
+		return wvl * span() + Start;
+	}
 
 	inline SpectralRange& operator+=(const SpectralRange& other)
 	{

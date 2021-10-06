@@ -18,7 +18,7 @@ enum class MaterialSampleFlag : uint8 {
 	SpectralVarying	  = 0x4,  // TODO
 	SpatialVarying	  = 0x8,  // TODO
 	TimeVarying		  = 0x10, // TODO
-	Flourescent       = 0x20,
+	Fluorescent       = 0x20,
 };
 PR_MAKE_FLAGS(MaterialSampleFlag, MaterialSampleFlags)
 

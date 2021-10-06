@@ -11,16 +11,16 @@
 
 namespace PR {
 template <bool TwoSided>
-class FlourescentShift : public IMaterial {
+class FluorescentShift : public IMaterial {
 public:
-	FlourescentShift(const std::shared_ptr<FloatSpectralNode>& alb, const std::shared_ptr<FloatSpectralNode>& shift)
+	FluorescentShift(const std::shared_ptr<FloatSpectralNode>& alb, const std::shared_ptr<FloatSpectralNode>& shift)
 		: IMaterial()
 		, mAlbedo(alb)
 		, mShift(shift)
 	{
 	}
 
-	virtual ~FlourescentShift() = default;
+	virtual ~FluorescentShift() = default;
 
 	inline static float culling(float u)
 	{
@@ -42,7 +42,7 @@ public:
 		return wvl / (1 - wvl * shift);
 	}
 
-	MaterialFlags flags() const override { return MaterialFlag::HasFlourescence; }
+	MaterialFlags flags() const override { return MaterialFlag::HasFluorescence; }
 
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
 			  const RenderTileSession&) const override
@@ -52,14 +52,14 @@ public:
 		const bool isLight				= in.Context.RayFlags & RayFlag::Light;
 		const SpectralBlob expShift		= mShift->eval(in.ShadingContext);
 		const SpectralBlob expWvl		= isLight ? stokesShift(in.Context.WavelengthNM, expShift) : stokesShift(in.Context.WavelengthNM, -expShift);
-		const SpectralBlob actShift		= in.Context.FlourescentWavelengthNM - expWvl;
-		const SpectralBlob flourescentW = (actShift < 0).select(0, (1 - actShift / expShift).cwiseMax(0.0f));
+		const SpectralBlob actShift		= in.Context.FluorescentWavelengthNM - expWvl;
+		const SpectralBlob fluorescentW = (actShift < 0).select(0, (1 - actShift / expShift).cwiseMax(0.0f));
 
 		const float dot = in.Context.V.sameHemisphere(in.Context.L) ? culling(in.Context.NdotL()) : 0;
-		out.Weight		= flourescentW * mAlbedo->eval(in.ShadingContext) * dot * PR_INV_PI;
+		out.Weight		= fluorescentW * mAlbedo->eval(in.ShadingContext) * dot * PR_INV_PI;
 		out.PDF_S		= Sampling::cos_hemi_pdf(dot);
 		out.Type		= MaterialScatteringType::DiffuseReflection;
-		out.Flags		= MaterialSampleFlag::Flourescent;
+		out.Flags		= MaterialSampleFlag::Fluorescent;
 	}
 
 	void pdf(const MaterialEvalInput& in, MaterialPDFOutput& out,
@@ -69,7 +69,7 @@ public:
 
 		const float dot = in.Context.V.sameHemisphere(in.Context.L) ? culling(in.Context.NdotL()) : 0;
 		out.PDF_S		= Sampling::cos_hemi_pdf(dot);
-		out.Flags		= MaterialSampleFlag::Flourescent;
+		out.Flags		= MaterialSampleFlag::Fluorescent;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -90,9 +90,9 @@ public:
 
 		// We apply the forward stokes shift for lights and reverse stokes shift for camera lights
 		if (in.Context.RayFlags & RayFlag::Light)
-			out.FlourescentWavelengthNM = stokesShift(in.Context.WavelengthNM, mShift->eval(in.ShadingContext));
+			out.FluorescentWavelengthNM = stokesShift(in.Context.WavelengthNM, mShift->eval(in.ShadingContext));
 		else
-			out.FlourescentWavelengthNM = stokesShift(in.Context.WavelengthNM, -mShift->eval(in.ShadingContext));
+			out.FluorescentWavelengthNM = stokesShift(in.Context.WavelengthNM, -mShift->eval(in.ShadingContext));
 
 		out.PDF_S = Sampling::cos_hemi_pdf(out.L(2));
 		out.Type  = MaterialScatteringType::DiffuseReflection;
@@ -100,7 +100,7 @@ public:
 		// Make sure the output direction is on the same side
 		out.L = in.Context.V.makeSameHemisphere(out.L);
 
-		out.Flags = MaterialSampleFlag::Flourescent;
+		out.Flags = MaterialSampleFlag::Fluorescent;
 	}
 
 	std::string dumpInformation() const override
@@ -108,7 +108,7 @@ public:
 		std::stringstream stream;
 
 		stream << std::boolalpha << IMaterial::dumpInformation()
-			   << "  <FlourescentShift>:" << std::endl
+			   << "  <FluorescentShift>:" << std::endl
 			   << "    Albedo:   " << mAlbedo->dumpInformation() << std::endl
 			   << "    Shift:   " << mShift->dumpInformation() << std::endl
 			   << "    TwoSided: " << (TwoSided ? "true" : "false") << std::endl;
@@ -123,7 +123,7 @@ private:
 
 inline constexpr float stokesShiftDelta(float nm, float nm_shift) { return 1 / nm - 1 / (nm + nm_shift); }
 
-class FlourescentShiftMaterialPlugin : public IMaterialPlugin {
+class FluorescentShiftMaterialPlugin : public IMaterialPlugin {
 public:
 	std::shared_ptr<IMaterial> create(const std::string&, const SceneLoadContext& ctx) override
 	{
@@ -134,20 +134,20 @@ public:
 		const auto shift  = ctx.lookupSpectralNode("shift", def_shift);
 
 		if (ctx.parameters().getBool("two_sided", true))
-			return std::make_shared<FlourescentShift<true>>(albedo, shift);
+			return std::make_shared<FluorescentShift<true>>(albedo, shift);
 		else
-			return std::make_shared<FlourescentShift<false>>(albedo, shift);
+			return std::make_shared<FluorescentShift<false>>(albedo, shift);
 	}
 
 	const std::vector<std::string>& getNames() const override
 	{
-		const static std::vector<std::string> names({ "stokes", "flourescent_shift", "stokes_shift" });
+		const static std::vector<std::string> names({ "stokes", "fluorescent_shift", "stokes_shift" });
 		return names;
 	}
 
 	PluginSpecification specification(const std::string&) const override
 	{
-		return PluginSpecificationBuilder("Flourescent Diffuse BSDF", "A perfect diffuse BSDF with flourescent properties based on the stokes shift")
+		return PluginSpecificationBuilder("Fluorescent Diffuse BSDF", "A perfect diffuse BSDF with fluorescent properties based on the stokes shift")
 			.Identifiers(getNames())
 			.Inputs()
 			.SpectralNodeV({ "albedo", "base", "diffuse" }, "Amount of light which is reflected", 1.0f)
@@ -159,4 +159,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::FlourescentShiftMaterialPlugin, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::FluorescentShiftMaterialPlugin, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

@@ -2,7 +2,7 @@
   (integrator
     :type 'direct'
     :max_ray_depth 6
-    ;:direct false
+    ;:nee false
   )
   (sampler
     :slot 'aa'
@@ -11,6 +11,7 @@
   )
   (spectral_mapper
     :type 'spd'
+    ;:cmis false
   )
   (filter
     :slot 'pixel'

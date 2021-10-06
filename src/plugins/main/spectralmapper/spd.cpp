@@ -10,6 +10,7 @@
 #include "spectral/RGBConverter.h"
 
 #include "Logger.h"
+#include "Standard.h"
 
 #include <mutex>
 
@@ -24,9 +25,9 @@ struct SPDContext {
 	}
 };
 
-class SPDSpectralMapper : public ISpectralMapper {
+class CMISSPDSpectralMapper : public ISpectralMapper {
 public:
-	SPDSpectralMapper(const SpectralRange& cameraRange, const SpectralRange& lightRange, const SPDContext& context)
+	CMISSPDSpectralMapper(const SpectralRange& cameraRange, const SpectralRange& lightRange, const SPDContext& context)
 		: ISpectralMapper()
 		, mCameraRange(cameraRange)
 		, mLightRange(lightRange)
@@ -34,21 +35,21 @@ public:
 	{
 	}
 
-	virtual ~SPDSpectralMapper() = default;
+	virtual ~CMISSPDSpectralMapper() = default;
 
 	void sample(const SpectralSampleInput& in, SpectralSampleOutput& out) const override
 	{
-		const float u = in.RND.getFloat();
-
 		if (in.Purpose == SpectralSamplePurpose::Pixel) {
+			const float u				= in.RND.getFloat();
 			const Distribution1D& distr = mContext.Distribution;
 
 			PR_OPT_LOOP
 			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
 				const float k		= std::fmod(u + i / (float)PR_SPECTRAL_BLOB_SIZE, 1.0f);
-				out.WavelengthNM(i) = distr.sampleContinuous(k, out.PDF(i)) * mCameraRange.span() + mCameraRange.Start;
+				out.WavelengthNM(i) = distr.sampleContinuous(k /*in.RND.getFloat()*/, out.PDF(i)) * mCameraRange.span() + mCameraRange.Start;
 			}
 		} else if (in.Purpose == SpectralSamplePurpose::Light) {
+			const float u				= in.RND.getFloat();
 			const Distribution1D& distr = mContext.LightDistributions[in.Light->lightID()];
 			const SpectralRange range	= in.Light->spectralRange().bounded(mCameraRange);
 
@@ -58,19 +59,7 @@ public:
 				out.WavelengthNM(i) = distr.sampleContinuous(k, out.PDF(i)) * range.span() + range.Start;
 			}
 		} else {
-			// For connections and cases with not enough information, we fallback to pure random sampling
-			const SpectralRange range = mLightRange;
-			const float u			  = in.RND.getFloat();
-
-			const float span  = range.span();
-			const float delta = span / PR_SPECTRAL_BLOB_SIZE;
-
-			const float start	= u * span;			   // Wavelength inside the span
-			out.WavelengthNM(0) = start + range.Start; // Hero wavelength
-			PR_OPT_LOOP
-			for (size_t i = 1; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-				out.WavelengthNM(i) = range.Start + std::fmod(start + i * delta, span);
-			out.PDF = 1;
+			out.WavelengthNM = sampleStandardWavelength(in.RND.getFloat(), mLightRange, out.PDF);
 		}
 	}
 
@@ -97,7 +86,66 @@ public:
 			return res;
 		} else {
 			// For connections and cases with not enough information, we fallback to pure random sampling
-			return SpectralBlob::Ones();
+			return pdfStandardWavelength(wavelength, mLightRange);
+		}
+	}
+
+private:
+	const SpectralRange mCameraRange;
+	const SpectralRange mLightRange;
+	const SPDContext& mContext;
+};
+
+class HeroSPDSpectralMapper : public ISpectralMapper {
+public:
+	HeroSPDSpectralMapper(const SpectralRange& cameraRange, const SpectralRange& lightRange, const SPDContext& context)
+		: ISpectralMapper()
+		, mCameraRange(cameraRange)
+		, mLightRange(lightRange)
+		, mContext(context)
+	{
+	}
+
+	virtual ~HeroSPDSpectralMapper() = default;
+
+	void sample(const SpectralSampleInput& in, SpectralSampleOutput& out) const override
+	{
+		if (in.Purpose == SpectralSamplePurpose::Pixel) {
+			const float u				= in.RND.getFloat();
+			const Distribution1D& distr = mContext.Distribution;
+
+			float pdf		 = 0;
+			const float hero = distr.sampleContinuous(u, pdf) * mCameraRange.span() + mCameraRange.Start;
+			out.WavelengthNM = constructHeroWavelength(hero, mCameraRange);
+			out.PDF			 = pdf;
+		} else if (in.Purpose == SpectralSamplePurpose::Light) {
+			const float u				= in.RND.getFloat();
+			const Distribution1D& distr = mContext.LightDistributions[in.Light->lightID()];
+			const SpectralRange range	= in.Light->spectralRange().bounded(mCameraRange);
+
+			float pdf		 = 0;
+			const float hero = distr.sampleContinuous(u, pdf) * range.span() + range.Start;
+			out.WavelengthNM = constructHeroWavelength(hero, range);
+			out.PDF			 = pdf;
+		} else {
+			// For connections and cases with not enough information, we fallback to pure random sampling
+			out.WavelengthNM = sampleStandardWavelength(in.RND.getFloat(), mLightRange, out.PDF);
+		}
+	}
+
+	// Do not apply the jacobian of the mapping from [0, 1] to [start, end], as we do not divide by it
+	SpectralBlob pdf(const SpectralEvalInput& in, const SpectralBlob& wavelength) const override
+	{
+		if (in.Purpose == SpectralSamplePurpose::Pixel) {
+			const Distribution1D& distr = mContext.Distribution;
+			return SpectralBlob(distr.continuousPdf((wavelength(0) - mCameraRange.Start) / mCameraRange.span()));
+		} else if (in.Purpose == SpectralSamplePurpose::Light) {
+			const Distribution1D& distr = mContext.LightDistributions[in.Light->lightID()];
+			const SpectralRange range	= in.Light->spectralRange().bounded(mCameraRange);
+			return SpectralBlob(distr.continuousPdf((wavelength(0) - range.Start) / range.span()));
+		} else {
+			// For connections and cases with not enough information, we fallback to pure random sampling
+			return pdfStandardWavelength(wavelength, mLightRange);
 		}
 	}
 
@@ -125,6 +173,7 @@ struct SPDParameters {
 	bool EnsureCompleteSampling = true;
 	uint32 SmoothIterations		= 0; // How many times to apply moving average?
 	bool Verbose				= false;
+	bool UseCMIS				= true;
 };
 
 static void movingAverage(std::vector<float>& inout)
@@ -158,7 +207,10 @@ public:
 		}
 		mMutex.unlock();
 
-		return std::make_shared<SPDSpectralMapper>(ctx->cameraSpectralRange(), ctx->lightSpectralRange(), mContext);
+		if (mParameters.UseCMIS)
+			return std::make_shared<CMISSPDSpectralMapper>(ctx->cameraSpectralRange(), ctx->lightSpectralRange(), mContext);
+		else
+			return std::make_shared<HeroSPDSpectralMapper>(ctx->cameraSpectralRange(), ctx->lightSpectralRange(), mContext);
 	}
 
 private:
@@ -322,6 +374,7 @@ public:
 		parameters.EnsureCompleteSampling = ctx.parameters().getBool("complete", parameters.EnsureCompleteSampling);
 		parameters.UseNormalizedLights	  = ctx.parameters().getBool("normalized", parameters.UseNormalizedLights);
 		parameters.SmoothIterations		  = ctx.parameters().getUInt("smooth_iterations", parameters.SmoothIterations);
+		parameters.UseCMIS				  = ctx.parameters().getBool("cmis", parameters.UseCMIS);
 		parameters.Verbose				  = ctx.parameters().getBool("verbose", parameters.Verbose);
 
 		return std::make_shared<SPDSpectralMapperFactory>(parameters);
@@ -345,6 +398,7 @@ public:
 			.Bool("normalized", "Use normalized SPD for each light", params.UseNormalizedLights)
 			.UInt("smooth_iterations", "Iteration count of smooth operation on accumulated histogram", params.SmoothIterations)
 			.Bool("verbose", "Dump information regarding the accumulated SPD", params.Verbose)
+			.Bool("cmis", "Use continuous MIS method. Should be on except for debug purposes", params.UseCMIS)
 			.Specification()
 			.get();
 	}

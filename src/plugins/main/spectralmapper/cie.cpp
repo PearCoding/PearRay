@@ -20,15 +20,12 @@ public:
 
 	void sample(const SpectralSampleInput& in, SpectralSampleOutput& out) const override
 	{
-		const float u = in.RND.getFloat();
-
 		PR_OPT_LOOP
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
-			const float k = std::fmod(u + i / (float)PR_SPECTRAL_BLOB_SIZE, 1.0f);
 			if constexpr (YOnly)
-				out.WavelengthNM(i) = CIE::sample_y(k, out.PDF(i));
+				out.WavelengthNM(i) = CIE::sample_y(in.RND.getFloat(), out.PDF(i));
 			else
-				out.WavelengthNM(i) = CIE::sample_xyz(k, out.PDF(i));
+				out.WavelengthNM(i) = CIE::sample_xyz(in.RND.getFloat(), out.PDF(i));
 		}
 	}
 
@@ -61,15 +58,12 @@ public:
 
 	void sample(const SpectralSampleInput& in, SpectralSampleOutput& out) const override
 	{
-		const float u = in.RND.getFloat();
-
 		PR_OPT_LOOP
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
-			const float k = std::fmod(u + i / (float)PR_SPECTRAL_BLOB_SIZE, 1.0f);
 			if constexpr (YOnly)
-				out.WavelengthNM(i) = CIE::sample_trunc_y(k, out.PDF(i), mRange.Start, mRange.End);
+				out.WavelengthNM(i) = CIE::sample_trunc_y(in.RND.getFloat(), out.PDF(i), mRange.Start, mRange.End);
 			else
-				out.WavelengthNM(i) = CIE::sample_trunc_xyz(k, out.PDF(i), mRange.Start, mRange.End);
+				out.WavelengthNM(i) = CIE::sample_trunc_xyz(in.RND.getFloat(), out.PDF(i), mRange.Start, mRange.End);
 		}
 	}
 

@@ -16,7 +16,7 @@ struct PR_LIB_CORE MaterialBaseOutput {
 	inline bool isSpectralVarying() const { return Flags & MaterialSampleFlag::SpectralVarying; }
 	inline bool isSpatialVarying() const { return Flags & MaterialSampleFlag::SpatialVarying; }
 	inline bool isTimeVarying() const { return Flags & MaterialSampleFlag::TimeVarying; }
-	inline bool isFlourescent() const { return Flags & MaterialSampleFlag::Flourescent; }
+	inline bool isFluorescent() const { return Flags & MaterialSampleFlag::Fluorescent; }
 
 	// When to reduce to hero wavelength only
 	inline bool isHeroCollapsing() const { return isDelta() && isSpectralVarying(); }
@@ -58,7 +58,7 @@ struct PR_LIB_CORE MaterialSampleOutput : public MaterialBaseOutput {
 	ShadingVector L;
 
 	SpectralBlob IntegralWeight;		  // PDF already applied
-	SpectralBlob FlourescentWavelengthNM; // Only valid if isFlourescent() is true
+	SpectralBlob FluorescentWavelengthNM; // Only valid if isFluorescent() is true
 	MaterialScatteringType Type = MaterialScatteringType::DiffuseReflection;
 
 	inline Vector3f globalL(const IntersectionPoint& ip) const

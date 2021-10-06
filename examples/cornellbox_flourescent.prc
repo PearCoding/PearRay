@@ -89,14 +89,14 @@
 	)
 	(material
 		:name 'shortBox'
-		:type 'flourescent'
+		:type 'fluorescent'
 		:albedo 1
 		:absorption (spd 'fluorophores/FixableDye.csv' 1 true)
 		:emission (spd 'fluorophores/FixableDye.csv' 2 true)
 	)
 	(material
 		:name 'tallBox'
-		:type 'flourescent'
+		:type 'fluorescent'
 		:albedo 1
 		:absorption (spd 'fluorophores/BrilliantUltraviolet.csv' 1 true)
 		:emission (spd 'fluorophores/BrilliantUltraviolet.csv' 2 true)

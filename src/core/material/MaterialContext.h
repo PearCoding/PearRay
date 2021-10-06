@@ -49,7 +49,7 @@ public:
 class PR_LIB_CORE MaterialEvalContext : public MaterialSampleContext {
 public:
 	ShadingVector L;					  // Outgoing light vector in shading space
-	SpectralBlob FlourescentWavelengthNM; // Light vector wavelength, same as incoming for most materials
+	SpectralBlob FluorescentWavelengthNM; // Light vector wavelength, same as incoming for most materials
 
 	inline float NdotL() const { return L(2); }
 	inline float XdotL() const { return L(0); }
@@ -72,7 +72,7 @@ public:
 		ctx.UV						= sp.Surface.Geometry.UV;
 		ctx.PrimitiveID				= sp.Surface.Geometry.PrimitiveID;
 		ctx.WavelengthNM			= sp.Ray.WavelengthNM;
-		ctx.FlourescentWavelengthNM = sp.Ray.WavelengthNM;
+		ctx.FluorescentWavelengthNM = sp.Ray.WavelengthNM;
 		ctx.RayFlags				= sp.Ray.Flags;
 		ctx.setVFromGlobal(sp, gV);
 		ctx.setLFromGlobal(sp, gL);
@@ -96,7 +96,7 @@ inline MaterialEvalContext MaterialSampleContext::expandLocal(const Vector3f& L)
 	MaterialEvalContext ctx;
 	*reinterpret_cast<MaterialSampleContext*>(&ctx) = *this;
 	ctx.L											= L;
-	ctx.FlourescentWavelengthNM						= ctx.WavelengthNM;
+	ctx.FluorescentWavelengthNM						= ctx.WavelengthNM;
 	return ctx;
 }
 

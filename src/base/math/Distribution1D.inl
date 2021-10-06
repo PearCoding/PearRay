@@ -105,6 +105,7 @@ inline float Distribution1D::evalContinuous(float u) const
 
 inline float Distribution1D::evalContinuous(float x, const float* cdf, size_t size)
 {
+	PR_ASSERT(std::abs(cdf[size - 1] - 1.0f) <= PR_EPSILON, "Expected last entry of CDF to be 1");
 	const size_t off = std::min<size_t>(size - 2, x * (size - 1));
 	const float dt	 = x * (size - 1) - off;
 	return cdf[off] * (1 - dt) + cdf[off + 1] * dt;
@@ -117,6 +118,7 @@ inline size_t Distribution1D::sampleDiscrete(float u, float& pdf, float* remaind
 
 inline size_t Distribution1D::sampleDiscrete(float u, float& pdf, const float* cdf, size_t size, float* remainder)
 {
+	PR_ASSERT(std::abs(cdf[size - 1] - 1.0f) <= PR_EPSILON, "Expected last entry of CDF to be 1");
 	const size_t off = Interval::binary_search(size, [&](int index) {
 		return cdf[index] <= u;
 	});
@@ -141,6 +143,7 @@ inline float Distribution1D::discretePdf(size_t x, const float* cdf, size_t size
 {
 	PR_UNUSED(size);
 	PR_ASSERT(x < size - 1, "Expected x to be of correct range");
+	PR_ASSERT(std::abs(cdf[size - 1] - 1.0f) <= PR_EPSILON, "Expected last entry of CDF to be 1");
 	return cdf[x + 1] - cdf[x];
 }
 
