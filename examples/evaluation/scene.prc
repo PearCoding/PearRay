@@ -10,7 +10,7 @@
     :sample_count 128
   )
   (spectral_mapper
-    :type 'spd'
+    :type 'agh'
     ;:cmis false
   )
   (filter
