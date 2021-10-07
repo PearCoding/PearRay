@@ -109,17 +109,18 @@ void FrameOutputDevice::mergeLocal(
 	}
 
 	// Add spectral AOVs
+	const auto merger = [=](float a, float b) { return (a * (iteration - 1) + b) / iteration; };
 	PR_OPT_LOOP
 	for (int i = 0; i < AOV_SPECTRAL_COUNT; ++i) {
 		if (ignoreInLocal((AOVSpectral)i))
 			continue;
 
 		if (mData.mSpectral[i])
-			mData.mSpectral[i]->addBlock(dst_off, dst_size, src_off, src_size, *bucket->data().mSpectral[i]);
+			mData.mSpectral[i]->applyBlock(dst_off, dst_size, src_off, src_size, *bucket->data().mSpectral[i], merger);
 
 		PR_OPT_LOOP
 		for (size_t k = 0; k < mData.mLPE_Spectral[i].size(); ++k)
-			mData.mLPE_Spectral[i][k].second->addBlock(dst_off, dst_size, src_off, src_size, *bucket->data().mLPE_Spectral[i][k].second);
+			mData.mLPE_Spectral[i][k].second->applyBlock(dst_off, dst_size, src_off, src_size, *bucket->data().mLPE_Spectral[i][k].second, merger);
 	}
 
 	// Add 3d AOVs
@@ -171,7 +172,7 @@ void FrameOutputDevice::mergeLocal(
 	for (auto aI = mData.mCustomSpectral.begin(), bI = bucket->data().mCustomSpectral.begin();
 		 aI != mData.mCustomSpectral.end();
 		 ++aI, ++bI) {
-		(*aI)->addBlock(dst_off, dst_size, src_off, src_size, *(*bI));
+		(*aI)->applyBlock(dst_off, dst_size, src_off, src_size, *(*bI), merger);
 	}
 
 	// Add custom 3d aovs

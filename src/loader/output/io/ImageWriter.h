@@ -50,7 +50,6 @@ struct IM_SaveOptions {
 	uint32 IterationMeta = 0;
 	uint64 TimeMeta		 = 0; // Seconds
 	bool WriteMeta		 = false;
-	float SpectralFactor = 1.0f; // Optional weight factor
 };
 
 class FrameOutputDevice;

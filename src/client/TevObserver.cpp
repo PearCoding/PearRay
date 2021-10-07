@@ -218,8 +218,7 @@ void TevObserver::updateImageProtocol()
 	const size_t tx = channel->width() / UPDATE_TILE_SIZE + 1;
 	const size_t ty = channel->height() / UPDATE_TILE_SIZE + 1;
 
-	const bool monotonic	= mRenderContext->settings().spectralMono;
-	const float blendFactor = 1.0f / mRenderContext->currentIteration().Iteration;
+	const bool monotonic = mRenderContext->settings().spectralMono;
 
 	// TODO: Better way?
 	for (size_t i = 0; i < ty; ++i) {
@@ -251,18 +250,18 @@ void TevObserver::updateImageProtocol()
 
 						float r, g, b;
 						RGBConverter::fromXYZ(x, y, z, r, g, b);
-						mConnection->Data[UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * 0 + iy * w + ix] = r * blendFactor;
-						mConnection->Data[UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * 1 + iy * w + ix] = g * blendFactor;
-						mConnection->Data[UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * 2 + iy * w + ix] = b * blendFactor;
+						mConnection->Data[UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * 0 + iy * w + ix] = r;
+						mConnection->Data[UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * 1 + iy * w + ix] = g;
+						mConnection->Data[UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * 2 + iy * w + ix] = b;
 					}
 				}
 			} else {
 				PR_OPT_LOOP
 				for (size_t iy = 0; iy < h; ++iy) {
 					for (size_t ix = 0; ix < w; ++ix) {
-						const auto p			= Point2i(sx + ix, sy + iy);
+						const auto p = Point2i(sx + ix, sy + iy);
 						for (size_t k = 0; k < 3; ++k)
-							mConnection->Data[UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * k + iy * w + ix] = blendFactor * channel->getFragment(p, k);
+							mConnection->Data[UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * k + iy * w + ix] = channel->getFragment(p, k);
 					}
 				}
 			}
@@ -272,9 +271,9 @@ void TevObserver::updateImageProtocol()
 				PR_OPT_LOOP
 				for (size_t iy = 0; iy < h; ++iy) {
 					for (size_t ix = 0; ix < w; ++ix) {
-						const auto p			= Point2i(sx + ix, sy + iy);
+						const auto p = Point2i(sx + ix, sy + iy);
 						for (size_t k = 0; k < 3; ++k)
-							mConnection->Data[UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * (k + delta) + iy * w + ix] = blendFactor * var_channel->getFragment(p, k);
+							mConnection->Data[UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * (k + delta) + iy * w + ix] = var_channel->getFragment(p, k);
 					}
 				}
 				delta += 3;

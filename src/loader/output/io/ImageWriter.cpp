@@ -60,7 +60,6 @@ bool ImageWriter::save(FrameOutputDevice* outputDevice,
 
 	const Size2i viewSize  = mRenderer->viewSize();
 	const Point2i viewOff  = mRenderer->viewOffset();
-	const size_t iteration = mRenderer->currentIteration().Iteration;
 
 	const size_t channelCount = chSpec.size() * 3 + ch1d.size() + chcounter.size() + ch3d.size() * 3;
 	if (channelCount == 0)
@@ -137,9 +136,6 @@ bool ImageWriter::save(FrameOutputDevice* outputDevice,
 			size_t id		= x * channelCount;
 			const Point2i p = Point2i(x, y);
 
-			// Blendweights are only used for spectral AOVs
-			const float blendFactor = 1.0f / iteration;
-
 			// Spectral
 			for (const IM_ChannelSettingSpec& sett : chSpec) {
 				std::shared_ptr<FrameBufferFloat> channel;
@@ -170,10 +166,6 @@ bool ImageWriter::save(FrameOutputDevice* outputDevice,
 					toneMapper.map(&ptr[y * channel->heightPitch() + x * channel->widthPitch()], nullptr,
 								   &line[id], 3, 1); // RGB
 				}
-
-				line[id] *= blendFactor * options.SpectralFactor;
-				line[id + 1] *= blendFactor * options.SpectralFactor;
-				line[id + 2] *= blendFactor * options.SpectralFactor;
 
 				id += 3;
 			}

@@ -382,7 +382,7 @@ private:
 
 		// If the given contribution can not be determined by NEE as well, do not calculate MIS
 		if (!mParameters.DoNEE || hitFromBehind || current.LastWasDelta) {
-			mCameraPath.addToken(LightPathToken::Emissive()); // TODO: CMIS
+			mCameraPath.addToken(LightPathToken::Emissive());
 			session.pushSpectralFragment(heroFactor / (heroFactor * current.WavelengthPDF).sum(), current.Throughput, radiance, cameraIP.Ray, mCameraPath);
 			mCameraPath.popToken();
 			return;
