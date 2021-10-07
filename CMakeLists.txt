@@ -6,14 +6,14 @@ endif()
 
 # Prevent in source builds
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
-	if(NOT DEFINED WITH_IN_SOURCE_BUILD)
-		message(FATAL_ERROR "CMake generation for PearRay is not allowed within the source directory! Define WITH_IN_SOURCE_BUILD if absolutely necessary!" )
-	endif()
+    if(NOT DEFINED WITH_IN_SOURCE_BUILD)
+        message(FATAL_ERROR "CMake generation for PearRay is not allowed within the source directory! Define WITH_IN_SOURCE_BUILD if absolutely necessary!" )
+    endif()
 endif()
 
 # Omit superfluous "Up-to-date" messages.
 if(NOT DEFINED CMAKE_INSTALL_MESSAGE)
-	set(CMAKE_INSTALL_MESSAGE "LAZY")
+    set(CMAKE_INSTALL_MESSAGE "LAZY")
 endif()
 
 # Set default to Release
@@ -23,23 +23,23 @@ endif()
 
 # Setup project
 project(PearRay
-	VERSION 0.14
-	DESCRIPTION "Experimental high accurate spectral path and ray tracer")
+    VERSION 0.14
+    DESCRIPTION "Experimental high accurate spectral path and ray tracer")
 
 set(PR_PLUGIN_VERSION "1.0")
 
 # For whatever reason PearRay might be used as a subproject...
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-	set(PR_SUBPROJECT OFF)
+    set(PR_SUBPROJECT OFF)
 else()
-	set(PR_SUBPROJECT ON)
+    set(PR_SUBPROJECT ON)
 endif()
 
 # SETS
 if(BUILD_SHARED_LIBS AND WIN32 AND NOT CYGWIN)
-   	set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR})
+       set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR})
 else()
-	set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin/)
+    set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin/)
 endif()
 
 set(INCLUDE_PREFIX "${PROJECT_NAME}")
@@ -55,15 +55,15 @@ include(Git)
 message(STATUS "Building PearRay ${PearRay_VERSION}")
 
 if(MINGW)
-	message(WARNING "Please don't use MinGW with PearRay, use the MSVC version instead")
+    message(WARNING "Please don't use MinGW with PearRay, use the MSVC version instead")
 endif()
 
 if(MSYS)
-	message(WARNING "Please don't use MSYS with PearRay, use the MSVC version instead")
+    message(WARNING "Please don't use MSYS with PearRay, use the MSVC version instead")
 endif()
 
 if(CYGWIN)
-	message(WARNING "Please don't use CYGWIN with PearRay, use the MSVC version instead")
+    message(WARNING "Please don't use CYGWIN with PearRay, use the MSVC version instead")
 endif()
 
 if(NOT PR_SUBPROJECT)
@@ -75,24 +75,26 @@ include(CMakeDependentOption)
 
 # Some defaults based on initial configuration
 if(PR_SUBPROJECT)
-	set(_default_extra OFF)
+    set(_default_extra OFF)
 else()
-	set(_default_extra ON)
+    set(_default_extra ON)
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
-	set(_default_lto ON)
+    set(_default_lto ON)
 else()
-	set(_default_lto OFF)
+    set(_default_lto OFF)
 endif()
 
 if(MSVC)
-	set(_default_ccache OFF)
+    set(_default_ccache OFF)
 else()
-	set(_default_ccache ON)
+    set(_default_ccache ON)
 endif()
 
-option(PR_WITH_ASSERTS 			"Compile with asserts on. Disable only in deployment code!" ON)
+option(PR_WITH_ASSERTS 			  "Compile with asserts on. Disable only in deployment code!" ON)
+option(PR_WITH_ASSERTS_IN_RELEASE "Enable asserts even in Release mode" OFF)
+
 option(PR_WITH_PYTHON 			"Compile with python API (using pybind11)" ON)
 option(PR_WITH_CLIENT 			"Compile commandline client. Strongly recommended!" ON)
 option(PR_WITH_MAIN_PLUGINS 	"Compile main plugins. Recommended!" ON)
@@ -131,18 +133,18 @@ option(PR_DISABLE_HW_FEATURE_POPCNT 	"Disable POPCNT support" OFF)
 option(PR_DISABLE_HW_FEATURE_FMA4 		"Disable FMA4 support" OFF)
 option(PR_DISABLE_HW_FEATURE_FMA 		"Disable FMA3 support" OFF)
 
-option(BUILD_SHARED_LIBS		"Build shared library" OFF)
+option(BUILD_SHARED_LIBS "Build shared library" OFF)
 
 # Include packages
 if(NOT WIN32)
-	find_package(Threads REQUIRED)
+    find_package(Threads REQUIRED)
 endif()
 
 find_package(Filesystem REQUIRED)
 
 set(_qt_components Core Widgets Charts)
 if(WIN32)
-	set(_qt_components ${_qt_components} WinExtras)
+    set(_qt_components ${_qt_components} WinExtras)
 endif()
 find_package(Qt5 COMPONENTS ${_qt_components})
 
@@ -161,15 +163,15 @@ endif()
 
 # Optional
 if(PR_USE_CCACHE)
-	include(CCache)
+    include(CCache)
 endif()
 
 if(PR_EXTRA_OPENSUBDIV)
-	find_package(OpenSubdiv COMPONENTS CPU)
+    find_package(OpenSubdiv COMPONENTS CPU)
 endif()
 
 if(PR_EXTRA_SEEXPR)
-	find_package(SeExpr2)
+    find_package(SeExpr2)
 endif()
 
 #DEFINITIONS AND FLAGS
@@ -177,12 +179,12 @@ link_directories(${CMAKE_CURRENT_BINARY_DIR} ${Boost_LIBRARY_DIRS})
 
 # Python API
 if(PR_WITH_PYTHON)
-	add_subdirectory(external/pybind11 EXCLUDE_FROM_ALL)
-	set(PR_HAS_PYTHON_API ON)
+    add_subdirectory(external/pybind11 EXCLUDE_FROM_ALL)
+    set(PR_HAS_PYTHON_API ON)
 endif()
 
 if(NOT PR_WITH_ASSERTS)
-	add_definitions(-DDL_NO_ASSERTS -DPR_NO_ASSERTS)
+    add_definitions(-DDL_NO_ASSERTS -DPR_NO_ASSERTS)
 endif()
 
 # Configure
@@ -201,18 +203,18 @@ configure_file(src/base/config/Git.h.in             ${CMAKE_CURRENT_BINARY_DIR}/
 configure_file(src/base/config/Version.h.in         ${CMAKE_CURRENT_BINARY_DIR}/config/Version.h)
 
 # Install generated header files
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/PR_Config.h 
-	DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${INCLUDE_PREFIX}" 
-	COMPONENT development)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/PR_Config.h
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${INCLUDE_PREFIX}"
+    COMPONENT development)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/config/HW_Switch.inl
-			  ${CMAKE_CURRENT_BINARY_DIR}/config/Git.h
-			  ${CMAKE_CURRENT_BINARY_DIR}/config/Version.h
-		 DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${INCLUDE_PREFIX}/config"
-		 COMPONENT development)
+              ${CMAKE_CURRENT_BINARY_DIR}/config/Git.h
+              ${CMAKE_CURRENT_BINARY_DIR}/config/Version.h
+         DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${INCLUDE_PREFIX}/config"
+         COMPONENT development)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR}
-			external/DataLisp/src ${CMAKE_CURRENT_BINARY_DIR}/external/DataLisp
-			external/tinyobjloader external/cxxopts/include)
+            external/DataLisp/src ${CMAKE_CURRENT_BINARY_DIR}/external/DataLisp
+            external/tinyobjloader external/cxxopts/include)
 
 # Extras
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -224,36 +226,36 @@ include(Deploy)
 include(Install)
 
 if(PR_GENERATE_COVERAGE AND (CMAKE_BUILD_TYPE MATCHES Debug))
-	include(Coveralls)
-	coveralls_turn_on_coverage()
+    include(Coveralls)
+    coveralls_turn_on_coverage()
 endif()
 
 # march
 include(CheckCXXCompilerFlag)
 if(PR_OPTIMIZE_FOR_NATIVE)
-	CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
-	if(COMPILER_SUPPORTS_MARCH_NATIVE)
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
-	endif()
+    CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
+    if(COMPILER_SUPPORTS_MARCH_NATIVE)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
+    endif()
 endif()
 
 if(WIN32)
-	if(PR_USE_AVX512)
-		CHECK_CXX_COMPILER_FLAG("/arch:AVX512" COMPILER_SUPPORTS_AVX512)
-		if(COMPILER_SUPPORTS_AVX512)
-			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX512")
-		endif()
-	elseif(PR_USE_AVX2)
-		CHECK_CXX_COMPILER_FLAG("/arch:AVX2" COMPILER_SUPPORTS_AVX2)
-		if(COMPILER_SUPPORTS_AVX2)
-			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX2")
-		endif()
-	elseif(PR_USE_AVX)
-		CHECK_CXX_COMPILER_FLAG("/arch:AVX" COMPILER_SUPPORTS_AVX)
-		if(COMPILER_SUPPORTS_AVX)
-			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX")
-		endif()
-	endif()
+    if(PR_USE_AVX512)
+        CHECK_CXX_COMPILER_FLAG("/arch:AVX512" COMPILER_SUPPORTS_AVX512)
+        if(COMPILER_SUPPORTS_AVX512)
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX512")
+        endif()
+    elseif(PR_USE_AVX2)
+        CHECK_CXX_COMPILER_FLAG("/arch:AVX2" COMPILER_SUPPORTS_AVX2)
+        if(COMPILER_SUPPORTS_AVX2)
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX2")
+        endif()
+    elseif(PR_USE_AVX)
+        CHECK_CXX_COMPILER_FLAG("/arch:AVX" COMPILER_SUPPORTS_AVX)
+        if(COMPILER_SUPPORTS_AVX)
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX")
+        endif()
+    endif()
 endif()
 
 # Libraries
@@ -264,38 +266,38 @@ add_subdirectory(src/vcm)
 
 # If embedded, plugins have to be imported first, as they are added TO pr_lib_utils
 if(PR_EMBED_PLUGINS)
-	add_subdirectory(src/plugins)
+    add_subdirectory(src/plugins)
 endif()
 
 add_subdirectory(src/loader)
 
 # If not embedded, plugins have to be imported later, as they are depended ON pr_lib_utils
 if(NOT PR_EMBED_PLUGINS)
-	add_subdirectory(src/plugins)
+    add_subdirectory(src/plugins)
 endif()
 
 if(PR_HAS_PYTHON_API)
-	add_subdirectory(src/python)
+    add_subdirectory(src/python)
 endif()
 
 # Executables
 if(PR_WITH_CLIENT)
-	add_subdirectory(src/client)
+    add_subdirectory(src/client)
 endif()
 
 if(${Qt5Widgets_FOUND})
-	message(STATUS "Using Qt: ${Qt5Widgets_VERSION_STRING}")
-	add_subdirectory(src/ui)
+    message(STATUS "Using Qt: ${Qt5Widgets_VERSION_STRING}")
+    add_subdirectory(src/ui)
 endif()
 
 if(PR_WITH_EXTRA_TOOLS)
-	add_subdirectory(src/tools)
+    add_subdirectory(src/tools)
 endif()
 
 # Tests
 if(PR_BUILD_TESTS AND BUILD_TESTING)
-	add_subdirectory(src/sandbox)
-	add_subdirectory(src/tests)
+    add_subdirectory(src/sandbox)
+    add_subdirectory(src/tests)
 endif()
 
 # Example renderings
@@ -308,5 +310,5 @@ endif()
 
 # Coverage
 if(PR_GENERATE_COVERAGE AND (CMAKE_BUILD_TYPE MATCHES Debug))
-	coveralls_setup()
+    coveralls_setup()
 endif()
