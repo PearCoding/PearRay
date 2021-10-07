@@ -20,17 +20,18 @@ constexpr float BStd = 538;
 
 static inline float aghSingle(float lambda, float A, float B)
 {
-	return std::tanh(A * (lambda - B));
+	return std::tanh(A * (B - lambda));
 }
 
-static inline float aghPDF(float lambda, float A, float B, float N, float C)
+static inline float aghPDF(float lambda, float A, float B, float N)
 {
-	return (aghSingle(lambda, A, B) - C) / N;
+	const float K = std::cosh(A * (lambda - B));
+	return 1 / (K * K * N);
 }
 
 static inline float aghSample(float u, float A, float B, float N, float C)
 {
-	return B - std::atanh(N * u + C) / A;
+	return B - std::atanh(C - N * u) / A;
 }
 
 class CMISAGHSpectralMapper : public ISpectralMapper {
@@ -40,7 +41,7 @@ public:
 		, mCameraRange(cameraRange)
 		, mLightRange(lightRange)
 		, mCameraC(aghSingle(cameraRange.Start, AStd, BStd))
-		, mCameraN(aghSingle(cameraRange.End, AStd, BStd) - aghSingle(cameraRange.Start, AStd, BStd)) // A already included
+		, mCameraN(aghSingle(cameraRange.Start, AStd, BStd) - aghSingle(cameraRange.End, AStd, BStd)) // A already included
 	{
 	}
 
@@ -53,7 +54,8 @@ public:
 			PR_OPT_LOOP
 			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
 				const float k		= std::fmod(u + i / (float)PR_SPECTRAL_BLOB_SIZE, 1.0f);
-				out.WavelengthNM(i) = aghSample(k, AStd, BStd, mCameraN, mCameraC);
+				out.WavelengthNM(i) = aghSample(in.RND.getFloat(), AStd, BStd, mCameraN, mCameraC);
+				out.PDF(i)			= aghPDF(out.WavelengthNM(i), AStd, BStd, mCameraN);
 			}
 		} else {
 			out.WavelengthNM = sampleStandardWavelength(in.RND.getFloat(), mLightRange, out.PDF);
@@ -67,7 +69,7 @@ public:
 			SpectralBlob res;
 			PR_OPT_LOOP
 			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-				res(i) = aghPDF(wavelength(i), AStd, BStd, mCameraN, mCameraC);
+				res(i) = aghPDF(wavelength(i), AStd, BStd, mCameraN);
 			return res;
 		} else {
 			// For connections and cases with not enough information, we fallback to pure random sampling
@@ -82,9 +84,50 @@ private:
 	const float mCameraN;
 };
 
-// TODO: Hero
+class HeroAGHSpectralMapper : public ISpectralMapper {
+public:
+	HeroAGHSpectralMapper(const SpectralRange& cameraRange, const SpectralRange& lightRange)
+		: ISpectralMapper()
+		, mCameraRange(cameraRange)
+		, mLightRange(lightRange)
+		, mCameraC(aghSingle(cameraRange.Start, AStd, BStd))
+		, mCameraN(aghSingle(cameraRange.Start, AStd, BStd) - aghSingle(cameraRange.End, AStd, BStd)) // A already included
+	{
+	}
+
+	virtual ~HeroAGHSpectralMapper() = default;
+
+	void sample(const SpectralSampleInput& in, SpectralSampleOutput& out) const override
+	{
+		if (in.Purpose == SpectralSamplePurpose::Pixel) {
+			float hero		 = aghSample(in.RND.getFloat(), AStd, BStd, mCameraN, mCameraC);
+			out.WavelengthNM = constructHeroWavelength(hero, mCameraRange);
+			out.PDF			 = aghPDF(hero, AStd, BStd, mCameraN);
+		} else {
+			out.WavelengthNM = sampleStandardWavelength(in.RND.getFloat(), mLightRange, out.PDF);
+		}
+	}
+
+	// Do not apply the jacobian of the mapping from [0, 1] to [start, end], as we do not divide by it
+	SpectralBlob pdf(const SpectralEvalInput& in, const SpectralBlob& wavelength) const override
+	{
+		if (in.Purpose == SpectralSamplePurpose::Pixel) {
+			return SpectralBlob(aghPDF(wavelength(0), AStd, BStd, mCameraN));
+		} else {
+			// For connections and cases with not enough information, we fallback to pure random sampling
+			return pdfStandardWavelength(wavelength, mLightRange);
+		}
+	}
+
+private:
+	const SpectralRange mCameraRange;
+	const SpectralRange mLightRange;
+	const float mCameraC;
+	const float mCameraN;
+};
 
 struct AGHParameters {
+	bool UseCMIS = true;
 };
 
 class AGHSpectralMapperFactory : public ISpectralMapperFactory {
@@ -96,7 +139,10 @@ public:
 
 	std::shared_ptr<ISpectralMapper> createInstance(RenderContext* ctx) override
 	{
-		return std::make_shared<CMISAGHSpectralMapper>(ctx->cameraSpectralRange(), ctx->lightSpectralRange());
+		if (mParameters.UseCMIS)
+			return std::make_shared<CMISAGHSpectralMapper>(ctx->cameraSpectralRange(), ctx->lightSpectralRange());
+		else
+			return std::make_shared<HeroAGHSpectralMapper>(ctx->cameraSpectralRange(), ctx->lightSpectralRange());
 	}
 
 private:
@@ -108,6 +154,7 @@ public:
 	std::shared_ptr<ISpectralMapperFactory> create(const std::string&, const SceneLoadContext& ctx) override
 	{
 		AGHParameters parameters;
+		parameters.UseCMIS = ctx.parameters().getBool("cmis", parameters.UseCMIS);
 
 		return std::make_shared<AGHSpectralMapperFactory>(parameters);
 	}
@@ -124,6 +171,7 @@ public:
 		return PluginSpecificationBuilder("AGH Spectral Mapper", "Spectral mapper based on the paper 'An Improved Technique for Full Spectral Rendering'")
 			.Identifiers(getNames())
 			.Inputs()
+			.Bool("cmis", "Use continuous MIS method. Should be on except for debug purposes", params.UseCMIS)
 			.Specification()
 			.get();
 	}
