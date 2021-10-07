@@ -10,9 +10,10 @@ class LightPathExpression;
 /// Abstract output device
 class PR_LIB_CORE OutputDevice {
 public:
-	virtual void clear(bool force = false)														= 0;
-	virtual std::shared_ptr<LocalOutputDevice> createLocal(const Size2i& size) const			= 0;
+	virtual void clear(bool force = false)																		  = 0;
+	virtual std::shared_ptr<LocalOutputDevice> createLocal(const Size2i& size) const							  = 0;
 	virtual void mergeLocal(const Point2i& p, const std::shared_ptr<LocalOutputDevice>& bucket, size_t iteration) = 0;
+	virtual void onEndOfIteration(size_t iteration)																  = 0;
 
 	virtual void enable1DChannel(AOV1D var)				= 0;
 	virtual void enableCounterChannel(AOVCounter var)	= 0;

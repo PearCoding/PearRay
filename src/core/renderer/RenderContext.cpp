@@ -284,6 +284,7 @@ void RenderContext::handleNextIteration()
 
 	++mIncrementalCurrentIteration;
 	const RenderIteration iter = currentIteration();
+	mOutputSystem->onEndOfIteration(iter.Iteration);
 
 	if (iter.Pass == 0 && mRenderSettings.useAdaptiveTiling) {
 		PR_LOG(L_DEBUG) << "Optimizing tile map" << std::endl;

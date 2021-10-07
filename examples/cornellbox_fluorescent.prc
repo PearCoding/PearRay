@@ -28,7 +28,6 @@
 	(output
 		:name 'image'
 		(channel :type 'color' :color 'srgb' )
-		(channel :type 'blend')
 		(channel :type 'var')
 	)
 	; Camera
@@ -54,7 +53,7 @@
 	(emission
 		:name 'light_em'
 		:type 'standard'
-		:radiance (spd 'UVLight.csv')
+		:radiance (smul (spd 'UVLight.csv') 100)
 	)
 	; Materials
 	(material

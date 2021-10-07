@@ -27,17 +27,22 @@ inline void VarianceEstimator::addValue(const Point2i& p, Size1i channel, float 
 }
 
 inline void VarianceEstimator::addBlock(Size1i channel,
-										const Point2i& block_offset,
-										const Size2i& block_size,
+										const Point2i& global_off,
+										const Size2i& global_size,
+										const Point2i& local_off,
+										const Size2i& local_size,
 										const FrameBufferFloat& local_value,
 										size_t iteration)
 {
-	const Point2i block_end = block_size + block_offset;
+	Point2i global_end = (global_size + global_off).cwiseMin(mOnlineMean->size().asArray());
+	Point2i local_end  = (local_size + local_off).cwiseMin(local_value.size().asArray());
 
-	for (Size1i y = block_offset.y(); y < block_end.y(); ++y)
-		for (Size1i x = block_offset.x(); x < block_end.x(); ++x)
-			addValue(Point2i(x, y), channel,
-					 local_value.getFragment(Point2i(x, y) - block_offset, channel),
+	Point2i size = (local_end - local_off).cwiseMin(global_end - global_off);
+
+	for (Size1i y = 0; y < size.y(); ++y)
+		for (Size1i x = 0; x < size.x(); ++x)
+			addValue(global_off + Point2i(x, y), channel,
+					 local_value.getFragment(local_off + Point2i(x, y), channel),
 					 iteration);
 }
 } // namespace PR

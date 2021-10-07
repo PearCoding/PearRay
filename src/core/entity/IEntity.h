@@ -92,7 +92,7 @@ public:
 	virtual EntitySamplePoint sampleParameterPoint(const Vector2f& rnd) const = 0;
 	virtual float sampleParameterPointPDF() const
 	{
-		return 1.0f / localSurfaceArea();
+		return 1.0f / worldSurfaceArea();
 	}
 
 	virtual void provideGeometryPoint(const EntityGeometryQueryPoint& query, GeometryPoint& pt) const = 0;

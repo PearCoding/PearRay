@@ -50,10 +50,8 @@ public:
 	void sample(const SpectralSampleInput& in, SpectralSampleOutput& out) const override
 	{
 		if (in.Purpose == SpectralSamplePurpose::Pixel) {
-			const float u = in.RND.getFloat();
 			PR_OPT_LOOP
 			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
-				const float k		= std::fmod(u + i / (float)PR_SPECTRAL_BLOB_SIZE, 1.0f);
 				out.WavelengthNM(i) = aghSample(in.RND.getFloat(), AStd, BStd, mCameraN, mCameraC);
 				out.PDF(i)			= aghPDF(out.WavelengthNM(i), AStd, BStd, mCameraN);
 			}

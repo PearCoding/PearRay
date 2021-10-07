@@ -361,7 +361,7 @@ void OutputSpecification::parse(Environment*, const DL::DataGroup& entry)
 
 				file.SettingsCounter.push_back(spec);
 			} else {
-				PR_LOG(L_ERROR) << "Unknown channel type " << type;
+				PR_LOG(L_ERROR) << "Unknown channel type " << type << std::endl;
 			}
 		} else if (channelD.type() == DL::DT_Group
 				   && channelD.getGroup().id() == "custom_channel") {
@@ -422,7 +422,7 @@ void OutputSpecification::parse(Environment*, const DL::DataGroup& entry)
 				spec.Name	  = name;
 				file.SettingsCounter.push_back(spec);
 			} else {
-				PR_LOG(L_ERROR) << "Unknown custom channel type " << type;
+				PR_LOG(L_ERROR) << "Unknown custom channel type " << type << std::endl;
 			}
 		}
 	}

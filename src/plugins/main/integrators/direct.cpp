@@ -320,7 +320,7 @@ private:
 
 			//PR_ASSERT((mis <= PR_SPECTRAL_BLOB_SIZE).all(), "MIS must be between 0 and PR_SPECTRAL_BLOB_SIZE");
 		} else {
-			mis = heroFactor / (heroFactor * current.WavelengthPDF).sum();
+			mis = heroFactor / (heroFactor.sum() * current.WavelengthPDF);
 		}
 
 		// Trace shadow ray
@@ -383,7 +383,7 @@ private:
 		// If the given contribution can not be determined by NEE as well, do not calculate MIS
 		if (!mParameters.DoNEE || hitFromBehind || current.LastWasDelta) {
 			mCameraPath.addToken(LightPathToken::Emissive());
-			session.pushSpectralFragment(heroFactor / (heroFactor * current.WavelengthPDF).sum(), current.Throughput, radiance, cameraIP.Ray, mCameraPath);
+			session.pushSpectralFragment(heroFactor / (heroFactor.sum() * current.WavelengthPDF), current.Throughput, radiance, cameraIP.Ray, mCameraPath);
 			mCameraPath.popToken();
 			return;
 		}
@@ -439,12 +439,12 @@ private:
 
 		// If the given contribution can not be determined by NEE as well, do not calculate MIS
 		if (!mParameters.DoNEE || current.LastWasDelta) {
-			session.pushSpectralFragment(heroFactor / (heroFactor * current.WavelengthPDF).sum(), current.Throughput, radiance, ray, mCameraPath);
+			session.pushSpectralFragment(heroFactor / (heroFactor.sum() * current.WavelengthPDF), current.Throughput, radiance, ray, mCameraPath);
 			return;
 		}
 
 		// Calculate MIS
-		const float denom	   = VCM::mis_term<MISMode>(heroFactor * current.LastPDF_S).sum() + denom_mis;
+		const float denom	   = VCM::mis_term<MISMode>(current.LastPDF_S).sum() + denom_mis;
 		const SpectralBlob mis = heroFactor * VCM::mis_term<MISMode>(current.LastPDF_S[0]) / (denom * VCM::mis_term<MISMode>(current.WavelengthPDF));
 
 		PR_ASSERT((mis <= PR_SPECTRAL_BLOB_SIZE).all(), "MIS must be between 0 and PR_SPECTRAL_BLOB_SIZE");
@@ -458,7 +458,7 @@ private:
 	{
 		session.tile()->statistics().add(RenderStatisticEntry::BackgroundHitCount);
 		const SpectralBlob heroFactor = (ray.Flags & RayFlag::Monochrome) ? SpectralBlobUtils::HeroOnly() : SpectralBlob::Ones();
-		session.pushSpectralFragment(heroFactor / (heroFactor * current.WavelengthPDF).sum(), current.Throughput, SpectralBlob::Zero(), ray, mCameraPath);
+		session.pushSpectralFragment(heroFactor / (heroFactor.sum() * current.WavelengthPDF), current.Throughput, SpectralBlob::Zero(), ray, mCameraPath);
 	}
 
 private:

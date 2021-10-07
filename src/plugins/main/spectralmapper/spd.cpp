@@ -40,24 +40,18 @@ public:
 	void sample(const SpectralSampleInput& in, SpectralSampleOutput& out) const override
 	{
 		if (in.Purpose == SpectralSamplePurpose::Pixel) {
-			const float u				= in.RND.getFloat();
 			const Distribution1D& distr = mContext.Distribution;
 
 			PR_OPT_LOOP
-			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
-				const float k		= std::fmod(u + i / (float)PR_SPECTRAL_BLOB_SIZE, 1.0f);
-				out.WavelengthNM(i) = distr.sampleContinuous(k /*in.RND.getFloat()*/, out.PDF(i)) * mCameraRange.span() + mCameraRange.Start;
-			}
+			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
+				out.WavelengthNM(i) = mCameraRange.mapFromNormalized(distr.sampleContinuous(in.RND.getFloat(), out.PDF(i)));
 		} else if (in.Purpose == SpectralSamplePurpose::Light) {
-			const float u				= in.RND.getFloat();
 			const Distribution1D& distr = mContext.LightDistributions[in.Light->lightID()];
 			const SpectralRange range	= in.Light->spectralRange().bounded(mCameraRange);
 
 			PR_OPT_LOOP
-			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
-				const float k		= std::fmod(u + i / (float)PR_SPECTRAL_BLOB_SIZE, 1.0f);
-				out.WavelengthNM(i) = distr.sampleContinuous(k, out.PDF(i)) * range.span() + range.Start;
-			}
+			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
+				out.WavelengthNM(i) = range.mapFromNormalized(distr.sampleContinuous(in.RND.getFloat(), out.PDF(i)));
 		} else {
 			out.WavelengthNM = sampleStandardWavelength(in.RND.getFloat(), mLightRange, out.PDF);
 		}
@@ -72,7 +66,7 @@ public:
 			SpectralBlob res;
 			PR_OPT_LOOP
 			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-				res(i) = distr.continuousPdf((wavelength(i) - mCameraRange.Start) / mCameraRange.span());
+				res(i) = distr.continuousPdf(mCameraRange.mapToNormalized(wavelength(i)));
 			return res;
 		} else if (in.Purpose == SpectralSamplePurpose::Light) {
 			const Distribution1D& distr = mContext.LightDistributions[in.Light->lightID()];
@@ -81,8 +75,7 @@ public:
 			SpectralBlob res;
 			PR_OPT_LOOP
 			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-				res(i) = distr.continuousPdf((wavelength(i) - range.Start) / range.span());
-
+				res(i) = distr.continuousPdf(range.mapToNormalized(wavelength(i)));
 			return res;
 		} else {
 			// For connections and cases with not enough information, we fallback to pure random sampling
@@ -115,16 +108,21 @@ public:
 			const Distribution1D& distr = mContext.Distribution;
 
 			float pdf		 = 0;
-			const float hero = distr.sampleContinuous(u, pdf) * mCameraRange.span() + mCameraRange.Start;
+			const float hero = mCameraRange.mapFromNormalized(distr.sampleContinuous(u, pdf));
 			out.WavelengthNM = constructHeroWavelength(hero, mCameraRange);
 			out.PDF			 = pdf;
+
+			/*SpectralBlob res;
+			PR_OPT_LOOP
+			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
+				out.PDF(i) = distr.continuousPdf(mCameraRange.mapToNormalized(out.WavelengthNM(i)));*/
 		} else if (in.Purpose == SpectralSamplePurpose::Light) {
 			const float u				= in.RND.getFloat();
 			const Distribution1D& distr = mContext.LightDistributions[in.Light->lightID()];
 			const SpectralRange range	= in.Light->spectralRange().bounded(mCameraRange);
 
 			float pdf		 = 0;
-			const float hero = distr.sampleContinuous(u, pdf) * range.span() + range.Start;
+			const float hero = range.mapFromNormalized(distr.sampleContinuous(u, pdf));
 			out.WavelengthNM = constructHeroWavelength(hero, range);
 			out.PDF			 = pdf;
 		} else {
@@ -138,11 +136,16 @@ public:
 	{
 		if (in.Purpose == SpectralSamplePurpose::Pixel) {
 			const Distribution1D& distr = mContext.Distribution;
-			return SpectralBlob(distr.continuousPdf((wavelength(0) - mCameraRange.Start) / mCameraRange.span()));
+			return SpectralBlob(distr.continuousPdf(mCameraRange.mapToNormalized(wavelength(0))));
+			/*SpectralBlob res;
+			PR_OPT_LOOP
+			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
+				res(i) = distr.continuousPdf(mCameraRange.mapToNormalized(wavelength(i)));
+			return res;*/
 		} else if (in.Purpose == SpectralSamplePurpose::Light) {
 			const Distribution1D& distr = mContext.LightDistributions[in.Light->lightID()];
 			const SpectralRange range	= in.Light->spectralRange().bounded(mCameraRange);
-			return SpectralBlob(distr.continuousPdf((wavelength(0) - range.Start) / range.span()));
+			return SpectralBlob(distr.continuousPdf(range.mapToNormalized(wavelength(0))));
 		} else {
 			// For connections and cases with not enough information, we fallback to pure random sampling
 			return pdfStandardWavelength(wavelength, mLightRange);
@@ -164,9 +167,9 @@ enum class WeightingMethod {
 
 struct SPDParameters {
 	/* This one can be high quality, as we sample each single wavelength!*/
-	uint32 NumberOfBins = PR_CIE_WAVELENGTH_END - PR_CIE_WAVELENGTH_START;
+	uint32 NumberOfBins = PR_CIE_WAVELENGTH_RANGE;
 	// Number of bins for single light distributions
-	uint32 NumberOfLightBins = (PR_CIE_WAVELENGTH_END - PR_CIE_WAVELENGTH_START) / 2;
+	uint32 NumberOfLightBins = PR_CIE_WAVELENGTH_RANGE / 2;
 
 	WeightingMethod Method		= WeightingMethod::CIE_XYZ;
 	bool UseNormalizedLights	= true;
@@ -288,7 +291,7 @@ private:
 
 		// Ensure that all wavelengths will be sampled if necessary
 		if (mParameters.EnsureCompleteSampling) {
-			constexpr float MIN_POWER = 1e-3f;
+			constexpr float MIN_POWER = 1e-2f;
 			for (float& f : distr)
 				f = std::max(MIN_POWER, f);
 		}

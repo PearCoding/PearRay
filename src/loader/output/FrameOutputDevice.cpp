@@ -105,22 +105,21 @@ void FrameOutputDevice::mergeLocal(
 	if (mData.hasVarianceEstimator()) {
 		auto varianceEstimator = mData.varianceEstimator();
 		for (Size1i i = 0; i < mData.mSpectral[AOV_OnlineMean]->channels(); ++i)
-			varianceEstimator.addBlock(i, dst_off, dst_size, *bucket->data().mSpectral[AOV_Output], iteration);
+			varianceEstimator.addBlock(i, dst_off, dst_size, src_off, src_size, *bucket->data().mSpectral[AOV_Output], iteration);
 	}
 
 	// Add spectral AOVs
-	const auto merger = [=](float a, float b) { return (a * (iteration - 1) + b) / iteration; };
 	PR_OPT_LOOP
 	for (int i = 0; i < AOV_SPECTRAL_COUNT; ++i) {
 		if (ignoreInLocal((AOVSpectral)i))
 			continue;
 
 		if (mData.mSpectral[i])
-			mData.mSpectral[i]->applyBlock(dst_off, dst_size, src_off, src_size, *bucket->data().mSpectral[i], merger);
+			mCopySpectral[i]->addBlock(dst_off, dst_size, src_off, src_size, *bucket->data().mSpectral[i]);
 
 		PR_OPT_LOOP
 		for (size_t k = 0; k < mData.mLPE_Spectral[i].size(); ++k)
-			mData.mLPE_Spectral[i][k].second->applyBlock(dst_off, dst_size, src_off, src_size, *bucket->data().mLPE_Spectral[i][k].second, merger);
+			mCopyLPE_Spectral[i][k]->addBlock(dst_off, dst_size, src_off, src_size, *bucket->data().mLPE_Spectral[i][k].second);
 	}
 
 	// Add 3d AOVs
@@ -172,7 +171,7 @@ void FrameOutputDevice::mergeLocal(
 	for (auto aI = mData.mCustomSpectral.begin(), bI = bucket->data().mCustomSpectral.begin();
 		 aI != mData.mCustomSpectral.end();
 		 ++aI, ++bI) {
-		(*aI)->applyBlock(dst_off, dst_size, src_off, src_size, *(*bI), merger);
+		(*aI)->addBlock(dst_off, dst_size, src_off, src_size, *(*bI));
 	}
 
 	// Add custom 3d aovs
@@ -200,6 +199,27 @@ void FrameOutputDevice::mergeLocal(
 	}
 }
 
+void FrameOutputDevice::onEndOfIteration(size_t iteration)
+{
+	const auto merger = [=](float a, float b) { return (a * (iteration - 1) + b) / iteration; };
+	PR_OPT_LOOP
+	for (int i = 0; i < AOV_SPECTRAL_COUNT; ++i) {
+		if (ignoreInLocal((AOVSpectral)i))
+			continue;
+
+		if (mData.mSpectral[i]) {
+			mData.mSpectral[i]->applyBlock(Point2i::Zero(), *mCopySpectral[i], merger);
+			mCopySpectral[i]->clear(true);
+		}
+
+		PR_OPT_LOOP
+		for (size_t k = 0; k < mData.mLPE_Spectral[i].size(); ++k) {
+			mData.mLPE_Spectral[i][k].second->applyBlock(Point2i::Zero(), *mCopyLPE_Spectral[i][k], merger);
+			mCopyLPE_Spectral[i][k]->clear(true);
+		}
+	}
+}
+
 void FrameOutputDevice::clear(bool force)
 {
 	mData.clear(force);
@@ -223,6 +243,9 @@ void FrameOutputDevice::enable3DChannel(AOV3D var)
 void FrameOutputDevice::enableSpectralChannel(AOVSpectral var)
 {
 	mData.requestInternalChannel_Spectral(var);
+	if (!mCopySpectral[var])
+		mCopySpectral[var] = mData.createSpectralBuffer();
+	mCopySpectral[var]->clear(true);
 }
 
 void FrameOutputDevice::registerLPE1DChannel(AOV1D var, const LightPathExpression& expr, uint32 id)
@@ -243,6 +266,10 @@ void FrameOutputDevice::registerLPE3DChannel(AOV3D var, const LightPathExpressio
 void FrameOutputDevice::registerLPESpectralChannel(AOVSpectral var, const LightPathExpression& expr, uint32 id)
 {
 	mData.requestLPEChannel_Spectral(var, expr, id);
+	if (id >= mCopyLPE_Spectral[var].size())
+		mCopyLPE_Spectral[var].resize(id);
+	mCopyLPE_Spectral[var][id] = mData.createSpectralBuffer();
+	mCopyLPE_Spectral[var][id]->clear(true);
 }
 
 void FrameOutputDevice::registerCustom1DChannel(const std::string&, uint32 id)

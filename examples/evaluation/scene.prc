@@ -10,8 +10,9 @@
     :sample_count 128
   )
   (spectral_mapper
-    :type 'agh'
+    :type 'random'
     ;:cmis false
+    :weighting 'srgb'
   )
   (filter
     :slot 'pixel'

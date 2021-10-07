@@ -46,9 +46,9 @@ public:
 
 	std::shared_ptr<LocalOutputSystem> createLocal(const RenderTile* tile, const Size2i& size) const;
 	void mergeLocal(const Point2i& p, const std::shared_ptr<LocalOutputSystem>& local, size_t iteration);
+	void onEndOfIteration(size_t iteration);
 
 	/// It triggers an undefined behavior if the following methods are called after the renderer started
-
 	void enableVarianceEstimation();
 	void enable1DChannel(AOV1D var);
 	void enableCounterChannel(AOVCounter var);

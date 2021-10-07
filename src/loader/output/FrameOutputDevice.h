@@ -21,6 +21,7 @@ public:
 	void clear(bool force = false) override;
 	std::shared_ptr<LocalOutputDevice> createLocal(const Size2i& size) const override;
 	void mergeLocal(const Point2i& p, const std::shared_ptr<LocalOutputDevice>& bucket, size_t iteration) override;
+	void onEndOfIteration(size_t iteration)	override;
 
 	void enable1DChannel(AOV1D var) override;
 	void enableCounterChannel(AOVCounter var) override;
@@ -45,5 +46,8 @@ private:
 
 	FrameContainer mData;
 	std::mutex mMergeMutex;
+
+	std::shared_ptr<FrameBufferFloat> mCopySpectral[AOV_SPECTRAL_COUNT];
+	std::vector<std::shared_ptr<FrameBufferFloat>> mCopyLPE_Spectral[AOV_SPECTRAL_COUNT];
 };
 } // namespace PR
