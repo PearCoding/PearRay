@@ -1,12 +1,12 @@
 ; Original CornellBox converted to PearRay format
 (scene
 	:name 'cornellbox'
-	:render_width 1000
-	:render_height 1000
+	:render_width 256
+	:render_height 256
 	:camera 'Camera'
 	; Settings
 	(integrator
-		:type 'vcm'
+		:type 'direct'
 		:max_ray_depth 16
 		:max_camera_ray_depth 4
 		:max_light_ray_depth 4
@@ -24,7 +24,6 @@
 	(output
 		:name 'image'
 		(channel :type 'color' :color 'srgb' )
-		(channel :type 'blend')
 		(channel :type 'var')
 	)
 	; Camera

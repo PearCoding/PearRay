@@ -27,7 +27,7 @@
 	(output
 		:name 'image'
 		(channel :type 'color', :color 'srgb')
-		(channel :type 'color', :color 'srgb', :lpe 'CS*DL')
+		;(channel :type 'color', :color 'srgb', :lpe 'CS*DL')
 		(channel :type 'n' )
 		(channel :type 'ng' )
 		(channel :type 'feedback' )

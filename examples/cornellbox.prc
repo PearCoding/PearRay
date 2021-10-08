@@ -18,7 +18,6 @@
 	(output
 		:name 'image'
 		(channel :type 'color' :color 'srgb' )
-		(channel :type 'blend')
 		(channel :type 'var')
 	)
 	; Camera
