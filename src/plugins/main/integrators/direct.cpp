@@ -49,7 +49,8 @@ private:
 		bool LastWasDelta		   = true;
 		bool LastWasFluorescent	   = false;
 		bool LastWasEmissive	   = false;
-		SpectralBlob LastPDF_S	   = SpectralBlob::Ones();
+		SpectralBlob PathPDF	   = SpectralBlob::Ones();
+		SpectralBlob PrevPathPDF   = SpectralBlob::Ones();
 		SpectralBlob WavelengthPDF = SpectralBlob::Zero(); // Wavelength of the initial sampling
 		Vector3f LastPosition	   = Vector3f::Zero();	   // Used in NEE
 		Vector3f LastNormal		   = Vector3f::Zero();
@@ -199,9 +200,10 @@ private:
 		current.LastWasDelta	   = sout.isDelta();
 		current.LastWasFluorescent = sout.isFluorescent();
 		//current.LastWasEmissive was updated in parent function
-		current.LastPDF_S = sout.PDF_S * scatProb;
+		current.PrevPathPDF = current.PathPDF;
+		current.PathPDF *= sout.PDF_S * scatProb;
 
-		if ((current.LastPDF_S <= PDF_EPS).all()) // Catch this case, or everything will explode
+		if ((current.PathPDF <= PDF_EPS).all()) // Catch this case, or everything will explode
 			return {};
 
 		// Update throughput
@@ -209,7 +211,7 @@ private:
 
 		if (sout.isHeroCollapsing()) {
 			current.Throughput *= SpectralBlobUtils::HeroOnly();
-			current.LastPDF_S *= SpectralBlobUtils::HeroOnly();
+			current.PathPDF *= SpectralBlobUtils::HeroOnly();
 		}
 
 		if (current.Throughput.isZero(PR_EPSILON))
@@ -315,8 +317,8 @@ private:
 			const float cameraRoulette	  = mCameraRR.probability(cameraPathLength);
 
 			const SpectralBlob bsdfPdfS = bsdfWvlPdfS * cameraRoulette;
-			const float denom			= VCM::mis_term<MISMode>(lightPdfS2).sum() + VCM::mis_term<MISMode>(bsdfPdfS).sum();
-			mis							= light->hasDeltaDistribution() ? (heroFactor / heroFactor.sum()).eval() : (VCM::mis_term<MISMode>(lightPdfS2[0]) / (heroFactor * denom * VCM::mis_term<MISMode>(current.WavelengthPDF))).eval();
+			const float denom			= VCM::mis_term<MISMode>(current.PathPDF * lightPdfS2).sum() + VCM::mis_term<MISMode>(current.PathPDF * bsdfPdfS).sum();
+			mis							= light->hasDeltaDistribution() ? (heroFactor / heroFactor.sum()).eval() : (VCM::mis_term<MISMode>(current.PathPDF[0] * lightPdfS2[0]) / (heroFactor * denom * VCM::mis_term<MISMode>(current.WavelengthPDF))).eval();
 
 			//PR_ASSERT((mis <= PR_SPECTRAL_BLOB_SIZE).all(), "MIS must be between 0 and PR_SPECTRAL_BLOB_SIZE");
 		} else {
@@ -398,8 +400,8 @@ private:
 		/*cameraIP.Ray.IterationDepth > 0 && current.LastWasFluorescent ? mLightSampler->pdfWavelength(cameraIP.Ray.WavelengthNM, cameraIP.P, cameraEntity)
 																								   : SpectralBlob::Ones();*/
 
-		const float denom	   = VCM::mis_term<MISMode>(heroFactor * wvlProb * posPDF_S).sum() + VCM::mis_term<MISMode>(heroFactor * current.LastPDF_S).sum();
-		const SpectralBlob mis = heroFactor * VCM::mis_term<MISMode>(current.LastPDF_S[0]) / (denom * VCM::mis_term<MISMode>(current.WavelengthPDF));
+		const float denom	   = VCM::mis_term<MISMode>(current.PrevPathPDF * wvlProb * posPDF_S).sum() + VCM::mis_term<MISMode>(current.PathPDF).sum();
+		const SpectralBlob mis = heroFactor * VCM::mis_term<MISMode>(current.PathPDF[0]) / (denom * VCM::mis_term<MISMode>(current.WavelengthPDF));
 
 		//PR_ASSERT((mis <= PR_SPECTRAL_BLOB_SIZE).all(), "MIS must be between 0 and PR_SPECTRAL_BLOB_SIZE");
 
@@ -434,7 +436,7 @@ private:
 			const SpectralBlob wvlProb = SpectralBlob::Ones();
 			//ray.IterationDepth > 0 && current.LastWasFluorescent ? mLightSampler->pdfWavelength(ray.WavelengthNM, ray.Origin, light) : SpectralBlob::Ones();
 			radiance += lout.Radiance;
-			denom_mis += VCM::mis_term<MISMode>(heroFactor * wvlProb * pdf_S).sum();
+			denom_mis += VCM::mis_term<MISMode>(current.PrevPathPDF * wvlProb * pdf_S).sum();
 		}
 
 		// If the given contribution can not be determined by NEE as well, do not calculate MIS
@@ -444,8 +446,8 @@ private:
 		}
 
 		// Calculate MIS
-		const float denom	   = VCM::mis_term<MISMode>(current.LastPDF_S).sum() + denom_mis;
-		const SpectralBlob mis = heroFactor * VCM::mis_term<MISMode>(current.LastPDF_S[0]) / (denom * VCM::mis_term<MISMode>(current.WavelengthPDF));
+		const float denom	   = VCM::mis_term<MISMode>(current.PathPDF).sum() + denom_mis;
+		const SpectralBlob mis = heroFactor * VCM::mis_term<MISMode>(current.PathPDF[0]) / (denom * VCM::mis_term<MISMode>(current.WavelengthPDF));
 
 		PR_ASSERT((mis <= PR_SPECTRAL_BLOB_SIZE).all(), "MIS must be between 0 and PR_SPECTRAL_BLOB_SIZE");
 

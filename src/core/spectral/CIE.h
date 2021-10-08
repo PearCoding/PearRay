@@ -8,13 +8,13 @@ namespace PR {
 using CIETriplet = Eigen::Array<float, 3, 1>;
 
 // The spectrum the CIE data is available
-#define PR_USE_CIE_1931
+//#define PR_USE_CIE_1931
 #ifdef PR_USE_CIE_1931
 constexpr int PR_CIE_SAMPLE_COUNT		= 95;
 constexpr float PR_CIE_WAVELENGTH_START = 360;
 constexpr float PR_CIE_WAVELENGTH_END	= 830;
 constexpr float PR_CIE_Y_NORM_SUM		= 21.37140785047f;
-#else
+#else // CIE_2006
 constexpr int PR_CIE_SAMPLE_COUNT		= 441;
 constexpr float PR_CIE_WAVELENGTH_START = 390;
 constexpr float PR_CIE_WAVELENGTH_END	= 830;
