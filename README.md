@@ -1,3 +1,5 @@
+:exclamation: **This project is currently on hold in favour of my other renderer [Ignis](https://github.com/PearCoding/Ignis).** :exclamation:
+
 # PearRay [![GitHub Tag](https://img.shields.io/github/tag/PearCoding/PearRay.svg)](https://github.com/PearCoding/PearRay/releases) [![Build Status](https://travis-ci.org/PearCoding/PearRay.svg?branch=master)](https://travis-ci.org/PearCoding/PearRay)
 
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/PearCoding/PearRay/master/LICENSE)
